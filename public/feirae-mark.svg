@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Feiraê</title>
+  <defs>
+    <linearGradient id="g" x1="18" y1="14" x2="110" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#25824c"/>
+      <stop offset="1" stop-color="#0b4224"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="38" fill="url(#g)"/>
+  <path d="M33 67c0-25 14-40 35-40 18 0 30 11 30 27 0 18-15 28-40 28h-7c3 11 11 17 24 17 8 0 15-2 22-7v18c-7 5-16 7-27 7-24 0-37-17-37-50Zm18-1h6c15 0 23-4 23-12 0-6-4-10-12-10-10 0-16 8-17 22Z" fill="#fff"/>
+  <path d="m55 19 12-10 12 10" fill="none" stroke="#dff36b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
