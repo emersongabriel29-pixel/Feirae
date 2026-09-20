@@ -9,6 +9,7 @@ import {
   Heart,
   Home,
   LocateFixed,
+  LogOut,
   MapPin,
   MessageCircle,
   Minus,
@@ -16,7 +17,6 @@ import {
   Plus,
   Search,
   Settings,
-  ShieldCheck,
   ShoppingBag,
   Store,
   Trash2,
@@ -33,11 +33,15 @@ const roleLabels: Record<Role, string> = {
   customer: "Cliente",
   feirante: "Feirante",
   delivery: "Entregador",
-  admin: "Administração",
 };
 
+function isRole(value: unknown): value is Role {
+  return value === "customer" || value === "feirante" || value === "delivery";
+}
+
 export default function App() {
-  const [role, setRole] = useState<Role>("customer");
+  const [storedRole, setStoredRole] = usePersistentState<unknown>("feirae:session-role", null);
+  const role = isRole(storedRole) ? storedRole : null;
   const [tab, setTab] = useState<CustomerTab>("home");
   const [screen, setScreen] = useState<Screen>("main");
   const [query, setQuery] = useState("");
@@ -65,7 +69,6 @@ export default function App() {
     window.setTimeout(() => setToast(""), 2800);
   }
   function openCustomerTab(nextTab: CustomerTab) {
-    setRole("customer");
     setScreen("main");
     setTab(nextTab);
     setCartOpen(false);
@@ -74,11 +77,17 @@ export default function App() {
     setScreen(nextScreen);
     setCartOpen(false);
   }
-  function changeRole(nextRole: Role) {
-    setRole(nextRole);
+  function login(nextRole: Role) {
+    setStoredRole(nextRole);
     setScreen("main");
+    setTab("home");
     setCartOpen(false);
-    notify(`Prévia do modo ${roleLabels[nextRole]}.`);
+  }
+  function logout() {
+    setStoredRole(null);
+    setScreen("main");
+    setTab("home");
+    setCartOpen(false);
   }
   function addToCart(id: number) {
     const product = products.find((item) => item.id === id);
@@ -143,6 +152,8 @@ export default function App() {
     notify(`Pedido ${id} criado no modo demonstração.`);
   }
 
+  if (!role) return <LoginPage onLogin={login} />;
+
   return (
     <div className="min-h-screen bg-[var(--fe-bg)] pb-24 text-slate-900 md:pb-8">
       <a className="skip-link" href="#main-content">
@@ -157,7 +168,7 @@ export default function App() {
         locationLoading={locationLoading}
         notifications={notifications}
         itemCount={itemCount}
-        onHome={() => openCustomerTab("home")}
+        onHome={() => (role === "customer" ? openCustomerTab("home") : setScreen("main"))}
         onTab={openCustomerTab}
         onQuery={(value) => {
           setQuery(value);
@@ -168,6 +179,7 @@ export default function App() {
         onLocation={requestLocation}
         onNotifications={() => openScreen("notifications")}
         onCart={() => setCartOpen(true)}
+        onLogout={logout}
       />
 
       <div id="main-content">
@@ -186,7 +198,6 @@ export default function App() {
                   openScreen("feirante");
                 }}
                 onTracking={() => openScreen("tracking")}
-                onRole={() => changeRole("feirante")}
                 onMap={openMap}
               />
             )}
@@ -211,17 +222,13 @@ export default function App() {
               />
             )}
             {tab === "orders" && <OrdersPage orders={orders} onTracking={() => openScreen("tracking")} />}
-            {tab === "profile" && <ProfilePage onScreen={openScreen} onRole={changeRole} />}
+            {tab === "profile" && <ProfilePage onScreen={openScreen} onLogout={logout} />}
           </main>
         )}
         {role !== "customer" && screen === "main" && (
           <RoleDashboard
             role={role}
-            onOpen={() =>
-              openScreen(
-                role === "feirante" ? "feiranteOps" : role === "delivery" ? "deliveryOps" : "adminOps",
-              )
-            }
+            onOpen={() => openScreen(role === "feirante" ? "feiranteOps" : "deliveryOps")}
           />
         )}
         {screen === "fair" && (
@@ -273,11 +280,9 @@ export default function App() {
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "feiranteOps" && <FeiranteOperations onBack={() => setScreen("main")} />}
         {screen === "deliveryOps" && <DeliveryOperations onBack={() => setScreen("main")} />}
-        {screen === "adminOps" && <AdminOperations onBack={() => setScreen("main")} />}
       </div>
 
       {role === "customer" && screen === "main" && <MobileNavigation active={tab} onTab={openCustomerTab} />}
-      {role !== "customer" && <RoleSwitcher role={role} onRole={changeRole} />}
       {cartOpen && (
         <CartDrawer
           items={cartProducts}
@@ -298,6 +303,124 @@ export default function App() {
   );
 }
 
+function LoginPage({ onLogin }: { onLogin: (role: Role) => void }) {
+  const [selectedRole, setSelectedRole] = useState<Role>("customer");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const options: Array<{ role: Role; title: string; text: string; icon: ReactNode }> = [
+    {
+      role: "customer",
+      title: "Cliente",
+      text: "Comprar produtos e acompanhar pedidos",
+      icon: <ShoppingBag />,
+    },
+    {
+      role: "feirante",
+      title: "Feirante",
+      text: "Gerenciar sua banca, produtos e vendas",
+      icon: <Store />,
+    },
+    {
+      role: "delivery",
+      title: "Entregador",
+      text: "Aceitar entregas, rotas e acompanhar ganhos",
+      icon: <Bike />,
+    },
+  ];
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    onLogin(selectedRole);
+  }
+
+  return (
+    <main className="login-page">
+      <section className="login-showcase">
+        <div className="login-brand">
+          <span className="brand-mark">ê</span>
+          <b>
+            Feiraê<span>.</span>
+          </b>
+        </div>
+        <div>
+          <span className="eyebrow light">A feira do seu jeito</span>
+          <h1>
+            Um aplicativo.
+            <br />
+            Três experiências.
+          </h1>
+          <p>Cada pessoa acessa apenas as ferramentas necessárias para sua rotina.</p>
+        </div>
+        <div className="login-benefits">
+          <span>Produtos locais</span>
+          <span>Feiras do DF</span>
+          <span>Entrega e retirada</span>
+        </div>
+      </section>
+      <section className="login-content">
+        <div className="login-form-wrap">
+          <span className="eyebrow">Acesso ao Feiraê</span>
+          <h2>Como você vai usar o aplicativo?</h2>
+          <p className="login-intro">
+            Escolha seu tipo de acesso. As telas serão preparadas para essa função.
+          </p>
+          <div className="role-options" role="radiogroup" aria-label="Tipo de acesso">
+            {options.map((option) => (
+              <button
+                type="button"
+                role="radio"
+                aria-checked={selectedRole === option.role}
+                key={option.role}
+                onClick={() => setSelectedRole(option.role)}
+                className={selectedRole === option.role ? "selected" : ""}
+              >
+                <span>{option.icon}</span>
+                <span>
+                  <b>{option.title}</b>
+                  <small>{option.text}</small>
+                </span>
+                <i>{selectedRole === option.role && <Check size={15} />}</i>
+              </button>
+            ))}
+          </div>
+          <form onSubmit={submit} className="login-form">
+            <label>
+              E-mail
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="seuemail@exemplo.com"
+                autoComplete="email"
+                required
+              />
+            </label>
+            <label>
+              Senha
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Digite sua senha"
+                autoComplete="current-password"
+                minLength={6}
+                required
+              />
+            </label>
+            <button type="submit" className="primary-action w-full">
+              Entrar como {roleLabels[selectedRole]} <ChevronRight size={18} />
+            </button>
+          </form>
+          <p className="demo-notice">
+            Modo demonstração: as credenciais ainda não são validadas. O login real será ativado com o
+            Supabase.
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 type HeaderProps = {
   role: Role;
   tab: CustomerTab;
@@ -315,6 +438,7 @@ type HeaderProps = {
   onLocation: () => void;
   onNotifications: () => void;
   onCart: () => void;
+  onLogout: () => void;
 };
 function Header(props: HeaderProps) {
   return (
@@ -351,21 +475,30 @@ function Header(props: HeaderProps) {
               ))}
             </nav>
           )}
-          <div className="ml-auto flex items-center gap-2">
-            <button onClick={props.onNotifications} className="icon-button" aria-label="Abrir notificações">
-              <Bell size={19} />
-              {props.notifications > 0 && <span className="badge">{props.notifications}</span>}
-            </button>
-            <button
-              onClick={props.onCart}
-              className="cart-button"
-              aria-label={`Abrir sacola com ${props.itemCount} itens`}
-            >
-              <ShoppingBag size={19} />
-              <span className="hidden sm:inline">Minha feira</span>
-              {props.itemCount > 0 && <span className="cart-count">{props.itemCount}</span>}
-            </button>
-          </div>
+          {props.role === "customer" ? (
+            <div className="ml-auto flex items-center gap-2">
+              <button onClick={props.onNotifications} className="icon-button" aria-label="Abrir notificações">
+                <Bell size={19} />
+                {props.notifications > 0 && <span className="badge">{props.notifications}</span>}
+              </button>
+              <button
+                onClick={props.onCart}
+                className="cart-button"
+                aria-label={`Abrir sacola com ${props.itemCount} itens`}
+              >
+                <ShoppingBag size={19} />
+                <span className="hidden sm:inline">Minha feira</span>
+                {props.itemCount > 0 && <span className="cart-count">{props.itemCount}</span>}
+              </button>
+            </div>
+          ) : (
+            <div className="ml-auto flex items-center gap-2">
+              <span className="role-badge">{roleLabels[props.role]}</span>
+              <button onClick={props.onLogout} className="logout-button">
+                <LogOut size={17} /> Sair
+              </button>
+            </div>
+          )}
         </div>
         {props.role === "customer" && (
           <div className="grid gap-2 pb-3 md:grid-cols-[minmax(260px,1fr)_auto_auto]">
@@ -413,7 +546,6 @@ function HomePage({
   onFair,
   onVendor,
   onTracking,
-  onRole,
   onMap,
 }: {
   fairItems: ReturnType<typeof sortFairsByDistance>;
@@ -421,7 +553,6 @@ function HomePage({
   onFair: (name: string) => void;
   onVendor: (name: string) => void;
   onTracking: () => void;
-  onRole: () => void;
   onMap: (lat: number, lng: number) => void;
 }) {
   return (
@@ -465,7 +596,12 @@ function HomePage({
             onClick={() => onVendor("Sítio da Vó")}
           />
           <QuickAction icon="🛵" title="Meu pedido" text="Acompanhar a entrega" onClick={onTracking} />
-          <QuickAction icon="🧑‍🌾" title="Quero vender" text="Conhecer a área do feirante" onClick={onRole} />
+          <QuickAction
+            icon="✨"
+            title="Destaques"
+            text="Ver produtos selecionados"
+            onClick={() => onTab("products")}
+          />
         </div>
       </section>
       <section>
@@ -686,13 +822,7 @@ function OrdersPage({ orders, onTracking }: { orders: DemoOrder[]; onTracking: (
     </section>
   );
 }
-function ProfilePage({
-  onScreen,
-  onRole,
-}: {
-  onScreen: (screen: Screen) => void;
-  onRole: (role: Role) => void;
-}) {
+function ProfilePage({ onScreen, onLogout }: { onScreen: (screen: Screen) => void; onLogout: () => void }) {
   const links: Array<[string, string, ReactNode, Screen]> = [
     ["Meus endereços", "Gerencie locais de entrega", <MapPin />, "addresses"],
     ["Favoritos", "Produtos salvos", <Heart />, "favorites"],
@@ -724,24 +854,9 @@ function ProfilePage({
           </button>
         ))}
       </div>
-      <div className="demo-panel mt-7">
-        <div>
-          <span className="eyebrow">Prévia de perfis</span>
-          <h2>Conheça cada área do Feiraê</h2>
-          <p>Estes modos usam dados demonstrativos até a autenticação ser conectada.</p>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-3">
-          <button onClick={() => onRole("feirante")}>
-            <Store /> Feirante
-          </button>
-          <button onClick={() => onRole("delivery")}>
-            <Bike /> Entregador
-          </button>
-          <button onClick={() => onRole("admin")}>
-            <ShieldCheck /> Administração
-          </button>
-        </div>
-      </div>
+      <button onClick={onLogout} className="profile-logout">
+        <LogOut size={18} /> Sair da conta
+      </button>
     </section>
   );
 }
@@ -1187,29 +1302,17 @@ function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void }) {
             ["4,9", "avaliação"],
           ],
         }
-      : role === "delivery"
-        ? {
-            icon: <Bike />,
-            title: "Central do entregador",
-            subtitle: "Entregas, rotas e ganhos",
-            metrics: [
-              ["8", "disponíveis"],
-              ["2", "em rota"],
-              ["R$ 186", "ganhos hoje"],
-              ["4,9", "avaliação"],
-            ],
-          }
-        : {
-            icon: <ShieldCheck />,
-            title: "Administração",
-            subtitle: "Visão demonstrativa da operação",
-            metrics: [
-              ["126", "feirantes"],
-              [String(fairs.length), "feiras"],
-              ["348", "pedidos"],
-              ["R$ 28 mil", "vendas"],
-            ],
-          };
+      : {
+          icon: <Bike />,
+          title: "Central do entregador",
+          subtitle: "Entregas, rotas e ganhos",
+          metrics: [
+            ["8", "disponíveis"],
+            ["2", "em rota"],
+            ["R$ 186", "ganhos hoje"],
+            ["4,9", "avaliação"],
+          ],
+        };
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="role-heading">
@@ -1318,34 +1421,6 @@ function DeliveryOperations({ onBack }: { onBack: () => void }) {
     </Panel>
   );
 }
-function AdminOperations({ onBack }: { onBack: () => void }) {
-  const modules = [
-    "Aprovações",
-    "Feiras",
-    "Categorias",
-    "Pedidos",
-    "Entregadores",
-    "Financeiro",
-    "Relatórios",
-    "Denúncias",
-    "Configurações",
-  ];
-  const [active, setActive] = useState("Aprovações");
-  return (
-    <Panel title="Administração" subtitle="Prévia sem acesso a dados reais" onBack={onBack}>
-      <ModuleTabs modules={modules} active={active} onActive={setActive} />
-      <div className="surface-card">
-        <span className="eyebrow">Módulo selecionado</span>
-        <h2>{active}</h2>
-        <p>
-          A interface está navegável. Autorizações, dados e ações administrativas serão conectados ao Supabase
-          depois.
-        </p>
-      </div>
-    </Panel>
-  );
-}
-
 function CartDrawer({
   items,
   cart,
@@ -1449,18 +1524,6 @@ function MobileNavigation({ active, onTab }: { active: CustomerTab; onTab: (tab:
         </button>
       ))}
     </nav>
-  );
-}
-function RoleSwitcher({ role, onRole }: { role: Role; onRole: (role: Role) => void }) {
-  return (
-    <div className="role-switcher">
-      <span>Prévia</span>
-      {(["customer", "feirante", "delivery", "admin"] as Role[]).map((item) => (
-        <button key={item} onClick={() => onRole(item)} className={role === item ? "active" : ""}>
-          {roleLabels[item]}
-        </button>
-      ))}
-    </div>
   );
 }
 function Panel({
