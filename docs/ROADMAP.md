@@ -7,13 +7,14 @@
 - GPS opcional e ordenação por distância.
 - Carrinho, checkout e pedidos demonstrativos persistidos localmente.
 - Favoritos, endereços, preferências e suporte local.
-- Prévias navegáveis dos painéis de feirante, entregador e administração.
+- Entrada demonstrativa com escolha entre cliente, feirante e entregador.
+- Experiências separadas por perfil, sem troca de papel dentro do aplicativo.
 - Acessibilidade básica, lint, formatação, testes e CI.
 
 ## 🔴 Próxima fase: Supabase e MVP operacional
 
 1. Supabase + banco: usuários, feiras, feirantes, lojas, produtos, categorias, estoque, pedidos, itens, endereços, entregas e avaliações.
-2. Autenticação: cadastro/login, recuperação de senha, perfis e permissões.
+2. Autenticação: validar o acesso escolhido no login, cadastro, recuperação de senha, perfis e permissões.
 3. Catálogo real: produto, foto, preço, unidade, estoque, disponibilidade e promoções.
 4. Feiras reais: endereço, GPS, dias/horários e feirantes participantes.
 5. Carrinho persistente: banco, validação server-side de estoque e preço.
@@ -43,6 +44,8 @@ Pedidos · Produtos · Estoque · Minha loja · Minha feira · Vendas · Finance
 ## 🛠️ Painel administrativo
 
 Feiras · feirantes · categorias · pedidos · entregas · usuários · cancelamentos · financeiro · denúncias/moderação · relatórios.
+
+O administrador terá autenticação e endereço próprios; não será uma quarta opção no login público do aplicativo.
 
 ## 🟢 Pós-MVP
 

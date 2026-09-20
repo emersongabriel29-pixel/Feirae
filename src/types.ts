@@ -1,4 +1,4 @@
-export type Role = "customer" | "feirante" | "delivery" | "admin";
+export type Role = "customer" | "feirante" | "delivery";
 
 export type CustomerTab = "home" | "fairs" | "products" | "orders" | "profile";
 
@@ -14,8 +14,7 @@ export type Screen =
   | "chat"
   | "settings"
   | "feiranteOps"
-  | "deliveryOps"
-  | "adminOps";
+  | "deliveryOps";
 
 export type Product = {
   id: number;
