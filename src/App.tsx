@@ -56,10 +56,18 @@ export default function App(){
 
  return <div className="min-h-screen bg-[#f7f8f3] text-slate-900 pb-20">
   <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur">
-   <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
+   <div className="relative mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
     <button onClick={()=>{switchRole("customer");go("main");setTab("home")}} className="mr-1 text-left"><b className="text-2xl font-black text-green-700">Feiraê<span className="text-amber-500">.</span></b><small className="hidden sm:block text-[10px] font-bold uppercase tracking-widest text-slate-400">A feira do seu jeito</small></button>
     <button onClick={gps} className="hidden rounded-xl bg-green-50 px-3 py-2 text-xs font-bold text-green-800 md:flex items-center gap-1"><MapPin size={15}/>{location}</button>
-    <div className="relative flex-1 min-w-[180px]"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17}/><input value={query} onChange={e=>{setQuery(e.target.value);if(e.target.value){setTab("products");go("main")}}} placeholder="O que você procura na feira?" className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 outline-none focus:border-green-500"/></div>
+    <div className="order-3 w-full md:order-none md:absolute md:left-1/2 md:top-1/2 md:w-auto md:-translate-x-1/2 md:-translate-y-1/2">
+      <label className="mx-auto flex w-fit items-center gap-2 rounded-2xl border border-green-100 bg-green-50/90 px-3 py-2 shadow-sm">
+        <span className="hidden text-[10px] font-black uppercase tracking-wider text-green-700 sm:inline">Feira atual</span>
+        <select value={selectedFair} onChange={e=>goFair(e.target.value)} className="max-w-[210px] bg-transparent text-xs font-black text-green-900 outline-none">
+          {fairs.map(f=><option key={f.name} value={f.name}>{f.name} · {f.place}</option>)}
+        </select>
+      </label>
+    </div>
+    <div className="relative order-2 flex-1 min-w-[180px] md:order-none"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17}/><input value={query} onChange={e=>{setQuery(e.target.value);if(e.target.value){setTab("products");go("main")}}} placeholder="O que você procura na feira?" className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 outline-none focus:border-green-500"/></div>
     <button onClick={()=>go("notifications")} className="relative rounded-2xl border bg-white p-3"><Bell size={20}/>{notifications>0&&<span className="absolute -right-1 -top-1 rounded-full bg-amber-400 px-1.5 text-xs font-black">{notifications}</span>}</button>
     <button onClick={()=>setCartOpen(true)} className="relative rounded-2xl bg-green-700 p-3 text-white"><ShoppingBag size={20}/>{count>0&&<span className="absolute -right-1 -top-1 rounded-full bg-amber-400 px-1.5 text-xs font-black text-slate-900">{count}</span>}</button>
    </div>
