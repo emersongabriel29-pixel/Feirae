@@ -1,184 +1,1619 @@
-import { useMemo, useState } from "react";
-import { MapPin, Search, ShoppingBag, Plus, Minus, Trash2, X, Heart, Package, User, Store, Bike, ShieldCheck, LayoutDashboard, ChevronRight, Bell, Map, Clock, CreditCard, Truck, CheckCircle2, ArrowLeft, Tag, MessageCircle, Settings, LogOut } from "lucide-react";
+import { FormEvent, ReactNode, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  Bell,
+  Bike,
+  Check,
+  ChevronRight,
+  CreditCard,
+  Heart,
+  Home,
+  LocateFixed,
+  MapPin,
+  MessageCircle,
+  Minus,
+  Package,
+  Plus,
+  Search,
+  Settings,
+  ShieldCheck,
+  ShoppingBag,
+  Store,
+  Trash2,
+  Truck,
+  User,
+  X,
+} from "lucide-react";
+import { categories, fairs, initialOrders, products } from "./data";
+import type { Address, CustomerTab, DemoOrder, Product, Role, Screen } from "./types";
+import { cartSubtotal, filterProducts, money, sortFairsByDistance } from "./utils";
+import { usePersistentState } from "./usePersistentState";
 
-type Role = "customer" | "feirante" | "delivery" | "admin";
-type Product = { id:number; name:string; feirante:string; fair:string; price:number; category:string; emoji:string; stock:number };
-type OrderStatus = "Recebido" | "Preparando" | "Coleta" | "Em rota" | "Entregue" | "Cancelado";
+const roleLabels: Record<Role, string> = {
+  customer: "Cliente",
+  feirante: "Feirante",
+  delivery: "Entregador",
+  admin: "Administração",
+};
 
-const categories = ["Hortifruti","Carnes","Queijos","Padaria","Doces","Comidas prontas","Moda","Artesanato","Casa","Plantas","Presentes"];
-const products:Product[] = [
- {id:1,name:"Cesta de frutas",feirante:"Sítio da Vó",fair:"Feira do Produtor",price:24.9,category:"Hortifruti",emoji:"🍎",stock:30},
- {id:2,name:"Queijo artesanal",feirante:"Queijaria do Cerrado",fair:"Feira do Produtor",price:32,category:"Queijos",emoji:"🧀",stock:18},
- {id:3,name:"Bolo de milho",feirante:"Delícias da Feira",fair:"Feira Central",price:18,category:"Doces",emoji:"🌽",stock:12},
- {id:4,name:"Cesta de pães",feirante:"Forno da Praça",fair:"Feira Central",price:21.5,category:"Padaria",emoji:"🥖",stock:25},
- {id:5,name:"Planta ornamental",feirante:"Verde Cerrado",fair:"Feira de Artesanato",price:28,category:"Plantas",emoji:"🪴",stock:9},
- {id:6,name:"Bolsa artesanal",feirante:"Mãos do DF",fair:"Feira de Artesanato",price:69.9,category:"Artesanato",emoji:"👜",stock:7},
- {id:7,name:"Mel artesanal",feirante:"Apiário Cerrado",fair:"Feira Central",price:28,category:"Doces",emoji:"🍯",stock:15},
- {id:8,name:"Pastel de carne",feirante:"Pastelaria da Feira",fair:"Feira do Produtor",price:9.5,category:"Comidas prontas",emoji:"🥟",stock:40}
-];
-const fairs = [
- {name:"Feira do Produtor",place:"Planaltina",status:"Seg e qui · 19h–2h",feirantes:48,distance:"1,8 km",lat:-15.836,lng:-47.934},
- {name:"Feira de Hortifrutigranjeiro",place:"Planaltina",status:"Ter–dom · 7h–18h",feirantes:36,distance:"2,4 km",lat:-15.836,lng:-47.934},
- {name:"Feira Central de Brasília",place:"Plano Piloto",status:"Consultar horário",feirantes:60,distance:"28,4 km",lat:-15.80,lng:-47.89},
- {name:"Feira Permanente do Guará",place:"Guará",status:"Feira permanente",feirantes:50,distance:"25,7 km",lat:-15.829,lng:-47.976},
- {name:"Feira Permanente do Cruzeiro",place:"Cruzeiro",status:"Feira permanente",feirantes:40,distance:"27,8 km",lat:-15.792,lng:-47.938},
- {name:"Feira Permanente do Núcleo Bandeirante",place:"Núcleo Bandeirante",status:"Feira permanente",feirantes:45,distance:"24,9 km",lat:-15.871,lng:-47.969},
- {name:"Feira Permanente de Sobradinho II",place:"Sobradinho II",status:"Feira permanente",feirantes:35,distance:"13,5 km",lat:-15.652,lng:-47.788},
- {name:"Feira do Produtor de Ceilândia",place:"Ceilândia",status:"Feira do produtor",feirantes:55,distance:"35,2 km",lat:-15.82,lng:-48.11},
- {name:"Feira do Produtor de Vicente Pires",place:"Vicente Pires",status:"Feira do produtor",feirantes:45,distance:"30,6 km",lat:-15.80,lng:-48.02},
- {name:"Feira Permanente de São Sebastião",place:"São Sebastião",status:"Feira permanente",feirantes:30,distance:"34,8 km",lat:-15.90,lng:-47.77}
-];
-const money=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+export default function App() {
+  const [role, setRole] = useState<Role>("customer");
+  const [tab, setTab] = useState<CustomerTab>("home");
+  const [screen, setScreen] = useState<Screen>("main");
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("Todos");
+  const [cart, setCart] = usePersistentState<Record<number, number>>("feirae:cart", {});
+  const [favorites, setFavorites] = usePersistentState<number[]>("feirae:favorites", [2]);
+  const [orders, setOrders] = usePersistentState<DemoOrder[]>("feirae:orders", initialOrders);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [notifications, setNotifications] = useState(2);
+  const [selectedFair, setSelectedFair] = useState(fairs[0].name);
+  const [selectedVendor, setSelectedVendor] = useState("Sítio da Vó");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationLabel, setLocationLabel] = useState("Planaltina, DF");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [toast, setToast] = useState("");
 
-export default function App(){
- const [role,setRole]=useState<Role>("customer");
- const [availableRoles,setAvailableRoles]=useState<Role[]>(["customer","feirante","delivery"]);
- const [tab,setTab]=useState("home");
- const [screen,setScreen]=useState("main");
- const [query,setQuery]=useState("");
- const [category,setCategory]=useState("Todos");
- const [cart,setCart]=useState<Record<number,number>>({});
- const [cartOpen,setCartOpen]=useState(false);
- const [location,setLocation]=useState("Planaltina, DF");
- const [favorites,setFavorites]=useState<number[]>([2]);
- const [notifications,setNotifications]=useState(2);
- const [delivery,setDelivery]=useState<"delivery"|"pickup">("delivery");
- const [payment,setPayment]=useState("Pix");
- const [orderPlaced,setOrderPlaced]=useState(false);\n const [selectedFair,setSelectedFair]=useState(fairs[0].name);\n const [selectedFeirante,setSelectedFeirante]=useState("Sítio da Vó");
+  const visibleProducts = useMemo(() => filterProducts(products, query, category), [query, category]);
+  const cartProducts = products.filter((product) => cart[product.id]);
+  const subtotal = cartSubtotal(cartProducts, cart);
+  const itemCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
+  const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
 
- const filtered=useMemo(()=>products.filter(p=>(category==="Todos"||p.category===category)&&(!query||[p.name,p.feirante,p.fair,p.category].join(" ").toLowerCase().includes(query.toLowerCase()))),[query,category]);
- const items=products.filter(p=>cart[p.id]);
- const count=Object.values(cart).reduce((a,b)=>a+b,0);
- const subtotal=items.reduce((s,p)=>s+p.price*cart[p.id],0);
- const deliveryFee=delivery==="delivery"?(subtotal>=80?0:8.9):0;
- const total=subtotal+deliveryFee;
+  function notify(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 2800);
+  }
+  function openCustomerTab(nextTab: CustomerTab) {
+    setRole("customer");
+    setScreen("main");
+    setTab(nextTab);
+    setCartOpen(false);
+  }
+  function openScreen(nextScreen: Screen) {
+    setScreen(nextScreen);
+    setCartOpen(false);
+  }
+  function changeRole(nextRole: Role) {
+    setRole(nextRole);
+    setScreen("main");
+    setCartOpen(false);
+    notify(`Prévia do modo ${roleLabels[nextRole]}.`);
+  }
+  function addToCart(id: number) {
+    const product = products.find((item) => item.id === id);
+    if (!product) return;
+    setCart((current) => {
+      const quantity = current[id] ?? 0;
+      if (quantity >= product.stock) {
+        notify("Você atingiu o estoque disponível deste produto.");
+        return current;
+      }
+      return { ...current, [id]: quantity + 1 };
+    });
+  }
+  function removeFromCart(id: number, removeAll = false) {
+    setCart((current) => {
+      const next = { ...current };
+      if (removeAll || next[id] === 1) delete next[id];
+      else if (next[id]) next[id] -= 1;
+      return next;
+    });
+  }
+  function toggleFavorite(id: number) {
+    setFavorites((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  }
+  function requestLocation() {
+    if (!navigator.geolocation) {
+      setLocationLabel("Localização indisponível");
+      notify("Seu navegador não oferece geolocalização.");
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords: current }) => {
+        setCoords({ lat: current.latitude, lng: current.longitude });
+        setLocationLabel("Localização atual");
+        setLocationLoading(false);
+        notify("Feiras ordenadas pela sua proximidade.");
+      },
+      () => {
+        setLocationLabel("Planaltina, DF");
+        setLocationLoading(false);
+        notify("Não foi possível acessar o GPS. Mantivemos a região informada.");
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+    );
+  }
+  function openMap(lat: number, lng: number) {
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+  function confirmOrder(total: number) {
+    const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
+    const date = new Intl.DateTimeFormat("pt-BR").format(new Date());
+    setOrders((current) => [{ id, date, status: "Recebido", value: total }, ...current]);
+    setCart({});
+    openCustomerTab("orders");
+    notify(`Pedido ${id} criado no modo demonstração.`);
+  }
 
- const add=(id:number)=>setCart(c=>({...c,[id]:(c[id]||0)+1}));
- const remove=(id:number)=>setCart(c=>{const n={...c};if(!n[id])return n;if(n[id]===1)delete n[id];else n[id]--;return n});
- const gps=()=>{if(!navigator.geolocation){setLocation("Informe sua localização");return}navigator.geolocation.getCurrentPosition(()=>setLocation("Minha localização"),()=>setLocation("Localização manual"))};
- const map=(lat:number,lng:number)=>window.open("https://www.google.com/maps/dir/?api=1&destination="+lat+","+lng,"_blank");
- const go=(s:string)=>{setScreen(s);setTab("home")};\n const goFair=(name:string)=>{setSelectedFair(name);setScreen("fair");setTab("home")};\n const goFeirante=(name:string)=>{setSelectedFeirante(name);setScreen("feirante");setTab("home")};
- const toggleFavorite=(id:number)=>setFavorites(v=>v.includes(id)?v.filter(x=>x!==id):[...v,id]);
- const switchRole=(next:Role)=>{if(next==="admin"||availableRoles.includes(next)){setRole(next);setScreen("main");setTab("home");setCartOpen(false)}};
+  return (
+    <div className="min-h-screen bg-[var(--fe-bg)] pb-24 text-slate-900 md:pb-8">
+      <a className="skip-link" href="#main-content">
+        Pular para o conteúdo
+      </a>
+      <Header
+        role={role}
+        tab={tab}
+        query={query}
+        selectedFair={selectedFair}
+        locationLabel={locationLabel}
+        locationLoading={locationLoading}
+        notifications={notifications}
+        itemCount={itemCount}
+        onHome={() => openCustomerTab("home")}
+        onTab={openCustomerTab}
+        onQuery={(value) => {
+          setQuery(value);
+          if (value) openCustomerTab("products");
+        }}
+        onFairChange={setSelectedFair}
+        onOpenFair={() => openScreen("fair")}
+        onLocation={requestLocation}
+        onNotifications={() => openScreen("notifications")}
+        onCart={() => setCartOpen(true)}
+      />
 
- return <div className="min-h-screen bg-[#f7f8f3] text-slate-900 pb-20">
-  <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur">
-   <div className="relative mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
-    <button onClick={()=>{switchRole("customer");go("main");setTab("home")}} className="mr-1 text-left"><b className="text-2xl font-black text-green-700">Feiraê<span className="text-amber-500">.</span></b><small className="hidden sm:block text-[10px] font-bold uppercase tracking-widest text-slate-400">A feira do seu jeito</small></button>
-    <button onClick={gps} className="hidden rounded-xl bg-green-50 px-3 py-2 text-xs font-bold text-green-800 md:flex items-center gap-1" title="Usar minha localização"><MapPin size={15}/><span className="max-w-[150px] truncate">{location}</span></button>
-    <div className="order-3 flex w-full items-center justify-center gap-2 md:order-none md:absolute md:left-1/2 md:top-1/2 md:w-auto md:-translate-x-1/2 md:-translate-y-1/2">
-      <button onClick={gps} className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm md:hidden" title="Usar minha localização"><MapPin size={14}/><span className="max-w-[110px] truncate">{location}</span></button>
-      <label className="mx-auto flex w-fit items-center gap-2 rounded-2xl border border-green-100 bg-green-50/90 px-3 py-2 shadow-sm">
-        <span className="hidden text-[10px] font-black uppercase tracking-wider text-green-700 sm:inline">Feira atual</span>
-        <select value={selectedFair} onChange={e=>goFair(e.target.value)} className="max-w-[210px] bg-transparent text-xs font-black text-green-900 outline-none">
-          {fairs.map(f=><option key={f.name} value={f.name}>{f.name} · {f.place}</option>)}
-        </select>
-      </label>
+      <div id="main-content">
+        {role === "customer" && screen === "main" && (
+          <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            {tab === "home" && (
+              <HomePage
+                fairItems={fairsWithDistance}
+                onTab={openCustomerTab}
+                onFair={(name) => {
+                  setSelectedFair(name);
+                  openScreen("fair");
+                }}
+                onVendor={(name) => {
+                  setSelectedVendor(name);
+                  openScreen("feirante");
+                }}
+                onTracking={() => openScreen("tracking")}
+                onRole={() => changeRole("feirante")}
+                onMap={openMap}
+              />
+            )}
+            {tab === "fairs" && (
+              <FairsPage
+                fairItems={fairsWithDistance}
+                onFair={(name) => {
+                  setSelectedFair(name);
+                  openScreen("fair");
+                }}
+                onMap={openMap}
+              />
+            )}
+            {tab === "products" && (
+              <CatalogPage
+                items={visibleProducts}
+                category={category}
+                onCategory={setCategory}
+                onAdd={addToCart}
+                favorites={favorites}
+                onFavorite={toggleFavorite}
+              />
+            )}
+            {tab === "orders" && <OrdersPage orders={orders} onTracking={() => openScreen("tracking")} />}
+            {tab === "profile" && <ProfilePage onScreen={openScreen} onRole={changeRole} />}
+          </main>
+        )}
+        {role !== "customer" && screen === "main" && (
+          <RoleDashboard
+            role={role}
+            onOpen={() =>
+              openScreen(
+                role === "feirante" ? "feiranteOps" : role === "delivery" ? "deliveryOps" : "adminOps",
+              )
+            }
+          />
+        )}
+        {screen === "fair" && (
+          <FairDetail
+            fairName={selectedFair}
+            onBack={() => openCustomerTab("fairs")}
+            onMap={openMap}
+            onAdd={addToCart}
+          />
+        )}
+        {screen === "feirante" && (
+          <VendorStore
+            vendorName={selectedVendor}
+            onBack={() => openCustomerTab("home")}
+            onAdd={addToCart}
+            favorites={favorites}
+            onFavorite={toggleFavorite}
+          />
+        )}
+        {screen === "tracking" && <DeliveryTracking onBack={() => openCustomerTab("orders")} />}
+        {screen === "checkout" && (
+          <Checkout
+            items={cartProducts}
+            cart={cart}
+            subtotal={subtotal}
+            onBack={() => setCartOpen(true)}
+            onConfirm={confirmOrder}
+          />
+        )}
+        {screen === "favorites" && (
+          <FavoritesPage
+            ids={favorites}
+            onAdd={addToCart}
+            onFavorite={toggleFavorite}
+            onBack={() => openCustomerTab("profile")}
+          />
+        )}
+        {screen === "notifications" && (
+          <NotificationsPage
+            onBack={() => openCustomerTab("home")}
+            onClear={() => {
+              setNotifications(0);
+              notify("Notificações marcadas como lidas.");
+            }}
+          />
+        )}
+        {screen === "addresses" && <AddressesPage onBack={() => openCustomerTab("profile")} />}
+        {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
+        {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
+        {screen === "feiranteOps" && <FeiranteOperations onBack={() => setScreen("main")} />}
+        {screen === "deliveryOps" && <DeliveryOperations onBack={() => setScreen("main")} />}
+        {screen === "adminOps" && <AdminOperations onBack={() => setScreen("main")} />}
+      </div>
+
+      {role === "customer" && screen === "main" && <MobileNavigation active={tab} onTab={openCustomerTab} />}
+      {role !== "customer" && <RoleSwitcher role={role} onRole={changeRole} />}
+      {cartOpen && (
+        <CartDrawer
+          items={cartProducts}
+          cart={cart}
+          subtotal={subtotal}
+          onAdd={addToCart}
+          onRemove={removeFromCart}
+          onClose={() => setCartOpen(false)}
+          onCheckout={() => openScreen("checkout")}
+        />
+      )}
+      {toast && (
+        <div className="toast" role="status" aria-live="polite">
+          <Check size={17} /> {toast}
+        </div>
+      )}
     </div>
-    <div className="relative order-2 flex-1 min-w-[180px] md:order-none"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17}/><input value={query} onChange={e=>{setQuery(e.target.value);if(e.target.value){setTab("products");go("main")}}} placeholder="O que você procura na feira?" className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 outline-none focus:border-green-500"/></div>
-    <button onClick={()=>go("notifications")} className="relative rounded-2xl border bg-white p-3"><Bell size={20}/>{notifications>0&&<span className="absolute -right-1 -top-1 rounded-full bg-amber-400 px-1.5 text-xs font-black">{notifications}</span>}</button>
-    <button onClick={()=>setCartOpen(true)} className="relative rounded-2xl bg-green-700 p-3 text-white"><ShoppingBag size={20}/>{count>0&&<span className="absolute -right-1 -top-1 rounded-full bg-amber-400 px-1.5 text-xs font-black text-slate-900">{count}</span>}</button>
-   </div>
-  </header>
-
-  {screen==="main"&&role==="customer"&&<main className="mx-auto max-w-7xl px-4 py-6">
-   {tab==="home"&&<Home setTab={setTab} setScreen={setScreen} map={map} category={category} setCategory={setCategory} goFair={goFair} goFeirante={goFeirante} />}
-   {tab==="fairs"&&<Fairs goFair={goFair} map={map}/>}
-   {tab==="products"&&<Catalog products={filtered} category={category} setCategory={setCategory} add={add} favorites={favorites} toggleFavorite={toggleFavorite}/>}
-   {tab==="orders"&&<Orders go={go}/>}
-   {tab==="profile"&&<Profile go={go} setRole={setRole}/>}
-  </main>}
-
-  {screen==="fair"&&<FairDetail fairName={selectedFair} onBack={()=>go("main")} map={map} add={add}/>}
-  {screen==="feirante"&&<FeiranteStore feiranteName={selectedFeirante} onBack={()=>go("main")} add={add} favorites={favorites} toggleFavorite={toggleFavorite}/>}
-  {screen==="tracking"&&<DeliveryTracking/>}
-  {screen==="checkout"&&<Checkout items={items} cart={cart} subtotal={subtotal} delivery={delivery} setDelivery={setDelivery} deliveryFee={deliveryFee} total={total} payment={payment} setPayment={setPayment} onBack={()=>setScreen("main")} onPlace={()=>{setOrderPlaced(true);setCart({});setCartOpen(false);setScreen("orders");setTab("orders");window.setTimeout(()=>setOrderPlaced(false),3500)}}/>}
-  {screen==="favorites"&&<Favorites ids={favorites} add={add} toggleFavorite={toggleFavorite}/>}
-  {screen==="notifications"&&<Notifications clear={()=>{setNotifications(0);setScreen("main")}}/>}
-  {screen==="addresses"&&<Addresses/>}
-  {screen==="chat"&&<Chat/>}
-  {screen==="feiranteOps"&&<FeiranteOperations/>}
-  {screen==="deliveryOps"&&<DeliveryOperations/>}
-  {screen==="adminOps"&&<AdminOperations/>}
-
-  {role!=="customer"&&screen==="main"&&<Dashboard role={role} setScreen={setScreen}/>}
-  {role==="customer"&&<nav className="fixed bottom-0 left-0 right-0 z-30 border-t bg-white/95 p-2 md:hidden"><div className="mx-auto grid max-w-md grid-cols-4 gap-1">
-   <button onClick={()=>{setTab("home");go("main")}} className="rounded-xl p-2 text-xs font-bold">⌂<br/>Início</button>
-   <button onClick={()=>{setTab("fairs");go("main")}} className="rounded-xl p-2 text-xs font-bold">🧺<br/>Feiras</button>
-   <button onClick={()=>{setTab("orders");go("main")}} className="rounded-xl p-2 text-xs font-bold">📦<br/>Pedidos</button>
-   <button onClick={()=>{setTab("profile");go("main")}} className="rounded-xl p-2 text-xs font-bold">👤<br/>Perfil</button>
-  </div></nav>}
-  {role!=="admin"&&<div className="fixed bottom-20 right-3 z-30 hidden rounded-2xl border bg-white p-2 shadow-lg md:flex items-center gap-1"><span className="px-2 text-[10px] font-black uppercase text-slate-400">Modo</span>{availableRoles.map(r=><button key={r} onClick={()=>switchRole(r)} className={`rounded-xl px-3 py-2 text-xs font-bold ${role===r?"bg-green-700 text-white":"hover:bg-slate-100"}`}>{r==="customer"?"Cliente":r==="feirante"?"Feirante":"Entregador"}</button>)}</div>
-  {role==="feirante"&&<nav className="fixed bottom-0 left-0 right-0 z-30 border-t bg-white/95 p-2 md:hidden"><div className="mx-auto grid max-w-md grid-cols-4 gap-1"><button onClick={()=>setScreen("main")} className="rounded-xl p-2 text-xs font-bold">▦<br/>Painel</button><button onClick={()=>setScreen("feiranteOps")} className="rounded-xl p-2 text-xs font-bold">📦<br/>Pedidos</button><button onClick={()=>setScreen("feiranteOps")} className="rounded-xl p-2 text-xs font-bold">🏪<br/>Loja</button><button onClick={()=>switchRole("customer")} className="rounded-xl p-2 text-xs font-bold">👤<br/>Cliente</button></div></nav>}
-  {role==="delivery"&&<nav className="fixed bottom-0 left-0 right-0 z-30 border-t bg-white/95 p-2 md:hidden"><div className="mx-auto grid max-w-md grid-cols-4 gap-1"><button onClick={()=>setScreen("main")} className="rounded-xl p-2 text-xs font-bold">▦<br/>Central</button><button onClick={()=>setScreen("deliveryOps")} className="rounded-xl p-2 text-xs font-bold">🛵<br/>Entregas</button><button onClick={()=>setScreen("deliveryOps")} className="rounded-xl p-2 text-xs font-bold">💰<br/>Ganhos</button><button onClick={()=>switchRole("customer")} className="rounded-xl p-2 text-xs font-bold">👤<br/>Cliente</button></div></nav>}
-
-  {cartOpen&&<Cart items={items} cart={cart} add={add} remove={remove} total={subtotal} onClose={()=>setCartOpen(false)} onCheckout={()=>setScreen("checkout")}/>}
-  {orderPlaced&&<div className="fixed bottom-5 left-1/2 z-[70] -translate-x-1/2 rounded-2xl bg-green-800 px-5 py-3 text-sm font-bold text-white shadow-xl">Pedido FE-1027 criado no modo demonstração.</div>}
- </div>
+  );
 }
 
-function Home({setTab,setScreen,map,category,setCategory,goFair,goFeirante}:{setTab:(x:string)=>void;setScreen:(x:string)=>void;map:(a:number,b:number)=>void;category:string;setCategory:(x:string)=>void;goFair:(x:string)=>void;goFeirante:(x:string)=>void}){
- return <div className="space-y-10">
-  <section className="relative overflow-hidden rounded-[2.25rem] bg-green-800 p-7 text-white sm:p-10 lg:p-14">
-   <div className="max-w-2xl">
-    <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider">🧺 Marketplace das feiras do DF</span>
-    <h1 className="mt-5 text-4xl font-black leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">A feira que você gosta, do seu jeito.</h1>
-    <p className="mt-5 max-w-xl text-base leading-7 text-green-50 sm:text-lg">Encontre produtos, feirantes e feiras perto de você. Compre para receber em casa ou retire onde preferir.</p>
-    <div className="mt-7 flex flex-wrap gap-3">
-      <button onClick={()=>setTab("products")} className="rounded-2xl bg-amber-400 px-5 py-3.5 font-black text-slate-950 shadow-lg shadow-black/10">Explorar produtos <ChevronRight className="ml-1 inline" size={17}/></button>
-      <button onClick={()=>setTab("fairs")} className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3.5 font-bold text-white backdrop-blur">Encontrar uma feira</button>
-    </div>
-   </div>
-   <div className="pointer-events-none absolute -right-8 -bottom-14 text-[11rem] opacity-15 sm:text-[14rem]">🧺</div>
-  </section>
-  <section>
-   <div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-green-700">Explore</p><h2 className="mt-1 text-2xl font-black tracking-tight">O que você quer fazer?</h2></div></div>
-   <div className="grid grid-cols-2 gap-3 md:grid-cols-4"><Action title="Minha feira" sub="Entrar em uma feira" icon="🧺" onClick={()=>goFair(fairs[0].name)}/><Action title="Lojas" sub="Conhecer feirantes" icon="🏪" onClick={()=>goFeirante("Sítio da Vó")}/><Action title="Meu pedido" sub="Acompanhar entrega" icon="🛵" onClick={()=>setScreen("tracking")}/><Action title="Quero ser feirante" sub="Área do feirante" icon="🧑‍🌾" onClick={()=>setScreen("feiranteOps")}/></div>
-  </section>
-  <section>
-   <div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-green-700">Comprar</p><h2 className="mt-1 text-2xl font-black tracking-tight">Categorias</h2><p className="mt-1 text-sm text-slate-500">Da banca para a sua casa.</p></div><button onClick={()=>{setCategory("Todos");setTab("products")}} className="text-sm font-black text-green-700">Ver tudo</button></div>
-   <div className="flex gap-2 overflow-auto pb-2">{["Todos",...categories].map(c=><button key={c} onClick={()=>{setCategory(c);setTab("products")}} className={`whitespace-nowrap rounded-2xl border px-4 py-3 text-xs font-bold transition ${category===c?"border-green-600 bg-green-50 text-green-800 shadow-sm":"border-slate-200 bg-white hover:border-green-300"}`}>{c}</button>)}</div>
-  </section>
-  <section>
-   <div className="mb-4"><p className="text-xs font-black uppercase tracking-widest text-green-700">Perto de você</p><h2 className="mt-1 text-2xl font-black tracking-tight">Feiras em destaque</h2></div>
-   <div className="grid gap-4 md:grid-cols-3">{fairs.map((f,i)=><article key={f.name} className="group overflow-hidden rounded-[1.75rem] border bg-white shadow-sm">
-    <div className={`relative flex h-36 items-end overflow-hidden p-4 ${i===0?"bg-gradient-to-br from-lime-100 via-green-50 to-amber-50":"bg-gradient-to-br from-amber-50 via-white to-green-50"}`}><span className="text-6xl transition duration-300 group-hover:scale-110">🧺</span><span className="absolute right-3 top-3 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-green-700 shadow-sm">{f.status}</span></div>
-    <div className="p-5"><h3 className="text-lg font-black">{f.name}</h3><p className="mt-1 text-xs text-slate-500"><MapPin size={12} className="mr-1 inline"/> {f.place} · {f.distance} · {f.feirantes} feirantes</p><div className="mt-5 flex gap-2"><button onClick={()=>goFair(f.name)} className="flex-1 rounded-xl bg-green-700 px-3 py-2.5 text-xs font-black text-white">Ver feira</button><button onClick={()=>map(f.lat,f.lng)} className="rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-black hover:bg-slate-200">Rota</button></div></div>
-   </article>)}</div>
-  </section>
- </div>
+type HeaderProps = {
+  role: Role;
+  tab: CustomerTab;
+  query: string;
+  selectedFair: string;
+  locationLabel: string;
+  locationLoading: boolean;
+  notifications: number;
+  itemCount: number;
+  onHome: () => void;
+  onTab: (tab: CustomerTab) => void;
+  onQuery: (value: string) => void;
+  onFairChange: (value: string) => void;
+  onOpenFair: () => void;
+  onLocation: () => void;
+  onNotifications: () => void;
+  onCart: () => void;
+};
+function Header(props: HeaderProps) {
+  return (
+    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-16 items-center gap-3 py-2">
+          <button onClick={props.onHome} className="brand" aria-label="Ir para o início do Feiraê">
+            <span className="brand-mark" aria-hidden="true">
+              ê
+            </span>
+            <span>
+              <b>
+                Feiraê<i>.</i>
+              </b>
+              <small>A feira do seu jeito</small>
+            </span>
+          </button>
+          {props.role === "customer" && (
+            <nav className="ml-3 hidden items-center gap-1 lg:flex" aria-label="Navegação principal">
+              {(["home", "fairs", "products", "orders"] as CustomerTab[]).map((item) => (
+                <button
+                  key={item}
+                  onClick={() => props.onTab(item)}
+                  className={props.tab === item ? "desktop-nav active" : "desktop-nav"}
+                >
+                  {item === "home"
+                    ? "Início"
+                    : item === "fairs"
+                      ? "Feiras"
+                      : item === "products"
+                        ? "Produtos"
+                        : "Pedidos"}
+                </button>
+              ))}
+            </nav>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            <button onClick={props.onNotifications} className="icon-button" aria-label="Abrir notificações">
+              <Bell size={19} />
+              {props.notifications > 0 && <span className="badge">{props.notifications}</span>}
+            </button>
+            <button
+              onClick={props.onCart}
+              className="cart-button"
+              aria-label={`Abrir sacola com ${props.itemCount} itens`}
+            >
+              <ShoppingBag size={19} />
+              <span className="hidden sm:inline">Minha feira</span>
+              {props.itemCount > 0 && <span className="cart-count">{props.itemCount}</span>}
+            </button>
+          </div>
+        </div>
+        {props.role === "customer" && (
+          <div className="grid gap-2 pb-3 md:grid-cols-[minmax(260px,1fr)_auto_auto]">
+            <label className="search-field">
+              <Search size={18} aria-hidden="true" />
+              <span className="sr-only">Buscar produtos, feirantes ou feiras</span>
+              <input
+                value={props.query}
+                onChange={(event) => props.onQuery(event.target.value)}
+                placeholder="Busque produtos, feirantes ou feiras"
+              />
+              {props.query && (
+                <button onClick={() => props.onQuery("")} aria-label="Limpar busca">
+                  <X size={16} />
+                </button>
+              )}
+            </label>
+            <div className="fair-switcher">
+              <label htmlFor="current-fair">Feira</label>
+              <select
+                id="current-fair"
+                value={props.selectedFair}
+                onChange={(event) => props.onFairChange(event.target.value)}
+              >
+                {fairs.map((fair) => (
+                  <option key={fair.name}>{fair.name}</option>
+                ))}
+              </select>
+              <button onClick={props.onOpenFair}>Abrir</button>
+            </div>
+            <button onClick={props.onLocation} className="location-button" disabled={props.locationLoading}>
+              <LocateFixed size={17} />
+              <span>{props.locationLoading ? "Localizando…" : props.locationLabel}</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
 }
-function Action({title,sub,icon,onClick}:{title:string;sub:string;icon:string;onClick:()=>void}){return <button onClick={onClick} className="group rounded-[1.35rem] border border-slate-200 bg-white p-4 text-left shadow-sm hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-green-50 text-2xl transition group-hover:scale-105">{icon}</span><b className="mt-3 block">{title}</b><small className="mt-0.5 block text-slate-500">{sub}</small></button>}
 
-function Fairs({goFair,map}:{goFair:(x:string)=>void;map:(a:number,b:number)=>void}){return <section><div className="flex items-end justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-widest text-green-700">Marketplace DF</p><h1 className="mt-1 text-3xl font-black">Feiras</h1><p className="text-slate-500">Escolha onde quer comprar, retirar ou descobrir novos feirantes.</p></div><span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-800">{fairs.length} cadastradas</span></div><div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{fairs.map(f=><article key={f.name} className="rounded-3xl border bg-white p-5"><div className="flex items-center justify-between"><div className="text-5xl">🧺</div><span className="rounded-full bg-amber-50 px-3 py-1 text-[10px] font-black text-amber-700">{f.status}</span></div><h2 className="mt-4 font-black">{f.name}</h2><p className="text-sm text-slate-500">{f.place} · {f.distance}</p><button onClick={()=>goFair(f.name)} className="mt-5 w-full rounded-xl bg-green-700 py-3 font-bold text-white">Entrar na feira</button><button onClick={()=>map(f.lat,f.lng)} className="mt-2 w-full rounded-xl bg-slate-100 py-3 font-bold">Como chegar</button></article>)}</div></section>}
+function HomePage({
+  fairItems,
+  onTab,
+  onFair,
+  onVendor,
+  onTracking,
+  onRole,
+  onMap,
+}: {
+  fairItems: ReturnType<typeof sortFairsByDistance>;
+  onTab: (tab: CustomerTab) => void;
+  onFair: (name: string) => void;
+  onVendor: (name: string) => void;
+  onTracking: () => void;
+  onRole: () => void;
+  onMap: (lat: number, lng: number) => void;
+}) {
+  return (
+    <div className="space-y-12">
+      <section className="hero">
+        <div className="relative z-10 max-w-2xl">
+          <span className="eyebrow light">Marketplace das feiras do DF</span>
+          <h1>A feira que você gosta, agora mais perto.</h1>
+          <p>
+            Descubra produtos locais, apoie feirantes e escolha entre receber em casa ou retirar na feira.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <button onClick={() => onTab("products")} className="primary-action amber">
+              Explorar produtos <ChevronRight size={18} />
+            </button>
+            <button onClick={() => onTab("fairs")} className="secondary-action light">
+              Encontrar uma feira
+            </button>
+          </div>
+        </div>
+        <div className="hero-illustration" aria-hidden="true">
+          <span>🥕</span>
+          <span>🥖</span>
+          <span>🧀</span>
+          <strong>🧺</strong>
+        </div>
+      </section>
+      <section>
+        <SectionHeading eyebrow="Atalhos" title="O que você quer fazer?" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <QuickAction
+            icon="🧺"
+            title="Minha feira"
+            text="Conhecer bancas e produtos"
+            onClick={() => onFair(fairs[0].name)}
+          />
+          <QuickAction
+            icon="🏪"
+            title="Lojas"
+            text="Comprar de um feirante"
+            onClick={() => onVendor("Sítio da Vó")}
+          />
+          <QuickAction icon="🛵" title="Meu pedido" text="Acompanhar a entrega" onClick={onTracking} />
+          <QuickAction icon="🧑‍🌾" title="Quero vender" text="Conhecer a área do feirante" onClick={onRole} />
+        </div>
+      </section>
+      <section>
+        <SectionHeading
+          eyebrow="Escolha com calma"
+          title="Destaques da feira"
+          action="Ver catálogo"
+          onAction={() => onTab("products")}
+        />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {products
+            .filter((product) => product.featured)
+            .map((product) => (
+              <article key={product.id} className="mini-product">
+                <span>{product.emoji}</span>
+                <small>{product.feirante}</small>
+                <b>{product.name}</b>
+                <strong>
+                  {money(product.price)} <em>/{product.unit}</em>
+                </strong>
+              </article>
+            ))}
+        </div>
+      </section>
+      <section>
+        <SectionHeading
+          eyebrow="Perto de você"
+          title="Feiras em destaque"
+          action="Ver todas"
+          onAction={() => onTab("fairs")}
+        />
+        <div className="grid gap-4 md:grid-cols-3">
+          {fairItems.slice(0, 3).map((fair, index) => (
+            <FairCard key={fair.name} fair={fair} index={index} onFair={onFair} onMap={onMap} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
 
-function Catalog({products,category,setCategory,add,favorites,toggleFavorite}:{products:Product[];category:string;setCategory:(x:string)=>void;add:(id:number)=>void;favorites:number[];toggleFavorite:(id:number)=>void}){return <section><div className="flex items-end justify-between"><div><h1 className="text-3xl font-black">Catálogo</h1><p className="text-slate-500">{products.length} produtos encontrados.</p></div><span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">Marketplace</span></div><div className="mt-4 flex gap-2 overflow-auto pb-2">{["Todos",...categories].map(c=><button key={c} onClick={()=>setCategory(c)} className={`whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold ${category===c?"bg-green-700 text-white":"bg-white border"}`}>{c}</button>)}</div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{products.map(p=><ProductCard key={p.id} p={p} add={add} favorite={favorites.includes(p.id)} toggleFavorite={toggleFavorite}/>)}</div></section>}
-function ProductCard({p,add,favorite,toggleFavorite}:{p:Product;add:(id:number)=>void;favorite?:boolean;toggleFavorite?:(id:number)=>void}){return <article className="group relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm"><button aria-label="Favoritar" onClick={()=>toggleFavorite?.(p.id)} className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/90 shadow-sm backdrop-blur hover:scale-105"><Heart size={16} className={favorite?"fill-red-500 text-red-500":"text-slate-500"}/></button><div className="relative flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-lime-50 via-white to-amber-50 text-7xl transition duration-300 group-hover:scale-[1.01]">{p.emoji}<span className="absolute bottom-3 left-3 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-green-800 backdrop-blur">{p.category}</span></div><div className="p-4"><small className="font-bold text-green-700">{p.feirante}</small><h3 className="mt-1 text-sm font-black leading-tight sm:text-base">{p.name}</h3><p className="mt-1 text-[11px] text-slate-400">{p.fair} · {p.stock} disponíveis</p><div className="mt-4 flex items-end justify-between gap-2"><div><span className="text-lg font-black">{money(p.price)}</span><small className="ml-1 text-[10px] text-slate-400">un.</small></div><button aria-label="Adicionar" onClick={()=>add(p.id)} className="grid h-10 w-10 place-items-center rounded-xl bg-green-700 text-white shadow-sm shadow-green-900/15 hover:bg-green-800"><Plus size={18}/></button></div></div></article>}
+function FairsPage({
+  fairItems,
+  onFair,
+  onMap,
+}: {
+  fairItems: ReturnType<typeof sortFairsByDistance>;
+  onFair: (name: string) => void;
+  onMap: (lat: number, lng: number) => void;
+}) {
+  return (
+    <section>
+      <PageHeading
+        title="Feiras do Distrito Federal"
+        subtitle="Escolha onde comprar, retirar ou conhecer novos feirantes."
+      />
+      <div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {fairItems.map((fair, index) => (
+          <FairCard key={fair.name} fair={fair} index={index} onFair={onFair} onMap={onMap} />
+        ))}
+      </div>
+    </section>
+  );
+}
+function FairCard({
+  fair,
+  index,
+  onFair,
+  onMap,
+}: {
+  fair: ReturnType<typeof sortFairsByDistance>[number];
+  index: number;
+  onFair: (name: string) => void;
+  onMap: (lat: number, lng: number) => void;
+}) {
+  return (
+    <article className="fair-card">
+      <div className={`fair-cover tone-${index % 3}`}>
+        <span aria-hidden="true">🧺</span>
+        <small>{fair.status}</small>
+      </div>
+      <div className="p-5">
+        <h3>{fair.name}</h3>
+        <p>
+          <MapPin size={14} /> {fair.place}
+        </p>
+        <p>
+          <Store size={14} /> {fair.feirantes} feirantes{" "}
+          {fair.distance !== null && `· ${fair.distance.toFixed(1)} km`}
+        </p>
+        <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
+          <button onClick={() => onFair(fair.name)} className="primary-action">
+            Ver feira
+          </button>
+          <button
+            onClick={() => onMap(fair.lat, fair.lng)}
+            className="icon-button large"
+            aria-label={`Abrir rota para ${fair.name}`}
+          >
+            <MapPin size={18} />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
 
-function Cart({items,cart,add,remove,total,onClose,onCheckout}:{items:Product[];cart:Record<number,number>;add:(id:number)=>void;remove:(id:number)=>void;total:number;onClose:()=>void;onCheckout:()=>void}){return <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40"><aside className="flex h-full w-full max-w-md flex-col bg-white"><div className="flex justify-between border-b p-5"><div><h2 className="text-xl font-black">Minha Feira</h2><small>{Object.values(cart).reduce((a,b)=>a+b,0)} item(ns)</small></div><button onClick={onClose}><X/></button></div><div className="flex-1 overflow-auto p-5">{items.length?items.map(p=><div key={p.id} className="mb-3 rounded-2xl border p-3"><div className="flex gap-3"><span className="text-3xl">{p.emoji}</span><div className="flex-1"><b>{p.name}</b><small className="block text-slate-500">{p.feirante}</small><div className="mt-2 flex justify-between"><strong>{money(p.price*cart[p.id])}</strong><span><button onClick={()=>remove(p.id)}><Minus size={15}/></button> {cart[p.id]} <button onClick={()=>add(p.id)}><Plus size={15}/></button></span></div></div><button onClick={()=>{for(let i=0;i<cart[p.id];i++)remove(p.id)}}><Trash2 size={15}/></button></div></div>):<div className="py-20 text-center"><ShoppingBag className="mx-auto text-slate-300" size={45}/><p className="font-bold">Sua sacola está vazia.</p></div>}</div>{items.length>0&&<div className="border-t p-5"><div className="flex justify-between"><span>Subtotal</span><b>{money(total)}</b></div><button className="mt-4 w-full rounded-2xl bg-green-700 py-4 font-black text-white" onClick={onCheckout}>Continuar para checkout</button></div>}</aside></div>}
+function CatalogPage({
+  items,
+  category,
+  onCategory,
+  onAdd,
+  favorites,
+  onFavorite,
+}: {
+  items: Product[];
+  category: string;
+  onCategory: (category: string) => void;
+  onAdd: (id: number) => void;
+  favorites: number[];
+  onFavorite: (id: number) => void;
+}) {
+  return (
+    <section>
+      <PageHeading title="Produtos da feira" subtitle={`${items.length} produtos encontrados.`} />
+      <div className="category-list" aria-label="Categorias">
+        {["Todos", ...categories].map((item) => (
+          <button key={item} onClick={() => onCategory(item)} className={category === item ? "active" : ""}>
+            {item}
+          </button>
+        ))}
+      </div>
+      {items.length ? (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {items.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdd={onAdd}
+              favorite={favorites.includes(product.id)}
+              onFavorite={onFavorite}
+            />
+          ))}
+        </div>
+      ) : (
+        <Empty title="Nenhum produto encontrado" text="Tente outro termo ou remova o filtro de categoria." />
+      )}
+    </section>
+  );
+}
+function ProductCard({
+  product,
+  onAdd,
+  favorite,
+  onFavorite,
+}: {
+  product: Product;
+  onAdd: (id: number) => void;
+  favorite: boolean;
+  onFavorite: (id: number) => void;
+}) {
+  return (
+    <article className="product-card">
+      <button
+        className="favorite-button"
+        onClick={() => onFavorite(product.id)}
+        aria-label={favorite ? `Remover ${product.name} dos favoritos` : `Favoritar ${product.name}`}
+      >
+        <Heart size={17} className={favorite ? "fill-red-500 text-red-500" : ""} />
+      </button>
+      <div className="product-art">
+        <span aria-hidden="true">{product.emoji}</span>
+        <small>{product.category}</small>
+      </div>
+      <div className="p-4">
+        <small className="vendor-name">{product.feirante}</small>
+        <h3>{product.name}</h3>
+        <p>{product.fair}</p>
+        <div className="mt-4 flex items-end justify-between gap-2">
+          <div>
+            <strong>{money(product.price)}</strong>
+            <small>/{product.unit}</small>
+          </div>
+          <button
+            onClick={() => onAdd(product.id)}
+            className="add-button"
+            aria-label={`Adicionar ${product.name} à sacola`}
+          >
+            <Plus size={19} />
+          </button>
+        </div>
+        <p className="stock">{product.stock} disponíveis</p>
+      </div>
+    </article>
+  );
+}
 
-function Checkout({items,cart,subtotal,delivery,setDelivery,deliveryFee,total,payment,setPayment,onBack,onPlace}:{items:Product[];cart:Record<number,number>;subtotal:number;delivery:"delivery"|"pickup";setDelivery:(x:"delivery"|"pickup")=>void;deliveryFee:number;total:number;payment:string;setPayment:(x:string)=>void;onBack:()=>void;onPlace:()=>void}){return <FeaturePanel title="Finalizar pedido" subtitle="Confira a compra antes de confirmar"><button onClick={onBack} className="mb-5 flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 font-bold"><ArrowLeft size={16}/> Voltar</button><div className="grid gap-5 lg:grid-cols-[1fr_360px]"><div className="space-y-5"><Box title="1. Como receber"><div className="grid grid-cols-2 gap-3"><Choice active={delivery==="delivery"} onClick={()=>setDelivery("delivery")} icon={<Truck/>} title="Entrega" text="Receba em casa"/><Choice active={delivery==="pickup"} onClick={()=>setDelivery("pickup")} icon={<Store/>} title="Retirada" text="Na feira"/></div></Box>{delivery==="delivery"&&<Box title="2. Endereço"><div className="rounded-2xl bg-slate-50 p-4"><b>Casa</b><p className="text-sm text-slate-500">Planaltina, DF · endereço de demonstração</p><button className="mt-2 text-xs font-bold text-green-700">Alterar endereço</button></div></Box>}<Box title={delivery==="delivery"?"3. Pagamento":"2. Pagamento"}><div className="grid gap-2 sm:grid-cols-3">{["Pix","Cartão","Dinheiro"].map(x=><Choice key={x} active={payment===x} onClick={()=>setPayment(x)} icon={<CreditCard/>} title={x} text={x==="Pix"?"Aprovação rápida":"No modo demonstração"}/>)}</div></Box><Box title="Itens"><div className="space-y-3">{items.map(p=><div key={p.id} className="flex justify-between border-b pb-3"><span>{cart[p.id]}× {p.name}</span><b>{money(p.price*cart[p.id])}</b></div>)}</div></Box></div><aside className="h-fit rounded-3xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Resumo</h2><div className="mt-5 space-y-3 text-sm"><div className="flex justify-between"><span>Subtotal</span><b>{money(subtotal)}</b></div><div className="flex justify-between"><span>{delivery==="delivery"?"Entrega":"Retirada"}</span><b>{deliveryFee?money(deliveryFee):"Grátis"}</b></div><div className="border-t pt-3 flex justify-between text-lg"><b>Total</b><b className="text-green-700">{money(total)}</b></div></div><button onClick={onPlace} className="mt-6 w-full rounded-2xl bg-green-700 py-4 font-black text-white">Confirmar pedido</button><p className="mt-3 text-center text-[11px] text-slate-400">Pagamento real será conectado na última fase.</p></aside></div></FeaturePanel>}
-function Box({title,children}:{title:string;children:any}){return <div className="rounded-3xl border bg-white p-5"><h2 className="mb-4 font-black">{title}</h2>{children}</div>}
-function Choice({active,onClick,icon,title,text}:{active:boolean;onClick:()=>void;icon:any;title:string;text:string}){return <button onClick={onClick} className={`rounded-2xl border p-4 text-left ${active?"border-green-600 bg-green-50":"bg-white"}`}><div className="flex items-center gap-2 text-green-700">{icon}<b>{title}</b></div><small className="text-slate-500">{text}</small></button>}
+function OrdersPage({ orders, onTracking }: { orders: DemoOrder[]; onTracking: () => void }) {
+  return (
+    <section className="mx-auto max-w-3xl">
+      <PageHeading title="Meus pedidos" subtitle="Acompanhe suas compras, retiradas e entregas." />
+      <div className="mt-6 space-y-3">
+        {orders.map((order) => (
+          <article key={order.id} className="order-card">
+            <div>
+              <small>{order.date}</small>
+              <h3>{order.id}</h3>
+              <p>Compra em múltiplas bancas</p>
+            </div>
+            <div className="text-right">
+              <span>{order.status}</span>
+              <strong>{money(order.value)}</strong>
+              <button onClick={onTracking}>Ver detalhes</button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+function ProfilePage({
+  onScreen,
+  onRole,
+}: {
+  onScreen: (screen: Screen) => void;
+  onRole: (role: Role) => void;
+}) {
+  const links: Array<[string, string, ReactNode, Screen]> = [
+    ["Meus endereços", "Gerencie locais de entrega", <MapPin />, "addresses"],
+    ["Favoritos", "Produtos salvos", <Heart />, "favorites"],
+    ["Notificações", "Pedidos e novidades", <Bell />, "notifications"],
+    ["Falar com o suporte", "Atendimento demonstrativo", <MessageCircle />, "chat"],
+    ["Configurações", "Preferências do aplicativo", <Settings />, "settings"],
+  ];
+  return (
+    <section className="mx-auto max-w-3xl">
+      <div className="profile-hero">
+        <div className="avatar">
+          <User />
+        </div>
+        <div>
+          <small>CONTA DEMONSTRATIVA</small>
+          <h1>Olá, visitante</h1>
+          <p>Seus dados serão conectados quando o Supabase for implementado.</p>
+        </div>
+      </div>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {links.map(([title, text, icon, target]) => (
+          <button key={title} onClick={() => onScreen(target)} className="profile-link">
+            <span>{icon}</span>
+            <span>
+              <b>{title}</b>
+              <small>{text}</small>
+            </span>
+            <ChevronRight />
+          </button>
+        ))}
+      </div>
+      <div className="demo-panel mt-7">
+        <div>
+          <span className="eyebrow">Prévia de perfis</span>
+          <h2>Conheça cada área do Feiraê</h2>
+          <p>Estes modos usam dados demonstrativos até a autenticação ser conectada.</p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <button onClick={() => onRole("feirante")}>
+            <Store /> Feirante
+          </button>
+          <button onClick={() => onRole("delivery")}>
+            <Bike /> Entregador
+          </button>
+          <button onClick={() => onRole("admin")}>
+            <ShieldCheck /> Administração
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-function Orders({go}:{go:(s:string)=>void}){return <section className="mx-auto max-w-3xl"><h1 className="text-3xl font-black">Meus pedidos</h1><p className="text-slate-500">Acompanhe compras, retirada e entrega.</p><div className="mt-5 space-y-3"><Order id="FE-1027" date="20/09/2026" status="Recebido" value={86.8} go={go}/><Order id="FE-1024" date="20/09/2026" status="Em rota" value={58.7} go={go}/><Order id="FE-1019" date="19/09/2026" status="Entregue" value={42.9} go={go}/></div></section>}
-function Order({id,date,status,value,go}:{id:string;date:string;status:OrderStatus;value:number;go:(s:string)=>void}){return <article className="rounded-3xl border bg-white p-5"><div className="flex items-center justify-between"><div><b>{id}</b><p className="text-xs text-slate-500">{date} · Feiraê</p></div><span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">{status}</span></div><div className="mt-4 flex justify-between"><b>{money(value)}</b><button onClick={()=>go("tracking")} className="rounded-xl bg-green-700 px-4 py-2 text-xs font-bold text-white">Acompanhar</button></div></article>}
+function FairDetail({
+  fairName,
+  onBack,
+  onMap,
+  onAdd,
+}: {
+  fairName: string;
+  onBack: () => void;
+  onMap: (lat: number, lng: number) => void;
+  onAdd: (id: number) => void;
+}) {
+  const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
+  const fairProducts = products.filter((product) => product.fair === fair.name);
+  return (
+    <Panel title={fair.name} subtitle={`${fair.place} · ${fair.status}`} onBack={onBack}>
+      <div className="detail-banner">
+        <div>
+          <span className="eyebrow light">Feira selecionada</span>
+          <h2>Compre de quem faz a cidade acontecer.</h2>
+          <p>{fair.feirantes} feirantes cadastrados nesta feira.</p>
+        </div>
+        <button onClick={() => onMap(fair.lat, fair.lng)} className="secondary-action light">
+          <MapPin size={17} /> Abrir rota
+        </button>
+      </div>
+      <SectionHeading eyebrow="Catálogo" title="Produtos desta feira" />
+      {fairProducts.length ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {fairProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdd={onAdd}
+              favorite={false}
+              onFavorite={() => undefined}
+            />
+          ))}
+        </div>
+      ) : (
+        <Empty
+          title="Catálogo em preparação"
+          text="Os feirantes desta unidade ainda cadastrarão seus produtos."
+        />
+      )}
+    </Panel>
+  );
+}
+function VendorStore({
+  vendorName,
+  onBack,
+  onAdd,
+  favorites,
+  onFavorite,
+}: {
+  vendorName: string;
+  onBack: () => void;
+  onAdd: (id: number) => void;
+  favorites: number[];
+  onFavorite: (id: number) => void;
+}) {
+  const vendorProducts = products.filter((product) => product.feirante === vendorName);
+  return (
+    <Panel title={vendorName} subtitle="Loja do feirante" onBack={onBack}>
+      <div className="detail-banner">
+        <div>
+          <Store size={30} />
+          <h2>{vendorName}</h2>
+          <p>Produtos selecionados direto da feira · avaliação demonstrativa 4,9 ★</p>
+        </div>
+      </div>
+      {vendorProducts.length ? (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {vendorProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdd={onAdd}
+              favorite={favorites.includes(product.id)}
+              onFavorite={onFavorite}
+            />
+          ))}
+        </div>
+      ) : (
+        <Empty title="Loja sem produtos" text="Este feirante ainda não cadastrou produtos." />
+      )}
+    </Panel>
+  );
+}
+function DeliveryTracking({ onBack }: { onBack: () => void }) {
+  return (
+    <Panel title="Acompanhar entrega" subtitle="Pedido demonstrativo FE-1024" onBack={onBack}>
+      <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+        <div className="tracking-map">
+          <span aria-hidden="true">🛵</span>
+          <div className="route-line">
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+          <h2>Seu pedido está a caminho</h2>
+          <p>Previsão estimada: 20–35 minutos.</p>
+        </div>
+        <div className="surface-card">
+          <h2>Linha do pedido</h2>
+          {["Pedido confirmado", "Produtos separados", "Coleta concluída", "Entregador em rota"].map(
+            (text, index) => (
+              <div className="timeline-item" key={text}>
+                <span>{index < 3 ? <Check size={15} /> : <Bike size={15} />}</span>
+                <div>
+                  <b>{text}</b>
+                  <small>{index < 3 ? "Concluído" : "Agora"}</small>
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      </div>
+    </Panel>
+  );
+}
 
-function Profile({go,setRole}:{go:(s:string)=>void;setRole:(r:Role)=>void}){return <section className="mx-auto max-w-2xl py-4"><div className="flex items-center gap-4"><div className="grid h-16 w-16 place-items-center rounded-full bg-green-100 text-2xl">👤</div><div><h1 className="text-2xl font-black">Meu perfil</h1><p className="text-sm text-slate-500">Cliente Feiraê</p></div></div><div className="mt-6 rounded-3xl border bg-white p-5"><div className="flex items-center justify-between"><div><b>Modo atual</b><p className="text-xs text-slate-500">Uma conta, experiências diferentes.</p></div><span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">Cliente</span></div><div className="mt-4 grid grid-cols-2 gap-2"><button onClick={()=>{setRole("feirante");go("main")}} className="rounded-xl border p-3 text-left text-xs font-bold">🧑‍🌾 Feirante<small className="mt-1 block font-normal text-slate-500">Gerenciar minha loja</small></button><button onClick={()=>{setRole("delivery");go("main")}} className="rounded-xl border p-3 text-left text-xs font-bold">🛵 Entregador<small className="mt-1 block font-normal text-slate-500">Aceitar entregas</small></button></div></div><div className="mt-6 grid gap-2">{[["Meus endereços","addresses",<MapPin/>],["Favoritos","favorites",<Heart/>],["Notificações","notifications",<Bell/>],["Conversar com suporte","chat",<MessageCircle/>]].map(([x,s,i])=><button key={String(s)} onClick={()=>go(String(s))} className="flex items-center justify-between rounded-2xl border bg-white p-4 text-left font-bold"><span className="flex items-center gap-3 text-green-700">{i}<span className="text-slate-900">{String(x)}</span></span><ChevronRight/></button>)}<button onClick={()=>{setRole("feirante");go("main")}} className="flex justify-between rounded-2xl border bg-white p-4 font-bold">Quero vender no Feiraê<ChevronRight/></button><button className="mt-4 flex items-center gap-2 rounded-2xl border bg-white p-4 font-bold text-slate-500"><Settings/> Configurações</button></div></section>}
+function Checkout({
+  items,
+  cart,
+  subtotal,
+  onBack,
+  onConfirm,
+}: {
+  items: Product[];
+  cart: Record<number, number>;
+  subtotal: number;
+  onBack: () => void;
+  onConfirm: (total: number) => void;
+}) {
+  const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
+  const [payment, setPayment] = useState("Pix");
+  const deliveryFee = fulfillment === "delivery" && subtotal < 80 ? 8.9 : 0;
+  const total = subtotal + deliveryFee;
+  if (!items.length)
+    return (
+      <Panel title="Sua sacola está vazia" subtitle="Adicione produtos antes de finalizar." onBack={onBack}>
+        <Empty title="Nenhum item" text="Volte ao catálogo para começar sua feira." />
+      </Panel>
+    );
+  return (
+    <Panel title="Finalizar pedido" subtitle="Confira tudo antes de confirmar" onBack={onBack}>
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-5">
+          <Step title="1. Como deseja receber?">
+            <div className="grid grid-cols-2 gap-3">
+              <Choice
+                active={fulfillment === "delivery"}
+                onClick={() => setFulfillment("delivery")}
+                icon={<Truck />}
+                title="Entrega"
+                text="Receba em casa"
+              />
+              <Choice
+                active={fulfillment === "pickup"}
+                onClick={() => setFulfillment("pickup")}
+                icon={<Store />}
+                title="Retirada"
+                text="Busque na feira"
+              />
+            </div>
+          </Step>
+          {fulfillment === "delivery" && (
+            <Step title="2. Endereço">
+              <div className="address-preview">
+                <MapPin />
+                <div>
+                  <b>Casa</b>
+                  <p>Planaltina, DF · endereço demonstrativo</p>
+                </div>
+              </div>
+            </Step>
+          )}
+          <Step title={fulfillment === "delivery" ? "3. Pagamento" : "2. Pagamento"}>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {["Pix", "Cartão", "Dinheiro"].map((method) => (
+                <Choice
+                  key={method}
+                  active={payment === method}
+                  onClick={() => setPayment(method)}
+                  icon={<CreditCard />}
+                  title={method}
+                  text="Modo demonstração"
+                />
+              ))}
+            </div>
+          </Step>
+          <Step title="Itens do pedido">
+            {items.map((product) => (
+              <div className="checkout-item" key={product.id}>
+                <span>{product.emoji}</span>
+                <div>
+                  <b>
+                    {cart[product.id]}× {product.name}
+                  </b>
+                  <small>{product.feirante}</small>
+                </div>
+                <strong>{money(product.price * cart[product.id])}</strong>
+              </div>
+            ))}
+          </Step>
+        </div>
+        <aside className="summary-card">
+          <span className="eyebrow">Resumo</span>
+          <h2>Seu pedido</h2>
+          <div>
+            <p>
+              <span>Subtotal</span>
+              <b>{money(subtotal)}</b>
+            </p>
+            <p>
+              <span>{fulfillment === "delivery" ? "Entrega" : "Retirada"}</span>
+              <b>{deliveryFee ? money(deliveryFee) : "Grátis"}</b>
+            </p>
+            <p className="total">
+              <span>Total</span>
+              <b>{money(total)}</b>
+            </p>
+          </div>
+          <button onClick={() => onConfirm(total)} className="primary-action w-full">
+            Confirmar pedido
+          </button>
+          <small>Pedido local demonstrativo. Nenhuma cobrança será realizada.</small>
+        </aside>
+      </div>
+    </Panel>
+  );
+}
 
-function FairDetail({fairName,onBack,map,add}:{fairName:string;onBack:()=>void;map:(a:number,b:number)=>void;add:(id:number)=>void}){const fair=fairs.find(f=>f.name===fairName)||fairs[0];const ps=products.filter(p=>p.fair===fair.name);return <FeaturePanel title={fair.name} subtitle={fair.place+" · "+fair.status}><Back onBack={onBack}/><div className="grid gap-4 md:grid-cols-3"><Box title="Localização"><p className="text-sm text-slate-500">{fair.place}</p><button onClick={()=>map(fair.lat,fair.lng)} className="mt-3 text-xs font-bold text-green-700">Abrir rota</button></Box><Box title="Horários"><p className="text-sm text-slate-500">Consulte a programação da feira.</p></Box><Box title="Feirantes"><p className="text-2xl font-black">{fair.feirantes}</p><p className="text-xs text-slate-500">participantes cadastrados</p></Box></div><h2 className="mt-8 text-xl font-black">Produtos desta feira</h2><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{ps.length?ps.map(p=><ProductCard key={p.id} p={p} add={add}/>):<Empty text="Os produtos desta feira serão cadastrados pelos feirantes."/>}</div></FeaturePanel>}
-function FeiranteStore({feiranteName,onBack,add,favorites,toggleFavorite}:{feiranteName:string;onBack:()=>void;add:(id:number)=>void;favorites:number[];toggleFavorite:(id:number)=>void}){const ps=products.filter(p=>p.feirante===feiranteName);const feiranteProducts=ps.length?ps:products.filter(p=>p.feirante==="Sítio da Vó");const name=feiranteProducts[0]?.feirante||feiranteName;return <FeaturePanel title={name} subtitle="Loja do feirante"><Back onBack={onBack}/><div className="rounded-3xl bg-green-800 p-7 text-white"><Store/><h2 className="mt-3 text-2xl font-black">{name}</h2><p className="text-green-100">Produtos selecionados direto da feira.</p><div className="mt-4 flex gap-2 text-xs"><span className="rounded-full bg-white/15 px-3 py-1">⭐ 4,9</span><span className="rounded-full bg-white/15 px-3 py-1">Planaltina</span></div></div><div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">{feiranteProducts.map(p=><ProductCard key={p.id} p={p} add={add} favorite={favorites.includes(p.id)} toggleFavorite={toggleFavorite}/>)}</div></FeaturePanel>}
-function Back({onBack}:{onBack:()=>void}){return <button onClick={onBack} className="mb-5 flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 font-bold"><ArrowLeft size={16}/> Voltar</button>}
-function DeliveryTracking(){return <FeaturePanel title="Acompanhar entrega" subtitle="Pedido FE-1024"><div className="grid gap-5 lg:grid-cols-2"><div className="rounded-3xl bg-green-800 p-8 text-white"><div className="text-6xl">🛵</div><h2 className="mt-4 text-2xl font-black">Seu pedido está a caminho</h2><p className="mt-2 text-green-100">Previsão: 20–35 min.</p><div className="mt-7 h-3 rounded-full bg-white/20"><div className="h-3 w-3/4 rounded-full bg-amber-400"/></div><div className="mt-4 flex justify-between text-xs"><span>Preparando</span><span>Coletado</span><b>Em rota</b><span>Entregue</span></div></div><div className="rounded-3xl border bg-white p-6"><h3 className="font-black">Linha do pedido</h3><div className="mt-5 space-y-4">{["Pedido confirmado","Produtos separados pelos feirantes","Coleta concluída","Entregador em rota"].map((x,i)=><div key={x} className="flex gap-3"><span className="grid h-7 w-7 place-items-center rounded-full bg-green-100 text-green-700">{i<3?"✓":"•"}</span><span className="font-semibold">{x}</span></div>)}</div></div></div></FeaturePanel>}
-function Favorites({ids,add,toggleFavorite}:{ids:number[];add:(id:number)=>void;toggleFavorite:(id:number)=>void}){const ps=products.filter(p=>ids.includes(p.id));return <FeaturePanel title="Favoritos" subtitle="Produtos que você quer encontrar de novo."><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{ps.length?ps.map(p=><ProductCard key={p.id} p={p} add={add} favorite toggleFavorite={toggleFavorite}/>):<Empty text="Você ainda não favoritou produtos."/>}</div></FeaturePanel>}
-function Notifications({clear}:{clear:()=>void}){return <FeaturePanel title="Notificações" subtitle="Atualizações dos seus pedidos e ofertas."><div className="mb-4 flex justify-end"><button onClick={clear} className="text-xs font-bold text-green-700">Marcar como lidas</button></div>{["Seu pedido FE-1024 saiu para entrega.","Novo desconto na Feira do Produtor.","Sítio da Vó adicionou produtos ao catálogo.","Seu pedido FE-1019 foi entregue."].map((x,i)=><div key={x} className={`mb-2 rounded-2xl border p-4 ${i<2?"bg-green-50":"bg-white"}`}><div className="flex gap-3"><Bell className="text-green-700"/><div><b>{x}</b><p className="text-xs text-slate-500">{i+1} h atrás</p></div></div></div>)}</FeaturePanel>}
-function Addresses(){return <FeaturePanel title="Meus endereços" subtitle="Onde você quer receber suas compras?"><div className="rounded-3xl border bg-white p-5"><div className="flex justify-between"><div><b>Casa</b><p className="text-sm text-slate-500">Planaltina, DF · endereço de demonstração</p></div><span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">Principal</span></div></div><button className="mt-4 w-full rounded-2xl border-2 border-dashed p-5 font-bold text-green-700">+ Adicionar endereço</button></FeaturePanel>}
-function Chat(){return <FeaturePanel title="Suporte Feiraê" subtitle="Atendimento demonstrativo"><div className="rounded-3xl border bg-white p-5"><div className="rounded-2xl bg-slate-100 p-4 text-sm">Olá! Como podemos ajudar com seu pedido?</div><div className="mt-4 flex gap-2"><input placeholder="Digite sua mensagem..." className="flex-1 rounded-xl border p-3"/><button className="rounded-xl bg-green-700 px-4 text-white"><MessageCircle/></button></div></div></FeaturePanel>}
-function Empty({text}:{text:string}){return <div className="col-span-full rounded-3xl border bg-white p-10 text-center text-slate-500">{text}</div>}
+function FavoritesPage({
+  ids,
+  onAdd,
+  onFavorite,
+  onBack,
+}: {
+  ids: number[];
+  onAdd: (id: number) => void;
+  onFavorite: (id: number) => void;
+  onBack: () => void;
+}) {
+  const favoriteProducts = products.filter((product) => ids.includes(product.id));
+  return (
+    <Panel title="Favoritos" subtitle="Produtos que você quer encontrar de novo." onBack={onBack}>
+      {favoriteProducts.length ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {favoriteProducts.map((product) => (
+            <ProductCard key={product.id} product={product} onAdd={onAdd} favorite onFavorite={onFavorite} />
+          ))}
+        </div>
+      ) : (
+        <Empty title="Nenhum favorito" text="Toque no coração de um produto para salvá-lo aqui." />
+      )}
+    </Panel>
+  );
+}
+function NotificationsPage({ onBack, onClear }: { onBack: () => void; onClear: () => void }) {
+  return (
+    <Panel title="Notificações" subtitle="Pedidos, ofertas e novidades." onBack={onBack}>
+      <div className="mb-4 flex justify-end">
+        <button onClick={onClear} className="text-button">
+          Marcar todas como lidas
+        </button>
+      </div>
+      {[
+        "Seu pedido FE-1024 saiu para entrega.",
+        "Novo desconto na Feira do Produtor.",
+        "Sítio da Vó adicionou produtos ao catálogo.",
+        "Seu pedido FE-1019 foi entregue.",
+      ].map((text, index) => (
+        <article key={text} className={index < 2 ? "notification unread" : "notification"}>
+          <span>
+            <Bell size={18} />
+          </span>
+          <div>
+            <b>{text}</b>
+            <small>{index + 1} h atrás</small>
+          </div>
+        </article>
+      ))}
+    </Panel>
+  );
+}
 
-function FeiranteOperations(){const [status,setStatus]=useState("Recebido");return <FeaturePanel title="Operação do feirante" subtitle="Gerencie sua loja no protótipo"><Stats values={[["Pedidos hoje","24"],["Vendas","R$ 1.842"],["Estoque baixo","3"]]}/><div className="mt-6 grid gap-4 lg:grid-cols-2"><Box title="Pedido FE-1027"><p className="text-sm text-slate-500">3 itens · R$ 86,80 · Cliente de Planaltina</p><div className="mt-4 flex flex-wrap gap-2">{["Recebido","Preparando","Coleta"].map(x=><button key={x} onClick={()=>setStatus(x)} className={`rounded-xl px-3 py-2 text-xs font-bold ${status===x?"bg-green-700 text-white":"bg-slate-100"}`}>{x}</button>)}</div><p className="mt-3 text-sm font-bold">Status atual: {status}</p></Box><Box title="Atalhos"><div className="grid grid-cols-2 gap-2">{["Novo produto","Estoque","Promoções","Financeiro","Avaliações","Horários"].map(x=><button key={x} className="rounded-xl border p-4 text-left text-sm font-bold">{x}</button>)}</div></Box></div></FeaturePanel>}
-function DeliveryOperations(){const [available,setAvailable]=useState(true);return <FeaturePanel title="Central do entregador" subtitle="Aceite, colete e finalize entregas"><Stats values={[["Disponíveis","8"],["Em rota","2"],["Ganhos hoje","R$ 186,40"]]}/><div className="mt-6 rounded-3xl border bg-white p-5"><div className="flex items-center justify-between"><h2 className="font-black">Disponibilidade</h2><button onClick={()=>setAvailable(!available)} className={`rounded-full px-4 py-2 text-xs font-bold ${available?"bg-green-100 text-green-800":"bg-slate-100"}`}>{available?"Online":"Offline"}</button></div>{["FE-1024 · Feira do Produtor → Planaltina","FE-1025 · Feira Central → Asa Norte","FE-1026 · Feira de Artesanato → Sudoeste"].map(x=><div key={x} className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4"><span className="font-bold">{x}</span><button className="rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white">Aceitar</button></div>)}</div></FeaturePanel>}
-function AdminOperations(){return <FeaturePanel title="Administração" subtitle="Controle da operação Feiraê"><Stats values={[["126","feirantes"],["12","feiras"],["348","pedidos"],["R$ 28.430","vendas"]]}/><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{["Aprovar feirantes","Cadastrar feira","Gerenciar categorias","Acompanhar pedidos","Gerenciar entregadores","Financeiro","Relatórios","Denúncias","Configurações"].map(x=><button key={x} className="rounded-2xl border bg-white p-5 text-left"><b>{x}</b><small className="mt-1 block text-slate-500">Abrir módulo</small></button>)}</div></FeaturePanel>}
-function Stats({values}:{values:string[][]}){return <div className="grid gap-4 md:grid-cols-4">{values.map(x=><div key={x.join()} className="rounded-3xl border bg-white p-6"><small className="text-slate-500">{x[1]}</small><b className="mt-2 block text-3xl">{x[0]}</b></div>)}</div>}
-function Dashboard({role,setScreen}:{role:Role;setScreen:(x:string)=>void}){const feirante=role==="feirante",deliveryRole=role==="delivery";const data=feirante?{icon:<Store/>,title:"Painel do feirante",items:["Dashboard","Pedidos","Produtos","Estoque","Minha loja","Vendas","Financeiro","Avaliações"]}:deliveryRole?{icon:<Bike/>,title:"Central de entregas",items:["Dashboard","Entregas disponíveis","Minhas entregas","Mapa e rotas","Ganhos","Histórico"]}:{icon:<ShieldCheck/>,title:"Painel administrativo",items:["Dashboard","Usuários","Feiras","Feirantes","Entregadores","Pedidos","Categorias","Financeiro","Relatórios"]};return <main className="mx-auto max-w-7xl px-4 py-8"><div className="flex items-center gap-3">{data.icon}<div><small className="font-bold text-green-700">FEIRAÊ</small><h1 className="text-3xl font-black">{data.title}</h1></div></div><div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4"><div className="rounded-2xl border bg-white p-5"><b className="text-xl">24</b><small className="block text-slate-500">pedidos</small></div><div className="rounded-2xl border bg-white p-5"><b className="text-xl">R$ 1.842</b><small className="block text-slate-500">vendas</small></div><div className="rounded-2xl border bg-white p-5"><b className="text-xl">8</b><small className="block text-slate-500">pendentes</small></div><div className="rounded-2xl border bg-white p-5"><b className="text-xl">4,9 ★</b><small className="block text-slate-500">avaliação</small></div></div><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{data.items.map(x=><button key={x} onClick={()=>{if(feirante)setScreen("feiranteOps");else if(deliveryRole)setScreen("deliveryOps");else setScreen("adminOps")}} className="rounded-2xl border bg-white p-5 text-left shadow-sm"><LayoutDashboard className="text-green-700"/><b className="mt-3 block">{x}</b><small className="text-slate-500">Gerenciar {x.toLowerCase()}</small></button>)}</div></main>}
-function FeaturePanel({title,subtitle,children}:{title:string;subtitle:string;children:any}){return <section className="mx-auto max-w-7xl px-4 py-8"><p className="text-xs font-black uppercase tracking-widest text-green-700">FEIRAÊ</p><h1 className="mt-1 text-3xl font-black">{title}</h1><p className="text-sm text-slate-500">{subtitle}</p><div className="mt-6">{children}</div></section>}
+function AddressesPage({ onBack }: { onBack: () => void }) {
+  const [addresses, setAddresses] = usePersistentState<Address[]>("feirae:addresses", [
+    { id: 1, label: "Casa", details: "Planaltina, DF · endereço demonstrativo", isDefault: true },
+  ]);
+  const [adding, setAdding] = useState(false);
+  const [label, setLabel] = useState("");
+  const [details, setDetails] = useState("");
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!label.trim() || !details.trim()) return;
+    setAddresses((current) => [
+      ...current,
+      { id: Date.now(), label: label.trim(), details: details.trim(), isDefault: false },
+    ]);
+    setLabel("");
+    setDetails("");
+    setAdding(false);
+  }
+  return (
+    <Panel title="Meus endereços" subtitle="Locais salvos apenas neste dispositivo." onBack={onBack}>
+      <div className="space-y-3">
+        {addresses.map((address) => (
+          <article className="address-card" key={address.id}>
+            <MapPin />
+            <div>
+              <b>{address.label}</b>
+              <p>{address.details}</p>
+            </div>
+            {address.isDefault && <span>Principal</span>}
+            <button
+              onClick={() => setAddresses((current) => current.filter((item) => item.id !== address.id))}
+              aria-label={`Excluir endereço ${address.label}`}
+            >
+              <Trash2 size={17} />
+            </button>
+          </article>
+        ))}
+      </div>
+      {adding ? (
+        <form onSubmit={submit} className="form-card">
+          <label>
+            Nome do endereço
+            <input
+              value={label}
+              onChange={(event) => setLabel(event.target.value)}
+              placeholder="Ex.: Trabalho"
+              required
+            />
+          </label>
+          <label>
+            Endereço completo
+            <input
+              value={details}
+              onChange={(event) => setDetails(event.target.value)}
+              placeholder="Região, rua e número"
+              required
+            />
+          </label>
+          <div className="flex gap-2">
+            <button type="submit" className="primary-action">
+              Salvar endereço
+            </button>
+            <button type="button" onClick={() => setAdding(false)} className="secondary-action">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button onClick={() => setAdding(true)} className="dashed-action">
+          <Plus /> Adicionar endereço
+        </button>
+      )}
+    </Panel>
+  );
+}
+function ChatPage({ onBack }: { onBack: () => void }) {
+  const [messages, setMessages] = useState(["Olá! Como podemos ajudar com seu pedido?"]);
+  const [message, setMessage] = useState("");
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!message.trim()) return;
+    setMessages((current) => [
+      ...current,
+      message.trim(),
+      "Mensagem recebida. O suporte real será conectado na próxima fase.",
+    ]);
+    setMessage("");
+  }
+  return (
+    <Panel title="Suporte Feiraê" subtitle="Atendimento local demonstrativo" onBack={onBack}>
+      <div className="chat-card">
+        <div className="chat-messages">
+          {messages.map((text, index) => (
+            <p key={`${text}-${index}`} className={index % 2 ? "sent" : "received"}>
+              {text}
+            </p>
+          ))}
+        </div>
+        <form onSubmit={submit}>
+          <label className="sr-only" htmlFor="support-message">
+            Digite sua mensagem
+          </label>
+          <input
+            id="support-message"
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Digite sua mensagem…"
+          />
+          <button type="submit" aria-label="Enviar mensagem">
+            <MessageCircle />
+          </button>
+        </form>
+      </div>
+    </Panel>
+  );
+}
+function SettingsPage({ onBack }: { onBack: () => void }) {
+  const [offers, setOffers] = usePersistentState("feirae:offers", true);
+  const [orderUpdates, setOrderUpdates] = usePersistentState("feirae:order-updates", true);
+  return (
+    <Panel title="Configurações" subtitle="Preferências salvas neste dispositivo." onBack={onBack}>
+      <div className="surface-card max-w-2xl">
+        <Toggle
+          label="Ofertas e novidades"
+          description="Receber novidades das feiras favoritas"
+          checked={offers}
+          onChange={setOffers}
+        />
+        <Toggle
+          label="Atualizações dos pedidos"
+          description="Acompanhar mudanças de status"
+          checked={orderUpdates}
+          onChange={setOrderUpdates}
+        />
+      </div>
+    </Panel>
+  );
+}
+
+function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void }) {
+  const config =
+    role === "feirante"
+      ? {
+          icon: <Store />,
+          title: "Painel do feirante",
+          subtitle: "Pedidos, produtos e operação da sua banca",
+          metrics: [
+            ["24", "pedidos"],
+            ["R$ 1.842", "vendas"],
+            ["3", "estoque baixo"],
+            ["4,9", "avaliação"],
+          ],
+        }
+      : role === "delivery"
+        ? {
+            icon: <Bike />,
+            title: "Central do entregador",
+            subtitle: "Entregas, rotas e ganhos",
+            metrics: [
+              ["8", "disponíveis"],
+              ["2", "em rota"],
+              ["R$ 186", "ganhos hoje"],
+              ["4,9", "avaliação"],
+            ],
+          }
+        : {
+            icon: <ShieldCheck />,
+            title: "Administração",
+            subtitle: "Visão demonstrativa da operação",
+            metrics: [
+              ["126", "feirantes"],
+              [String(fairs.length), "feiras"],
+              ["348", "pedidos"],
+              ["R$ 28 mil", "vendas"],
+            ],
+          };
+  return (
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="role-heading">
+        <span>{config.icon}</span>
+        <div>
+          <small>MODO DEMONSTRAÇÃO</small>
+          <h1>{config.title}</h1>
+          <p>{config.subtitle}</p>
+        </div>
+      </div>
+      <div className="metrics">
+        {config.metrics.map(([value, label]) => (
+          <article key={label}>
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </article>
+        ))}
+      </div>
+      <button onClick={onOpen} className="primary-action mt-6">
+        Abrir central operacional <ChevronRight size={18} />
+      </button>
+    </main>
+  );
+}
+function FeiranteOperations({ onBack }: { onBack: () => void }) {
+  const modules = [
+    "Pedidos",
+    "Produtos",
+    "Estoque",
+    "Minha loja",
+    "Promoções",
+    "Financeiro",
+    "Avaliações",
+    "Horários",
+  ];
+  const [active, setActive] = useState("Pedidos");
+  const [status, setStatus] = useState("Recebido");
+  return (
+    <Panel title="Operação do feirante" subtitle="Dados locais demonstrativos" onBack={onBack}>
+      <ModuleTabs modules={modules} active={active} onActive={setActive} />
+      <div className="surface-card">
+        <span className="eyebrow">{active}</span>
+        <h2>{active === "Pedidos" ? "Pedido FE-1027" : `Gerenciar ${active.toLocaleLowerCase("pt-BR")}`}</h2>
+        {active === "Pedidos" ? (
+          <>
+            <p>3 itens · R$ 86,80 · Cliente de Planaltina</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["Recebido", "Preparando", "Pronto para coleta"].map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setStatus(item)}
+                  className={status === item ? "status-button active" : "status-button"}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p>O conteúdo real deste módulo será sincronizado com o Supabase na próxima fase.</p>
+        )}
+      </div>
+    </Panel>
+  );
+}
+function DeliveryOperations({ onBack }: { onBack: () => void }) {
+  const [online, setOnline] = useState(true);
+  const [accepted, setAccepted] = useState<string[]>([]);
+  const deliveries = [
+    "FE-1024 · Feira do Produtor → Planaltina",
+    "FE-1025 · Feira Central → Asa Norte",
+    "FE-1026 · Feira da Torre → Sudoeste",
+  ];
+  return (
+    <Panel title="Central do entregador" subtitle="Entregas locais demonstrativas" onBack={onBack}>
+      <div className="surface-card">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <span className="eyebrow">Disponibilidade</span>
+            <h2>{online ? "Você está online" : "Você está offline"}</h2>
+          </div>
+          <button
+            onClick={() => setOnline((value) => !value)}
+            className={online ? "status-button active" : "status-button"}
+          >
+            {online ? "Online" : "Offline"}
+          </button>
+        </div>
+        <div className="mt-6 space-y-3">
+          {deliveries.map((delivery) => (
+            <article className="delivery-row" key={delivery}>
+              <span>
+                <Bike />
+              </span>
+              <b>{delivery}</b>
+              <button
+                disabled={!online || accepted.includes(delivery)}
+                onClick={() => setAccepted((current) => [...current, delivery])}
+              >
+                {accepted.includes(delivery) ? "Aceita" : "Aceitar"}
+              </button>
+            </article>
+          ))}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+function AdminOperations({ onBack }: { onBack: () => void }) {
+  const modules = [
+    "Aprovações",
+    "Feiras",
+    "Categorias",
+    "Pedidos",
+    "Entregadores",
+    "Financeiro",
+    "Relatórios",
+    "Denúncias",
+    "Configurações",
+  ];
+  const [active, setActive] = useState("Aprovações");
+  return (
+    <Panel title="Administração" subtitle="Prévia sem acesso a dados reais" onBack={onBack}>
+      <ModuleTabs modules={modules} active={active} onActive={setActive} />
+      <div className="surface-card">
+        <span className="eyebrow">Módulo selecionado</span>
+        <h2>{active}</h2>
+        <p>
+          A interface está navegável. Autorizações, dados e ações administrativas serão conectados ao Supabase
+          depois.
+        </p>
+      </div>
+    </Panel>
+  );
+}
+
+function CartDrawer({
+  items,
+  cart,
+  subtotal,
+  onAdd,
+  onRemove,
+  onClose,
+  onCheckout,
+}: {
+  items: Product[];
+  cart: Record<number, number>;
+  subtotal: number;
+  onAdd: (id: number) => void;
+  onRemove: (id: number, all?: boolean) => void;
+  onClose: () => void;
+  onCheckout: () => void;
+}) {
+  return (
+    <div
+      className="drawer-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <aside className="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+        <div className="drawer-header">
+          <div>
+            <small>SUA COMPRA</small>
+            <h2 id="cart-title">Minha Feira</h2>
+          </div>
+          <button onClick={onClose} aria-label="Fechar sacola">
+            <X />
+          </button>
+        </div>
+        <div className="drawer-body">
+          {items.length ? (
+            items.map((product) => (
+              <article className="cart-item" key={product.id}>
+                <span>{product.emoji}</span>
+                <div>
+                  <b>{product.name}</b>
+                  <small>{product.feirante}</small>
+                  <strong>{money(product.price * cart[product.id])}</strong>
+                  <div>
+                    <button
+                      onClick={() => onRemove(product.id)}
+                      aria-label={`Remover uma unidade de ${product.name}`}
+                    >
+                      <Minus size={15} />
+                    </button>
+                    <span>{cart[product.id]}</span>
+                    <button
+                      onClick={() => onAdd(product.id)}
+                      aria-label={`Adicionar uma unidade de ${product.name}`}
+                    >
+                      <Plus size={15} />
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onRemove(product.id, true)}
+                  aria-label={`Excluir ${product.name} da sacola`}
+                >
+                  <Trash2 size={17} />
+                </button>
+              </article>
+            ))
+          ) : (
+            <Empty title="Sua sacola está vazia" text="Adicione produtos para começar sua feira." />
+          )}
+        </div>
+        {items.length > 0 && (
+          <div className="drawer-footer">
+            <p>
+              <span>Subtotal</span>
+              <b>{money(subtotal)}</b>
+            </p>
+            <button onClick={onCheckout} className="primary-action w-full">
+              Continuar para checkout
+            </button>
+          </div>
+        )}
+      </aside>
+    </div>
+  );
+}
+function MobileNavigation({ active, onTab }: { active: CustomerTab; onTab: (tab: CustomerTab) => void }) {
+  const items: Array<[CustomerTab, string, ReactNode]> = [
+    ["home", "Início", <Home />],
+    ["fairs", "Feiras", <Store />],
+    ["orders", "Pedidos", <Package />],
+    ["profile", "Perfil", <User />],
+  ];
+  return (
+    <nav className="mobile-nav" aria-label="Navegação móvel">
+      {items.map(([item, label, icon]) => (
+        <button key={item} onClick={() => onTab(item)} className={active === item ? "active" : ""}>
+          {icon}
+          <span>{label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+function RoleSwitcher({ role, onRole }: { role: Role; onRole: (role: Role) => void }) {
+  return (
+    <div className="role-switcher">
+      <span>Prévia</span>
+      {(["customer", "feirante", "delivery", "admin"] as Role[]).map((item) => (
+        <button key={item} onClick={() => onRole(item)} className={role === item ? "active" : ""}>
+          {roleLabels[item]}
+        </button>
+      ))}
+    </div>
+  );
+}
+function Panel({
+  title,
+  subtitle,
+  onBack,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  onBack: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <button onClick={onBack} className="back-button">
+        <ArrowLeft size={17} /> Voltar
+      </button>
+      <PageHeading title={title} subtitle={subtitle} />
+      <div className="mt-6">{children}</div>
+    </main>
+  );
+}
+function PageHeading({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="page-heading">
+      <span className="eyebrow">Feiraê</span>
+      <h1>{title}</h1>
+      <p>{subtitle}</p>
+    </div>
+  );
+}
+function SectionHeading({
+  eyebrow,
+  title,
+  action,
+  onAction,
+}: {
+  eyebrow: string;
+  title: string;
+  action?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="section-heading">
+      <div>
+        <span className="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+      </div>
+      {action && (
+        <button onClick={onAction}>
+          {action} <ChevronRight size={16} />
+        </button>
+      )}
+    </div>
+  );
+}
+function QuickAction({
+  icon,
+  title,
+  text,
+  onClick,
+}: {
+  icon: string;
+  title: string;
+  text: string;
+  onClick: () => void;
+}) {
+  return (
+    <button onClick={onClick} className="quick-action">
+      <span aria-hidden="true">{icon}</span>
+      <b>{title}</b>
+      <small>{text}</small>
+      <ChevronRight />
+    </button>
+  );
+}
+function Empty({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="empty-state">
+      <ShoppingBag size={34} />
+      <b>{title}</b>
+      <p>{text}</p>
+    </div>
+  );
+}
+function Step({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="surface-card">
+      <h2>{title}</h2>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+function Choice({
+  active,
+  onClick,
+  icon,
+  title,
+  text,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: ReactNode;
+  title: string;
+  text: string;
+}) {
+  return (
+    <button onClick={onClick} className={active ? "choice active" : "choice"}>
+      <span>{icon}</span>
+      <b>{title}</b>
+      <small>{text}</small>
+    </button>
+  );
+}
+function Toggle({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="toggle-row">
+      <span>
+        <b>{label}</b>
+        <small>{description}</small>
+      </span>
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <i aria-hidden="true" />
+    </label>
+  );
+}
+function ModuleTabs({
+  modules,
+  active,
+  onActive,
+}: {
+  modules: string[];
+  active: string;
+  onActive: (module: string) => void;
+}) {
+  return (
+    <div className="module-tabs">
+      {modules.map((module) => (
+        <button key={module} onClick={() => onActive(module)} className={active === module ? "active" : ""}>
+          {module}
+        </button>
+      ))}
+    </div>
+  );
+}
