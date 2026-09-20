@@ -58,8 +58,9 @@ export default function App(){
   <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur">
    <div className="relative mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
     <button onClick={()=>{switchRole("customer");go("main");setTab("home")}} className="mr-1 text-left"><b className="text-2xl font-black text-green-700">Feiraê<span className="text-amber-500">.</span></b><small className="hidden sm:block text-[10px] font-bold uppercase tracking-widest text-slate-400">A feira do seu jeito</small></button>
-    <button onClick={gps} className="hidden rounded-xl bg-green-50 px-3 py-2 text-xs font-bold text-green-800 md:flex items-center gap-1"><MapPin size={15}/>{location}</button>
-    <div className="order-3 w-full md:order-none md:absolute md:left-1/2 md:top-1/2 md:w-auto md:-translate-x-1/2 md:-translate-y-1/2">
+    <button onClick={gps} className="hidden rounded-xl bg-green-50 px-3 py-2 text-xs font-bold text-green-800 md:flex items-center gap-1" title="Usar minha localização"><MapPin size={15}/><span className="max-w-[150px] truncate">{location}</span></button>
+    <div className="order-3 flex w-full items-center justify-center gap-2 md:order-none md:absolute md:left-1/2 md:top-1/2 md:w-auto md:-translate-x-1/2 md:-translate-y-1/2">
+      <button onClick={gps} className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm md:hidden" title="Usar minha localização"><MapPin size={14}/><span className="max-w-[110px] truncate">{location}</span></button>
       <label className="mx-auto flex w-fit items-center gap-2 rounded-2xl border border-green-100 bg-green-50/90 px-3 py-2 shadow-sm">
         <span className="hidden text-[10px] font-black uppercase tracking-wider text-green-700 sm:inline">Feira atual</span>
         <select value={selectedFair} onChange={e=>goFair(e.target.value)} className="max-w-[210px] bg-transparent text-xs font-black text-green-900 outline-none">
