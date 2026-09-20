@@ -133,7 +133,7 @@ function Home({setTab,setScreen,map,category,setCategory,goFair,goVendor}:{setTa
   </section>
   <section>
    <div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-green-700">Explore</p><h2 className="mt-1 text-2xl font-black tracking-tight">O que você quer fazer?</h2></div></div>
-   <div className="grid grid-cols-2 gap-3 md:grid-cols-4"><Action title="Minha feira" sub="Entrar em uma feira" icon="🧺" onClick={()=>goFair(fairs[0].name)}/><Action title="Lojas" sub="Conhecer feirantes" icon="🏪" onClick={()=>goVendor("Sítio da Vó")}/><Action title="Meu pedido" sub="Acompanhar entrega" icon="🛵" onClick={()=>setScreen("tracking")}/><Action title="Vender" sub="Área do feirante" icon="🧑‍🌾" onClick={()=>setScreen("vendorOps")}/></div>
+   <div className="grid grid-cols-2 gap-3 md:grid-cols-4"><Action title="Minha feira" sub="Entrar em uma feira" icon="🧺" onClick={()=>goFair(fairs[0].name)}/><Action title="Lojas" sub="Conhecer feirantes" icon="🏪" onClick={()=>goVendor("Sítio da Vó")}/><Action title="Meu pedido" sub="Acompanhar entrega" icon="🛵" onClick={()=>setScreen("tracking")}/><Action title="Quero ser feirante" sub="Área do feirante" icon="🧑‍🌾" onClick={()=>setScreen("vendorOps")}/></div>
   </section>
   <section>
    <div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-green-700">Comprar</p><h2 className="mt-1 text-2xl font-black tracking-tight">Categorias</h2><p className="mt-1 text-sm text-slate-500">Da banca para a sua casa.</p></div><button onClick={()=>{setCategory("Todos");setTab("products")}} className="text-sm font-black text-green-700">Ver tudo</button></div>
