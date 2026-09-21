@@ -1712,26 +1712,55 @@ function AddressesPage({ onBack }: { onBack: () => void }) {
 }
 
 function AccountPage({ session, onBack }: { session: DemoSession; onBack: () => void }) {
+  const [profile, setProfile] = usePersistentState(`feirae:account:${session.email}`, {
+    name: session.name,
+    email: session.email,
+    phone: "",
+    password: "",
+  });
+  const [saved, setSaved] = useState(false);
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 2200);
+  }
   return (
     <Panel title="Minha conta" subtitle="Dados básicos para editar sua conta no Feiraê." onBack={onBack}>
-      <form className="form-card max-w-2xl">
+      <form className="form-card max-w-2xl" onSubmit={submit}>
         <label>
           Nome
-          <input defaultValue={session.name} />
+          <input
+            value={profile.name}
+            onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
+          />
         </label>
         <label>
           E-mail
-          <input defaultValue={session.email} type="email" />
+          <input
+            value={profile.email}
+            type="email"
+            onChange={(event) => setProfile((current) => ({ ...current, email: event.target.value }))}
+          />
         </label>
         <label>
           Telefone
-          <input placeholder="(61) 99999-9999" />
+          <input
+            value={profile.phone}
+            onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
+            placeholder="(61) 99999-9999"
+          />
         </label>
         <label>
           Nova senha
-          <input type="password" placeholder="Mínimo 6 caracteres" />
+          <input
+            value={profile.password}
+            onChange={(event) => setProfile((current) => ({ ...current, password: event.target.value }))}
+            type="password"
+            placeholder="Mínimo 6 caracteres"
+          />
         </label>
-        <button type="button" className="primary-action">
+        {saved && <p className="inline-success">Alterações salvas neste dispositivo.</p>}
+        <button type="submit" className="primary-action">
           <Edit3 size={17} /> Salvar alterações
         </button>
       </form>
@@ -1740,6 +1769,18 @@ function AccountPage({ session, onBack }: { session: DemoSession; onBack: () => 
 }
 
 function PaymentsPage({ onBack }: { onBack: () => void }) {
+  const [cards, setCards] = usePersistentState("feirae:cards", ["Cartão final 4821"]);
+  const [pixKeys, setPixKeys] = usePersistentState("feirae:pix", ["fernanda@email.com"]);
+  const [mode, setMode] = useState<"card" | "pix" | null>(null);
+  const [field, setField] = useState("");
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!field.trim() || !mode) return;
+    if (mode === "card") setCards((current) => [`Cartão final ${field.trim().slice(-4)}`, ...current]);
+    else setPixKeys((current) => [field.trim(), ...current]);
+    setField("");
+    setMode(null);
+  }
   return (
     <Panel title="Pagamentos e carteira" subtitle="O app mostra pagamento nativo, mesmo usando provedor externo por trás." onBack={onBack}>
       <div className="grid gap-4 lg:grid-cols-[1fr_.8fr]">
@@ -1750,24 +1791,50 @@ function PaymentsPage({ onBack }: { onBack: () => void }) {
               <CreditCard />
               <div>
                 <b>Cartão de crédito/débito</b>
-                <small>Cadastrar cartão para pedidos futuros</small>
+                <small>{cards.length ? cards.join(" · ") : "Cadastrar cartão para pedidos futuros"}</small>
               </div>
-              <button>Adicionar</button>
+              <button onClick={() => setMode("card")}>Adicionar</button>
             </article>
             <article>
               <Wallet />
               <div>
                 <b>Pix</b>
-                <small>Gerar Pix no fechamento do pedido</small>
+                <small>{pixKeys.length ? pixKeys.join(" · ") : "Gerar Pix no fechamento do pedido"}</small>
               </div>
-              <button>Configurar</button>
+              <button onClick={() => setMode("pix")}>Configurar</button>
             </article>
           </div>
+          {mode && (
+            <form className="form-card compact" onSubmit={submit}>
+              <label>
+                {mode === "card" ? "Número do cartão" : "Chave Pix"}
+                <input
+                  value={field}
+                  onChange={(event) => setField(event.target.value)}
+                  placeholder={mode === "card" ? "0000 0000 0000 0000" : "CPF, e-mail, telefone ou chave aleatória"}
+                  required
+                />
+              </label>
+              <div className="module-action-row">
+                <button className="primary-action" type="submit">
+                  Salvar {mode === "card" ? "cartão" : "Pix"}
+                </button>
+                <button className="secondary-action" type="button" onClick={() => setMode(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
         </div>
         <div className="surface-card wallet-card">
           <span className="eyebrow">Carteira</span>
-          <h2>R$ 0,00</h2>
-          <p>Cupons, reembolsos e créditos aparecerão aqui.</p>
+          <h2>R$ 18,90</h2>
+          <p>Crédito de reembolso disponível para a próxima compra.</p>
+          <div className="finance-breakdown">
+            <p><span>Cupom ativo</span><strong>FEIRA10</strong></p>
+            <p><span>Reembolso</span><strong>R$ 18,90</strong></p>
+            <p><span>Expira em</span><strong>30 dias</strong></p>
+          </div>
         </div>
       </div>
     </Panel>
@@ -1799,7 +1866,8 @@ function RatingsPage({ onBack }: { onBack: () => void }) {
 }
 
 function ChatPage({ onBack }: { onBack: () => void }) {
-  const [messages, setMessages] = useState(["Olá! Como podemos ajudar com seu pedido?"]);
+  const [topic, setTopic] = useState("Pedido em andamento");
+  const [messages, setMessages] = useState(["Olá! Escolha o assunto e descreva o problema."]);
   const [message, setMessage] = useState("");
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -1807,13 +1875,20 @@ function ChatPage({ onBack }: { onBack: () => void }) {
     setMessages((current) => [
       ...current,
       message.trim(),
-      "Mensagem recebida. O suporte real será conectado na próxima fase.",
+      `Protocolo FE-${Math.floor(2000 + Math.random() * 7000)} aberto em ${topic}. Nossa equipe acompanha por aqui.`,
     ]);
     setMessage("");
   }
   return (
-    <Panel title="Suporte Feiraê" subtitle="Atendimento local demonstrativo" onBack={onBack}>
+    <Panel title="Suporte Feiraê" subtitle="Atendimento para pedido, pagamento, entrega e conta." onBack={onBack}>
       <div className="chat-card">
+        <div className="support-topics">
+          {["Pedido em andamento", "Pagamento", "Entrega", "Conta"].map((item) => (
+            <button key={item} onClick={() => setTopic(item)} className={topic === item ? "active" : ""}>
+              {item}
+            </button>
+          ))}
+        </div>
         <div className="chat-messages">
           {messages.map((text, index) => (
             <p key={`${text}-${index}`} className={index % 2 ? "sent" : "received"}>
@@ -1842,6 +1917,9 @@ function ChatPage({ onBack }: { onBack: () => void }) {
 function SettingsPage({ onBack }: { onBack: () => void }) {
   const [offers, setOffers] = usePersistentState("feirae:offers", true);
   const [orderUpdates, setOrderUpdates] = usePersistentState("feirae:order-updates", true);
+  const [whatsapp, setWhatsapp] = usePersistentState("feirae:whatsapp", true);
+  const [useGps, setUseGps] = usePersistentState("feirae:gps", true);
+  const [compactCards, setCompactCards] = usePersistentState("feirae:compact-cards", false);
   return (
     <Panel title="Configurações" subtitle="Preferências salvas neste dispositivo." onBack={onBack}>
       <div className="surface-card max-w-2xl">
@@ -1856,6 +1934,24 @@ function SettingsPage({ onBack }: { onBack: () => void }) {
           description="Acompanhar mudanças de status"
           checked={orderUpdates}
           onChange={setOrderUpdates}
+        />
+        <Toggle
+          label="Avisos por WhatsApp"
+          description="Receber resumo do pedido e mudança de entrega"
+          checked={whatsapp}
+          onChange={setWhatsapp}
+        />
+        <Toggle
+          label="Usar localização aproximada"
+          description="Ordenar feiras próximas e calcular entrega"
+          checked={useGps}
+          onChange={setUseGps}
+        />
+        <Toggle
+          label="Cards compactos"
+          description="Mostrar vitrines com menos altura quando houver muitos produtos"
+          checked={compactCards}
+          onChange={setCompactCards}
         />
       </div>
     </Panel>
@@ -2007,6 +2103,7 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
   const [status, setStatus] = useState("Recebido");
   const [storeOpen, setStoreOpen] = useState(true);
   const [promotionActive, setPromotionActive] = useState(false);
+  const [promotionTool, setPromotionTool] = useState<"combo" | "horario" | "cupom">("combo");
   const [customHours, setCustomHours] = useState(false);
   const [newProductOpen, setNewProductOpen] = useState(false);
   const [productName, setProductName] = useState("");
@@ -2341,10 +2438,66 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
               </button>
             </div>
             <div className="module-action-row">
-              <button className="status-button">Criar combo</button>
-              <button className="status-button">Oferta por horário</button>
-              <button className="status-button">Cupom da banca</button>
+              <button
+                className={promotionTool === "combo" ? "status-button active" : "status-button"}
+                onClick={() => setPromotionTool("combo")}
+              >
+                Criar combo
+              </button>
+              <button
+                className={promotionTool === "horario" ? "status-button active" : "status-button"}
+                onClick={() => setPromotionTool("horario")}
+              >
+                Oferta por horário
+              </button>
+              <button
+                className={promotionTool === "cupom" ? "status-button active" : "status-button"}
+                onClick={() => setPromotionTool("cupom")}
+              >
+                Cupom da banca
+              </button>
             </div>
+            <form className="form-card compact">
+              {promotionTool === "combo" && (
+                <>
+                  <label>
+                    Nome do combo
+                    <input defaultValue="Combo salada da semana" />
+                  </label>
+                  <label>
+                    Itens
+                    <input defaultValue="Tomate orgânico + cheiro-verde + alface" />
+                  </label>
+                </>
+              )}
+              {promotionTool === "horario" && (
+                <>
+                  <label>
+                    Janela da oferta
+                    <input defaultValue="Sábado · 7h às 10h" />
+                  </label>
+                  <label>
+                    Desconto
+                    <input defaultValue="15%" />
+                  </label>
+                </>
+              )}
+              {promotionTool === "cupom" && (
+                <>
+                  <label>
+                    Código do cupom
+                    <input defaultValue="SITIO10" />
+                  </label>
+                  <label>
+                    Regra
+                    <input defaultValue="10% acima de R$ 50,00" />
+                  </label>
+                </>
+              )}
+              <button type="button" className="primary-action">
+                Salvar campanha
+              </button>
+            </form>
           </>
         ) : active === "Financeiro" ? (
           <>
@@ -2472,6 +2625,8 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
   const [stage, setStage] = useState(0);
   const [cancelReason, setCancelReason] = useState("");
   const [active, setActive] = useState("Central");
+  const [helpTopic, setHelpTopic] = useState("Falar com suporte");
+  const [helpProtocol, setHelpProtocol] = useState("");
   const deliveries = [
     { id: "FE-1024", route: "Feira do Produtor → Planaltina", distance: "4,2 km", fee: "R$ 12,80", weight: 8.4, vehicle: "Moto" },
     { id: "FE-1025", route: "Feira Central → Asa Norte", distance: "6,8 km", fee: "R$ 17,40", weight: 16.8, vehicle: "Moto com baú" },
@@ -2815,10 +2970,45 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
                 description="Atalhos para resolver problema de rota, pedido, pagamento ou segurança."
               />
               <div className="module-action-row">
-                <button className="status-button active">Falar com suporte</button>
-                <button className="status-button">Problema no pedido</button>
-                <button className="status-button">Dúvida de repasse</button>
+                {["Falar com suporte", "Problema no pedido", "Dúvida de repasse"].map((item) => (
+                  <button
+                    key={item}
+                    className={helpTopic === item ? "status-button active" : "status-button"}
+                    onClick={() => {
+                      setHelpTopic(item);
+                      setHelpProtocol("");
+                    }}
+                  >
+                    {item}
+                  </button>
+                ))}
               </div>
+              <form className="form-card compact">
+                <label>
+                  Assunto selecionado
+                  <input value={helpTopic} readOnly />
+                </label>
+                <label>
+                  Detalhe do atendimento
+                  <input
+                    defaultValue={
+                      helpTopic === "Problema no pedido"
+                        ? "Pedido com embalagem ou peso divergente"
+                        : helpTopic === "Dúvida de repasse"
+                          ? "Conferir taxa e data do próximo pagamento"
+                          : "Preciso falar com o suporte da rota"
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="primary-action"
+                  onClick={() => setHelpProtocol(`SUP-${Math.floor(1000 + Math.random() * 8000)}`)}
+                >
+                  Abrir atendimento
+                </button>
+                {helpProtocol && <p className="inline-success">Protocolo {helpProtocol} aberto para {helpTopic}.</p>}
+              </form>
               <div className="operation-list detailed">
                 {["Como confirmar coleta", "O que fazer quando cliente não responde", "Quando cancelar sem prejudicar desempenho"].map((item) => (
                   <article key={item}>
@@ -2897,8 +3087,8 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
             <div className="operation-list">
               {[
                 `${active} do entregador`,
-                "Conteúdo demonstrativo para orientar operação, suporte e preferências.",
-                "A integração real será conectada ao cadastro e histórico do entregador.",
+                "Checklist de documentação, preferências e histórico da conta.",
+                "Próximo passo: revisar dados, salvar alterações e acompanhar status.",
               ].map((item) => (
                 <article key={item}>
                   <Info />
