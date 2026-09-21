@@ -12,6 +12,7 @@ import {
   EyeOff,
   Heart,
   Home,
+  Info,
   LocateFixed,
   LogOut,
   MapPin,
@@ -2212,10 +2213,27 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
   );
 }
 function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () => void }) {
+  const modules = [
+    "Painel",
+    "Entregas",
+    "Em andamento",
+    "Financeiro",
+    "Veículos",
+    "Forma de entrega",
+    "Desempenho",
+    "Notificações",
+    "Ajuda",
+    "Guia inicial",
+    "Alertas graves",
+    "Conta",
+    "Vantagens",
+    "Avaliações",
+  ];
   const [online, setOnline] = useState(true);
   const [accepted, setAccepted] = useState<string | null>(null);
   const [stage, setStage] = useState(0);
   const [cancelReason, setCancelReason] = useState("");
+  const [active, setActive] = useState("Painel");
   const deliveries = [
     { id: "FE-1024", route: "Feira do Produtor → Planaltina", distance: "4,2 km", fee: "R$ 12,80", weight: 8.4, vehicle: "Moto" },
     { id: "FE-1025", route: "Feira Central → Asa Norte", distance: "6,8 km", fee: "R$ 17,40", weight: 16.8, vehicle: "Moto com baú" },
@@ -2223,124 +2241,235 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
   ];
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
+  const activeDeliverySection = activeDelivery ? (
+    <section className="active-delivery">
+      <span className="eyebrow">Entrega em andamento</span>
+      <h3>{activeDelivery.id}</h3>
+      <p>{activeDelivery.route}</p>
+      <small>
+        {activeDelivery.weight} kg · veículo indicado: {activeDelivery.vehicle}
+      </small>
+      <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
+        {deliveryStages.map((label, index) => (
+          <span className={index <= stage ? "done" : ""} key={label}>
+            {index + 1}
+          </span>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button onClick={onMap} className="secondary-action">
+          <MapPin size={17} /> Abrir rota
+        </button>
+        <button
+          className="primary-action"
+          onClick={() => {
+            if (stage === deliveryStages.length - 1) {
+              setAccepted(null);
+              setStage(0);
+            } else setStage((value) => value + 1);
+          }}
+        >
+          {deliveryStages[stage]} <ChevronRight size={17} />
+        </button>
+      </div>
+      <div className="cancel-panel">
+        <b>Cancelar entrega</b>
+        <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
+          <option value="">Motivo do cancelamento</option>
+          <option>Veículo com problema</option>
+          <option>Peso/volume incompatível</option>
+          <option>Banca atrasou a retirada</option>
+          <option>Endereço inseguro ou incorreto</option>
+          <option>Cliente não responde</option>
+        </select>
+        <button
+          className="secondary-action"
+          onClick={() => {
+            setAccepted(null);
+            setStage(0);
+          }}
+        >
+          <XCircle size={17} /> Cancelar corrida
+        </button>
+      </div>
+    </section>
+  ) : (
+    <Empty title="Nenhuma entrega ativa" text="Aceite uma entrega disponível para acompanhar as etapas." />
+  );
+  const deliveryList = (
+    <div className="mt-6 space-y-3">
+      <span className="eyebrow">Entregas disponíveis</span>
+      {deliveries
+        .filter((delivery) => delivery.id !== accepted)
+        .map((delivery) => (
+          <article className="delivery-row" key={delivery.id}>
+            <span>
+              <Bike />
+            </span>
+            <div>
+              <b>
+                {delivery.id} · {delivery.route}
+              </b>
+              <small>
+                {delivery.distance} · {delivery.weight} kg · {delivery.vehicle} · ganho {delivery.fee}
+              </small>
+            </div>
+            <button
+              disabled={!online || accepted !== null}
+              onClick={() => {
+                setAccepted(delivery.id);
+                setStage(0);
+                setActive("Em andamento");
+              }}
+            >
+              Aceitar
+            </button>
+          </article>
+        ))}
+    </div>
+  );
   return (
     <Panel title="Central do entregador" subtitle="Entregas locais demonstrativas" onBack={onBack}>
-      <div className="surface-card">
-        <div className="delivery-hero">
-          <span aria-hidden="true">🛵</span>
-          <div>
-            <b>Rotas com capacidade compatível</b>
-            <p>O Feiraê só oferece corridas dentro do peso/volume aceito pelo veículo cadastrado.</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <span className="eyebrow">Disponibilidade</span>
-            <h2>{online ? "Você está online" : "Você está offline"}</h2>
-          </div>
-          <button
-            onClick={() => setOnline((value) => !value)}
-            className={online ? "status-button active" : "status-button"}
-          >
-            {online ? "Online" : "Offline"}
-          </button>
-        </div>
-        {activeDelivery && (
-          <section className="active-delivery">
-            <span className="eyebrow">Entrega em andamento</span>
-            <h3>{activeDelivery.id}</h3>
-            <p>{activeDelivery.route}</p>
-            <small>
-              {activeDelivery.weight} kg · veículo indicado: {activeDelivery.vehicle}
-            </small>
-            <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
-              {deliveryStages.map((label, index) => (
-                <span className={index <= stage ? "done" : ""} key={label}>
-                  {index + 1}
-                </span>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={onMap} className="secondary-action">
-                <MapPin size={17} /> Abrir rota
-              </button>
-              <button
-                className="primary-action"
-                onClick={() => {
-                  if (stage === deliveryStages.length - 1) {
-                    setAccepted(null);
-                    setStage(0);
-                  } else setStage((value) => value + 1);
-                }}
-              >
-                {deliveryStages[stage]} <ChevronRight size={17} />
-              </button>
-            </div>
-            <div className="cancel-panel">
-              <b>Cancelar entrega</b>
-              <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
-                <option value="">Motivo do cancelamento</option>
-                <option>Veículo com problema</option>
-                <option>Peso/volume incompatível</option>
-                <option>Banca atrasou a retirada</option>
-                <option>Endereço inseguro ou incorreto</option>
-                <option>Cliente não responde</option>
-              </select>
-              <button
-                className="secondary-action"
-                onClick={() => {
-                  setAccepted(null);
-                  setStage(0);
-                }}
-              >
-                <XCircle size={17} /> Cancelar corrida
-              </button>
-            </div>
-          </section>
-        )}
-        <div className="review-grid compact">
-          {[
-            ["Cliente avalia entregador", "pontualidade, cuidado e educação"],
-            ["Entregador avalia cliente", "presença, endereço e comunicação"],
-            ["Entregador avalia banca", "pedido pronto, embalagem e peso correto"],
-          ].map(([title, text]) => (
-            <article className="review-card" key={title}>
-              <strong>★</strong>
-              <div>
-                <b>{title}</b>
-                <small>{text}</small>
-              </div>
-            </article>
+      <div className="ops-layout">
+        <aside className="vertical-menu" aria-label="Menu do entregador">
+          {modules.map((module) => (
+            <button key={module} className={active === module ? "active" : ""} onClick={() => setActive(module)}>
+              {module}
+            </button>
           ))}
-        </div>
-        <div className="mt-6 space-y-3">
-          <span className="eyebrow">Entregas disponíveis</span>
-          {deliveries
-            .filter((delivery) => delivery.id !== accepted)
-            .map((delivery) => (
-              <article className="delivery-row" key={delivery.id}>
-                <span>
-                  <Bike />
-                </span>
+        </aside>
+        <div className="surface-card operation-card">
+          <span className="eyebrow">{active}</span>
+          {active === "Painel" ? (
+            <>
+              <div className="delivery-hero">
+                <span aria-hidden="true">🛵</span>
                 <div>
-                  <b>
-                    {delivery.id} · {delivery.route}
-                  </b>
-                  <small>
-                    {delivery.distance} · {delivery.weight} kg · {delivery.vehicle} · ganho {delivery.fee}
-                  </small>
+                  <b>Rotas com capacidade compatível</b>
+                  <p>O Feiraê só oferece corridas dentro do peso/volume aceito pelo veículo cadastrado.</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="eyebrow">Disponibilidade</span>
+                  <h2>{online ? "Você está online" : "Você está offline"}</h2>
                 </div>
                 <button
-                  disabled={!online || accepted !== null}
-                  onClick={() => {
-                    setAccepted(delivery.id);
-                    setStage(0);
-                  }}
+                  onClick={() => setOnline((value) => !value)}
+                  className={online ? "status-button active" : "status-button"}
                 >
-                  Aceitar
+                  {online ? "Online" : "Offline"}
                 </button>
+              </div>
+              <div className="operation-metrics">
+                <article>
+                  <strong>3</strong>
+                  <span>corridas disponíveis</span>
+                </article>
+                <article>
+                  <strong>R$ 54,40</strong>
+                  <span>ganhos previstos</span>
+                </article>
+                <article>
+                  <strong>4,9 ★</strong>
+                  <span>média após entregas</span>
+                </article>
+              </div>
+              {activeDelivery && activeDeliverySection}
+              {deliveryList}
+            </>
+          ) : active === "Entregas" ? (
+            deliveryList
+          ) : active === "Em andamento" ? (
+            activeDeliverySection
+          ) : active === "Financeiro" ? (
+            <div className="operation-metrics">
+              <article>
+                <strong>R$ 186,20</strong>
+                <span>ganhos hoje</span>
               </article>
-            ))}
+              <article>
+                <strong>R$ 42,50</strong>
+                <span>taxas administrativas demonstrativas</span>
+              </article>
+              <article>
+                <strong>12</strong>
+                <span>corridas concluídas na semana</span>
+              </article>
+            </div>
+          ) : active === "Veículos" || active === "Forma de entrega" ? (
+            <div className="operation-list">
+              {["Moto cadastrada · até 12 kg", "Moto com baú · até 20 kg", "Carro · até 80 kg"].map((item) => (
+                <article key={item}>
+                  <Truck />
+                  <div>
+                    <b>{item}</b>
+                    <small>Usado para liberar apenas corridas compatíveis com peso e volume.</small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : active === "Desempenho" ? (
+            <div className="operation-metrics">
+              <article>
+                <strong>96%</strong>
+                <span>entregas no prazo</span>
+              </article>
+              <article>
+                <strong>4,9 ★</strong>
+                <span>avaliação média</span>
+              </article>
+              <article>
+                <strong>1</strong>
+                <span>cancelamento na semana</span>
+              </article>
+            </div>
+          ) : active === "Avaliações" ? (
+            <div className="operation-list">
+              {[
+                ["Depois da entrega", "Cliente avalia entregador e entrega."],
+                ["Depois da entrega", "Entregador avalia cliente."],
+                ["Depois da coleta", "Entregador avalia banca quando houver problema de preparo, embalagem ou peso."],
+                ["Mensalmente", "Usuário pode avaliar o app uma vez por mês."],
+              ].map(([title, text]) => (
+                <article key={`${title}-${text}`}>
+                  <Star />
+                  <div>
+                    <b>{title}</b>
+                    <small>{text}</small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : active === "Alertas graves" ? (
+            <div className="operation-list">
+              {["Acidente ou pane", "Endereço inseguro", "Cliente não localizado", "Pedido violado ou danificado"].map((item) => (
+                <article key={item}>
+                  <XCircle />
+                  <div>
+                    <b>{item}</b>
+                    <small>Abre suporte prioritário e registra ocorrência da corrida.</small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="operation-list">
+              {[
+                `${active} do entregador`,
+                "Conteúdo demonstrativo para orientar operação, suporte e preferências.",
+                "A integração real será conectada ao cadastro e histórico do entregador.",
+              ].map((item) => (
+                <article key={item}>
+                  <Info />
+                  <div>
+                    <b>{item}</b>
+                    <small>Área operacional do entregador</small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Panel>
