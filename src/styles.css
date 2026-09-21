@@ -1969,13 +1969,15 @@ textarea:focus-visible {
 }
 .operation-metrics {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.7rem;
   margin-top: 1rem;
 }
 .operation-metrics article {
   border-radius: 0.9rem;
   background: var(--fe-green-soft);
-  padding: 1rem;
+  padding: 0.8rem;
+  min-width: 0;
 }
 .operation-metrics strong,
 .operation-metrics span {
@@ -1983,12 +1985,14 @@ textarea:focus-visible {
 }
 .operation-metrics strong {
   color: var(--fe-green-dark);
-  font-size: 1.2rem;
+  font-size: clamp(0.95rem, 4vw, 1.2rem);
+  line-height: 1.1;
 }
 .operation-metrics span {
   margin-top: 0.15rem;
   color: var(--fe-muted);
-  font-size: 0.7rem;
+  font-size: clamp(0.56rem, 2.4vw, 0.7rem);
+  line-height: 1.25;
 }
 .review-card {
   margin-top: 1rem;
@@ -2293,9 +2297,6 @@ textarea:focus-visible {
   }
   .metrics {
     grid-template-columns: repeat(4, 1fr);
-  }
-  .operation-metrics {
-    grid-template-columns: repeat(3, 1fr);
   }
   .login-form {
     grid-template-columns: 1fr 1fr;
