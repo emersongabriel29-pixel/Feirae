@@ -1890,6 +1890,56 @@ textarea:focus-visible {
   padding: clamp(1rem, 2.5vw, 1.4rem);
   box-shadow: 0 14px 34px rgba(30, 45, 34, 0.055);
 }
+.module-header {
+  margin-bottom: 1rem;
+}
+.module-header h2 {
+  margin-top: 0.15rem;
+  color: var(--fe-ink);
+  font-size: clamp(1.35rem, 5vw, 1.9rem);
+  font-weight: 950;
+  letter-spacing: 0;
+}
+.module-header p {
+  margin-top: 0.35rem;
+  color: var(--fe-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.module-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0.9rem 0 1rem;
+}
+.module-kpi-strip article {
+  min-width: 0;
+  border: 1px solid #dce9df;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #ffffff, #f5faf6);
+  padding: 0.75rem;
+}
+.module-kpi-strip strong,
+.module-kpi-strip span {
+  display: block;
+}
+.module-kpi-strip strong {
+  color: var(--fe-green-dark);
+  font-size: clamp(0.9rem, 3.8vw, 1.1rem);
+  font-weight: 950;
+}
+.module-kpi-strip span {
+  margin-top: 0.15rem;
+  color: var(--fe-muted);
+  font-size: clamp(0.55rem, 2.3vw, 0.68rem);
+  line-height: 1.25;
+}
+.module-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.9rem 0;
+}
 .operation-list {
   display: grid;
   gap: 0.65rem;
@@ -1905,6 +1955,16 @@ textarea:focus-visible {
   border-radius: 0.9rem;
   background: #fafbf9;
   padding: 0.85rem;
+}
+.operation-list.detailed article {
+  align-items: flex-start;
+  background:
+    radial-gradient(circle at 98% 0%, rgba(223, 243, 107, 0.13), transparent 6rem),
+    #ffffff;
+}
+.operation-list article svg {
+  flex: none;
+  color: var(--fe-green);
 }
 .operation-list article > div,
 .operation-summary > div,
@@ -1966,6 +2026,116 @@ textarea:focus-visible {
   background: var(--fe-green-soft);
   color: var(--fe-green);
   font-weight: 900;
+}
+.vendor-profile-card,
+.promo-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #d8e6dc;
+  border-radius: 1.1rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(223, 243, 107, 0.18), transparent 8rem),
+    linear-gradient(135deg, #ffffff, #f6fbf7);
+  padding: 0.9rem;
+  box-shadow: 0 12px 28px rgba(30, 45, 34, 0.05);
+}
+.vendor-profile-card > span:first-child,
+.promo-card > span:first-child {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: var(--fe-green-soft);
+  font-size: 1.8rem;
+}
+.vendor-profile-card > div,
+.promo-card > div {
+  min-width: 0;
+  flex: 1;
+}
+.vendor-profile-card b,
+.promo-card b {
+  display: block;
+  color: var(--fe-ink);
+  font-weight: 950;
+}
+.vendor-profile-card small,
+.promo-card small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--fe-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+.document-status {
+  flex: none;
+  border-radius: 999px;
+  background: #f0f7f2;
+  padding: 0.4rem 0.55rem;
+  color: var(--fe-green-dark);
+  font-size: 0.63rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.finance-breakdown {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  border: 1px solid var(--fe-border);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.85rem;
+}
+.finance-breakdown p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--fe-muted);
+  font-size: 0.76rem;
+}
+.finance-breakdown strong {
+  color: var(--fe-ink);
+  font-weight: 950;
+  text-align: right;
+}
+.timeline-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+.timeline-list article {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid var(--fe-border);
+  border-radius: 1rem;
+  background: #ffffff;
+  padding: 0.85rem;
+}
+.timeline-list article > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--fe-green);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 950;
+}
+.timeline-list b,
+.timeline-list small {
+  display: block;
+}
+.timeline-list small {
+  margin-top: 0.15rem;
+  color: var(--fe-muted);
+  font-size: 0.7rem;
 }
 .operation-metrics {
   display: grid;
