@@ -14,9 +14,13 @@ export type Screen =
   | "feirante"
   | "tracking"
   | "checkout"
+  | "vendors"
   | "favorites"
   | "notifications"
   | "addresses"
+  | "account"
+  | "payments"
+  | "ratings"
   | "chat"
   | "settings"
   | "feiranteOps"
@@ -32,6 +36,9 @@ export type Product = {
   emoji: string;
   stock: number;
   unit: string;
+  weightKg: number;
+  minQuantity?: number;
+  volume: "leve" | "medio" | "pesado";
   featured?: boolean;
 };
 

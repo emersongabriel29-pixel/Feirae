@@ -3,9 +3,11 @@ import {
   ArrowLeft,
   Bell,
   Bike,
+  CalendarClock,
   Check,
   ChevronRight,
   CreditCard,
+  Edit3,
   Eye,
   EyeOff,
   Heart,
@@ -20,11 +22,14 @@ import {
   Search,
   Settings,
   ShoppingBag,
+  Star,
   Store,
   Trash2,
   Truck,
   User,
+  Wallet,
   X,
+  XCircle,
 } from "lucide-react";
 import { categories, fairs, initialOrders, products } from "./data";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Role, Screen } from "./types";
@@ -36,6 +41,38 @@ const roleLabels: Record<Role, string> = {
   feirante: "Feirante",
   delivery: "Entregador",
 };
+
+const vehicleRules = [
+  { name: "Bicicleta", maxKg: 5, note: "pedidos leves e próximos" },
+  { name: "Moto", maxKg: 12, note: "sacola pequena ou média" },
+  { name: "Moto com baú", maxKg: 20, note: "compras médias com volume controlado" },
+  { name: "Carro", maxKg: 80, note: "compras pesadas, caixas e várias bancas" },
+];
+
+function productWeight(product: Product, quantity: number) {
+  return product.weightKg * quantity;
+}
+
+function cartWeight(items: Product[], cart: Record<number, number>) {
+  return items.reduce((sum, product) => sum + productWeight(product, cart[product.id] ?? 0), 0);
+}
+
+function vehicleForWeight(weight: number) {
+  return vehicleRules.find((rule) => weight <= rule.maxKg) ?? vehicleRules[vehicleRules.length - 1];
+}
+
+function vendorSummaries() {
+  return Array.from(new Set(products.map((product) => product.feirante))).map((name) => {
+    const vendorProducts = products.filter((product) => product.feirante === name);
+    return {
+      name,
+      fair: vendorProducts[0]?.fair ?? "Feira",
+      categories: Array.from(new Set(vendorProducts.map((product) => product.category))).slice(0, 3),
+      products: vendorProducts.length,
+      rating: name === "Sítio da Vó" ? "4,9" : name.includes("Pescados") ? "4,7" : "4,8",
+    };
+  });
+}
 
 function isRole(value: unknown): value is Role {
   return value === "customer" || value === "feirante" || value === "delivery";
@@ -132,9 +169,13 @@ export default function App() {
       const screenRoutes: Record<string, Screen> = {
         "/cliente/rastreamento": "tracking",
         "/cliente/checkout": "checkout",
+        "/cliente/bancas": "vendors",
         "/cliente/favoritos": "favorites",
         "/cliente/notificacoes": "notifications",
         "/cliente/enderecos": "addresses",
+        "/cliente/conta": "account",
+        "/cliente/pagamentos": "payments",
+        "/cliente/avaliacoes": "ratings",
         "/cliente/suporte": "chat",
         "/cliente/configuracoes": "settings",
       };
@@ -192,9 +233,13 @@ export default function App() {
     const routes: Partial<Record<Screen, string>> = {
       tracking: "/cliente/rastreamento",
       checkout: "/cliente/checkout",
+      vendors: "/cliente/bancas",
       favorites: "/cliente/favoritos",
       notifications: "/cliente/notificacoes",
       addresses: "/cliente/enderecos",
+      account: "/cliente/conta",
+      payments: "/cliente/pagamentos",
+      ratings: "/cliente/avaliacoes",
       chat: "/cliente/suporte",
       settings: "/cliente/configuracoes",
       feiranteOps: "/feirante/operacao",
@@ -331,11 +376,7 @@ export default function App() {
                   setScreen("fair");
                   updateHash(`/feiras/${encodeURIComponent(name)}`);
                 }}
-                onVendor={(name) => {
-                  setSelectedVendor(name);
-                  setScreen("feirante");
-                  updateHash(`/lojas/${encodeURIComponent(name)}`);
-                }}
+                onVendors={() => openScreen("vendors")}
                 onTracking={() => openScreen("tracking")}
               />
             )}
@@ -389,6 +430,16 @@ export default function App() {
             onFavorite={toggleFavorite}
           />
         )}
+        {screen === "vendors" && (
+          <VendorsPage
+            onBack={() => openCustomerTab("home")}
+            onVendor={(name) => {
+              setSelectedVendor(name);
+              setScreen("feirante");
+              updateHash(`/lojas/${encodeURIComponent(name)}`);
+            }}
+          />
+        )}
         {screen === "tracking" && <DeliveryTracking onBack={() => openCustomerTab("orders")} />}
         {screen === "checkout" && (
           <Checkout
@@ -418,6 +469,9 @@ export default function App() {
           />
         )}
         {screen === "addresses" && <AddressesPage onBack={() => openCustomerTab("profile")} />}
+        {screen === "account" && session && <AccountPage session={session} onBack={() => openCustomerTab("profile")} />}
+        {screen === "payments" && <PaymentsPage onBack={() => openCustomerTab("profile")} />}
+        {screen === "ratings" && <RatingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "feiranteOps" && (
@@ -462,6 +516,7 @@ export default function App() {
 
 function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) => void }) {
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -518,9 +573,19 @@ function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) => void }
       <section className="login-content">
         <div className="login-form-wrap">
           <span className="eyebrow">Acesso ao Feiraê</span>
-          <h2>Como você vai usar o aplicativo?</h2>
+          <div className="auth-switch" role="tablist" aria-label="Entrar ou criar conta">
+            <button className={mode === "login" ? "active" : ""} type="button" onClick={() => setMode("login")}>
+              Entrar
+            </button>
+            <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => setMode("signup")}>
+              Criar conta
+            </button>
+          </div>
+          <h2>{mode === "login" ? "Como você vai usar o aplicativo?" : "Crie sua conta no Feiraê"}</h2>
           <p className="login-intro">
-            Escolha seu tipo de acesso. As telas serão preparadas para essa função.
+            {mode === "login"
+              ? "Escolha seu tipo de acesso. As telas serão preparadas para essa função."
+              : "Cliente entra rápido. Feirante e entregador passam por cadastro, documentos e validação."}
           </p>
           <div className="role-options" role="radiogroup" aria-label="Tipo de acesso">
             {options.map((option) => (
@@ -542,6 +607,12 @@ function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) => void }
             ))}
           </div>
           <form onSubmit={submit} className="login-form">
+            {mode === "signup" && (
+              <label>
+                Nome completo
+                <input placeholder="Seu nome" autoComplete="name" required />
+              </label>
+            )}
             <label>
               E-mail
               <input
@@ -574,8 +645,21 @@ function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) => void }
                 </button>
               </span>
             </label>
+            {mode === "signup" && selectedRole === "feirante" && (
+              <div className="signup-requirements">
+                <b>Cadastro de feirante</b>
+                <span>Banca, feira, box, documentos, horários e validação antes de vender.</span>
+              </div>
+            )}
+            {mode === "signup" && selectedRole === "delivery" && (
+              <div className="signup-requirements">
+                <b>Cadastro de entregador</b>
+                <span>Veículo, capacidade, CNH/documentos, foto e validação antes de aceitar corridas.</span>
+              </div>
+            )}
             <button type="submit" className="primary-action w-full">
-              Entrar como {roleLabels[selectedRole]} <ChevronRight size={18} />
+              {mode === "login" ? "Entrar" : "Criar conta"} como {roleLabels[selectedRole]}{" "}
+              <ChevronRight size={18} />
             </button>
           </form>
           <p className="demo-notice">
@@ -726,19 +810,19 @@ function Header(props: HeaderProps) {
 function HomePage({
   onTab,
   onFair,
-  onVendor,
+  onVendors,
   onTracking,
 }: {
   onTab: (tab: CustomerTab) => void;
   onFair: (name: string) => void;
-  onVendor: (name: string) => void;
+  onVendors: () => void;
   onTracking: () => void;
 }) {
   return (
     <div className="space-y-12">
       <section className="hero">
         <div className="relative z-10 max-w-2xl">
-          <span className="eyebrow light">Marketplace das feiras do DF</span>
+          <span className="eyebrow light">Marketplace de feiras locais</span>
           <h1>A feira que você gosta, agora mais perto.</h1>
           <p>
             Descubra produtos locais, apoie feirantes e escolha entre receber em casa ou retirar na feira.
@@ -764,21 +848,21 @@ function HomePage({
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <QuickAction
             icon="🧺"
-            title="Minha feira"
-            text="Conhecer bancas e produtos"
+            title="Feiras próximas"
+            text="Estado, cidade e feira"
             onClick={() => onFair(fairs[0].name)}
           />
           <QuickAction
             icon="🏪"
-            title="Lojas"
-            text="Comprar de um feirante"
-            onClick={() => onVendor("Sítio da Vó")}
+            title="Bancas"
+            text="Escolher feirantes"
+            onClick={onVendors}
           />
           <QuickAction icon="🛵" title="Meu pedido" text="Acompanhar a entrega" onClick={onTracking} />
           <QuickAction
             icon="✨"
-            title="Destaques"
-            text="Ver produtos selecionados"
+            title="Promoções"
+            text="Ofertas do dia"
             onClick={() => onTab("products")}
           />
         </div>
@@ -821,9 +905,29 @@ function FairsPage({
   return (
     <section>
       <PageHeading
-        title="Feiras do Distrito Federal"
-        subtitle="Escolha onde comprar, retirar ou conhecer novos feirantes."
+        title="Escolha sua feira"
+        subtitle="Comece por estado, cidade e feira. No momento a operação demonstrativa está carregada no DF."
       />
+      <div className="region-selector">
+        <label>
+          Estado
+          <select defaultValue="Distrito Federal">
+            <option>Distrito Federal</option>
+            <option>Goiás</option>
+            <option>São Paulo</option>
+            <option>Minas Gerais</option>
+          </select>
+        </label>
+        <label>
+          Cidade/região
+          <select defaultValue="Planaltina">
+            <option>Planaltina</option>
+            <option>Plano Piloto</option>
+            <option>Guará</option>
+            <option>Ceilândia</option>
+          </select>
+        </label>
+      </div>
       <div className="mt-7">
         <SectionHeading eyebrow="Perto de você" title="Feiras em destaque" />
         <div className="grid gap-4 md:grid-cols-3">
@@ -833,7 +937,7 @@ function FairsPage({
         </div>
       </div>
       <section className="mt-12">
-        <SectionHeading eyebrow="Explore o DF" title="Outras feiras" />
+        <SectionHeading eyebrow="Explore por região" title="Outras feiras" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {fairItems.slice(3).map((fair, index) => (
             <FairCard key={fair.name} fair={fair} index={index + 3} onFair={onFair} onMap={onMap} />
@@ -957,6 +1061,10 @@ function ProductCard({
         <small className="vendor-name">{product.feirante}</small>
         <h3>{product.name}</h3>
         <p>{product.fair}</p>
+        <div className="product-meta">
+          <span>{product.weightKg.toLocaleString("pt-BR")} kg/{product.unit}</span>
+          <span>{product.volume}</span>
+        </div>
         <div className="mt-4 flex items-end justify-between gap-2">
           <div>
             <strong>{money(product.price)}</strong>
@@ -970,7 +1078,7 @@ function ProductCard({
             <Plus size={19} />
           </button>
         </div>
-        <p className="stock">{product.stock} disponíveis</p>
+        <p className="stock">{product.stock} {product.unit}(s) disponíveis</p>
       </div>
     </article>
   );
@@ -1009,8 +1117,11 @@ function ProfilePage({
   onLogout: () => void;
 }) {
   const links: Array<[string, string, ReactNode, Screen]> = [
+    ["Minha conta", "Editar nome, telefone, e-mail e senha", <User />, "account"],
     ["Meus endereços", "Gerencie locais de entrega", <MapPin />, "addresses"],
+    ["Pagamentos e carteira", "Pix, cartões, cupons e reembolsos", <Wallet />, "payments"],
     ["Favoritos", "Produtos salvos", <Heart />, "favorites"],
+    ["Minhas avaliações", "Produtos, bancas, entregas e app", <Star />, "ratings"],
     ["Notificações", "Pedidos e novidades", <Bell />, "notifications"],
     ["Falar com o suporte", "Atendimento demonstrativo", <MessageCircle />, "chat"],
     ["Configurações", "Preferências do aplicativo", <Settings />, "settings"],
@@ -1093,6 +1204,42 @@ function FairDetail({
     </Panel>
   );
 }
+
+function VendorsPage({ onBack, onVendor }: { onBack: () => void; onVendor: (name: string) => void }) {
+  const vendors = vendorSummaries();
+  return (
+    <Panel
+      title="Bancas e feirantes"
+      subtitle="Escolha uma banca antes de ver os produtos. Lojas não abrem mais uma banca fixa."
+      onBack={onBack}
+    >
+      <div className="region-strip">
+        <MapPin size={18} />
+        <div>
+          <b>Região de compra</b>
+          <p>Estado: Distrito Federal · Cidade: Planaltina · altere nas configurações quando expandir.</p>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {vendors.map((vendor) => (
+          <article key={vendor.name} className="vendor-card">
+            <span aria-hidden="true">{vendor.name.includes("Pescados") ? "🐟" : "🏪"}</span>
+            <div>
+              <small>{vendor.fair}</small>
+              <h3>{vendor.name}</h3>
+              <p>{vendor.categories.join(" · ")}</p>
+              <b>{vendor.rating} ★ · {vendor.products} produtos</b>
+            </div>
+            <button onClick={() => onVendor(vendor.name)}>
+              Ver banca <ChevronRight size={16} />
+            </button>
+          </article>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
 function VendorStore({
   vendorName,
   onBack,
@@ -1135,6 +1282,8 @@ function VendorStore({
   );
 }
 function DeliveryTracking({ onBack }: { onBack: () => void }) {
+  const [cancelReason, setCancelReason] = useState("");
+  const [showReview, setShowReview] = useState(false);
   return (
     <Panel title="Acompanhar entrega" subtitle="Pedido demonstrativo FE-1024" onBack={onBack}>
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
@@ -1162,6 +1311,37 @@ function DeliveryTracking({ onBack }: { onBack: () => void }) {
               </div>
             ),
           )}
+          <div className="cancel-panel">
+            <b>Cancelar ou pedir ajuda</b>
+            <p>Depois da coleta, o cancelamento precisa de suporte para proteger cliente, banca e entregador.</p>
+            <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
+              <option value="">Escolha um motivo</option>
+              <option>Desisti do pedido</option>
+              <option>Endereço errado</option>
+              <option>Cliente ausente</option>
+              <option>Produto danificado</option>
+              <option>Emergência na entrega</option>
+            </select>
+            <button className="secondary-action">
+              <XCircle size={17} /> Solicitar cancelamento
+            </button>
+          </div>
+          <button className="primary-action w-full" onClick={() => setShowReview((value) => !value)}>
+            Avaliar pedido, banca e entrega
+          </button>
+          {showReview && (
+            <div className="review-grid compact">
+              {["Produto", "Banca", "Entrega"].map((item) => (
+                <article className="review-card" key={item}>
+                  <strong>★ ★ ★ ★ ★</strong>
+                  <div>
+                    <b>{item}</b>
+                    <small>Toque para registrar a nota do {item.toLocaleLowerCase("pt-BR")}.</small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Panel>
@@ -1183,6 +1363,8 @@ function Checkout({
 }) {
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
   const [payment, setPayment] = useState("Pix");
+  const totalWeight = cartWeight(items, cart);
+  const vehicle = vehicleForWeight(totalWeight);
   const deliveryFee = fulfillment === "delivery" && subtotal < 80 ? 8.9 : 0;
   const total = subtotal + deliveryFee;
   if (!items.length)
@@ -1222,6 +1404,16 @@ function Checkout({
                   <p>Planaltina, DF · endereço demonstrativo</p>
                 </div>
               </div>
+              <div className="logistics-box">
+                <Truck size={18} />
+                <div>
+                  <b>{vehicle.name} indicado para esta compra</b>
+                  <p>
+                    Peso estimado: {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg · limite
+                    sugerido: {vehicle.maxKg} kg · {vehicle.note}.
+                  </p>
+                </div>
+              </div>
             </Step>
           )}
           <Step title={fulfillment === "delivery" ? "3. Pagamento" : "2. Pagamento"}>
@@ -1247,6 +1439,12 @@ function Checkout({
                     {cart[product.id]}× {product.name}
                   </b>
                   <small>{product.feirante}</small>
+                  <small>
+                    {productWeight(product, cart[product.id]).toLocaleString("pt-BR", {
+                      maximumFractionDigits: 1,
+                    })}{" "}
+                    kg estimados
+                  </small>
                 </div>
                 <strong>{money(product.price * cart[product.id])}</strong>
               </div>
@@ -1260,6 +1458,14 @@ function Checkout({
             <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>
+            </p>
+            <p>
+              <span>Peso estimado</span>
+              <b>{totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</b>
+            </p>
+            <p>
+              <span>Veículo indicado</span>
+              <b>{vehicle.name}</b>
             </p>
             <p>
               <span>{fulfillment === "delivery" ? "Entrega" : "Retirada"}</span>
@@ -1343,7 +1549,12 @@ function NotificationsPage({ onBack, onClear }: { onBack: () => void; onClear: (
 
 function AddressesPage({ onBack }: { onBack: () => void }) {
   const [addresses, setAddresses] = usePersistentState<Address[]>("feirae:addresses", [
-    { id: 1, label: "Casa", details: "Planaltina, DF · endereço demonstrativo", isDefault: true },
+    {
+      id: 1,
+      label: "Casa",
+      details: "Planaltina - DF · próximo à Feira Permanente · entrega disponível",
+      isDefault: true,
+    },
   ]);
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
@@ -1360,7 +1571,11 @@ function AddressesPage({ onBack }: { onBack: () => void }) {
     setAdding(false);
   }
   return (
-    <Panel title="Meus endereços" subtitle="Locais salvos apenas neste dispositivo." onBack={onBack}>
+    <Panel
+      title="Meus endereços"
+      subtitle="Usamos seu endereço para ordenar feiras próximas, calcular entrega e validar área atendida."
+      onBack={onBack}
+    >
       <div className="space-y-3">
         {addresses.map((address) => (
           <article className="address-card" key={address.id}>
@@ -1382,11 +1597,11 @@ function AddressesPage({ onBack }: { onBack: () => void }) {
       {adding ? (
         <form onSubmit={submit} className="form-card">
           <label>
-            Nome do endereço
+            Apelido do endereço
             <input
               value={label}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder="Ex.: Trabalho"
+              placeholder="Casa, trabalho, mãe"
               required
             />
           </label>
@@ -1395,10 +1610,21 @@ function AddressesPage({ onBack }: { onBack: () => void }) {
             <input
               value={details}
               onChange={(event) => setDetails(event.target.value)}
-              placeholder="Região, rua e número"
+              placeholder="CEP, estado, cidade, bairro, rua/quadra e número"
               required
             />
           </label>
+          <label>
+            Ponto de referência
+            <input placeholder="Ex.: perto da Feira Permanente" />
+          </label>
+          <div className="region-strip">
+            <MapPin size={18} />
+            <div>
+              <b>Entrega disponível para essa região</b>
+              <p>Taxa estimada R$ 6,90 · 35-50 min · sujeito a peso e veículo.</p>
+            </div>
+          </div>
           <div className="flex gap-2">
             <button type="submit" className="primary-action">
               Salvar endereço
@@ -1416,6 +1642,94 @@ function AddressesPage({ onBack }: { onBack: () => void }) {
     </Panel>
   );
 }
+
+function AccountPage({ session, onBack }: { session: DemoSession; onBack: () => void }) {
+  return (
+    <Panel title="Minha conta" subtitle="Dados básicos para editar sua conta no Feiraê." onBack={onBack}>
+      <form className="form-card max-w-2xl">
+        <label>
+          Nome
+          <input defaultValue={session.name} />
+        </label>
+        <label>
+          E-mail
+          <input defaultValue={session.email} type="email" />
+        </label>
+        <label>
+          Telefone
+          <input placeholder="(61) 99999-9999" />
+        </label>
+        <label>
+          Nova senha
+          <input type="password" placeholder="Mínimo 6 caracteres" />
+        </label>
+        <button type="button" className="primary-action">
+          <Edit3 size={17} /> Salvar alterações
+        </button>
+      </form>
+    </Panel>
+  );
+}
+
+function PaymentsPage({ onBack }: { onBack: () => void }) {
+  return (
+    <Panel title="Pagamentos e carteira" subtitle="O app mostra pagamento nativo, mesmo usando provedor externo por trás." onBack={onBack}>
+      <div className="grid gap-4 lg:grid-cols-[1fr_.8fr]">
+        <div className="surface-card">
+          <span className="eyebrow">Métodos</span>
+          <div className="payment-list">
+            <article>
+              <CreditCard />
+              <div>
+                <b>Cartão de crédito/débito</b>
+                <small>Cadastrar cartão para pedidos futuros</small>
+              </div>
+              <button>Adicionar</button>
+            </article>
+            <article>
+              <Wallet />
+              <div>
+                <b>Pix</b>
+                <small>Gerar Pix no fechamento do pedido</small>
+              </div>
+              <button>Configurar</button>
+            </article>
+          </div>
+        </div>
+        <div className="surface-card wallet-card">
+          <span className="eyebrow">Carteira</span>
+          <h2>R$ 0,00</h2>
+          <p>Cupons, reembolsos e créditos aparecerão aqui.</p>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function RatingsPage({ onBack }: { onBack: () => void }) {
+  const reviews = [
+    ["Produto", "Cesta de frutas", "5,0", "Frutas bonitas e bem embaladas."],
+    ["Banca", "Sítio da Vó", "4,9", "Atendimento rápido na separação."],
+    ["Entrega", "FE-1024", "4,8", "Entrega cuidadosa e dentro do prazo."],
+    ["App", "Experiência mensal", "4,7", "Avaliação solicitada uma vez por mês."],
+  ];
+  return (
+    <Panel title="Minhas avaliações" subtitle="Cliente, banca, entregador e app se avaliam no fluxo certo." onBack={onBack}>
+      <div className="review-grid">
+        {reviews.map(([type, target, rating, text]) => (
+          <article className="review-card" key={`${type}-${target}`}>
+            <strong>{rating} ★</strong>
+            <div>
+              <b>{type} · {target}</b>
+              <small>{text}</small>
+            </div>
+          </article>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
 function ChatPage({ onBack }: { onBack: () => void }) {
   const [messages, setMessages] = useState(["Olá! Como podemos ajudar com seu pedido?"]);
   const [message, setMessage] = useState("");
@@ -1531,27 +1845,51 @@ function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void }) {
 }
 function FeiranteOperations({ onBack }: { onBack: () => void }) {
   const modules = [
+    "Painel",
     "Pedidos",
+    "Minha banca",
     "Produtos",
     "Estoque",
-    "Minha loja",
+    "Horários",
+    "Entrega/retirada",
     "Promoções",
     "Financeiro",
     "Avaliações",
-    "Horários",
+    "Documentos",
   ];
-  const [active, setActive] = useState("Pedidos");
+  const [active, setActive] = useState("Painel");
   const [status, setStatus] = useState("Recebido");
   const [storeOpen, setStoreOpen] = useState(true);
   const [promotionActive, setPromotionActive] = useState(false);
+  const [customHours, setCustomHours] = useState(false);
+  const [newProductOpen, setNewProductOpen] = useState(false);
+  const [productName, setProductName] = useState("");
   const [vendorItems, setVendorItems] = useState([
-    { id: 1, name: "Cesta de frutas", stock: 30, active: true },
-    { id: 9, name: "Tomate orgânico", stock: 4, active: true },
-    { id: 11, name: "Cheiro-verde", stock: 0, active: false },
+    { id: 1, name: "Cesta de frutas", stock: 30, active: true, price: 24.9, weightKg: 4, unit: "cesta" },
+    { id: 9, name: "Tomate orgânico", stock: 4, active: true, price: 8.9, weightKg: 1, unit: "kg" },
+    { id: 11, name: "Cheiro-verde", stock: 0, active: false, price: 4.5, weightKg: 0.2, unit: "maço" },
   ]);
 
   function updateItem(id: number, update: Partial<(typeof vendorItems)[number]>) {
     setVendorItems((current) => current.map((item) => (item.id === id ? { ...item, ...update } : item)));
+  }
+  function addVendorItem(event: FormEvent) {
+    event.preventDefault();
+    if (!productName.trim()) return;
+    setVendorItems((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        name: productName.trim(),
+        stock: 1,
+        active: true,
+        price: 0,
+        weightKg: 1,
+        unit: "unidade",
+      },
+    ]);
+    setProductName("");
+    setNewProductOpen(false);
   }
 
   const inventory = (
@@ -1561,7 +1899,11 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
           <span className={item.stock <= 4 ? "inventory-dot warning" : "inventory-dot"} />
           <div>
             <b>{item.name}</b>
-            <small>{item.stock ? `${item.stock} unidades disponíveis` : "Produto esgotado"}</small>
+            <small>
+              {item.stock
+                ? `${item.stock} unidades disponíveis · ${item.stock} ${item.unit}(s) · ${money(item.price)} · ${item.weightKg} kg`
+                : "Produto esgotado"}
+            </small>
           </div>
           {active === "Estoque" ? (
             <div className="stock-controls">
@@ -1570,12 +1912,17 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
               <button onClick={() => updateItem(item.id, { stock: item.stock + 1, active: true })}>+</button>
             </div>
           ) : (
-            <button
-              className={item.active ? "mini-toggle active" : "mini-toggle"}
-              onClick={() => updateItem(item.id, { active: !item.active })}
-            >
-              {item.active ? "À venda" : "Pausado"}
-            </button>
+            <div className="item-actions">
+              <button className="mini-toggle" onClick={() => updateItem(item.id, { price: item.price + 1 })}>
+                Editar R$
+              </button>
+              <button
+                className={item.active ? "mini-toggle active" : "mini-toggle"}
+                onClick={() => updateItem(item.id, { active: !item.active })}
+              >
+                {item.active ? "À venda" : "Pausado"}
+              </button>
+            </div>
           )}
         </article>
       ))}
@@ -1583,15 +1930,37 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
   );
   return (
     <Panel title="Operação do feirante" subtitle="Dados locais demonstrativos" onBack={onBack}>
-      <ModuleTabs modules={modules} active={active} onActive={setActive} />
-      <div className="surface-card operation-card">
-        <span className="eyebrow">{active}</span>
-        <h2>{active === "Pedidos" ? "Pedido FE-1027" : `Gerenciar ${active.toLocaleLowerCase("pt-BR")}`}</h2>
-        {active === "Pedidos" ? (
+      <div className="ops-layout">
+        <aside className="vertical-menu" aria-label="Menu do feirante">
+          {modules.map((module) => (
+            <button key={module} className={active === module ? "active" : ""} onClick={() => setActive(module)}>
+              {module}
+            </button>
+          ))}
+        </aside>
+        <div className="surface-card operation-card">
+          <span className="eyebrow">{active}</span>
+          <h2>{active === "Pedidos" ? "Pedido FE-1027" : `Gerenciar ${active.toLocaleLowerCase("pt-BR")}`}</h2>
+          {active === "Painel" ? (
+            <div className="operation-metrics">
+              <article>
+                <strong>{storeOpen ? "Aberta" : "Fechada"}</strong>
+                <span>Sítio da Vó · Banca 18</span>
+              </article>
+              <article>
+                <strong>4,9 ★</strong>
+                <span>média de 126 avaliações</span>
+              </article>
+              <article>
+                <strong>2</strong>
+                <span>produtos com estoque baixo</span>
+              </article>
+            </div>
+          ) : active === "Pedidos" ? (
           <>
             <p>3 itens · R$ 86,80 · Cliente de Planaltina</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              {["Recebido", "Preparando", "Pronto para coleta"].map((item) => (
+              {["Recebido", "Preparando", "Pronto para coleta", "Coletado"].map((item) => (
                 <button
                   key={item}
                   onClick={() => setStatus(item)}
@@ -1601,10 +1970,51 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
                 </button>
               ))}
             </div>
+            <div className="cancel-panel">
+              <b>Cancelar pedido</b>
+              <select>
+                <option>Item indisponível</option>
+                <option>Banca fechou mais cedo</option>
+                <option>Peso acima do combinado</option>
+                <option>Cliente solicitou cancelamento</option>
+              </select>
+            </div>
           </>
-        ) : active === "Produtos" || active === "Estoque" ? (
-          inventory
-        ) : active === "Minha loja" ? (
+          ) : active === "Produtos" ? (
+            <>
+              <button className="primary-action" onClick={() => setNewProductOpen((value) => !value)}>
+                <Plus size={17} /> Adicionar produto
+              </button>
+              {newProductOpen && (
+                <form className="form-card" onSubmit={addVendorItem}>
+                  <label>
+                    Nome do produto
+                    <input value={productName} onChange={(event) => setProductName(event.target.value)} required />
+                  </label>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <label>
+                      Preço
+                      <input placeholder="R$ 0,00" />
+                    </label>
+                    <label>
+                      Peso
+                      <input placeholder="kg por unidade" />
+                    </label>
+                    <label>
+                      Unidade
+                      <input placeholder="kg, maço, cesta" />
+                    </label>
+                  </div>
+                  <button className="primary-action" type="submit">
+                    Salvar produto
+                  </button>
+                </form>
+              )}
+              {inventory}
+            </>
+          ) : active === "Estoque" ? (
+            inventory
+          ) : active === "Minha banca" ? (
           <div className="operation-summary">
             <div>
               <b>Sítio da Vó</b>
@@ -1617,7 +2027,47 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
               {storeOpen ? "Loja aberta" : "Loja fechada"}
             </button>
           </div>
-        ) : active === "Promoções" ? (
+          ) : active === "Horários" ? (
+            <div className="space-y-3">
+              <Toggle
+                label="Usar horário padrão da feira"
+                description="Feira do Produtor · segunda e quinta · 19h-2h"
+                checked={!customHours}
+                onChange={(checked) => setCustomHours(!checked)}
+              />
+              <Toggle
+                label="Definir meu próprio horário"
+                description="Escolher dias, abertura, fechamento, pausas e exceções"
+                checked={customHours}
+                onChange={setCustomHours}
+              />
+              {customHours && (
+                <div className="operation-list">
+                  {["Segunda · 8h-17h", "Quarta · 8h-17h", "Sábado · 7h-14h"].map((schedule) => (
+                    <article key={schedule}>
+                      <CalendarClock />
+                      <div>
+                        <b>{schedule}</b>
+                        <small>Aberto com horário próprio da banca</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : active === "Entrega/retirada" ? (
+            <div className="operation-list">
+              {["Entrega pelo Feiraê", "Retirada na banca", "Peso máximo aceito: 20 kg por pedido"].map((item) => (
+                <article key={item}>
+                  <Truck />
+                  <div>
+                    <b>{item}</b>
+                    <small>Regra usada no fechamento do carrinho</small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : active === "Promoções" ? (
           <div className="operation-summary">
             <div>
               <b>10% na cesta de frutas</b>
@@ -1645,27 +2095,48 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
               <span>pedidos concluídos</span>
             </article>
           </div>
-        ) : active === "Avaliações" ? (
-          <div className="review-card">
-            <strong>4,9 ★</strong>
-            <div>
-              <b>“Produtos frescos e entrega cuidadosa.”</b>
-              <small>Cliente demonstrativo · hoje</small>
+          ) : active === "Avaliações" ? (
+            <div className="review-grid compact">
+              {[
+                ["Cliente", "4,9", "Produtos frescos e entrega cuidadosa."],
+                ["Entregador", "5,0", "Pedido pronto no horário combinado."],
+                ["Produto", "4,8", "Cesta bem montada e peso correto."],
+              ].map(([source, rating, text]) => (
+                <article className="review-card" key={source}>
+                  <strong>{rating} ★</strong>
+                  <div>
+                    <b>{source}</b>
+                    <small>{text}</small>
+                  </div>
+                </article>
+              ))}
             </div>
-          </div>
-        ) : (
-          <div className="operation-list">
-            {["Segunda e quinta · 19h–2h", "Sábado · 7h–14h"].map((schedule) => (
-              <article key={schedule}>
-                <span className="inventory-dot" />
+          ) : active === "Documentos" ? (
+            <div className="operation-list">
+              {["Documento do responsável", "Comprovante da banca/box", "Validação de feirante"].map((doc) => (
+                <article key={doc}>
+                  <Check />
+                  <div>
+                    <b>{doc}</b>
+                    <small>Necessário para vender e receber repasses</small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="operation-list">
+              {["R$ 1.842,30 em vendas no mês", "R$ 286,40 a receber", "Custos e taxas serão detalhados"].map((item) => (
+                <article key={item}>
+                  <Wallet />
                 <div>
-                  <b>{schedule}</b>
-                  <small>Atendimento na Feira do Produtor</small>
+                  <b>{item}</b>
+                  <small>Financeiro da banca</small>
                 </div>
               </article>
             ))}
           </div>
-        )}
+          )}
+        </div>
       </div>
       <p className="operation-footnote">
         Alterações locais de demonstração. A sincronização real será feita pelo Supabase.
@@ -1677,16 +2148,24 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
   const [online, setOnline] = useState(true);
   const [accepted, setAccepted] = useState<string | null>(null);
   const [stage, setStage] = useState(0);
+  const [cancelReason, setCancelReason] = useState("");
   const deliveries = [
-    { id: "FE-1024", route: "Feira do Produtor → Planaltina", distance: "4,2 km", fee: "R$ 12,80" },
-    { id: "FE-1025", route: "Feira Central → Asa Norte", distance: "6,8 km", fee: "R$ 17,40" },
-    { id: "FE-1026", route: "Feira da Torre → Sudoeste", distance: "5,1 km", fee: "R$ 14,20" },
+    { id: "FE-1024", route: "Feira do Produtor → Planaltina", distance: "4,2 km", fee: "R$ 12,80", weight: 8.4, vehicle: "Moto" },
+    { id: "FE-1025", route: "Feira Central → Asa Norte", distance: "6,8 km", fee: "R$ 17,40", weight: 16.8, vehicle: "Moto com baú" },
+    { id: "FE-1026", route: "Feira da Torre → Sudoeste", distance: "5,1 km", fee: "R$ 24,20", weight: 31.5, vehicle: "Carro" },
   ];
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
   return (
     <Panel title="Central do entregador" subtitle="Entregas locais demonstrativas" onBack={onBack}>
       <div className="surface-card">
+        <div className="delivery-hero">
+          <span aria-hidden="true">🛵</span>
+          <div>
+            <b>Rotas com capacidade compatível</b>
+            <p>O Feiraê só oferece corridas dentro do peso/volume aceito pelo veículo cadastrado.</p>
+          </div>
+        </div>
         <div className="flex items-center justify-between gap-3">
           <div>
             <span className="eyebrow">Disponibilidade</span>
@@ -1704,6 +2183,9 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
             <span className="eyebrow">Entrega em andamento</span>
             <h3>{activeDelivery.id}</h3>
             <p>{activeDelivery.route}</p>
+            <small>
+              {activeDelivery.weight} kg · veículo indicado: {activeDelivery.vehicle}
+            </small>
             <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
               {deliveryStages.map((label, index) => (
                 <span className={index <= stage ? "done" : ""} key={label}>
@@ -1727,8 +2209,43 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
                 {deliveryStages[stage]} <ChevronRight size={17} />
               </button>
             </div>
+            <div className="cancel-panel">
+              <b>Cancelar entrega</b>
+              <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
+                <option value="">Motivo do cancelamento</option>
+                <option>Veículo com problema</option>
+                <option>Peso/volume incompatível</option>
+                <option>Banca atrasou a retirada</option>
+                <option>Endereço inseguro ou incorreto</option>
+                <option>Cliente não responde</option>
+              </select>
+              <button
+                className="secondary-action"
+                onClick={() => {
+                  setAccepted(null);
+                  setStage(0);
+                }}
+              >
+                <XCircle size={17} /> Cancelar corrida
+              </button>
+            </div>
           </section>
         )}
+        <div className="review-grid compact">
+          {[
+            ["Cliente avalia entregador", "pontualidade, cuidado e educação"],
+            ["Entregador avalia cliente", "presença, endereço e comunicação"],
+            ["Entregador avalia banca", "pedido pronto, embalagem e peso correto"],
+          ].map(([title, text]) => (
+            <article className="review-card" key={title}>
+              <strong>★</strong>
+              <div>
+                <b>{title}</b>
+                <small>{text}</small>
+              </div>
+            </article>
+          ))}
+        </div>
         <div className="mt-6 space-y-3">
           <span className="eyebrow">Entregas disponíveis</span>
           {deliveries
@@ -1743,7 +2260,7 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
                     {delivery.id} · {delivery.route}
                   </b>
                   <small>
-                    {delivery.distance} · ganho {delivery.fee}
+                    {delivery.distance} · {delivery.weight} kg · {delivery.vehicle} · ganho {delivery.fee}
                   </small>
                 </div>
                 <button
@@ -1779,6 +2296,8 @@ function CartDrawer({
   onClose: () => void;
   onCheckout: () => void;
 }) {
+  const totalWeight = cartWeight(items, cart);
+  const vehicle = vehicleForWeight(totalWeight);
   return (
     <div
       className="drawer-backdrop"
@@ -1805,6 +2324,13 @@ function CartDrawer({
                 <div>
                   <b>{product.name}</b>
                   <small>{product.feirante}</small>
+                  <small>
+                    {cart[product.id]} {product.unit}(s) ·{" "}
+                    {productWeight(product, cart[product.id]).toLocaleString("pt-BR", {
+                      maximumFractionDigits: 1,
+                    })}{" "}
+                    kg
+                  </small>
                   <strong>{money(product.price * cart[product.id])}</strong>
                   <div>
                     <button
@@ -1836,6 +2362,14 @@ function CartDrawer({
         </div>
         {items.length > 0 && (
           <div className="drawer-footer">
+            <p>
+              <span>Peso estimado</span>
+              <b>{totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</b>
+            </p>
+            <p>
+              <span>Entrega indicada</span>
+              <b>{vehicle.name}</b>
+            </p>
             <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>
@@ -2015,24 +2549,5 @@ function Toggle({
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
       <i aria-hidden="true" />
     </label>
-  );
-}
-function ModuleTabs({
-  modules,
-  active,
-  onActive,
-}: {
-  modules: string[];
-  active: string;
-  onActive: (module: string) => void;
-}) {
-  return (
-    <div className="module-tabs">
-      {modules.map((module) => (
-        <button key={module} onClick={() => onActive(module)} className={active === module ? "active" : ""}>
-          {module}
-        </button>
-      ))}
-    </div>
   );
 }
