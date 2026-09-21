@@ -1911,6 +1911,64 @@ function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void }) {
     </main>
   );
 }
+
+const vendorModuleDetails: Record<string, { text: string; badge: string }> = {
+  Painel: { text: "Resumo da banca, pendências e indicadores do dia.", badge: "Resumo" },
+  Pedidos: { text: "Acompanhar pedidos, preparar, cancelar e marcar coleta.", badge: "3 novos" },
+  "Minha banca": { text: "Editar banca, box, feira e status aberto/fechado.", badge: "Banca 18" },
+  Produtos: { text: "Cadastrar produtos, valores, unidade, peso e disponibilidade.", badge: "Editar" },
+  Estoque: { text: "Controlar quantidades e pausar itens esgotados.", badge: "2 alertas" },
+  Horários: { text: "Usar horário da feira ou definir dias e horários próprios.", badge: "Configurar" },
+  "Entrega/retirada": { text: "Definir retirada, entrega Feiraê e limites de peso.", badge: "Logística" },
+  Promoções: { text: "Criar ofertas e campanhas da banca.", badge: "Oferta" },
+  Financeiro: { text: "Ver vendas, taxas, custos e valores a receber.", badge: "R$" },
+  Avaliações: { text: "Notas recebidas de clientes, produtos e entregadores.", badge: "4,9 ★" },
+  Documentos: { text: "Enviar e acompanhar validação da banca.", badge: "Obrigatório" },
+};
+
+const deliveryModuleDetails: Record<string, { text: string; badge: string }> = {
+  Painel: { text: "Resumo de disponibilidade, ganhos e rotas do dia.", badge: "Resumo" },
+  Entregas: { text: "Ver corridas disponíveis com peso, veículo e ganho.", badge: "3 disponíveis" },
+  "Em andamento": { text: "Acompanhar etapas, rota e cancelamento da corrida ativa.", badge: "Rota" },
+  Financeiro: { text: "Ganhos, taxas e histórico de repasses.", badge: "R$" },
+  Veículos: { text: "Cadastrar moto, baú ou carro e capacidade de peso.", badge: "Capacidade" },
+  "Forma de entrega": { text: "Configurar raio, preferências e tipo de entrega.", badge: "Preferências" },
+  Desempenho: { text: "Pontualidade, cancelamentos e nota média.", badge: "96%" },
+  Notificações: { text: "Avisos de corridas, pagamentos e suporte.", badge: "Avisos" },
+  Ajuda: { text: "Falar com suporte e tirar dúvidas operacionais.", badge: "Suporte" },
+  "Guia inicial": { text: "Passo a passo para começar a entregar.", badge: "Guia" },
+  "Alertas graves": { text: "Reportar acidente, pane ou endereço inseguro.", badge: "Urgente" },
+  Conta: { text: "Dados pessoais, foto, documentos e validação.", badge: "Perfil" },
+  Vantagens: { text: "Campanhas, benefícios e comunicações especiais.", badge: "Novo" },
+  Avaliações: { text: "Regras de avaliação após entrega e coleta.", badge: "Fluxo" },
+};
+
+function OperationsMenu({
+  modules,
+  details,
+  onOpen,
+}: {
+  modules: string[];
+  details: Record<string, { text: string; badge: string }>;
+  onOpen: (module: string) => void;
+}) {
+  return (
+    <div className="ops-card-grid">
+      {modules.map((module) => {
+        const detail = details[module] ?? { text: "Abrir módulo operacional.", badge: "Entrar" };
+        return (
+          <button className="module-card" key={module} onClick={() => onOpen(module)} aria-label={module}>
+            <span>{detail.badge}</span>
+            <b>{module}</b>
+            <small>{detail.text}</small>
+            <strong>Entrar <ChevronRight size={16} /></strong>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function FeiranteOperations({ onBack }: { onBack: () => void }) {
   const modules = [
     "Painel",
@@ -1925,7 +1983,7 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
     "Avaliações",
     "Documentos",
   ];
-  const [active, setActive] = useState("Painel");
+  const [active, setActive] = useState("Central");
   const [status, setStatus] = useState("Recebido");
   const [storeOpen, setStoreOpen] = useState(true);
   const [promotionActive, setPromotionActive] = useState(false);
@@ -1998,14 +2056,36 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
   );
   return (
     <Panel title="Operação do feirante" subtitle="Dados locais demonstrativos" onBack={onBack}>
-      <div className="ops-layout">
-        <aside className="vertical-menu" aria-label="Menu do feirante">
-          {modules.map((module) => (
-            <button key={module} className={active === module ? "active" : ""} onClick={() => setActive(module)}>
-              {module}
-            </button>
-          ))}
-        </aside>
+      {active === "Central" ? (
+        <div className="ops-home">
+          <div className="ops-summary">
+            <div>
+              <span className="eyebrow">Central</span>
+              <h2>Escolha o que deseja gerenciar</h2>
+              <p>Pedidos, produtos, horários, documentos e financeiro ficam em telas separadas.</p>
+            </div>
+            <div className="operation-metrics">
+              <article>
+                <strong>{storeOpen ? "Aberta" : "Fechada"}</strong>
+                <span>Sítio da Vó · Banca 18</span>
+              </article>
+              <article>
+                <strong>3</strong>
+                <span>pedidos pendentes</span>
+              </article>
+              <article>
+                <strong>4,9 ★</strong>
+                <span>avaliação média</span>
+              </article>
+            </div>
+          </div>
+          <OperationsMenu modules={modules} details={vendorModuleDetails} onOpen={setActive} />
+        </div>
+      ) : (
+        <div className="module-screen">
+          <button className="back-button" onClick={() => setActive("Central")}>
+            <ArrowLeft size={17} /> Voltar para central
+          </button>
         <div className="surface-card operation-card">
           <span className="eyebrow">{active}</span>
           <h2>{active === "Pedidos" ? "Pedido FE-1027" : `Gerenciar ${active.toLocaleLowerCase("pt-BR")}`}</h2>
@@ -2206,6 +2286,7 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
           )}
         </div>
       </div>
+      )}
       <p className="operation-footnote">
         Alterações locais de demonstração. A sincronização real será feita pelo Supabase.
       </p>
@@ -2233,7 +2314,7 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
   const [accepted, setAccepted] = useState<string | null>(null);
   const [stage, setStage] = useState(0);
   const [cancelReason, setCancelReason] = useState("");
-  const [active, setActive] = useState("Painel");
+  const [active, setActive] = useState("Central");
   const deliveries = [
     { id: "FE-1024", route: "Feira do Produtor → Planaltina", distance: "4,2 km", fee: "R$ 12,80", weight: 8.4, vehicle: "Moto" },
     { id: "FE-1025", route: "Feira Central → Asa Norte", distance: "6,8 km", fee: "R$ 17,40", weight: 16.8, vehicle: "Moto com baú" },
@@ -2330,14 +2411,36 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
   );
   return (
     <Panel title="Central do entregador" subtitle="Entregas locais demonstrativas" onBack={onBack}>
-      <div className="ops-layout">
-        <aside className="vertical-menu" aria-label="Menu do entregador">
-          {modules.map((module) => (
-            <button key={module} className={active === module ? "active" : ""} onClick={() => setActive(module)}>
-              {module}
-            </button>
-          ))}
-        </aside>
+      {active === "Central" ? (
+        <div className="ops-home">
+          <div className="ops-summary">
+            <div>
+              <span className="eyebrow">Central</span>
+              <h2>Escolha sua próxima ação</h2>
+              <p>Entregas, rota ativa, veículo, ganhos, alertas e avaliações ficam em telas próprias.</p>
+            </div>
+            <div className="operation-metrics">
+              <article>
+                <strong>{online ? "Online" : "Offline"}</strong>
+                <span>disponibilidade atual</span>
+              </article>
+              <article>
+                <strong>3</strong>
+                <span>corridas disponíveis</span>
+              </article>
+              <article>
+                <strong>R$ 54,40</strong>
+                <span>ganhos previstos</span>
+              </article>
+            </div>
+          </div>
+          <OperationsMenu modules={modules} details={deliveryModuleDetails} onOpen={setActive} />
+        </div>
+      ) : (
+        <div className="module-screen">
+          <button className="back-button" onClick={() => setActive("Central")}>
+            <ArrowLeft size={17} /> Voltar para central
+          </button>
         <div className="surface-card operation-card">
           <span className="eyebrow">{active}</span>
           {active === "Painel" ? (
@@ -2472,6 +2575,7 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
           )}
         </div>
       </div>
+      )}
     </Panel>
   );
 }

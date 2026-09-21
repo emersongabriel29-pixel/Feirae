@@ -84,6 +84,7 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^produtos$/i }));
     expect(screen.getByText(/30 unidades disponíveis/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /voltar para central/i }));
     fireEvent.click(screen.getByRole("button", { name: /^estoque$/i }));
     expect(screen.getAllByRole("button", { name: "+" }).length).toBeGreaterThan(0);
   });
@@ -98,6 +99,7 @@ describe("Feiraê role access", () => {
     render(<App />);
     loginAs("entregador");
     fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /aceitar/i })[0]);
     expect(screen.getByText(/entrega em andamento/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /ir para a banca/i }));
