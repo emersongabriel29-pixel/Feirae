@@ -3,6 +3,7 @@ import type { DemoOrder, Fair, Product } from "./types";
 export const categories = [
   "Hortifruti",
   "Carnes",
+  "Pescados",
   "Queijos",
   "Padaria",
   "Doces",
@@ -22,6 +23,14 @@ export const fairs: Fair[] = [
     feirantes: 48,
     lat: -15.621,
     lng: -47.657,
+  },
+  {
+    name: "Feira Permanente de Planaltina",
+    place: "Planaltina",
+    status: "Ter–dom · 7h–18h",
+    feirantes: 42,
+    lat: -15.617,
+    lng: -47.65,
   },
   {
     name: "Feira de Hortifrutigranjeiros",
@@ -116,6 +125,8 @@ export const products: Product[] = [
     emoji: "🍎",
     stock: 30,
     unit: "cesta",
+    weightKg: 4,
+    volume: "medio",
     featured: true,
   },
   {
@@ -128,6 +139,8 @@ export const products: Product[] = [
     emoji: "🧀",
     stock: 18,
     unit: "peça",
+    weightKg: 0.8,
+    volume: "leve",
     featured: true,
   },
   {
@@ -140,6 +153,8 @@ export const products: Product[] = [
     emoji: "🌽",
     stock: 12,
     unit: "unidade",
+    weightKg: 0.7,
+    volume: "leve",
   },
   {
     id: 4,
@@ -151,6 +166,8 @@ export const products: Product[] = [
     emoji: "🥖",
     stock: 25,
     unit: "cesta",
+    weightKg: 2.2,
+    volume: "medio",
     featured: true,
   },
   {
@@ -163,6 +180,8 @@ export const products: Product[] = [
     emoji: "🪴",
     stock: 9,
     unit: "vaso",
+    weightKg: 1.5,
+    volume: "medio",
   },
   {
     id: 6,
@@ -174,6 +193,8 @@ export const products: Product[] = [
     emoji: "👜",
     stock: 7,
     unit: "unidade",
+    weightKg: 0.6,
+    volume: "leve",
     featured: true,
   },
   {
@@ -186,6 +207,8 @@ export const products: Product[] = [
     emoji: "🍯",
     stock: 15,
     unit: "pote",
+    weightKg: 0.5,
+    volume: "leve",
   },
   {
     id: 8,
@@ -197,6 +220,8 @@ export const products: Product[] = [
     emoji: "🥟",
     stock: 40,
     unit: "unidade",
+    weightKg: 0.15,
+    volume: "leve",
   },
   {
     id: 9,
@@ -208,6 +233,8 @@ export const products: Product[] = [
     emoji: "🍅",
     stock: 22,
     unit: "kg",
+    weightKg: 1,
+    volume: "leve",
   },
   {
     id: 10,
@@ -219,6 +246,8 @@ export const products: Product[] = [
     emoji: "💐",
     stock: 11,
     unit: "buquê",
+    weightKg: 0.35,
+    volume: "leve",
   },
   {
     id: 11,
@@ -230,6 +259,8 @@ export const products: Product[] = [
     emoji: "🥬",
     stock: 28,
     unit: "maço",
+    weightKg: 0.25,
+    volume: "leve",
   },
   {
     id: 12,
@@ -241,6 +272,8 @@ export const products: Product[] = [
     emoji: "🌿",
     stock: 16,
     unit: "kit",
+    weightKg: 0.4,
+    volume: "leve",
   },
   {
     id: 13,
@@ -252,6 +285,8 @@ export const products: Product[] = [
     emoji: "🍮",
     stock: 14,
     unit: "pote",
+    weightKg: 0.65,
+    volume: "leve",
   },
   {
     id: 14,
@@ -263,6 +298,8 @@ export const products: Product[] = [
     emoji: "☕",
     stock: 21,
     unit: "pacote",
+    weightKg: 0.5,
+    volume: "leve",
   },
   {
     id: 15,
@@ -274,6 +311,8 @@ export const products: Product[] = [
     emoji: "🥕",
     stock: 20,
     unit: "cesta",
+    weightKg: 6,
+    volume: "pesado",
     featured: true,
   },
   {
@@ -286,6 +325,8 @@ export const products: Product[] = [
     emoji: "🪡",
     stock: 8,
     unit: "jogo",
+    weightKg: 0.7,
+    volume: "leve",
   },
   {
     id: 17,
@@ -297,6 +338,8 @@ export const products: Product[] = [
     emoji: "🌵",
     stock: 13,
     unit: "vaso",
+    weightKg: 1.2,
+    volume: "medio",
   },
   {
     id: 18,
@@ -308,6 +351,35 @@ export const products: Product[] = [
     emoji: "🍪",
     stock: 25,
     unit: "pacote",
+    weightKg: 0.45,
+    volume: "leve",
+  },
+  {
+    id: 19,
+    name: "Filé de tilápia fresco",
+    feirante: "Pescados Planaltina",
+    fair: "Feira Permanente de Planaltina",
+    price: 42.9,
+    category: "Pescados",
+    emoji: "🐟",
+    stock: 18,
+    unit: "kg",
+    weightKg: 1,
+    volume: "leve",
+    featured: true,
+  },
+  {
+    id: 20,
+    name: "Camarão selecionado",
+    feirante: "Pescados Planaltina",
+    fair: "Feira Permanente de Planaltina",
+    price: 58,
+    category: "Pescados",
+    emoji: "🦐",
+    stock: 10,
+    unit: "kg",
+    weightKg: 1,
+    volume: "leve",
   },
 ];
 
