@@ -1,4 +1,4 @@
-import { FormEvent, ReactNode, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Bell,
@@ -6,6 +6,8 @@ import {
   Check,
   ChevronRight,
   CreditCard,
+  Eye,
+  EyeOff,
   Heart,
   Home,
   LocateFixed,
@@ -25,7 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { categories, fairs, initialOrders, products } from "./data";
-import type { Address, CustomerTab, DemoOrder, Product, Role, Screen } from "./types";
+import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Role, Screen } from "./types";
 import { cartSubtotal, filterProducts, money, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
 
@@ -39,9 +41,40 @@ function isRole(value: unknown): value is Role {
   return value === "customer" || value === "feirante" || value === "delivery";
 }
 
+function readSession(value: unknown): DemoSession | null {
+  if (isRole(value)) return { role: value, email: "demo@feirae.app", name: "Conta de teste" };
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<DemoSession>;
+  if (!isRole(candidate.role) || typeof candidate.email !== "string" || typeof candidate.name !== "string") {
+    return null;
+  }
+  return { role: candidate.role, email: candidate.email, name: candidate.name };
+}
+
+function nameFromEmail(email: string) {
+  const rawName = email
+    .split("@")[0]
+    .replace(/[._-]+/g, " ")
+    .trim();
+  if (!rawName) return "Conta de teste";
+  return rawName.replace(/\b\p{L}/gu, (letter) => letter.toLocaleUpperCase("pt-BR"));
+}
+
+function resetViewport() {
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
+
+function updateHash(route: string, replace = false) {
+  const url = `${window.location.pathname}${window.location.search}#${route}`;
+  if (replace) window.history.replaceState(null, "", url);
+  else window.history.pushState(null, "", url);
+}
+
 export default function App() {
-  const [storedRole, setStoredRole] = usePersistentState<unknown>("feirae:session-role", null);
-  const role = isRole(storedRole) ? storedRole : null;
+  const [storedSession, setStoredSession] = usePersistentState<unknown>("feirae:session", null);
+  const session = readSession(storedSession);
+  const role = session?.role ?? null;
   const [tab, setTab] = useState<CustomerTab>("home");
   const [screen, setScreen] = useState<Screen>("main");
   const [query, setQuery] = useState("");
@@ -64,6 +97,78 @@ export default function App() {
   const itemCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
   const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
 
+  useEffect(() => {
+    resetViewport();
+  }, [role, screen, tab]);
+
+  useEffect(() => {
+    if (!role) {
+      if (window.location.hash !== "#/entrar") updateHash("/entrar", true);
+      return;
+    }
+
+    function syncFromUrl() {
+      const route = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+      if (role === "feirante") {
+        setScreen(route === "/feirante/operacao" ? "feiranteOps" : "main");
+        return;
+      }
+      if (role === "delivery") {
+        setScreen(route === "/entregador/entregas" ? "deliveryOps" : "main");
+        return;
+      }
+      const tabRoutes: Record<string, CustomerTab> = {
+        "/cliente/inicio": "home",
+        "/cliente/feiras": "fairs",
+        "/cliente/produtos": "products",
+        "/cliente/pedidos": "orders",
+        "/cliente/perfil": "profile",
+      };
+      if (tabRoutes[route]) {
+        setScreen("main");
+        setTab(tabRoutes[route]);
+        return;
+      }
+      const screenRoutes: Record<string, Screen> = {
+        "/cliente/rastreamento": "tracking",
+        "/cliente/checkout": "checkout",
+        "/cliente/favoritos": "favorites",
+        "/cliente/notificacoes": "notifications",
+        "/cliente/enderecos": "addresses",
+        "/cliente/suporte": "chat",
+        "/cliente/configuracoes": "settings",
+      };
+      if (screenRoutes[route]) {
+        setScreen(screenRoutes[route]);
+        return;
+      }
+      if (route.startsWith("/feiras/")) {
+        const fairName = route.slice("/feiras/".length);
+        if (fairs.some((fair) => fair.name === fairName)) setSelectedFair(fairName);
+        setScreen("fair");
+        return;
+      }
+      if (route.startsWith("/lojas/")) {
+        setSelectedVendor(route.slice("/lojas/".length));
+        setScreen("feirante");
+        return;
+      }
+      setScreen("main");
+      setTab("home");
+      updateHash("/cliente/inicio", true);
+    }
+
+    if (!window.location.hash || window.location.hash === "#/entrar") {
+      updateHash(
+        role === "customer" ? "/cliente/inicio" : role === "feirante" ? "/feirante" : "/entregador",
+        true,
+      );
+    }
+    syncFromUrl();
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, [role]);
+
   function notify(message: string) {
     setToast(message);
     window.setTimeout(() => setToast(""), 2800);
@@ -72,22 +177,49 @@ export default function App() {
     setScreen("main");
     setTab(nextTab);
     setCartOpen(false);
+    const routes: Record<CustomerTab, string> = {
+      home: "/cliente/inicio",
+      fairs: "/cliente/feiras",
+      products: "/cliente/produtos",
+      orders: "/cliente/pedidos",
+      profile: "/cliente/perfil",
+    };
+    updateHash(routes[nextTab]);
   }
   function openScreen(nextScreen: Screen) {
     setScreen(nextScreen);
     setCartOpen(false);
+    const routes: Partial<Record<Screen, string>> = {
+      tracking: "/cliente/rastreamento",
+      checkout: "/cliente/checkout",
+      favorites: "/cliente/favoritos",
+      notifications: "/cliente/notificacoes",
+      addresses: "/cliente/enderecos",
+      chat: "/cliente/suporte",
+      settings: "/cliente/configuracoes",
+      feiranteOps: "/feirante/operacao",
+      deliveryOps: "/entregador/entregas",
+    };
+    if (nextScreen === "fair") updateHash(`/feiras/${encodeURIComponent(selectedFair)}`);
+    else if (nextScreen === "feirante") updateHash(`/lojas/${encodeURIComponent(selectedVendor)}`);
+    else if (routes[nextScreen]) updateHash(routes[nextScreen]);
   }
-  function login(nextRole: Role) {
-    setStoredRole(nextRole);
+  function login(nextRole: Role, email: string) {
+    setStoredSession({ role: nextRole, email, name: nameFromEmail(email) });
     setScreen("main");
     setTab("home");
     setCartOpen(false);
+    updateHash(
+      nextRole === "customer" ? "/cliente/inicio" : nextRole === "feirante" ? "/feirante" : "/entregador",
+      true,
+    );
   }
   function logout() {
-    setStoredRole(null);
+    setStoredSession(null);
     setScreen("main");
     setTab("home");
     setCartOpen(false);
+    updateHash("/entrar", true);
   }
   function addToCart(id: number) {
     const product = products.find((item) => item.id === id);
@@ -168,7 +300,13 @@ export default function App() {
         locationLoading={locationLoading}
         notifications={notifications}
         itemCount={itemCount}
-        onHome={() => (role === "customer" ? openCustomerTab("home") : setScreen("main"))}
+        onHome={() => {
+          if (role === "customer") openCustomerTab("home");
+          else {
+            setScreen("main");
+            updateHash(role === "feirante" ? "/feirante" : "/entregador");
+          }
+        }}
         onTab={openCustomerTab}
         onQuery={(value) => {
           setQuery(value);
@@ -191,11 +329,13 @@ export default function App() {
                 onTab={openCustomerTab}
                 onFair={(name) => {
                   setSelectedFair(name);
-                  openScreen("fair");
+                  setScreen("fair");
+                  updateHash(`/feiras/${encodeURIComponent(name)}`);
                 }}
                 onVendor={(name) => {
                   setSelectedVendor(name);
-                  openScreen("feirante");
+                  setScreen("feirante");
+                  updateHash(`/lojas/${encodeURIComponent(name)}`);
                 }}
                 onTracking={() => openScreen("tracking")}
                 onMap={openMap}
@@ -206,7 +346,8 @@ export default function App() {
                 fairItems={fairsWithDistance}
                 onFair={(name) => {
                   setSelectedFair(name);
-                  openScreen("fair");
+                  setScreen("fair");
+                  updateHash(`/feiras/${encodeURIComponent(name)}`);
                 }}
                 onMap={openMap}
               />
@@ -222,7 +363,9 @@ export default function App() {
               />
             )}
             {tab === "orders" && <OrdersPage orders={orders} onTracking={() => openScreen("tracking")} />}
-            {tab === "profile" && <ProfilePage onScreen={openScreen} onLogout={logout} />}
+            {tab === "profile" && session && (
+              <ProfilePage session={session} onScreen={openScreen} onLogout={logout} />
+            )}
           </main>
         )}
         {role !== "customer" && screen === "main" && (
@@ -264,6 +407,7 @@ export default function App() {
             onAdd={addToCart}
             onFavorite={toggleFavorite}
             onBack={() => openCustomerTab("profile")}
+            onExplore={() => openCustomerTab("products")}
           />
         )}
         {screen === "notifications" && (
@@ -278,8 +422,23 @@ export default function App() {
         {screen === "addresses" && <AddressesPage onBack={() => openCustomerTab("profile")} />}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
-        {screen === "feiranteOps" && <FeiranteOperations onBack={() => setScreen("main")} />}
-        {screen === "deliveryOps" && <DeliveryOperations onBack={() => setScreen("main")} />}
+        {screen === "feiranteOps" && (
+          <FeiranteOperations
+            onBack={() => {
+              setScreen("main");
+              updateHash("/feirante");
+            }}
+          />
+        )}
+        {screen === "deliveryOps" && (
+          <DeliveryOperations
+            onBack={() => {
+              setScreen("main");
+              updateHash("/entregador");
+            }}
+            onMap={() => openMap(-15.621, -47.657)}
+          />
+        )}
       </div>
 
       {role === "customer" && screen === "main" && <MobileNavigation active={tab} onTab={openCustomerTab} />}
@@ -303,10 +462,11 @@ export default function App() {
   );
 }
 
-function LoginPage({ onLogin }: { onLogin: (role: Role) => void }) {
+function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) => void }) {
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const options: Array<{ role: Role; title: string; text: string; icon: ReactNode }> = [
     {
       role: "customer",
@@ -330,7 +490,7 @@ function LoginPage({ onLogin }: { onLogin: (role: Role) => void }) {
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    onLogin(selectedRole);
+    onLogin(selectedRole, email.trim());
   }
 
   return (
@@ -395,17 +555,26 @@ function LoginPage({ onLogin }: { onLogin: (role: Role) => void }) {
                 required
               />
             </label>
-            <label>
+            <label className="password-field">
               Senha
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Digite sua senha"
-                autoComplete="current-password"
-                minLength={6}
-                required
-              />
+              <span>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Digite sua senha"
+                  autoComplete="current-password"
+                  minLength={6}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </span>
             </label>
             <button type="submit" className="primary-action w-full">
               Entrar como {roleLabels[selectedRole]} <ChevronRight size={18} />
@@ -441,6 +610,7 @@ type HeaderProps = {
   onLogout: () => void;
 };
 function Header(props: HeaderProps) {
+  const [contextOpen, setContextOpen] = useState(false);
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -501,7 +671,7 @@ function Header(props: HeaderProps) {
           )}
         </div>
         {props.role === "customer" && (
-          <div className="grid gap-2 pb-3 md:grid-cols-[minmax(260px,1fr)_auto_auto]">
+          <div className="customer-tools">
             <label className="search-field">
               <Search size={18} aria-hidden="true" />
               <span className="sr-only">Buscar produtos, feirantes ou feiras</span>
@@ -516,23 +686,38 @@ function Header(props: HeaderProps) {
                 </button>
               )}
             </label>
-            <div className="fair-switcher">
-              <label htmlFor="current-fair">Feira</label>
-              <select
-                id="current-fair"
-                value={props.selectedFair}
-                onChange={(event) => props.onFairChange(event.target.value)}
-              >
-                {fairs.map((fair) => (
-                  <option key={fair.name}>{fair.name}</option>
-                ))}
-              </select>
-              <button onClick={props.onOpenFair}>Abrir</button>
-            </div>
-            <button onClick={props.onLocation} className="location-button" disabled={props.locationLoading}>
-              <LocateFixed size={17} />
-              <span>{props.locationLoading ? "Localizando…" : props.locationLabel}</span>
+            <button
+              type="button"
+              className="context-toggle"
+              onClick={() => setContextOpen((value) => !value)}
+              aria-expanded={contextOpen}
+            >
+              <MapPin size={16} />
+              <span>
+                <b>{props.selectedFair}</b>
+                <small>{props.locationLoading ? "Localizando…" : props.locationLabel}</small>
+              </span>
+              <ChevronRight size={17} />
             </button>
+            <div className={contextOpen ? "header-context open" : "header-context"}>
+              <div className="fair-switcher">
+                <label htmlFor="current-fair">Feira</label>
+                <select
+                  id="current-fair"
+                  value={props.selectedFair}
+                  onChange={(event) => props.onFairChange(event.target.value)}
+                >
+                  {fairs.map((fair) => (
+                    <option key={fair.name}>{fair.name}</option>
+                  ))}
+                </select>
+                <button onClick={props.onOpenFair}>Abrir</button>
+              </div>
+              <button onClick={props.onLocation} className="location-button" disabled={props.locationLoading}>
+                <LocateFixed size={17} />
+                <span>{props.locationLoading ? "Localizando…" : props.locationLabel}</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -772,7 +957,7 @@ function ProductCard({
       >
         <Heart size={17} className={favorite ? "fill-red-500 text-red-500" : ""} />
       </button>
-      <div className="product-art">
+      <div className="product-art" data-category={product.category}>
         <span aria-hidden="true">{product.emoji}</span>
         <small>{product.category}</small>
       </div>
@@ -822,7 +1007,15 @@ function OrdersPage({ orders, onTracking }: { orders: DemoOrder[]; onTracking: (
     </section>
   );
 }
-function ProfilePage({ onScreen, onLogout }: { onScreen: (screen: Screen) => void; onLogout: () => void }) {
+function ProfilePage({
+  session,
+  onScreen,
+  onLogout,
+}: {
+  session: DemoSession;
+  onScreen: (screen: Screen) => void;
+  onLogout: () => void;
+}) {
   const links: Array<[string, string, ReactNode, Screen]> = [
     ["Meus endereços", "Gerencie locais de entrega", <MapPin />, "addresses"],
     ["Favoritos", "Produtos salvos", <Heart />, "favorites"],
@@ -837,9 +1030,9 @@ function ProfilePage({ onScreen, onLogout }: { onScreen: (screen: Screen) => voi
           <User />
         </div>
         <div>
-          <small>CONTA DEMONSTRATIVA</small>
-          <h1>Olá, visitante</h1>
-          <p>Seus dados serão conectados quando o Supabase for implementado.</p>
+          <small>CONTA DEMONSTRATIVA · CLIENTE</small>
+          <h1>Olá, {session.name}</h1>
+          <p>{session.email} · dados locais até a conexão com o Supabase.</p>
         </div>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -1100,11 +1293,13 @@ function FavoritesPage({
   onAdd,
   onFavorite,
   onBack,
+  onExplore,
 }: {
   ids: number[];
   onAdd: (id: number) => void;
   onFavorite: (id: number) => void;
   onBack: () => void;
+  onExplore: () => void;
 }) {
   const favoriteProducts = products.filter((product) => ids.includes(product.id));
   return (
@@ -1116,7 +1311,12 @@ function FavoritesPage({
           ))}
         </div>
       ) : (
-        <Empty title="Nenhum favorito" text="Toque no coração de um produto para salvá-lo aqui." />
+        <Empty
+          title="Nenhum favorito"
+          text="Toque no coração de um produto para salvá-lo aqui."
+          action="Explorar produtos"
+          onAction={onExplore}
+        />
       )}
     </Panel>
   );
@@ -1350,10 +1550,49 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
   ];
   const [active, setActive] = useState("Pedidos");
   const [status, setStatus] = useState("Recebido");
+  const [storeOpen, setStoreOpen] = useState(true);
+  const [promotionActive, setPromotionActive] = useState(false);
+  const [vendorItems, setVendorItems] = useState([
+    { id: 1, name: "Cesta de frutas", stock: 30, active: true },
+    { id: 9, name: "Tomate orgânico", stock: 4, active: true },
+    { id: 11, name: "Cheiro-verde", stock: 0, active: false },
+  ]);
+
+  function updateItem(id: number, update: Partial<(typeof vendorItems)[number]>) {
+    setVendorItems((current) => current.map((item) => (item.id === id ? { ...item, ...update } : item)));
+  }
+
+  const inventory = (
+    <div className="operation-list">
+      {vendorItems.map((item) => (
+        <article key={item.id}>
+          <span className={item.stock <= 4 ? "inventory-dot warning" : "inventory-dot"} />
+          <div>
+            <b>{item.name}</b>
+            <small>{item.stock ? `${item.stock} unidades disponíveis` : "Produto esgotado"}</small>
+          </div>
+          {active === "Estoque" ? (
+            <div className="stock-controls">
+              <button onClick={() => updateItem(item.id, { stock: Math.max(0, item.stock - 1) })}>−</button>
+              <strong>{item.stock}</strong>
+              <button onClick={() => updateItem(item.id, { stock: item.stock + 1, active: true })}>+</button>
+            </div>
+          ) : (
+            <button
+              className={item.active ? "mini-toggle active" : "mini-toggle"}
+              onClick={() => updateItem(item.id, { active: !item.active })}
+            >
+              {item.active ? "À venda" : "Pausado"}
+            </button>
+          )}
+        </article>
+      ))}
+    </div>
+  );
   return (
     <Panel title="Operação do feirante" subtitle="Dados locais demonstrativos" onBack={onBack}>
       <ModuleTabs modules={modules} active={active} onActive={setActive} />
-      <div className="surface-card">
+      <div className="surface-card operation-card">
         <span className="eyebrow">{active}</span>
         <h2>{active === "Pedidos" ? "Pedido FE-1027" : `Gerenciar ${active.toLocaleLowerCase("pt-BR")}`}</h2>
         {active === "Pedidos" ? (
@@ -1371,21 +1610,88 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
               ))}
             </div>
           </>
+        ) : active === "Produtos" || active === "Estoque" ? (
+          inventory
+        ) : active === "Minha loja" ? (
+          <div className="operation-summary">
+            <div>
+              <b>Sítio da Vó</b>
+              <p>Feira do Produtor · Banca 18</p>
+            </div>
+            <button
+              className={storeOpen ? "status-button active" : "status-button"}
+              onClick={() => setStoreOpen((value) => !value)}
+            >
+              {storeOpen ? "Loja aberta" : "Loja fechada"}
+            </button>
+          </div>
+        ) : active === "Promoções" ? (
+          <div className="operation-summary">
+            <div>
+              <b>10% na cesta de frutas</b>
+              <p>Oferta demonstrativa válida até domingo</p>
+            </div>
+            <button
+              className={promotionActive ? "status-button active" : "status-button"}
+              onClick={() => setPromotionActive((value) => !value)}
+            >
+              {promotionActive ? "Ativa" : "Ativar"}
+            </button>
+          </div>
+        ) : active === "Financeiro" ? (
+          <div className="operation-metrics">
+            <article>
+              <strong>R$ 1.842,30</strong>
+              <span>vendas no mês</span>
+            </article>
+            <article>
+              <strong>R$ 286,40</strong>
+              <span>a receber</span>
+            </article>
+            <article>
+              <strong>24</strong>
+              <span>pedidos concluídos</span>
+            </article>
+          </div>
+        ) : active === "Avaliações" ? (
+          <div className="review-card">
+            <strong>4,9 ★</strong>
+            <div>
+              <b>“Produtos frescos e entrega cuidadosa.”</b>
+              <small>Cliente demonstrativo · hoje</small>
+            </div>
+          </div>
         ) : (
-          <p>O conteúdo real deste módulo será sincronizado com o Supabase na próxima fase.</p>
+          <div className="operation-list">
+            {["Segunda e quinta · 19h–2h", "Sábado · 7h–14h"].map((schedule) => (
+              <article key={schedule}>
+                <span className="inventory-dot" />
+                <div>
+                  <b>{schedule}</b>
+                  <small>Atendimento na Feira do Produtor</small>
+                </div>
+              </article>
+            ))}
+          </div>
         )}
       </div>
+      <p className="operation-footnote">
+        Alterações locais de demonstração. A sincronização real será feita pelo Supabase.
+      </p>
     </Panel>
   );
 }
-function DeliveryOperations({ onBack }: { onBack: () => void }) {
+function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () => void }) {
   const [online, setOnline] = useState(true);
-  const [accepted, setAccepted] = useState<string[]>([]);
+  const [accepted, setAccepted] = useState<string | null>(null);
+  const [stage, setStage] = useState(0);
   const deliveries = [
-    "FE-1024 · Feira do Produtor → Planaltina",
-    "FE-1025 · Feira Central → Asa Norte",
-    "FE-1026 · Feira da Torre → Sudoeste",
+    { id: "FE-1024", route: "Feira do Produtor → Planaltina", distance: "4,2 km", fee: "R$ 12,80" },
+    { id: "FE-1025", route: "Feira Central → Asa Norte", distance: "6,8 km", fee: "R$ 17,40" },
+    { id: "FE-1026", route: "Feira da Torre → Sudoeste", distance: "5,1 km", fee: "R$ 14,20" },
   ];
+  const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
+  const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
   return (
     <Panel title="Central do entregador" subtitle="Entregas locais demonstrativas" onBack={onBack}>
       <div className="surface-card">
@@ -1401,21 +1707,64 @@ function DeliveryOperations({ onBack }: { onBack: () => void }) {
             {online ? "Online" : "Offline"}
           </button>
         </div>
-        <div className="mt-6 space-y-3">
-          {deliveries.map((delivery) => (
-            <article className="delivery-row" key={delivery}>
-              <span>
-                <Bike />
-              </span>
-              <b>{delivery}</b>
-              <button
-                disabled={!online || accepted.includes(delivery)}
-                onClick={() => setAccepted((current) => [...current, delivery])}
-              >
-                {accepted.includes(delivery) ? "Aceita" : "Aceitar"}
+        {activeDelivery && (
+          <section className="active-delivery">
+            <span className="eyebrow">Entrega em andamento</span>
+            <h3>{activeDelivery.id}</h3>
+            <p>{activeDelivery.route}</p>
+            <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
+              {deliveryStages.map((label, index) => (
+                <span className={index <= stage ? "done" : ""} key={label}>
+                  {index + 1}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={onMap} className="secondary-action">
+                <MapPin size={17} /> Abrir rota
               </button>
-            </article>
-          ))}
+              <button
+                className="primary-action"
+                onClick={() => {
+                  if (stage === deliveryStages.length - 1) {
+                    setAccepted(null);
+                    setStage(0);
+                  } else setStage((value) => value + 1);
+                }}
+              >
+                {deliveryStages[stage]} <ChevronRight size={17} />
+              </button>
+            </div>
+          </section>
+        )}
+        <div className="mt-6 space-y-3">
+          <span className="eyebrow">Entregas disponíveis</span>
+          {deliveries
+            .filter((delivery) => delivery.id !== accepted)
+            .map((delivery) => (
+              <article className="delivery-row" key={delivery.id}>
+                <span>
+                  <Bike />
+                </span>
+                <div>
+                  <b>
+                    {delivery.id} · {delivery.route}
+                  </b>
+                  <small>
+                    {delivery.distance} · ganho {delivery.fee}
+                  </small>
+                </div>
+                <button
+                  disabled={!online || accepted !== null}
+                  onClick={() => {
+                    setAccepted(delivery.id);
+                    setStage(0);
+                  }}
+                >
+                  Aceitar
+                </button>
+              </article>
+            ))}
         </div>
       </div>
     </Panel>
@@ -1601,12 +1950,27 @@ function QuickAction({
     </button>
   );
 }
-function Empty({ title, text }: { title: string; text: string }) {
+function Empty({
+  title,
+  text,
+  action,
+  onAction,
+}: {
+  title: string;
+  text: string;
+  action?: string;
+  onAction?: () => void;
+}) {
   return (
     <div className="empty-state">
       <ShoppingBag size={34} />
       <b>{title}</b>
       <p>{text}</p>
+      {action && onAction && (
+        <button onClick={onAction} className="secondary-action">
+          {action} <ChevronRight size={16} />
+        </button>
+      )}
     </div>
   );
 }
