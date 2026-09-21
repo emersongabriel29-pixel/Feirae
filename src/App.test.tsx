@@ -7,7 +7,7 @@ function loginAs(role: "cliente" | "feirante" | "entregador") {
   fireEvent.change(screen.getByLabelText(/e-mail/i), {
     target: { value: `${role}@feirae.test` },
   });
-  fireEvent.change(screen.getByLabelText(/senha/i), {
+  fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
     target: { value: "123456" },
   });
   fireEvent.click(screen.getByRole("button", { name: new RegExp(`entrar como ${role}`, "i") }));
@@ -19,6 +19,7 @@ describe("Feiraê customer flow", () => {
     loginAs("cliente");
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
     expect(screen.getByRole("heading", { name: /produtos da feira/i })).toBeInTheDocument();
+    expect(window.location.hash).toBe("#/cliente/produtos");
   });
 
   it("completes the local demo checkout without leaving a blank screen", () => {
@@ -33,11 +34,30 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("heading", { name: /meus pedidos/i })).toBeInTheDocument();
     expect(screen.getByText(/recebido/i)).toBeInTheDocument();
   });
+
+  it("shows the demonstration account identity instead of visitor", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    expect(screen.getByRole("heading", { name: /olá, cliente/i })).toBeInTheDocument();
+    expect(screen.getByText(/cliente@feirae\.test/i)).toBeInTheDocument();
+  });
+
+  it("allows showing and hiding the password", () => {
+    render(<App />);
+    const password = screen.getByPlaceholderText(/digite sua senha/i);
+    expect(password).toHaveAttribute("type", "password");
+    fireEvent.click(screen.getByRole("button", { name: /mostrar senha/i }));
+    expect(password).toHaveAttribute("type", "text");
+  });
 });
 
 describe("Feiraê role access", () => {
   it("discards an obsolete or invalid saved profile", () => {
-    window.localStorage.setItem("feirae:session-role", JSON.stringify("admin"));
+    window.localStorage.setItem(
+      "feirae:session",
+      JSON.stringify({ role: "admin", email: "admin@feirae.test", name: "Admin" }),
+    );
     render(<App />);
     expect(screen.getByRole("heading", { name: /como você vai usar o aplicativo/i })).toBeInTheDocument();
   });
@@ -49,10 +69,30 @@ describe("Feiraê role access", () => {
     expect(screen.queryByText(/minha feira/i)).not.toBeInTheDocument();
   });
 
+  it("lets the vendor manage products and inventory in the demo", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^produtos$/i }));
+    expect(screen.getByText(/30 unidades disponíveis/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^estoque$/i }));
+    expect(screen.getAllByRole("button", { name: "+" }).length).toBeGreaterThan(0);
+  });
+
   it("opens the delivery experience selected at login", () => {
     render(<App />);
     loginAs("entregador");
     expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
+  });
+
+  it("lets the delivery person accept and advance a delivery", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /aceitar/i })[0]);
+    expect(screen.getByText(/entrega em andamento/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /ir para a banca/i }));
+    expect(screen.getByRole("button", { name: /confirmar coleta/i })).toBeInTheDocument();
   });
 
   it("only allows changing the profile after logout", () => {

@@ -7,7 +7,7 @@ describe("marketplace helpers", () => {
     expect(filterProducts(products, "QUEIJO", "Todos").map((item) => item.name)).toEqual([
       "Queijo artesanal",
     ]);
-    expect(filterProducts(products, "", "Hortifruti")).toHaveLength(2);
+    expect(filterProducts(products, "", "Hortifruti")).toHaveLength(4);
   });
 
   it("calculates cart totals", () => {

@@ -9,6 +9,8 @@
 - Favoritos, endereços, preferências e suporte local.
 - Entrada demonstrativa com escolha entre cliente, feirante e entregador.
 - Experiências separadas por perfil, sem troca de papel dentro do aplicativo.
+- Cabeçalho móvel compacto, rotas compartilháveis e identificação da sessão demonstrativa.
+- Operação local demonstrativa para feirante e ciclo completo de entrega demonstrativa.
 - Acessibilidade básica, lint, formatação, testes e CI.
 
 ## 🔴 Próxima fase: Supabase e MVP operacional

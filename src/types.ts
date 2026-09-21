@@ -1,5 +1,11 @@
 export type Role = "customer" | "feirante" | "delivery";
 
+export type DemoSession = {
+  role: Role;
+  email: string;
+  name: string;
+};
+
 export type CustomerTab = "home" | "fairs" | "products" | "orders" | "profile";
 
 export type Screen =

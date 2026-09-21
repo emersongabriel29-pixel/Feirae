@@ -6,7 +6,7 @@ Marketplace das feiras do Distrito Federal, com alimentos, artesanato, moda, pla
 
 ## Estado atual
 
-O frontend funciona como uma demonstração navegável e responsiva. A entrada oferece três acessos — cliente, feirante e entregador — e abre uma experiência específica para o perfil escolhido. A troca de perfil só acontece depois de sair. Carrinho, favoritos, endereços, preferências, sessão demonstrativa e pedidos são salvos no navegador com `localStorage`.
+O frontend funciona como uma demonstração navegável e responsiva. A entrada oferece três acessos — cliente, feirante e entregador — e abre uma experiência específica para o perfil escolhido. A troca de perfil só acontece depois de sair. Carrinho, favoritos, endereços, preferências, sessão demonstrativa e pedidos são salvos no navegador com `localStorage`. As telas possuem URLs compartilháveis com hash e respeitam a navegação voltar/avançar do navegador.
 
 O Supabase ficou deliberadamente para a próxima fase. Portanto, autenticação, permissões, estoque, pedidos, pagamentos e dados administrativos ainda não devem ser tratados como operações reais.
 
@@ -34,6 +34,8 @@ O Supabase ficou deliberadamente para a próxima fase. Portanto, autenticação,
 - compra de vários feirantes em um checkout, com divisão interna por vendedor;
 - avaliações, favoritos e notificações;
 - experiências separadas para cliente, feirante e entregador;
+- operações demonstrativas de estoque, produtos, loja, promoções e pedidos do feirante;
+- fluxo demonstrativo de aceite, coleta, rota e conclusão da entrega;
 - painel administrativo futuro, com acesso próprio;
 - futuro painel de gestão da feira.
 
