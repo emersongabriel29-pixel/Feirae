@@ -64,6 +64,12 @@ profiles, vendor_profiles, delivery_profiles, fairs, fair_vendor_memberships, ve
 - Build e testes automáticos no GitHub Actions.
 - Navegação acessível por teclado e suporte a redução de movimento.
 
+## Organização do código
+
+O componente raiz coordena a demonstração e a composição das telas, enquanto as regras puras do marketplace ficam em `src/domain/marketplace.ts` e a validação de sessão fica em `src/domain/session.ts`. Os tokens e estilos base vivem em `src/styles/tokens.css`; a folha principal mantém os estilos específicos das telas durante a migração gradual para módulos por domínio. Essa separação permite testar regras sem renderizar a aplicação e prepara a troca de `src/data.ts` por adapters de backend.
+
+Para a revisão formal, os riscos conhecidos e os comentários de PR estão em [docs/TECHNICAL_REVIEW.md](docs/TECHNICAL_REVIEW.md). O plano de transformação do protótipo em MVP está em [docs/MVP_CHECKLIST.md](docs/MVP_CHECKLIST.md).
+
 ## Desenvolvimento
 
 ```bash

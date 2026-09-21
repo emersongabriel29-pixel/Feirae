@@ -36,80 +36,22 @@ import { categories, fairs, initialOrders, products, vendorMetrics } from "./dat
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Role, Screen } from "./types";
 import { cartSubtotal, filterProducts, money, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
+import {
+  cartWeight,
+  metricForVendor,
+  minutesLabel,
+  productWeight,
+  ratingLabel,
+  vehicleForWeight,
+  vendorSummaries,
+} from "./domain/marketplace";
+import { nameFromEmail, readSession, routeForRole } from "./domain/session";
 
 const roleLabels: Record<Role, string> = {
   customer: "Cliente",
   feirante: "Feirante",
   delivery: "Entregador",
 };
-
-const vehicleRules = [
-  { name: "Bicicleta", maxKg: 5, note: "pedidos leves e próximos" },
-  { name: "Moto", maxKg: 12, note: "sacola pequena ou média" },
-  { name: "Moto com baú", maxKg: 20, note: "compras médias com volume controlado" },
-  { name: "Carro", maxKg: 80, note: "compras pesadas, caixas e várias bancas" },
-];
-
-function productWeight(product: Product, quantity: number) {
-  return product.weightKg * quantity;
-}
-
-function cartWeight(items: Product[], cart: Record<number, number>) {
-  return items.reduce((sum, product) => sum + productWeight(product, cart[product.id] ?? 0), 0);
-}
-
-function vehicleForWeight(weight: number) {
-  return vehicleRules.find((rule) => weight <= rule.maxKg) ?? vehicleRules[vehicleRules.length - 1];
-}
-
-function ratingLabel(value: number) {
-  return value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-}
-
-function minutesLabel(range: [number, number]) {
-  return `${range[0]}-${range[1]} min`;
-}
-
-function metricForVendor(name: string) {
-  return vendorMetrics[name] ?? { rating: 4.8, reviewCount: 100, deliveryMinutes: [40, 60], deliveryFee: 9.9 };
-}
-
-function vendorSummaries() {
-  return Array.from(new Set(products.map((product) => product.feirante))).map((name) => {
-    const vendorProducts = products.filter((product) => product.feirante === name);
-    const metrics = metricForVendor(name);
-    return {
-      name,
-      fair: vendorProducts[0]?.fair ?? "Feira",
-      categories: Array.from(new Set(vendorProducts.map((product) => product.category))).slice(0, 3),
-      products: vendorProducts.length,
-      ...metrics,
-    };
-  });
-}
-
-function isRole(value: unknown): value is Role {
-  return value === "customer" || value === "feirante" || value === "delivery";
-}
-
-function readSession(value: unknown): DemoSession | null {
-  if (isRole(value)) return { role: value, email: "demo@feirae.app", name: "Conta de teste" };
-  if (!value || typeof value !== "object") return null;
-  const candidate = value as Partial<DemoSession>;
-  if (!isRole(candidate.role) || typeof candidate.email !== "string" || typeof candidate.name !== "string") {
-    return null;
-  }
-  return { role: candidate.role, email: candidate.email, name: candidate.name };
-}
-
-function nameFromEmail(email: string) {
-  const rawName = email
-    .split("@")[0]
-    .replace(/[._-]+/g, " ")
-    .trim();
-  if (!rawName) return "Conta de teste";
-  return rawName.replace(/\b\p{L}/gu, (letter) => letter.toLocaleUpperCase("pt-BR"));
-}
 
 function resetViewport() {
   document.documentElement.scrollTop = 0;
@@ -214,10 +156,7 @@ export default function App() {
     }
 
     if (!window.location.hash || window.location.hash === "#/entrar") {
-      updateHash(
-        role === "customer" ? "/cliente/inicio" : role === "feirante" ? "/feirante" : "/entregador",
-        true,
-      );
+      updateHash(routeForRole(role), true);
     }
     syncFromUrl();
     window.addEventListener("popstate", syncFromUrl);
@@ -268,10 +207,7 @@ export default function App() {
     setScreen("main");
     setTab("home");
     setCartOpen(false);
-    updateHash(
-      nextRole === "customer" ? "/cliente/inicio" : nextRole === "feirante" ? "/feirante" : "/entregador",
-      true,
-    );
+    updateHash(routeForRole(nextRole), true);
   }
   function logout() {
     setStoredSession(null);
@@ -350,7 +286,9 @@ export default function App() {
     };
     setCart((current) => ({ ...current, ...demoBasket }));
     setCartOpen(true);
-    notify(orderId ? `Itens do pedido ${orderId} voltaram para a sacola.` : "Última compra voltou para a sacola.");
+    notify(
+      orderId ? `Itens do pedido ${orderId} voltaram para a sacola.` : "Última compra voltou para a sacola.",
+    );
   }
 
   if (!role) return <LoginPage onLogin={login} />;
@@ -426,11 +364,7 @@ export default function App() {
               />
             )}
             {tab === "orders" && (
-              <OrdersPage
-                orders={orders}
-                onTracking={() => openScreen("tracking")}
-                onBuyAgain={buyAgain}
-              />
+              <OrdersPage orders={orders} onTracking={() => openScreen("tracking")} onBuyAgain={buyAgain} />
             )}
             {tab === "profile" && session && (
               <ProfilePage session={session} onScreen={openScreen} onLogout={logout} />
@@ -499,7 +433,9 @@ export default function App() {
           />
         )}
         {screen === "addresses" && <AddressesPage onBack={() => openCustomerTab("profile")} />}
-        {screen === "account" && session && <AccountPage session={session} onBack={() => openCustomerTab("profile")} />}
+        {screen === "account" && session && (
+          <AccountPage session={session} onBack={() => openCustomerTab("profile")} />
+        )}
         {screen === "payments" && <PaymentsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "ratings" && <RatingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
@@ -605,10 +541,18 @@ function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) => void }
         <div className="login-form-wrap">
           <span className="eyebrow">Acesso ao Feiraê</span>
           <div className="auth-switch" role="tablist" aria-label="Entrar ou criar conta">
-            <button className={mode === "login" ? "active" : ""} type="button" onClick={() => setMode("login")}>
+            <button
+              className={mode === "login" ? "active" : ""}
+              type="button"
+              onClick={() => setMode("login")}
+            >
               Entrar
             </button>
-            <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => setMode("signup")}>
+            <button
+              className={mode === "signup" ? "active" : ""}
+              type="button"
+              onClick={() => setMode("signup")}
+            >
               Criar conta
             </button>
           </div>
@@ -883,19 +827,9 @@ function HomePage({
             text="Estado, cidade e feira"
             onClick={() => onFair(fairs[0].name)}
           />
-          <QuickAction
-            icon="🏪"
-            title="Bancas"
-            text="Escolher feirantes"
-            onClick={onVendors}
-          />
+          <QuickAction icon="🏪" title="Bancas" text="Escolher feirantes" onClick={onVendors} />
           <QuickAction icon="🛵" title="Meu pedido" text="Acompanhar a entrega" onClick={onTracking} />
-          <QuickAction
-            icon="✨"
-            title="Promoções"
-            text="Ofertas do dia"
-            onClick={() => onTab("products")}
-          />
+          <QuickAction icon="✨" title="Promoções" text="Ofertas do dia" onClick={() => onTab("products")} />
         </div>
       </section>
       <section>
@@ -1082,7 +1016,7 @@ function ProductCard({
   favorite: boolean;
   onFavorite: (id: number) => void;
 }) {
-  const metrics = metricForVendor(product.feirante);
+  const metrics = metricForVendor(product.feirante, vendorMetrics);
   return (
     <article className="product-card">
       <button
@@ -1108,7 +1042,9 @@ function ProductCard({
           <span>{money(metrics.deliveryFee)}</span>
         </div>
         <div className="product-meta">
-          <span>{product.weightKg.toLocaleString("pt-BR")} kg/{product.unit}</span>
+          <span>
+            {product.weightKg.toLocaleString("pt-BR")} kg/{product.unit}
+          </span>
           <span>{product.volume}</span>
         </div>
         <div className="mt-4 flex items-end justify-between gap-2">
@@ -1124,7 +1060,9 @@ function ProductCard({
             <Plus size={19} />
           </button>
         </div>
-        <p className="stock">{product.stock} {product.unit}(s) disponíveis</p>
+        <p className="stock">
+          {product.stock} {product.unit}(s) disponíveis
+        </p>
       </div>
     </article>
   );
@@ -1263,7 +1201,7 @@ function FairDetail({
 }
 
 function VendorsPage({ onBack, onVendor }: { onBack: () => void; onVendor: (name: string) => void }) {
-  const vendors = vendorSummaries();
+  const vendors = vendorSummaries(products, vendorMetrics);
   return (
     <Panel
       title="Bancas e feirantes"
@@ -1318,7 +1256,7 @@ function VendorStore({
   onFavorite: (id: number) => void;
 }) {
   const vendorProducts = products.filter((product) => product.feirante === vendorName);
-  const metrics = metricForVendor(vendorName);
+  const metrics = metricForVendor(vendorName, vendorMetrics);
   return (
     <Panel title={vendorName} subtitle="Loja do feirante" onBack={onBack}>
       <div className="detail-banner">
@@ -1381,7 +1319,9 @@ function DeliveryTracking({ onBack }: { onBack: () => void }) {
           )}
           <div className="cancel-panel">
             <b>Cancelar ou pedir ajuda</b>
-            <p>Depois da coleta, o cancelamento precisa de suporte para proteger cliente, banca e entregador.</p>
+            <p>
+              Depois da coleta, o cancelamento precisa de suporte para proteger cliente, banca e entregador.
+            </p>
             <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
               <option value="">Escolha um motivo</option>
               <option>Desisti do pedido</option>
@@ -1477,8 +1417,8 @@ function Checkout({
                 <div>
                   <b>{vehicle.name} indicado para esta compra</b>
                   <p>
-                    Peso estimado: {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg · limite
-                    sugerido: {vehicle.maxKg} kg · {vehicle.note}.
+                    Peso estimado: {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg ·
+                    limite sugerido: {vehicle.maxKg} kg · {vehicle.note}.
                   </p>
                 </div>
               </div>
@@ -1782,7 +1722,11 @@ function PaymentsPage({ onBack }: { onBack: () => void }) {
     setMode(null);
   }
   return (
-    <Panel title="Pagamentos e carteira" subtitle="O app mostra pagamento nativo, mesmo usando provedor externo por trás." onBack={onBack}>
+    <Panel
+      title="Pagamentos e carteira"
+      subtitle="O app mostra pagamento nativo, mesmo usando provedor externo por trás."
+      onBack={onBack}
+    >
       <div className="grid gap-4 lg:grid-cols-[1fr_.8fr]">
         <div className="surface-card">
           <span className="eyebrow">Métodos</span>
@@ -1811,7 +1755,9 @@ function PaymentsPage({ onBack }: { onBack: () => void }) {
                 <input
                   value={field}
                   onChange={(event) => setField(event.target.value)}
-                  placeholder={mode === "card" ? "0000 0000 0000 0000" : "CPF, e-mail, telefone ou chave aleatória"}
+                  placeholder={
+                    mode === "card" ? "0000 0000 0000 0000" : "CPF, e-mail, telefone ou chave aleatória"
+                  }
                   required
                 />
               </label>
@@ -1831,9 +1777,18 @@ function PaymentsPage({ onBack }: { onBack: () => void }) {
           <h2>R$ 18,90</h2>
           <p>Crédito de reembolso disponível para a próxima compra.</p>
           <div className="finance-breakdown">
-            <p><span>Cupom ativo</span><strong>FEIRA10</strong></p>
-            <p><span>Reembolso</span><strong>R$ 18,90</strong></p>
-            <p><span>Expira em</span><strong>30 dias</strong></p>
+            <p>
+              <span>Cupom ativo</span>
+              <strong>FEIRA10</strong>
+            </p>
+            <p>
+              <span>Reembolso</span>
+              <strong>R$ 18,90</strong>
+            </p>
+            <p>
+              <span>Expira em</span>
+              <strong>30 dias</strong>
+            </p>
           </div>
         </div>
       </div>
@@ -1849,13 +1804,19 @@ function RatingsPage({ onBack }: { onBack: () => void }) {
     ["App", "Experiência mensal", "4,7", "Avaliação solicitada uma vez por mês."],
   ];
   return (
-    <Panel title="Minhas avaliações" subtitle="Cliente, banca, entregador e app se avaliam no fluxo certo." onBack={onBack}>
+    <Panel
+      title="Minhas avaliações"
+      subtitle="Cliente, banca, entregador e app se avaliam no fluxo certo."
+      onBack={onBack}
+    >
       <div className="review-grid">
         {reviews.map(([type, target, rating, text]) => (
           <article className="review-card" key={`${type}-${target}`}>
             <strong>{rating} ★</strong>
             <div>
-              <b>{type} · {target}</b>
+              <b>
+                {type} · {target}
+              </b>
               <small>{text}</small>
             </div>
           </article>
@@ -1880,7 +1841,11 @@ function ChatPage({ onBack }: { onBack: () => void }) {
     setMessage("");
   }
   return (
-    <Panel title="Suporte Feiraê" subtitle="Atendimento para pedido, pagamento, entrega e conta." onBack={onBack}>
+    <Panel
+      title="Suporte Feiraê"
+      subtitle="Atendimento para pedido, pagamento, entrega e conta."
+      onBack={onBack}
+    >
       <div className="chat-card">
         <div className="support-topics">
           {["Pedido em andamento", "Pagamento", "Entrega", "Conta"].map((item) => (
@@ -2039,15 +2004,7 @@ const deliveryModuleDetails: Record<string, { text: string; badge: string }> = {
   Avaliações: { text: "Regras de avaliação após entrega e coleta.", badge: "Fluxo" },
 };
 
-function ModuleHeader({
-  title,
-  description,
-  badge,
-}: {
-  title: string;
-  description: string;
-  badge?: string;
-}) {
+function ModuleHeader({ title, description, badge }: { title: string; description: string; badge?: string }) {
   return (
     <div className="module-header">
       <div>
@@ -2077,7 +2034,9 @@ function OperationsMenu({
             <span>{detail.badge}</span>
             <b>{module}</b>
             <small>{detail.text}</small>
-            <strong>Entrar <ChevronRight size={16} /></strong>
+            <strong>
+              Entrar <ChevronRight size={16} />
+            </strong>
           </button>
         );
       })}
@@ -2203,399 +2162,420 @@ function FeiranteOperations({ onBack }: { onBack: () => void }) {
           <button className="back-button" onClick={() => setActive("Central")}>
             <ArrowLeft size={17} /> Voltar para central
           </button>
-        <div className="surface-card operation-card">
-          <span className="eyebrow">{active}</span>
-          <h2>{active === "Pedidos" ? "Pedido FE-1027" : `Gerenciar ${active.toLocaleLowerCase("pt-BR")}`}</h2>
-          {active === "Painel" ? (
-            <div className="operation-metrics">
-              <article>
-                <strong>{storeOpen ? "Aberta" : "Fechada"}</strong>
-                <span>Sítio da Vó · Banca 18</span>
-              </article>
-              <article>
-                <strong>4,9 ★</strong>
-                <span>média de 126 avaliações</span>
-              </article>
-              <article>
-                <strong>2</strong>
-                <span>produtos com estoque baixo</span>
-              </article>
-            </div>
-          ) : active === "Pedidos" ? (
-          <>
-            <ModuleHeader
-              badge="Pedido em preparo"
-              title="FE-1027 · Dona Marta"
-              description="3 itens · R$ 86,80 · Planaltina · retirada prevista em 18 minutos"
-            />
-            <div className="module-kpi-strip">
-              <article>
-                <strong>8,4 kg</strong>
-                <span>peso estimado</span>
-              </article>
-              <article>
-                <strong>Moto</strong>
-                <span>veículo compatível</span>
-              </article>
-              <article>
-                <strong>R$ 12,80</strong>
-                <span>entrega prevista</span>
-              </article>
-            </div>
-            <div className="module-action-row">
-              {["Recebido", "Preparando", "Pronto para coleta", "Coletado"].map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setStatus(item)}
-                  className={status === item ? "status-button active" : "status-button"}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-            <div className="operation-list detailed">
-              {["Cesta de frutas · 1 cesta · 4 kg", "Tomate orgânico · 2 kg", "Cheiro-verde · 2 maços"].map((item) => (
-                <article key={item}>
-                  <Package />
-                  <div>
-                    <b>{item}</b>
-                    <small>Separar, conferir peso e embalar antes da coleta.</small>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <div className="cancel-panel">
-              <b>Cancelar pedido</b>
-              <select>
-                <option>Item indisponível</option>
-                <option>Banca fechou mais cedo</option>
-                <option>Peso acima do combinado</option>
-                <option>Cliente solicitou cancelamento</option>
-              </select>
-            </div>
-          </>
-          ) : active === "Produtos" ? (
-            <>
-              <button className="primary-action" onClick={() => setNewProductOpen((value) => !value)}>
-                <Plus size={17} /> Adicionar produto
-              </button>
-              {newProductOpen && (
-                <form className="form-card" onSubmit={addVendorItem}>
-                  <label>
-                    Nome do produto
-                    <input value={productName} onChange={(event) => setProductName(event.target.value)} required />
-                  </label>
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    <label>
-                      Preço
-                      <input placeholder="R$ 0,00" />
-                    </label>
-                    <label>
-                      Peso
-                      <input placeholder="kg por unidade" />
-                    </label>
-                    <label>
-                      Unidade
-                      <input placeholder="kg, maço, cesta" />
-                    </label>
-                  </div>
-                  <button className="primary-action" type="submit">
-                    Salvar produto
-                  </button>
-                </form>
-              )}
-              {inventory}
-            </>
-          ) : active === "Estoque" ? (
-            <>
-              <ModuleHeader
-                badge="Controle rápido"
-                title="Estoque da banca"
-                description="Ajuste quantidade, pause item esgotado e evite venda sem produto."
-              />
-              <div className="module-kpi-strip">
+          <div className="surface-card operation-card">
+            <span className="eyebrow">{active}</span>
+            <h2>
+              {active === "Pedidos" ? "Pedido FE-1027" : `Gerenciar ${active.toLocaleLowerCase("pt-BR")}`}
+            </h2>
+            {active === "Painel" ? (
+              <div className="operation-metrics">
                 <article>
-                  <strong>34</strong>
-                  <span>itens disponíveis</span>
+                  <strong>{storeOpen ? "Aberta" : "Fechada"}</strong>
+                  <span>Sítio da Vó · Banca 18</span>
+                </article>
+                <article>
+                  <strong>4,9 ★</strong>
+                  <span>média de 126 avaliações</span>
                 </article>
                 <article>
                   <strong>2</strong>
-                  <span>alertas de baixo estoque</span>
-                </article>
-                <article>
-                  <strong>1</strong>
-                  <span>produto pausado</span>
+                  <span>produtos com estoque baixo</span>
                 </article>
               </div>
-              {inventory}
-            </>
-          ) : active === "Minha banca" ? (
-          <>
-            <ModuleHeader
-              badge="Perfil público"
-              title="Sítio da Vó · Banca 18"
-              description="Feira do Produtor, Planaltina. Hortifruti, cestas e produtos selecionados."
-            />
-            <div className="vendor-profile-card">
-              <span>🥬</span>
-              <div>
-                <b>Banca verificada</b>
-                <small>Box 18 · abre seg., qua. e sáb. · avaliação 4,9</small>
-              </div>
-              <button
-                className={storeOpen ? "status-button active" : "status-button"}
-                onClick={() => setStoreOpen((value) => !value)}
-              >
-                {storeOpen ? "Aberta" : "Fechada"}
-              </button>
-            </div>
-            <div className="operation-list detailed">
-              {["Editar nome, logo e foto da banca", "Atualizar feira, corredor, box e ponto de referência", "Definir categorias: hortifruti, orgânicos e cestas"].map((item) => (
-                <article key={item}>
-                  <Edit3 />
-                  <div>
-                    <b>{item}</b>
-                    <small>Essas informações aparecem para o cliente antes da compra.</small>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </>
-          ) : active === "Horários" ? (
-            <div className="space-y-3">
-              <ModuleHeader
-                badge="Agenda da banca"
-                title="Horários de venda"
-                description="Use o horário oficial da feira ou informe os dias que sua banca realmente estará aberta."
-              />
-              <Toggle
-                label="Usar horário padrão da feira"
-                description="Feira do Produtor · segunda e quinta · 19h-2h"
-                checked={!customHours}
-                onChange={(checked) => setCustomHours(!checked)}
-              />
-              <Toggle
-                label="Definir meu próprio horário"
-                description="Escolher dias, abertura, fechamento, pausas e exceções"
-                checked={customHours}
-                onChange={setCustomHours}
-              />
-              {customHours && (
-                <div className="operation-list">
-                  {["Segunda · 8h-17h", "Quarta · 8h-17h", "Sábado · 7h-14h"].map((schedule) => (
-                    <article key={schedule}>
-                      <CalendarClock />
+            ) : active === "Pedidos" ? (
+              <>
+                <ModuleHeader
+                  badge="Pedido em preparo"
+                  title="FE-1027 · Dona Marta"
+                  description="3 itens · R$ 86,80 · Planaltina · retirada prevista em 18 minutos"
+                />
+                <div className="module-kpi-strip">
+                  <article>
+                    <strong>8,4 kg</strong>
+                    <span>peso estimado</span>
+                  </article>
+                  <article>
+                    <strong>Moto</strong>
+                    <span>veículo compatível</span>
+                  </article>
+                  <article>
+                    <strong>R$ 12,80</strong>
+                    <span>entrega prevista</span>
+                  </article>
+                </div>
+                <div className="module-action-row">
+                  {["Recebido", "Preparando", "Pronto para coleta", "Coletado"].map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => setStatus(item)}
+                      className={status === item ? "status-button active" : "status-button"}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+                <div className="operation-list detailed">
+                  {[
+                    "Cesta de frutas · 1 cesta · 4 kg",
+                    "Tomate orgânico · 2 kg",
+                    "Cheiro-verde · 2 maços",
+                  ].map((item) => (
+                    <article key={item}>
+                      <Package />
                       <div>
-                        <b>{schedule}</b>
-                        <small>Aberto com horário próprio da banca</small>
+                        <b>{item}</b>
+                        <small>Separar, conferir peso e embalar antes da coleta.</small>
                       </div>
                     </article>
                   ))}
                 </div>
-              )}
-            </div>
-          ) : active === "Entrega/retirada" ? (
-            <>
-              <ModuleHeader
-                badge="Logística"
-                title="Entrega e retirada"
-                description="Defina como o pedido sai da banca e quais limites entram no cálculo da corrida."
-              />
-              <div className="operation-list detailed">
-                {[
-                  ["Entrega Feiraê", "Ativa · entregador recebe peso, volume, rota e ganho antes de aceitar."],
-                  ["Retirada na banca", "Cliente vê box, ponto de referência e horário de retirada."],
-                  ["Limite por pedido", "Até 20 kg para moto com baú; acima disso, direciona para carro."],
-                ].map(([title, text]) => (
-                  <article key={title}>
-                    <Truck />
-                    <div>
-                      <b>{title}</b>
-                      <small>{text}</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </>
-          ) : active === "Promoções" ? (
-          <>
-            <ModuleHeader
-              badge="Campanhas"
-              title="Promoções da banca"
-              description="Monte ofertas simples para aparecer em destaques, vitrine e recompra."
-            />
-            <div className="promo-card">
-              <span>🍎</span>
-              <div>
-                <b>10% na cesta de frutas</b>
-                <small>Válida até domingo · aparece em Destaques da feira</small>
-              </div>
-              <button
-                className={promotionActive ? "status-button active" : "status-button"}
-                onClick={() => setPromotionActive((value) => !value)}
-              >
-                {promotionActive ? "Ativa" : "Ativar"}
-              </button>
-            </div>
-            <div className="module-action-row">
-              <button
-                className={promotionTool === "combo" ? "status-button active" : "status-button"}
-                onClick={() => setPromotionTool("combo")}
-              >
-                Criar combo
-              </button>
-              <button
-                className={promotionTool === "horario" ? "status-button active" : "status-button"}
-                onClick={() => setPromotionTool("horario")}
-              >
-                Oferta por horário
-              </button>
-              <button
-                className={promotionTool === "cupom" ? "status-button active" : "status-button"}
-                onClick={() => setPromotionTool("cupom")}
-              >
-                Cupom da banca
-              </button>
-            </div>
-            <form className="form-card compact">
-              {promotionTool === "combo" && (
-                <>
-                  <label>
-                    Nome do combo
-                    <input defaultValue="Combo salada da semana" />
-                  </label>
-                  <label>
-                    Itens
-                    <input defaultValue="Tomate orgânico + cheiro-verde + alface" />
-                  </label>
-                </>
-              )}
-              {promotionTool === "horario" && (
-                <>
-                  <label>
-                    Janela da oferta
-                    <input defaultValue="Sábado · 7h às 10h" />
-                  </label>
-                  <label>
-                    Desconto
-                    <input defaultValue="15%" />
-                  </label>
-                </>
-              )}
-              {promotionTool === "cupom" && (
-                <>
-                  <label>
-                    Código do cupom
-                    <input defaultValue="SITIO10" />
-                  </label>
-                  <label>
-                    Regra
-                    <input defaultValue="10% acima de R$ 50,00" />
-                  </label>
-                </>
-              )}
-              <button type="button" className="primary-action">
-                Salvar campanha
-              </button>
-            </form>
-          </>
-        ) : active === "Financeiro" ? (
-          <>
-            <ModuleHeader
-              badge="Receitas e custos"
-              title="Financeiro da banca"
-              description="Visão de vendas, taxas, custos estimados e valores a receber."
-            />
-            <div className="operation-metrics">
-              <article>
-                <strong>R$ 1.842,30</strong>
-                <span>vendas no mês</span>
-              </article>
-              <article>
-                <strong>R$ 286,40</strong>
-                <span>a receber</span>
-              </article>
-              <article>
-                <strong>24</strong>
-                <span>pedidos concluídos</span>
-              </article>
-            </div>
-            <div className="finance-breakdown">
-              {[
-                ["Vendas brutas", "R$ 1.842,30"],
-                ["Taxa Feiraê demonstrativa", "R$ 92,10"],
-                ["Entrega repassada ao entregador", "R$ 214,60"],
-                ["Previsão de repasse", "R$ 1.535,60"],
-              ].map(([label, value]) => (
-                <p key={label}>
-                  <span>{label}</span>
-                  <strong>{value}</strong>
-                </p>
-              ))}
-            </div>
-          </>
-          ) : active === "Avaliações" ? (
-            <>
-            <ModuleHeader
-              badge="Reputação"
-              title="Avaliações recebidas"
-              description="Média em cima, avaliações individuais embaixo, separadas por cliente, produto e entrega."
-            />
-            <div className="review-grid compact">
-              {[
-                ["Cliente", "4,9", "Produtos frescos e entrega cuidadosa."],
-                ["Entregador", "5,0", "Pedido pronto no horário combinado."],
-                ["Produto", "4,8", "Cesta bem montada e peso correto."],
-              ].map(([source, rating, text]) => (
-                <article className="review-card" key={source}>
-                  <strong>{rating} ★</strong>
-                  <div>
-                    <b>{source}</b>
-                    <small>{text}</small>
-                  </div>
-                </article>
-              ))}
-            </div>
-            </>
-          ) : active === "Documentos" ? (
-            <>
-              <ModuleHeader
-                badge="Cadastro"
-                title="Documentação e validação"
-                description="Antes de vender de verdade, a banca precisa passar pela conferência."
-              />
-              <div className="operation-list detailed">
-                {[
-                  ["Documento do responsável", "Aprovado"],
-                  ["Comprovante da banca/box", "Pendente de envio"],
-                  ["Validação de feirante", "Em análise"],
-                ].map(([doc, statusText]) => (
-                  <article key={doc}>
-                    <Check />
-                    <div>
-                      <b>{doc}</b>
-                      <small>Necessário para vender e receber repasses.</small>
-                    </div>
-                    <span className="document-status">{statusText}</span>
-                  </article>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="operation-list">
-              {["R$ 1.842,30 em vendas no mês", "R$ 286,40 a receber", "Custos e taxas serão detalhados"].map((item) => (
-                <article key={item}>
-                  <Wallet />
-                <div>
-                  <b>{item}</b>
-                  <small>Financeiro da banca</small>
+                <div className="cancel-panel">
+                  <b>Cancelar pedido</b>
+                  <select>
+                    <option>Item indisponível</option>
+                    <option>Banca fechou mais cedo</option>
+                    <option>Peso acima do combinado</option>
+                    <option>Cliente solicitou cancelamento</option>
+                  </select>
                 </div>
-              </article>
-            ))}
+              </>
+            ) : active === "Produtos" ? (
+              <>
+                <button className="primary-action" onClick={() => setNewProductOpen((value) => !value)}>
+                  <Plus size={17} /> Adicionar produto
+                </button>
+                {newProductOpen && (
+                  <form className="form-card" onSubmit={addVendorItem}>
+                    <label>
+                      Nome do produto
+                      <input
+                        value={productName}
+                        onChange={(event) => setProductName(event.target.value)}
+                        required
+                      />
+                    </label>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <label>
+                        Preço
+                        <input placeholder="R$ 0,00" />
+                      </label>
+                      <label>
+                        Peso
+                        <input placeholder="kg por unidade" />
+                      </label>
+                      <label>
+                        Unidade
+                        <input placeholder="kg, maço, cesta" />
+                      </label>
+                    </div>
+                    <button className="primary-action" type="submit">
+                      Salvar produto
+                    </button>
+                  </form>
+                )}
+                {inventory}
+              </>
+            ) : active === "Estoque" ? (
+              <>
+                <ModuleHeader
+                  badge="Controle rápido"
+                  title="Estoque da banca"
+                  description="Ajuste quantidade, pause item esgotado e evite venda sem produto."
+                />
+                <div className="module-kpi-strip">
+                  <article>
+                    <strong>34</strong>
+                    <span>itens disponíveis</span>
+                  </article>
+                  <article>
+                    <strong>2</strong>
+                    <span>alertas de baixo estoque</span>
+                  </article>
+                  <article>
+                    <strong>1</strong>
+                    <span>produto pausado</span>
+                  </article>
+                </div>
+                {inventory}
+              </>
+            ) : active === "Minha banca" ? (
+              <>
+                <ModuleHeader
+                  badge="Perfil público"
+                  title="Sítio da Vó · Banca 18"
+                  description="Feira do Produtor, Planaltina. Hortifruti, cestas e produtos selecionados."
+                />
+                <div className="vendor-profile-card">
+                  <span>🥬</span>
+                  <div>
+                    <b>Banca verificada</b>
+                    <small>Box 18 · abre seg., qua. e sáb. · avaliação 4,9</small>
+                  </div>
+                  <button
+                    className={storeOpen ? "status-button active" : "status-button"}
+                    onClick={() => setStoreOpen((value) => !value)}
+                  >
+                    {storeOpen ? "Aberta" : "Fechada"}
+                  </button>
+                </div>
+                <div className="operation-list detailed">
+                  {[
+                    "Editar nome, logo e foto da banca",
+                    "Atualizar feira, corredor, box e ponto de referência",
+                    "Definir categorias: hortifruti, orgânicos e cestas",
+                  ].map((item) => (
+                    <article key={item}>
+                      <Edit3 />
+                      <div>
+                        <b>{item}</b>
+                        <small>Essas informações aparecem para o cliente antes da compra.</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Horários" ? (
+              <div className="space-y-3">
+                <ModuleHeader
+                  badge="Agenda da banca"
+                  title="Horários de venda"
+                  description="Use o horário oficial da feira ou informe os dias que sua banca realmente estará aberta."
+                />
+                <Toggle
+                  label="Usar horário padrão da feira"
+                  description="Feira do Produtor · segunda e quinta · 19h-2h"
+                  checked={!customHours}
+                  onChange={(checked) => setCustomHours(!checked)}
+                />
+                <Toggle
+                  label="Definir meu próprio horário"
+                  description="Escolher dias, abertura, fechamento, pausas e exceções"
+                  checked={customHours}
+                  onChange={setCustomHours}
+                />
+                {customHours && (
+                  <div className="operation-list">
+                    {["Segunda · 8h-17h", "Quarta · 8h-17h", "Sábado · 7h-14h"].map((schedule) => (
+                      <article key={schedule}>
+                        <CalendarClock />
+                        <div>
+                          <b>{schedule}</b>
+                          <small>Aberto com horário próprio da banca</small>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : active === "Entrega/retirada" ? (
+              <>
+                <ModuleHeader
+                  badge="Logística"
+                  title="Entrega e retirada"
+                  description="Defina como o pedido sai da banca e quais limites entram no cálculo da corrida."
+                />
+                <div className="operation-list detailed">
+                  {[
+                    [
+                      "Entrega Feiraê",
+                      "Ativa · entregador recebe peso, volume, rota e ganho antes de aceitar.",
+                    ],
+                    ["Retirada na banca", "Cliente vê box, ponto de referência e horário de retirada."],
+                    ["Limite por pedido", "Até 20 kg para moto com baú; acima disso, direciona para carro."],
+                  ].map(([title, text]) => (
+                    <article key={title}>
+                      <Truck />
+                      <div>
+                        <b>{title}</b>
+                        <small>{text}</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Promoções" ? (
+              <>
+                <ModuleHeader
+                  badge="Campanhas"
+                  title="Promoções da banca"
+                  description="Monte ofertas simples para aparecer em destaques, vitrine e recompra."
+                />
+                <div className="promo-card">
+                  <span>🍎</span>
+                  <div>
+                    <b>10% na cesta de frutas</b>
+                    <small>Válida até domingo · aparece em Destaques da feira</small>
+                  </div>
+                  <button
+                    className={promotionActive ? "status-button active" : "status-button"}
+                    onClick={() => setPromotionActive((value) => !value)}
+                  >
+                    {promotionActive ? "Ativa" : "Ativar"}
+                  </button>
+                </div>
+                <div className="module-action-row">
+                  <button
+                    className={promotionTool === "combo" ? "status-button active" : "status-button"}
+                    onClick={() => setPromotionTool("combo")}
+                  >
+                    Criar combo
+                  </button>
+                  <button
+                    className={promotionTool === "horario" ? "status-button active" : "status-button"}
+                    onClick={() => setPromotionTool("horario")}
+                  >
+                    Oferta por horário
+                  </button>
+                  <button
+                    className={promotionTool === "cupom" ? "status-button active" : "status-button"}
+                    onClick={() => setPromotionTool("cupom")}
+                  >
+                    Cupom da banca
+                  </button>
+                </div>
+                <form className="form-card compact">
+                  {promotionTool === "combo" && (
+                    <>
+                      <label>
+                        Nome do combo
+                        <input defaultValue="Combo salada da semana" />
+                      </label>
+                      <label>
+                        Itens
+                        <input defaultValue="Tomate orgânico + cheiro-verde + alface" />
+                      </label>
+                    </>
+                  )}
+                  {promotionTool === "horario" && (
+                    <>
+                      <label>
+                        Janela da oferta
+                        <input defaultValue="Sábado · 7h às 10h" />
+                      </label>
+                      <label>
+                        Desconto
+                        <input defaultValue="15%" />
+                      </label>
+                    </>
+                  )}
+                  {promotionTool === "cupom" && (
+                    <>
+                      <label>
+                        Código do cupom
+                        <input defaultValue="SITIO10" />
+                      </label>
+                      <label>
+                        Regra
+                        <input defaultValue="10% acima de R$ 50,00" />
+                      </label>
+                    </>
+                  )}
+                  <button type="button" className="primary-action">
+                    Salvar campanha
+                  </button>
+                </form>
+              </>
+            ) : active === "Financeiro" ? (
+              <>
+                <ModuleHeader
+                  badge="Receitas e custos"
+                  title="Financeiro da banca"
+                  description="Visão de vendas, taxas, custos estimados e valores a receber."
+                />
+                <div className="operation-metrics">
+                  <article>
+                    <strong>R$ 1.842,30</strong>
+                    <span>vendas no mês</span>
+                  </article>
+                  <article>
+                    <strong>R$ 286,40</strong>
+                    <span>a receber</span>
+                  </article>
+                  <article>
+                    <strong>24</strong>
+                    <span>pedidos concluídos</span>
+                  </article>
+                </div>
+                <div className="finance-breakdown">
+                  {[
+                    ["Vendas brutas", "R$ 1.842,30"],
+                    ["Taxa Feiraê demonstrativa", "R$ 92,10"],
+                    ["Entrega repassada ao entregador", "R$ 214,60"],
+                    ["Previsão de repasse", "R$ 1.535,60"],
+                  ].map(([label, value]) => (
+                    <p key={label}>
+                      <span>{label}</span>
+                      <strong>{value}</strong>
+                    </p>
+                  ))}
+                </div>
+              </>
+            ) : active === "Avaliações" ? (
+              <>
+                <ModuleHeader
+                  badge="Reputação"
+                  title="Avaliações recebidas"
+                  description="Média em cima, avaliações individuais embaixo, separadas por cliente, produto e entrega."
+                />
+                <div className="review-grid compact">
+                  {[
+                    ["Cliente", "4,9", "Produtos frescos e entrega cuidadosa."],
+                    ["Entregador", "5,0", "Pedido pronto no horário combinado."],
+                    ["Produto", "4,8", "Cesta bem montada e peso correto."],
+                  ].map(([source, rating, text]) => (
+                    <article className="review-card" key={source}>
+                      <strong>{rating} ★</strong>
+                      <div>
+                        <b>{source}</b>
+                        <small>{text}</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Documentos" ? (
+              <>
+                <ModuleHeader
+                  badge="Cadastro"
+                  title="Documentação e validação"
+                  description="Antes de vender de verdade, a banca precisa passar pela conferência."
+                />
+                <div className="operation-list detailed">
+                  {[
+                    ["Documento do responsável", "Aprovado"],
+                    ["Comprovante da banca/box", "Pendente de envio"],
+                    ["Validação de feirante", "Em análise"],
+                  ].map(([doc, statusText]) => (
+                    <article key={doc}>
+                      <Check />
+                      <div>
+                        <b>{doc}</b>
+                        <small>Necessário para vender e receber repasses.</small>
+                      </div>
+                      <span className="document-status">{statusText}</span>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="operation-list">
+                {[
+                  "R$ 1.842,30 em vendas no mês",
+                  "R$ 286,40 a receber",
+                  "Custos e taxas serão detalhados",
+                ].map((item) => (
+                  <article key={item}>
+                    <Wallet />
+                    <div>
+                      <b>{item}</b>
+                      <small>Financeiro da banca</small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
-          )}
         </div>
-      </div>
       )}
       <p className="operation-footnote">
         Alterações locais de demonstração. A sincronização real será feita pelo Supabase.
@@ -2628,9 +2608,30 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
   const [helpProtocol, setHelpProtocol] = useState("");
   const deliveries = [
-    { id: "FE-1024", route: "Feira do Produtor → Planaltina", distance: "4,2 km", fee: "R$ 12,80", weight: 8.4, vehicle: "Moto" },
-    { id: "FE-1025", route: "Feira Central → Asa Norte", distance: "6,8 km", fee: "R$ 17,40", weight: 16.8, vehicle: "Moto com baú" },
-    { id: "FE-1026", route: "Feira da Torre → Sudoeste", distance: "5,1 km", fee: "R$ 24,20", weight: 31.5, vehicle: "Carro" },
+    {
+      id: "FE-1024",
+      route: "Feira do Produtor → Planaltina",
+      distance: "4,2 km",
+      fee: "R$ 12,80",
+      weight: 8.4,
+      vehicle: "Moto",
+    },
+    {
+      id: "FE-1025",
+      route: "Feira Central → Asa Norte",
+      distance: "6,8 km",
+      fee: "R$ 17,40",
+      weight: 16.8,
+      vehicle: "Moto com baú",
+    },
+    {
+      id: "FE-1026",
+      route: "Feira da Torre → Sudoeste",
+      distance: "5,1 km",
+      fee: "R$ 24,20",
+      weight: 31.5,
+      vehicle: "Carro",
+    },
   ];
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
@@ -2753,355 +2754,386 @@ function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () =
           <button className="back-button" onClick={() => setActive("Central")}>
             <ArrowLeft size={17} /> Voltar para central
           </button>
-        <div className="surface-card operation-card">
-          <span className="eyebrow">{active}</span>
-          {active === "Painel" ? (
-            <>
-              <div className="delivery-hero">
-                <span aria-hidden="true">🛵</span>
-                <div>
-                  <b>Rotas com capacidade compatível</b>
-                  <p>O Feiraê só oferece corridas dentro do peso/volume aceito pelo veículo cadastrado.</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <span className="eyebrow">Disponibilidade</span>
-                  <h2>{online ? "Você está online" : "Você está offline"}</h2>
-                </div>
-                <button
-                  onClick={() => setOnline((value) => !value)}
-                  className={online ? "status-button active" : "status-button"}
-                >
-                  {online ? "Online" : "Offline"}
-                </button>
-              </div>
-              <div className="operation-metrics">
-                <article>
-                  <strong>3</strong>
-                  <span>corridas disponíveis</span>
-                </article>
-                <article>
-                  <strong>R$ 54,40</strong>
-                  <span>ganhos previstos</span>
-                </article>
-                <article>
-                  <strong>4,9 ★</strong>
-                  <span>média após entregas</span>
-                </article>
-              </div>
-              {activeDelivery && activeDeliverySection}
-              {deliveryList}
-            </>
-          ) : active === "Entregas" ? (
-            <>
-              <ModuleHeader
-                badge="Corridas liberadas"
-                title="Entregas compatíveis"
-                description="Cada corrida mostra rota, peso, veículo indicado e ganho antes do aceite."
-              />
-              {deliveryList}
-            </>
-          ) : active === "Em andamento" ? (
-            activeDeliverySection
-          ) : active === "Financeiro" ? (
-            <>
-              <ModuleHeader
-                badge="Repasses"
-                title="Financeiro do entregador"
-                description="Acompanhe ganhos por rota, taxa administrativa e previsão de pagamento."
-              />
-              <div className="operation-metrics">
-                <article>
-                  <strong>R$ 186,20</strong>
-                  <span>ganhos hoje</span>
-                </article>
-                <article>
-                  <strong>R$ 42,50</strong>
-                  <span>taxas administrativas demonstrativas</span>
-                </article>
-                <article>
-                  <strong>12</strong>
-                  <span>corridas concluídas na semana</span>
-                </article>
-              </div>
-              <div className="finance-breakdown">
-                {[
-                  ["FE-1022 · Feira Central", "R$ 18,90"],
-                  ["FE-1023 · Torre", "R$ 24,20"],
-                  ["FE-1024 · Produtor", "R$ 12,80"],
-                  ["Próximo repasse", "sexta-feira"],
-                ].map(([label, value]) => (
-                  <p key={label}>
-                    <span>{label}</span>
-                    <strong>{value}</strong>
-                  </p>
-                ))}
-              </div>
-            </>
-          ) : active === "Veículos" || active === "Forma de entrega" ? (
-            <>
-              <ModuleHeader
-                badge={active === "Veículos" ? "Capacidade" : "Preferências"}
-                title={active === "Veículos" ? "Veículos cadastrados" : "Forma de entrega"}
-                description="O app filtra corridas por peso, volume, raio de atuação e tipo de veículo."
-              />
-              <div className="operation-list detailed">
-                {[
-                  ["Moto cadastrada", "Até 12 kg · documentos em análise · baú pequeno"],
-                  ["Moto com baú", "Até 20 kg · ideal para compras médias de feira"],
-                  ["Carro", "Até 80 kg · compras pesadas, caixas e múltiplas bancas"],
-                ].map(([title, text]) => (
-                  <article key={title}>
-                    <Truck />
-                    <div>
-                      <b>{title}</b>
-                      <small>{text}</small>
-                    </div>
-                    <span className="document-status">{title === "Moto cadastrada" ? "Ativo" : "Opcional"}</span>
-                  </article>
-                ))}
-              </div>
-            </>
-          ) : active === "Desempenho" ? (
-            <>
-              <ModuleHeader
-                badge="Qualidade"
-                title="Desempenho"
-                description="Indicadores que afetam prioridade de corridas, suporte e campanhas."
-              />
-              <div className="operation-metrics">
-                <article>
-                  <strong>96%</strong>
-                  <span>entregas no prazo</span>
-                </article>
-                <article>
-                  <strong>4,9 ★</strong>
-                  <span>avaliação média</span>
-                </article>
-                <article>
-                  <strong>1</strong>
-                  <span>cancelamento na semana</span>
-                </article>
-              </div>
-              <div className="operation-list detailed">
-                {["Pontualidade ótima", "Cuidado com embalagens aprovado", "Comunicação com cliente dentro do esperado"].map((item) => (
-                  <article key={item}>
-                    <Check />
-                    <div>
-                      <b>{item}</b>
-                      <small>Baseado nas últimas entregas demonstrativas.</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </>
-          ) : active === "Avaliações" ? (
-            <>
-            <ModuleHeader
-              badge="Após cada etapa"
-              title="Avaliações cruzadas"
-              description="Cliente, entregador e banca se avaliam nos momentos certos, sem poluir a tela inicial."
-            />
-            <div className="operation-list detailed">
-              {[
-                ["Depois da entrega", "Cliente avalia entregador e entrega."],
-                ["Depois da entrega", "Entregador avalia cliente."],
-                ["Depois da coleta", "Entregador avalia banca quando houver problema de preparo, embalagem ou peso."],
-                ["Mensalmente", "Usuário pode avaliar o app uma vez por mês."],
-              ].map(([title, text]) => (
-                <article key={`${title}-${text}`}>
-                  <Star />
+          <div className="surface-card operation-card">
+            <span className="eyebrow">{active}</span>
+            {active === "Painel" ? (
+              <>
+                <div className="delivery-hero">
+                  <span aria-hidden="true">🛵</span>
                   <div>
-                    <b>{title}</b>
-                    <small>{text}</small>
+                    <b>Rotas com capacidade compatível</b>
+                    <p>O Feiraê só oferece corridas dentro do peso/volume aceito pelo veículo cadastrado.</p>
                   </div>
-                </article>
-              ))}
-            </div>
-            </>
-          ) : active === "Alertas graves" ? (
-            <>
-            <ModuleHeader
-              badge="Prioridade"
-              title="Alertas graves"
-              description="Ocorrências que precisam travar a corrida, avisar suporte ou proteger entregador e cliente."
-            />
-            <div className="operation-list detailed">
-              {["Acidente ou pane", "Endereço inseguro", "Cliente não localizado", "Pedido violado ou danificado"].map((item) => (
-                <article key={item}>
-                  <XCircle />
+                </div>
+                <div className="flex items-center justify-between gap-3">
                   <div>
-                    <b>{item}</b>
-                    <small>Abre suporte prioritário e registra ocorrência da corrida.</small>
+                    <span className="eyebrow">Disponibilidade</span>
+                    <h2>{online ? "Você está online" : "Você está offline"}</h2>
                   </div>
-                </article>
-              ))}
-            </div>
-            </>
-          ) : active === "Notificações" ? (
-            <>
-              <ModuleHeader
-                badge="Avisos"
-                title="Notificações operacionais"
-                description="Central para corridas novas, alteração de rota, pagamento e mensagens do suporte."
-              />
-              <div className="operation-list detailed">
-                {[
-                  ["Nova corrida compatível", "Feira do Produtor → Planaltina · 8,4 kg · R$ 12,80"],
-                  ["Pagamento previsto", "Repasse de R$ 186,20 programado para sexta."],
-                  ["Suporte respondeu", "Atualização sobre ocorrência FE-1019."],
-                ].map(([title, text]) => (
-                  <article key={title}>
-                    <Bell />
-                    <div>
-                      <b>{title}</b>
-                      <small>{text}</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </>
-          ) : active === "Ajuda" ? (
-            <>
-              <ModuleHeader
-                badge="Suporte"
-                title="Ajuda do entregador"
-                description="Atalhos para resolver problema de rota, pedido, pagamento ou segurança."
-              />
-              <div className="module-action-row">
-                {["Falar com suporte", "Problema no pedido", "Dúvida de repasse"].map((item) => (
                   <button
-                    key={item}
-                    className={helpTopic === item ? "status-button active" : "status-button"}
-                    onClick={() => {
-                      setHelpTopic(item);
-                      setHelpProtocol("");
-                    }}
+                    onClick={() => setOnline((value) => !value)}
+                    className={online ? "status-button active" : "status-button"}
                   >
-                    {item}
+                    {online ? "Online" : "Offline"}
                   </button>
-                ))}
-              </div>
-              <form className="form-card compact">
-                <label>
-                  Assunto selecionado
-                  <input value={helpTopic} readOnly />
-                </label>
-                <label>
-                  Detalhe do atendimento
-                  <input
-                    defaultValue={
-                      helpTopic === "Problema no pedido"
-                        ? "Pedido com embalagem ou peso divergente"
-                        : helpTopic === "Dúvida de repasse"
-                          ? "Conferir taxa e data do próximo pagamento"
-                          : "Preciso falar com o suporte da rota"
-                    }
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="primary-action"
-                  onClick={() => setHelpProtocol(`SUP-${Math.floor(1000 + Math.random() * 8000)}`)}
-                >
-                  Abrir atendimento
-                </button>
-                {helpProtocol && <p className="inline-success">Protocolo {helpProtocol} aberto para {helpTopic}.</p>}
-              </form>
-              <div className="operation-list detailed">
-                {["Como confirmar coleta", "O que fazer quando cliente não responde", "Quando cancelar sem prejudicar desempenho"].map((item) => (
+                </div>
+                <div className="operation-metrics">
+                  <article>
+                    <strong>3</strong>
+                    <span>corridas disponíveis</span>
+                  </article>
+                  <article>
+                    <strong>R$ 54,40</strong>
+                    <span>ganhos previstos</span>
+                  </article>
+                  <article>
+                    <strong>4,9 ★</strong>
+                    <span>média após entregas</span>
+                  </article>
+                </div>
+                {activeDelivery && activeDeliverySection}
+                {deliveryList}
+              </>
+            ) : active === "Entregas" ? (
+              <>
+                <ModuleHeader
+                  badge="Corridas liberadas"
+                  title="Entregas compatíveis"
+                  description="Cada corrida mostra rota, peso, veículo indicado e ganho antes do aceite."
+                />
+                {deliveryList}
+              </>
+            ) : active === "Em andamento" ? (
+              activeDeliverySection
+            ) : active === "Financeiro" ? (
+              <>
+                <ModuleHeader
+                  badge="Repasses"
+                  title="Financeiro do entregador"
+                  description="Acompanhe ganhos por rota, taxa administrativa e previsão de pagamento."
+                />
+                <div className="operation-metrics">
+                  <article>
+                    <strong>R$ 186,20</strong>
+                    <span>ganhos hoje</span>
+                  </article>
+                  <article>
+                    <strong>R$ 42,50</strong>
+                    <span>taxas administrativas demonstrativas</span>
+                  </article>
+                  <article>
+                    <strong>12</strong>
+                    <span>corridas concluídas na semana</span>
+                  </article>
+                </div>
+                <div className="finance-breakdown">
+                  {[
+                    ["FE-1022 · Feira Central", "R$ 18,90"],
+                    ["FE-1023 · Torre", "R$ 24,20"],
+                    ["FE-1024 · Produtor", "R$ 12,80"],
+                    ["Próximo repasse", "sexta-feira"],
+                  ].map(([label, value]) => (
+                    <p key={label}>
+                      <span>{label}</span>
+                      <strong>{value}</strong>
+                    </p>
+                  ))}
+                </div>
+              </>
+            ) : active === "Veículos" || active === "Forma de entrega" ? (
+              <>
+                <ModuleHeader
+                  badge={active === "Veículos" ? "Capacidade" : "Preferências"}
+                  title={active === "Veículos" ? "Veículos cadastrados" : "Forma de entrega"}
+                  description="O app filtra corridas por peso, volume, raio de atuação e tipo de veículo."
+                />
+                <div className="operation-list detailed">
+                  {[
+                    ["Moto cadastrada", "Até 12 kg · documentos em análise · baú pequeno"],
+                    ["Moto com baú", "Até 20 kg · ideal para compras médias de feira"],
+                    ["Carro", "Até 80 kg · compras pesadas, caixas e múltiplas bancas"],
+                  ].map(([title, text]) => (
+                    <article key={title}>
+                      <Truck />
+                      <div>
+                        <b>{title}</b>
+                        <small>{text}</small>
+                      </div>
+                      <span className="document-status">
+                        {title === "Moto cadastrada" ? "Ativo" : "Opcional"}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Desempenho" ? (
+              <>
+                <ModuleHeader
+                  badge="Qualidade"
+                  title="Desempenho"
+                  description="Indicadores que afetam prioridade de corridas, suporte e campanhas."
+                />
+                <div className="operation-metrics">
+                  <article>
+                    <strong>96%</strong>
+                    <span>entregas no prazo</span>
+                  </article>
+                  <article>
+                    <strong>4,9 ★</strong>
+                    <span>avaliação média</span>
+                  </article>
+                  <article>
+                    <strong>1</strong>
+                    <span>cancelamento na semana</span>
+                  </article>
+                </div>
+                <div className="operation-list detailed">
+                  {[
+                    "Pontualidade ótima",
+                    "Cuidado com embalagens aprovado",
+                    "Comunicação com cliente dentro do esperado",
+                  ].map((item) => (
+                    <article key={item}>
+                      <Check />
+                      <div>
+                        <b>{item}</b>
+                        <small>Baseado nas últimas entregas demonstrativas.</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Avaliações" ? (
+              <>
+                <ModuleHeader
+                  badge="Após cada etapa"
+                  title="Avaliações cruzadas"
+                  description="Cliente, entregador e banca se avaliam nos momentos certos, sem poluir a tela inicial."
+                />
+                <div className="operation-list detailed">
+                  {[
+                    ["Depois da entrega", "Cliente avalia entregador e entrega."],
+                    ["Depois da entrega", "Entregador avalia cliente."],
+                    [
+                      "Depois da coleta",
+                      "Entregador avalia banca quando houver problema de preparo, embalagem ou peso.",
+                    ],
+                    ["Mensalmente", "Usuário pode avaliar o app uma vez por mês."],
+                  ].map(([title, text]) => (
+                    <article key={`${title}-${text}`}>
+                      <Star />
+                      <div>
+                        <b>{title}</b>
+                        <small>{text}</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Alertas graves" ? (
+              <>
+                <ModuleHeader
+                  badge="Prioridade"
+                  title="Alertas graves"
+                  description="Ocorrências que precisam travar a corrida, avisar suporte ou proteger entregador e cliente."
+                />
+                <div className="operation-list detailed">
+                  {[
+                    "Acidente ou pane",
+                    "Endereço inseguro",
+                    "Cliente não localizado",
+                    "Pedido violado ou danificado",
+                  ].map((item) => (
+                    <article key={item}>
+                      <XCircle />
+                      <div>
+                        <b>{item}</b>
+                        <small>Abre suporte prioritário e registra ocorrência da corrida.</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Notificações" ? (
+              <>
+                <ModuleHeader
+                  badge="Avisos"
+                  title="Notificações operacionais"
+                  description="Central para corridas novas, alteração de rota, pagamento e mensagens do suporte."
+                />
+                <div className="operation-list detailed">
+                  {[
+                    ["Nova corrida compatível", "Feira do Produtor → Planaltina · 8,4 kg · R$ 12,80"],
+                    ["Pagamento previsto", "Repasse de R$ 186,20 programado para sexta."],
+                    ["Suporte respondeu", "Atualização sobre ocorrência FE-1019."],
+                  ].map(([title, text]) => (
+                    <article key={title}>
+                      <Bell />
+                      <div>
+                        <b>{title}</b>
+                        <small>{text}</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Ajuda" ? (
+              <>
+                <ModuleHeader
+                  badge="Suporte"
+                  title="Ajuda do entregador"
+                  description="Atalhos para resolver problema de rota, pedido, pagamento ou segurança."
+                />
+                <div className="module-action-row">
+                  {["Falar com suporte", "Problema no pedido", "Dúvida de repasse"].map((item) => (
+                    <button
+                      key={item}
+                      className={helpTopic === item ? "status-button active" : "status-button"}
+                      onClick={() => {
+                        setHelpTopic(item);
+                        setHelpProtocol("");
+                      }}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+                <form className="form-card compact">
+                  <label>
+                    Assunto selecionado
+                    <input value={helpTopic} readOnly />
+                  </label>
+                  <label>
+                    Detalhe do atendimento
+                    <input
+                      defaultValue={
+                        helpTopic === "Problema no pedido"
+                          ? "Pedido com embalagem ou peso divergente"
+                          : helpTopic === "Dúvida de repasse"
+                            ? "Conferir taxa e data do próximo pagamento"
+                            : "Preciso falar com o suporte da rota"
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="primary-action"
+                    onClick={() => setHelpProtocol(`SUP-${Math.floor(1000 + Math.random() * 8000)}`)}
+                  >
+                    Abrir atendimento
+                  </button>
+                  {helpProtocol && (
+                    <p className="inline-success">
+                      Protocolo {helpProtocol} aberto para {helpTopic}.
+                    </p>
+                  )}
+                </form>
+                <div className="operation-list detailed">
+                  {[
+                    "Como confirmar coleta",
+                    "O que fazer quando cliente não responde",
+                    "Quando cancelar sem prejudicar desempenho",
+                  ].map((item) => (
+                    <article key={item}>
+                      <Info />
+                      <div>
+                        <b>{item}</b>
+                        <small>Guia rápido para atendimento em campo.</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Guia inicial" ? (
+              <>
+                <ModuleHeader
+                  badge="Primeiros passos"
+                  title="Começar a entregar"
+                  description="Fluxo de cadastro, validação, primeira corrida e boas práticas."
+                />
+                <div className="timeline-list">
+                  {[
+                    "Criar conta e enviar documentos",
+                    "Cadastrar veículo e capacidade",
+                    "Ficar online e aceitar corrida compatível",
+                    "Coletar, entregar e receber avaliação",
+                  ].map((step, index) => (
+                    <article key={step}>
+                      <span>{index + 1}</span>
+                      <div>
+                        <b>{step}</b>
+                        <small>Etapa demonstrativa para orientar o entregador.</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Conta" ? (
+              <>
+                <ModuleHeader
+                  badge="Perfil validado"
+                  title="Conta do entregador"
+                  description="Dados pessoais, foto, telefone, documentos e status de validação."
+                />
+                <div className="vendor-profile-card">
+                  <span>👤</span>
+                  <div>
+                    <b>Entregador Feiraê</b>
+                    <small>Foto obrigatória · CNH/documento · telefone confirmado</small>
+                  </div>
+                  <span className="document-status">Em análise</span>
+                </div>
+                <div className="operation-list detailed">
+                  {[
+                    "Editar foto de perfil",
+                    "Atualizar telefone e Pix de repasse",
+                    "Enviar documento do veículo",
+                  ].map((item) => (
+                    <article key={item}>
+                      <User />
+                      <div>
+                        <b>{item}</b>
+                        <small>Essas informações impactam segurança, pagamento e suporte.</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : active === "Vantagens" ? (
+              <>
+                <ModuleHeader
+                  badge="Campanhas"
+                  title="Vantagens do entregador"
+                  description="Benefícios, metas e comunicações especiais para quem mantém boa avaliação."
+                />
+                <div className="promo-card">
+                  <span>🎁</span>
+                  <div>
+                    <b>Bônus por horário de feira</b>
+                    <small>Complete 5 entregas entre 7h e 11h para liberar bônus demonstrativo.</small>
+                  </div>
+                  <span className="document-status">Novo</span>
+                </div>
+              </>
+            ) : (
+              <div className="operation-list">
+                {[
+                  `${active} do entregador`,
+                  "Checklist de documentação, preferências e histórico da conta.",
+                  "Próximo passo: revisar dados, salvar alterações e acompanhar status.",
+                ].map((item) => (
                   <article key={item}>
                     <Info />
                     <div>
                       <b>{item}</b>
-                      <small>Guia rápido para atendimento em campo.</small>
+                      <small>Área operacional do entregador</small>
                     </div>
                   </article>
                 ))}
               </div>
-            </>
-          ) : active === "Guia inicial" ? (
-            <>
-              <ModuleHeader
-                badge="Primeiros passos"
-                title="Começar a entregar"
-                description="Fluxo de cadastro, validação, primeira corrida e boas práticas."
-              />
-              <div className="timeline-list">
-                {["Criar conta e enviar documentos", "Cadastrar veículo e capacidade", "Ficar online e aceitar corrida compatível", "Coletar, entregar e receber avaliação"].map((step, index) => (
-                  <article key={step}>
-                    <span>{index + 1}</span>
-                    <div>
-                      <b>{step}</b>
-                      <small>Etapa demonstrativa para orientar o entregador.</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </>
-          ) : active === "Conta" ? (
-            <>
-              <ModuleHeader
-                badge="Perfil validado"
-                title="Conta do entregador"
-                description="Dados pessoais, foto, telefone, documentos e status de validação."
-              />
-              <div className="vendor-profile-card">
-                <span>👤</span>
-                <div>
-                  <b>Entregador Feiraê</b>
-                  <small>Foto obrigatória · CNH/documento · telefone confirmado</small>
-                </div>
-                <span className="document-status">Em análise</span>
-              </div>
-              <div className="operation-list detailed">
-                {["Editar foto de perfil", "Atualizar telefone e Pix de repasse", "Enviar documento do veículo"].map((item) => (
-                  <article key={item}>
-                    <User />
-                    <div>
-                      <b>{item}</b>
-                      <small>Essas informações impactam segurança, pagamento e suporte.</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </>
-          ) : active === "Vantagens" ? (
-            <>
-              <ModuleHeader
-                badge="Campanhas"
-                title="Vantagens do entregador"
-                description="Benefícios, metas e comunicações especiais para quem mantém boa avaliação."
-              />
-              <div className="promo-card">
-                <span>🎁</span>
-                <div>
-                  <b>Bônus por horário de feira</b>
-                  <small>Complete 5 entregas entre 7h e 11h para liberar bônus demonstrativo.</small>
-                </div>
-                <span className="document-status">Novo</span>
-              </div>
-            </>
-          ) : (
-            <div className="operation-list">
-              {[
-                `${active} do entregador`,
-                "Checklist de documentação, preferências e histórico da conta.",
-                "Próximo passo: revisar dados, salvar alterações e acompanhar status.",
-              ].map((item) => (
-                <article key={item}>
-                  <Info />
-                  <div>
-                    <b>{item}</b>
-                    <small>Área operacional do entregador</small>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
       )}
     </Panel>
   );
