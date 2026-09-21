@@ -956,6 +956,35 @@ textarea:focus-visible {
   color: var(--fe-muted);
   font-size: 0.76rem;
 }
+.market-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.45rem;
+  margin-top: 0.65rem;
+  color: #5c6861;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+.market-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 999px;
+  background: #f3f6f3;
+  padding: 0.28rem 0.45rem;
+  line-height: 1;
+}
+.market-meta svg {
+  fill: #f6be3f;
+  color: #f6be3f;
+}
+.market-meta.compact {
+  margin-top: 0.5rem;
+}
+.market-meta.compact span {
+  background: transparent;
+  padding: 0;
+}
 .product-card {
   position: relative;
 }
@@ -1129,6 +1158,17 @@ textarea:focus-visible {
   color: var(--fe-green);
   font-size: 0.72rem;
   font-weight: 850;
+}
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 0.5rem;
+}
+.order-actions button:last-child {
+  border-radius: 999px;
+  background: var(--fe-green-soft);
+  padding: 0.35rem 0.55rem;
 }
 .profile-hero {
   display: flex;
@@ -2078,6 +2118,30 @@ textarea:focus-visible {
 }
 .cart-item > button {
   color: #8a4d4d;
+}
+.repeat-order-button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0 0.6rem;
+  margin-bottom: 0.85rem;
+  border: 1px solid #cfe1d4;
+  border-radius: 1rem;
+  background: #f4faf5;
+  padding: 0.8rem;
+  color: var(--fe-green);
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+.repeat-order-button svg {
+  grid-row: span 2;
+}
+.repeat-order-button small {
+  color: var(--fe-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
 }
 .drawer-footer {
   border-top: 1px solid var(--fe-border);

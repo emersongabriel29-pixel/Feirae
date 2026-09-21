@@ -18,8 +18,30 @@ describe("marketplace helpers", () => {
     expect(distanceInKm(-15.62, -47.65, -15.62, -47.65)).toBe(0);
     const sorted = sortFairsByDistance(
       [
-        { name: "Longe", place: "B", status: "Aberta", feirantes: 1, lat: -16, lng: -48 },
-        { name: "Perto", place: "A", status: "Aberta", feirantes: 1, lat: -15.62, lng: -47.65 },
+        {
+          name: "Longe",
+          place: "B",
+          status: "Aberta",
+          feirantes: 1,
+          rating: 4.7,
+          reviewCount: 100,
+          deliveryMinutes: [40, 60],
+          deliveryFee: 9.9,
+          lat: -16,
+          lng: -48,
+        },
+        {
+          name: "Perto",
+          place: "A",
+          status: "Aberta",
+          feirantes: 1,
+          rating: 4.8,
+          reviewCount: 120,
+          deliveryMinutes: [20, 35],
+          deliveryFee: 7.9,
+          lat: -15.62,
+          lng: -47.65,
+        },
       ],
       { lat: -15.62, lng: -47.65 },
     );

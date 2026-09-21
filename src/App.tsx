@@ -31,7 +31,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { categories, fairs, initialOrders, products } from "./data";
+import { categories, fairs, initialOrders, products, vendorMetrics } from "./data";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Role, Screen } from "./types";
 import { cartSubtotal, filterProducts, money, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
@@ -61,15 +61,28 @@ function vehicleForWeight(weight: number) {
   return vehicleRules.find((rule) => weight <= rule.maxKg) ?? vehicleRules[vehicleRules.length - 1];
 }
 
+function ratingLabel(value: number) {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+function minutesLabel(range: [number, number]) {
+  return `${range[0]}-${range[1]} min`;
+}
+
+function metricForVendor(name: string) {
+  return vendorMetrics[name] ?? { rating: 4.8, reviewCount: 100, deliveryMinutes: [40, 60], deliveryFee: 9.9 };
+}
+
 function vendorSummaries() {
   return Array.from(new Set(products.map((product) => product.feirante))).map((name) => {
     const vendorProducts = products.filter((product) => product.feirante === name);
+    const metrics = metricForVendor(name);
     return {
       name,
       fair: vendorProducts[0]?.fair ?? "Feira",
       categories: Array.from(new Set(vendorProducts.map((product) => product.category))).slice(0, 3),
       products: vendorProducts.length,
-      rating: name === "Sítio da Vó" ? "4,9" : name.includes("Pescados") ? "4,7" : "4,8",
+      ...metrics,
     };
   });
 }
@@ -328,6 +341,16 @@ export default function App() {
     openCustomerTab("orders");
     notify(`Pedido ${id} criado no modo demonstração.`);
   }
+  function buyAgain(orderId?: string) {
+    const demoBasket: Record<number, number> = {
+      1: 1,
+      2: 1,
+      9: 2,
+    };
+    setCart((current) => ({ ...current, ...demoBasket }));
+    setCartOpen(true);
+    notify(orderId ? `Itens do pedido ${orderId} voltaram para a sacola.` : "Última compra voltou para a sacola.");
+  }
 
   if (!role) return <LoginPage onLogin={login} />;
 
@@ -401,7 +424,13 @@ export default function App() {
                 onFavorite={toggleFavorite}
               />
             )}
-            {tab === "orders" && <OrdersPage orders={orders} onTracking={() => openScreen("tracking")} />}
+            {tab === "orders" && (
+              <OrdersPage
+                orders={orders}
+                onTracking={() => openScreen("tracking")}
+                onBuyAgain={buyAgain}
+              />
+            )}
             {tab === "profile" && session && (
               <ProfilePage session={session} onScreen={openScreen} onLogout={logout} />
             )}
@@ -502,6 +531,7 @@ export default function App() {
           onAdd={addToCart}
           onRemove={removeFromCart}
           onClose={() => setCartOpen(false)}
+          onBuyAgain={() => buyAgain()}
           onCheckout={() => openScreen("checkout")}
         />
       )}
@@ -973,6 +1003,13 @@ function FairCard({
           <Store size={14} /> {fair.feirantes} feirantes{" "}
           {fair.distance !== null && `· ${fair.distance.toFixed(1)} km`}
         </p>
+        <div className="market-meta">
+          <span>
+            <Star size={13} /> {ratingLabel(fair.rating)} ({fair.reviewCount})
+          </span>
+          <span>{minutesLabel(fair.deliveryMinutes)}</span>
+          <span>{money(fair.deliveryFee)}</span>
+        </div>
         <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
           <button onClick={() => onFair(fair.name)} className="primary-action">
             Ver feira
@@ -1044,6 +1081,7 @@ function ProductCard({
   favorite: boolean;
   onFavorite: (id: number) => void;
 }) {
+  const metrics = metricForVendor(product.feirante);
   return (
     <article className="product-card">
       <button
@@ -1061,6 +1099,13 @@ function ProductCard({
         <small className="vendor-name">{product.feirante}</small>
         <h3>{product.name}</h3>
         <p>{product.fair}</p>
+        <div className="market-meta compact">
+          <span>
+            <Star size={12} /> {ratingLabel(metrics.rating)} ({metrics.reviewCount})
+          </span>
+          <span>{minutesLabel(metrics.deliveryMinutes)}</span>
+          <span>{money(metrics.deliveryFee)}</span>
+        </div>
         <div className="product-meta">
           <span>{product.weightKg.toLocaleString("pt-BR")} kg/{product.unit}</span>
           <span>{product.volume}</span>
@@ -1084,7 +1129,15 @@ function ProductCard({
   );
 }
 
-function OrdersPage({ orders, onTracking }: { orders: DemoOrder[]; onTracking: () => void }) {
+function OrdersPage({
+  orders,
+  onTracking,
+  onBuyAgain,
+}: {
+  orders: DemoOrder[];
+  onTracking: () => void;
+  onBuyAgain: (orderId: string) => void;
+}) {
   return (
     <section className="mx-auto max-w-3xl">
       <PageHeading title="Meus pedidos" subtitle="Acompanhe suas compras, retiradas e entregas." />
@@ -1099,7 +1152,10 @@ function OrdersPage({ orders, onTracking }: { orders: DemoOrder[]; onTracking: (
             <div className="text-right">
               <span>{order.status}</span>
               <strong>{money(order.value)}</strong>
-              <button onClick={onTracking}>Ver detalhes</button>
+              <div className="order-actions">
+                <button onClick={onTracking}>Ver detalhes</button>
+                <button onClick={() => onBuyAgain(order.id)}>Comprar novamente</button>
+              </div>
             </div>
           </article>
         ))}
@@ -1228,7 +1284,14 @@ function VendorsPage({ onBack, onVendor }: { onBack: () => void; onVendor: (name
               <small>{vendor.fair}</small>
               <h3>{vendor.name}</h3>
               <p>{vendor.categories.join(" · ")}</p>
-              <b>{vendor.rating} ★ · {vendor.products} produtos</b>
+              <div className="market-meta">
+                <span>
+                  <Star size={13} /> {ratingLabel(vendor.rating)} ({vendor.reviewCount})
+                </span>
+                <span>{minutesLabel(vendor.deliveryMinutes)}</span>
+                <span>{money(vendor.deliveryFee)}</span>
+              </div>
+              <b>{vendor.products} produtos</b>
             </div>
             <button onClick={() => onVendor(vendor.name)}>
               Ver banca <ChevronRight size={16} />
@@ -1254,13 +1317,17 @@ function VendorStore({
   onFavorite: (id: number) => void;
 }) {
   const vendorProducts = products.filter((product) => product.feirante === vendorName);
+  const metrics = metricForVendor(vendorName);
   return (
     <Panel title={vendorName} subtitle="Loja do feirante" onBack={onBack}>
       <div className="detail-banner">
         <div>
           <Store size={30} />
           <h2>{vendorName}</h2>
-          <p>Produtos selecionados direto da feira · avaliação demonstrativa 4,9 ★</p>
+          <p>
+            Produtos selecionados direto da feira · {ratingLabel(metrics.rating)} ★ ({metrics.reviewCount}) ·{" "}
+            {minutesLabel(metrics.deliveryMinutes)} · entrega {money(metrics.deliveryFee)}
+          </p>
         </div>
       </div>
       {vendorProducts.length ? (
@@ -2286,6 +2353,7 @@ function CartDrawer({
   onAdd,
   onRemove,
   onClose,
+  onBuyAgain,
   onCheckout,
 }: {
   items: Product[];
@@ -2294,6 +2362,7 @@ function CartDrawer({
   onAdd: (id: number) => void;
   onRemove: (id: number, all?: boolean) => void;
   onClose: () => void;
+  onBuyAgain: () => void;
   onCheckout: () => void;
 }) {
   const totalWeight = cartWeight(items, cart);
@@ -2317,6 +2386,11 @@ function CartDrawer({
           </button>
         </div>
         <div className="drawer-body">
+          <button className="repeat-order-button" onClick={onBuyAgain}>
+            <ShoppingBag size={17} />
+            Comprar novamente
+            <small>Repetir itens da última feira</small>
+          </button>
           {items.length ? (
             items.map((product) => (
               <article className="cart-item" key={product.id}>

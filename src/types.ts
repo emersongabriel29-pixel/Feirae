@@ -42,11 +42,22 @@ export type Product = {
   featured?: boolean;
 };
 
+export type VendorMetrics = {
+  rating: number;
+  reviewCount: number;
+  deliveryMinutes: [number, number];
+  deliveryFee: number;
+};
+
 export type Fair = {
   name: string;
   place: string;
   status: string;
   feirantes: number;
+  rating: number;
+  reviewCount: number;
+  deliveryMinutes: [number, number];
+  deliveryFee: number;
   lat: number;
   lng: number;
 };
