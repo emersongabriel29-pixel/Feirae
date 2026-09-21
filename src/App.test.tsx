@@ -50,6 +50,15 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /mostrar senha/i }));
     expect(password).toHaveAttribute("type", "text");
   });
+
+  it("keeps featured fairs inside the fairs area", () => {
+    render(<App />);
+    loginAs("cliente");
+    expect(screen.queryByRole("heading", { name: /feiras em destaque/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /^feiras$/i })[0]);
+    expect(screen.getByRole("heading", { name: /feiras em destaque/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /outras feiras/i })).toBeInTheDocument();
+  });
 });
 
 describe("Feiraê role access", () => {

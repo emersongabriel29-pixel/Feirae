@@ -325,7 +325,6 @@ export default function App() {
           <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             {tab === "home" && (
               <HomePage
-                fairItems={fairsWithDistance}
                 onTab={openCustomerTab}
                 onFair={(name) => {
                   setSelectedFair(name);
@@ -338,7 +337,6 @@ export default function App() {
                   updateHash(`/lojas/${encodeURIComponent(name)}`);
                 }}
                 onTracking={() => openScreen("tracking")}
-                onMap={openMap}
               />
             )}
             {tab === "fairs" && (
@@ -726,19 +724,15 @@ function Header(props: HeaderProps) {
 }
 
 function HomePage({
-  fairItems,
   onTab,
   onFair,
   onVendor,
   onTracking,
-  onMap,
 }: {
-  fairItems: ReturnType<typeof sortFairsByDistance>;
   onTab: (tab: CustomerTab) => void;
   onFair: (name: string) => void;
   onVendor: (name: string) => void;
   onTracking: () => void;
-  onMap: (lat: number, lng: number) => void;
 }) {
   return (
     <div className="space-y-12">
@@ -811,19 +805,6 @@ function HomePage({
             ))}
         </div>
       </section>
-      <section>
-        <SectionHeading
-          eyebrow="Perto de você"
-          title="Feiras em destaque"
-          action="Ver todas"
-          onAction={() => onTab("fairs")}
-        />
-        <div className="grid gap-4 md:grid-cols-3">
-          {fairItems.slice(0, 3).map((fair, index) => (
-            <FairCard key={fair.name} fair={fair} index={index} onFair={onFair} onMap={onMap} />
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
@@ -843,11 +824,22 @@ function FairsPage({
         title="Feiras do Distrito Federal"
         subtitle="Escolha onde comprar, retirar ou conhecer novos feirantes."
       />
-      <div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {fairItems.map((fair, index) => (
-          <FairCard key={fair.name} fair={fair} index={index} onFair={onFair} onMap={onMap} />
-        ))}
+      <div className="mt-7">
+        <SectionHeading eyebrow="Perto de você" title="Feiras em destaque" />
+        <div className="grid gap-4 md:grid-cols-3">
+          {fairItems.slice(0, 3).map((fair, index) => (
+            <FairCard key={fair.name} fair={fair} index={index} onFair={onFair} onMap={onMap} />
+          ))}
+        </div>
       </div>
+      <section className="mt-12">
+        <SectionHeading eyebrow="Explore o DF" title="Outras feiras" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {fairItems.slice(3).map((fair, index) => (
+            <FairCard key={fair.name} fair={fair} index={index + 3} onFair={onFair} onMap={onMap} />
+          ))}
+        </div>
+      </section>
     </section>
   );
 }
