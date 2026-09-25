@@ -28,6 +28,8 @@ export type SharedStore = {
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   absorbDeliveryFee: boolean;
+  acceptCashOnDelivery: boolean;
+  acceptCardOnDelivery: boolean;
   promotions: SharedPromotion[];
   aliases?: string[];
   updatedAt: string;
@@ -87,6 +89,8 @@ export function syncVendorMarketplace(input: {
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   absorbDeliveryFee: boolean;
+  acceptCashOnDelivery: boolean;
+  acceptCardOnDelivery: boolean;
   promotions: SharedPromotion[];
   products: Array<{
     id: number;
@@ -114,6 +118,8 @@ export function syncVendorMarketplace(input: {
     deliveryEnabled: input.deliveryEnabled,
     pickupEnabled: input.pickupEnabled,
     absorbDeliveryFee: input.absorbDeliveryFee,
+    acceptCashOnDelivery: input.acceptCashOnDelivery,
+    acceptCardOnDelivery: input.acceptCardOnDelivery,
     promotions: input.promotions,
     aliases: Array.from(
       new Set([...(previousStore?.aliases ?? []), previousStore?.name, input.name].filter(Boolean) as string[]),
