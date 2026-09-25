@@ -662,7 +662,9 @@ export function DeliveryTracking({
     <Panel title="Acompanhar entrega" subtitle={`Pedido ${order.id} · ${order.status}`} onBack={onBack}>
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="tracking-map">
-          <span aria-hidden="true">{order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : "🛵"}</span>
+          <span aria-hidden="true">
+            {order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : "🛵"}
+          </span>
           <div className="route-line">
             {timeline.map((step, index) => (
               <i
