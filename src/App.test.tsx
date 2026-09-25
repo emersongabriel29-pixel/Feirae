@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "./App";
+import { readUnifiedOrders } from "./domain/orderBridge";
 
 function loginAs(role: "cliente" | "feirante" | "entregador") {
   fireEvent.click(screen.getByRole("radio", { name: new RegExp(role, "i") }));
@@ -270,6 +271,41 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("heading", { name: /pedidos para avaliar/i })).toBeInTheDocument();
     expect(screen.getByText("FE-1031")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /avaliações já enviadas/i })).toBeInTheDocument();
+  });
+
+  it("completes pickup from customer checkout through vendor handoff to delivered", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const search = screen.getByPlaceholderText(/busque produtos/i);
+    fireEvent.change(search, { target: { value: "cesta de frutas" } });
+    fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 itens/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
+    fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
+
+    const created = readUnifiedOrders("cliente@feirae.test")[0];
+    expect(created.fulfillment).toBe("pickup");
+    expect(created.status).toBe("received");
+
+    fireEvent.click(screen.getByRole("button", { name: /sair/i }));
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
+
+    const createdOrderCard = screen.getByText(new RegExp(created.id, "i")).closest("article");
+    expect(createdOrderCard).not.toBeNull();
+    fireEvent.click(
+      within(createdOrderCard as HTMLElement).getByRole("button", { name: /abrir pedido/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /aceitar pedido/i }));
+    screen.getAllByRole("button", { name: /marcar separado/i }).forEach((button) => fireEvent.click(button));
+    fireEvent.click(screen.getByRole("button", { name: /marcar pedido como pronto/i }));
+    expect(screen.getByText(/pronto para o cliente/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /confirmar retirada pelo cliente/i }));
+
+    expect(readUnifiedOrders().find((order) => order.id === created.id)?.status).toBe("delivered");
   });
 
   it("makes WhatsApp consent explicit and optional", () => {
