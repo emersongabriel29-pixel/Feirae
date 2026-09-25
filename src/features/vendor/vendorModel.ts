@@ -92,6 +92,9 @@ export type VendorPromotion = {
   minimumOrder?: number;
   discountValue?: number;
   target?: string;
+  couponCode?: string;
+  payQuantity?: number;
+  takeQuantity?: number;
 };
 
 export type VendorReview = {
