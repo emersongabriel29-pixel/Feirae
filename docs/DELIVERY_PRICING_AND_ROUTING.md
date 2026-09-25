@@ -152,15 +152,15 @@ O entregador nunca perde remuneração porque o cliente recebeu frete grátis.
 
 Estes valores são parâmetros de produto, não tabela legal definitiva.
 
-| Veículo | Base | R$/km | Peso incluído | Adicional/kg | Piso do entregador |
-|---|---:|---:|---:|---:|---:|
-| Bicicleta | R$ 4,50 | R$ 1,10 | 5 kg | R$ 0,08 | R$ 6,50 |
-| Bicicleta cargueira/triciclo | R$ 6,00 | R$ 1,25 | 15 kg | R$ 0,08 | R$ 8,00 |
-| Moto | R$ 6,50 | R$ 1,50 | 8 kg | R$ 0,12 | R$ 9,00 |
-| Moto com baú | R$ 7,50 | R$ 1,60 | 12 kg | R$ 0,12 | R$ 10,00 |
-| Carro | R$ 10,00 | R$ 2,10 | 30 kg | R$ 0,18 | R$ 14,00 |
-| Utilitário/Pickup | R$ 15,00 | R$ 2,60 | 80 kg | R$ 0,22 | R$ 20,00 |
-| Van | R$ 22,00 | R$ 3,20 | 150 kg | R$ 0,25 | R$ 30,00 |
+| Veículo                      |     Base |   R$/km | Peso incluído | Adicional/kg | Piso do entregador |
+| ---------------------------- | -------: | ------: | ------------: | -----------: | -----------------: |
+| Bicicleta                    |  R$ 4,50 | R$ 1,10 |          5 kg |      R$ 0,08 |            R$ 6,50 |
+| Bicicleta cargueira/triciclo |  R$ 6,00 | R$ 1,25 |         15 kg |      R$ 0,08 |            R$ 8,00 |
+| Moto                         |  R$ 6,50 | R$ 1,50 |          8 kg |      R$ 0,12 |            R$ 9,00 |
+| Moto com baú                 |  R$ 7,50 | R$ 1,60 |         12 kg |      R$ 0,12 |           R$ 10,00 |
+| Carro                        | R$ 10,00 | R$ 2,10 |         30 kg |      R$ 0,18 |           R$ 14,00 |
+| Utilitário/Pickup            | R$ 15,00 | R$ 2,60 |         80 kg |      R$ 0,22 |           R$ 20,00 |
+| Van                          | R$ 22,00 | R$ 3,20 |        150 kg |      R$ 0,25 |           R$ 30,00 |
 
 Banca extra dentro da mesma feira:
 
