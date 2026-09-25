@@ -265,6 +265,8 @@ export function FairCard({
 
 export function CatalogPage({
   items,
+  fairName,
+  query,
   category,
   onCategory,
   onAdd,
@@ -272,6 +274,8 @@ export function CatalogPage({
   onFavorite,
 }: {
   items: Product[];
+  fairName: string;
+  query: string;
   category: string;
   onCategory: (category: string) => void;
   onAdd: (id: number) => void;
@@ -280,7 +284,14 @@ export function CatalogPage({
 }) {
   return (
     <section>
-      <PageHeading title="Produtos da feira" subtitle={`${items.length} produtos encontrados.`} />
+      <PageHeading
+        title={query.trim() ? "Resultados da busca" : "Produtos da feira"}
+        subtitle={
+          query.trim()
+            ? `${items.length} resultado(s) em todas as feiras para “${query.trim()}”.`
+            : `${items.length} produto(s) na ${fairName}.`
+        }
+      />
       <div className="category-list" aria-label="Categorias">
         {["Todos", ...categories].map((item) => (
           <button key={item} onClick={() => onCategory(item)} className={category === item ? "active" : ""}>
@@ -318,6 +329,7 @@ export function ProductCard({
   onFavorite: (id: number) => void;
 }) {
   const metrics = metricForVendor(product.feirante, vendorMetrics);
+  const variableWeight = ["kg", "g"].includes(product.unit);
   return (
     <article className="product-card">
       <button
@@ -348,6 +360,7 @@ export function ProductCard({
           </span>
           <span>{product.volume}</span>
         </div>
+        {variableWeight && <small className="stock">Peso e valor finais podem variar na separação.</small>}
         <div className="mt-4 flex items-end justify-between gap-2">
           <div>
             <strong>{money(product.price)}</strong>
@@ -711,20 +724,34 @@ export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: 
           })}
           {order.status !== "Entregue" && order.status !== "Cancelado" && (
             <div className="cancel-panel">
-              <b>Cancelar ou pedir ajuda</b>
+              <b>{["Coleta", "Em rota"].includes(order.status) ? "Pedir ajuda com este pedido" : "Cancelar pedido"}</b>
               <p>
-                Depois da coleta, o cancelamento precisa de suporte para proteger cliente, banca e entregador.
+                {["Coleta", "Em rota"].includes(order.status)
+                  ? "Depois que a coleta começou, o cliente não cancela sozinho. O caso segue para suporte."
+                  : "Antes da coleta, escolha o motivo para solicitar o cancelamento."}
               </p>
               <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
                 <option value="">Escolha um motivo</option>
-                <option>Desisti do pedido</option>
-                <option>Endereço errado</option>
-                <option>Cliente ausente</option>
-                <option>Produto danificado</option>
-                <option>Emergência na entrega</option>
+                {["Coleta", "Em rota"].includes(order.status) ? (
+                  <>
+                    <option>Endereço incorreto</option>
+                    <option>Pedido chegou com problema</option>
+                    <option>Não consigo receber agora</option>
+                    <option>Outro problema com a entrega</option>
+                  </>
+                ) : (
+                  <>
+                    <option>Desisti da compra</option>
+                    <option>Endereço incorreto</option>
+                    <option>Pedido duplicado</option>
+                    <option>Problema com os itens</option>
+                    <option>Outro</option>
+                  </>
+                )}
               </select>
-              <button className="secondary-action">
-                <XCircle size={17} /> Solicitar cancelamento
+              <button className="secondary-action" disabled={!cancelReason}>
+                <XCircle size={17} />{" "}
+                {["Coleta", "Em rota"].includes(order.status) ? "Abrir solicitação de suporte" : "Solicitar cancelamento"}
               </button>
             </div>
           )}
@@ -770,6 +797,7 @@ export function Checkout({
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
   const [payment, setPayment] = useState("Pix");
   const totalWeight = cartWeight(items, cart);
+  const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const vehicle = vehicleForWeight(totalWeight);
   const deliveryFee = fulfillment === "delivery" && subtotal < 80 ? 8.9 : 0;
   const total = subtotal + deliveryFee;
@@ -823,8 +851,8 @@ export function Checkout({
             </Step>
           )}
           <Step title={fulfillment === "delivery" ? "3. Pagamento" : "2. Pagamento"}>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {["Pix", "Cartão", "Dinheiro"].map((method) => (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {["Pix", "Cartão"].map((method) => (
                 <Choice
                   key={method}
                   active={payment === method}
@@ -836,6 +864,18 @@ export function Checkout({
               ))}
             </div>
           </Step>
+          {hasVariableWeight && (
+            <div className="region-strip">
+              <Package size={18} />
+              <div>
+                <b>Há produtos vendidos por peso</b>
+                <p>
+                  Peso e valor são estimados até a separação. No MVP, a cobrança real só poderá ser ajustada
+                  quando o provedor suportar autorização de diferença; caso contrário serão usadas porções fechadas.
+                </p>
+              </div>
+            </div>
+          )}
           <Step title="Itens do pedido">
             {items.map((product) => (
               <div className="checkout-item" key={product.id}>
@@ -878,7 +918,7 @@ export function Checkout({
               <b>{deliveryFee ? money(deliveryFee) : "Grátis"}</b>
             </p>
             <p className="total">
-              <span>Total</span>
+              <span>{hasVariableWeight ? "Total estimado" : "Total"}</span>
               <b>{money(total)}</b>
             </p>
           </div>
@@ -925,30 +965,49 @@ export function FavoritesPage({
     </Panel>
   );
 }
-export function NotificationsPage({ onBack, onClear }: { onBack: () => void; onClear: () => void }) {
+export function NotificationsPage({
+  orders,
+  onBack,
+  onClear,
+}: {
+  orders: DemoOrder[];
+  onBack: () => void;
+  onClear: () => void;
+}) {
+  const messages = orders.map((order) => {
+    const textByStatus: Record<DemoOrder["status"], string> = {
+      Recebido: `Pedido ${order.id} recebido e aguardando confirmação da banca.`,
+      Preparando: `Pedido ${order.id} está sendo preparado.`,
+      Coleta: `Pedido ${order.id} está pronto para coleta.`,
+      "Em rota": `Pedido ${order.id} saiu para entrega.`,
+      Entregue: `Pedido ${order.id} foi entregue. Você já pode avaliar.`,
+      Cancelado: `Pedido ${order.id} foi cancelado.`,
+    };
+    return textByStatus[order.status];
+  });
+
   return (
-    <Panel title="Notificações" subtitle="Pedidos, ofertas e novidades." onBack={onBack}>
+    <Panel title="Notificações" subtitle="Eventos reais da demonstração de pedidos." onBack={onBack}>
       <div className="mb-4 flex justify-end">
         <button onClick={onClear} className="text-button">
           Marcar todas como lidas
         </button>
       </div>
-      {[
-        "Seu pedido FE-1024 saiu para entrega.",
-        "Novo desconto na Feira do Produtor.",
-        "Sítio da Vó adicionou produtos ao catálogo.",
-        "Seu pedido FE-1019 foi entregue.",
-      ].map((text, index) => (
-        <article key={text} className={index < 2 ? "notification unread" : "notification"}>
-          <span>
-            <Bell size={18} />
-          </span>
-          <div>
-            <b>{text}</b>
-            <small>{index + 1} h atrás</small>
-          </div>
-        </article>
-      ))}
+      {messages.length ? (
+        messages.map((text, index) => (
+          <article key={text} className={index < 2 ? "notification unread" : "notification"}>
+            <span>
+              <Bell size={18} />
+            </span>
+            <div>
+              <b>{text}</b>
+              <small>Gerado pelo estado atual do pedido</small>
+            </div>
+          </article>
+        ))
+      ) : (
+        <Empty title="Sem notificações" text="Mudanças nos pedidos aparecerão aqui." />
+      )}
     </Panel>
   );
 }
@@ -1323,22 +1382,41 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
 }
 
 export function PaymentsPage({ onBack }: { onBack: () => void }) {
-  const [cards, setCards] = usePersistentState("feirae:cards", ["Cartão final 4821"]);
-  const [pixKeys, setPixKeys] = usePersistentState("feirae:pix", ["fernanda@email.com"]);
-  const [mode, setMode] = useState<"card" | "pix" | null>(null);
-  const [field, setField] = useState("");
+  const [cards, setCards] = usePersistentState<
+    { id: string; holder: string; last4: string; expiry: string; type: string }[]
+  >("feirae:cards-v2", [{ id: "demo-card", holder: "Cliente Feiraê", last4: "4821", expiry: "12/29", type: "Crédito" }]);
+  const [mode, setMode] = useState<"card" | null>(null);
+  const [holder, setHolder] = useState("");
+  const [number, setNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [cardType, setCardType] = useState("Crédito");
+
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (!field.trim() || !mode) return;
-    if (mode === "card") setCards((current) => [`Cartão final ${field.trim().slice(-4)}`, ...current]);
-    else setPixKeys((current) => [field.trim(), ...current]);
-    setField("");
+    const digits = number.replace(/\D/g, "");
+    if (!holder.trim() || digits.length < 12 || !expiry.trim() || cvv.length < 3) return;
+    setCards((current) => [
+      {
+        id: String(Date.now()),
+        holder: holder.trim(),
+        last4: digits.slice(-4),
+        expiry: expiry.trim(),
+        type: cardType,
+      },
+      ...current,
+    ]);
+    setHolder("");
+    setNumber("");
+    setExpiry("");
+    setCvv("");
     setMode(null);
   }
+
   return (
     <Panel
       title="Pagamentos e carteira"
-      subtitle="O app mostra pagamento nativo, mesmo usando provedor externo por trás."
+      subtitle="Cartões são representados por token na arquitetura real; número completo e CVV não ficam salvos no Feiraê."
       onBack={onBack}
     >
       <div className="grid gap-4 lg:grid-cols-[1fr_.8fr]">
@@ -1349,7 +1427,11 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
               <CreditCard />
               <div>
                 <b>Cartão de crédito/débito</b>
-                <small>{cards.length ? cards.join(" · ") : "Cadastrar cartão para pedidos futuros"}</small>
+                <small>
+                  {cards.length
+                    ? cards.map((card) => `${card.type} final ${card.last4} · ${card.expiry}`).join(" · ")
+                    : "Nenhum cartão tokenizado"}
+                </small>
               </div>
               <button onClick={() => setMode("card")}>Adicionar</button>
             </article>
@@ -1357,27 +1439,63 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
               <Wallet />
               <div>
                 <b>Pix</b>
-                <small>{pixKeys.length ? pixKeys.join(" · ") : "Gerar Pix no fechamento do pedido"}</small>
+                <small>O QR Code/copia e cola é gerado no checkout. Não é necessário cadastrar uma chave Pix do cliente.</small>
               </div>
-              <button onClick={() => setMode("pix")}>Configurar</button>
             </article>
           </div>
-          {mode && (
+          {mode === "card" && (
             <form className="form-card compact" onSubmit={submit}>
               <label>
-                {mode === "card" ? "Número do cartão" : "Chave Pix"}
+                Nome no cartão
+                <input value={holder} onChange={(event) => setHolder(event.target.value)} autoComplete="cc-name" required />
+              </label>
+              <label>
+                Número do cartão
                 <input
-                  value={field}
-                  onChange={(event) => setField(event.target.value)}
-                  placeholder={
-                    mode === "card" ? "0000 0000 0000 0000" : "CPF, e-mail, telefone ou chave aleatória"
-                  }
+                  value={number}
+                  onChange={(event) => setNumber(event.target.value)}
+                  placeholder="0000 0000 0000 0000"
+                  inputMode="numeric"
+                  autoComplete="cc-number"
                   required
                 />
               </label>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label>
+                  Validade
+                  <input
+                    value={expiry}
+                    onChange={(event) => setExpiry(event.target.value)}
+                    placeholder="MM/AA"
+                    autoComplete="cc-exp"
+                    required
+                  />
+                </label>
+                <label>
+                  CVV
+                  <input
+                    value={cvv}
+                    onChange={(event) => setCvv(event.target.value.replace(/\D/g, "").slice(0, 4))}
+                    inputMode="numeric"
+                    autoComplete="cc-csc"
+                    placeholder="123"
+                    required
+                  />
+                </label>
+                <label>
+                  Tipo
+                  <select value={cardType} onChange={(event) => setCardType(event.target.value)}>
+                    <option>Crédito</option>
+                    <option>Débito</option>
+                  </select>
+                </label>
+              </div>
+              <p className="operation-footnote">
+                Na integração real, esses dados serão enviados diretamente ao provedor para tokenização. O CVV nunca será armazenado.
+              </p>
               <div className="module-action-row">
                 <button className="primary-action" type="submit">
-                  Salvar {mode === "card" ? "cartão" : "Pix"}
+                  Tokenizar e salvar cartão
                 </button>
                 <button className="secondary-action" type="button" onClick={() => setMode(null)}>
                   Cancelar
@@ -1389,19 +1507,15 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
         <div className="surface-card wallet-card">
           <span className="eyebrow">Carteira</span>
           <h2>R$ 18,90</h2>
-          <p>Crédito de reembolso disponível para a próxima compra.</p>
+          <p>Crédito demonstrativo de reembolso disponível para a próxima compra.</p>
           <div className="finance-breakdown">
-            <p>
-              <span>Cupom ativo</span>
-              <strong>FEIRA10</strong>
-            </p>
             <p>
               <span>Reembolso</span>
               <strong>R$ 18,90</strong>
             </p>
             <p>
-              <span>Expira em</span>
-              <strong>30 dias</strong>
+              <span>Origem</span>
+              <strong>Pedido demonstrativo</strong>
             </p>
           </div>
         </div>
@@ -1410,28 +1524,76 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-export function RatingsPage({ onBack }: { onBack: () => void }) {
-  const reviews = [
-    ["Produto", "Cesta de frutas", "5,0", "Frutas bonitas e bem embaladas."],
-    ["Banca", "Sítio da Vó", "4,9", "Atendimento rápido na separação."],
-    ["Entrega", "FE-1024", "4,8", "Entrega cuidadosa e dentro do prazo."],
-    ["App", "Experiência mensal", "4,7", "Avaliação solicitada uma vez por mês."],
-  ];
+export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: () => void }) {
+  const [reviews] = usePersistentState(
+    "feirae:customer-reviews",
+    [
+      {
+        id: "review-product-1",
+        type: "Produto",
+        target: "Cesta de frutas",
+        orderId: "FE-1019",
+        rating: 5,
+        text: "Frutas bonitas e bem embaladas.",
+      },
+      {
+        id: "review-vendor-1",
+        type: "Banca",
+        target: "Sítio da Vó",
+        orderId: "FE-1019",
+        rating: 4.9,
+        text: "Atendimento rápido na separação.",
+      },
+      {
+        id: "review-delivery-1",
+        type: "Entrega",
+        target: "Entregador do pedido",
+        orderId: "FE-1019",
+        rating: 4.8,
+        text: "Entrega cuidadosa.",
+      },
+    ],
+  );
+  const reviewedOrderIds = new Set(reviews.map((review) => review.orderId));
+  const pending = orders.filter(
+    (order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id),
+  );
+
   return (
     <Panel
       title="Minhas avaliações"
-      subtitle="Cliente, banca, entregador e app se avaliam no fluxo certo."
+      subtitle="Avaliações feitas ficam separadas dos pedidos que ainda aguardam sua nota."
       onBack={onBack}
     >
+      <SectionHeading eyebrow="Pendentes" title="Pedidos para avaliar" />
+      {pending.length ? (
+        <div className="operation-list">
+          {pending.map((order) => (
+            <article key={order.id}>
+              <Star />
+              <div>
+                <b>{order.id}</b>
+                <small>Avalie produtos, banca e entrega deste pedido.</small>
+              </div>
+              <button className="mini-toggle">Avaliar</button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="operation-footnote">Nenhum pedido entregue aguardando avaliação.</p>
+      )}
+
+      <SectionHeading eyebrow="Histórico" title="Avaliações já enviadas" />
       <div className="review-grid">
-        {reviews.map(([type, target, rating, text]) => (
-          <article className="review-card" key={`${type}-${target}`}>
-            <strong>{rating} ★</strong>
+        {reviews.map((review) => (
+          <article className="review-card" key={review.id}>
+            <strong>{review.rating.toLocaleString("pt-BR")} ★</strong>
             <div>
               <b>
-                {type} · {target}
+                {review.type} · {review.target}
               </b>
-              <small>{text}</small>
+              <small>{review.orderId}</small>
+              <p>{review.text}</p>
             </div>
           </article>
         ))}
@@ -1496,7 +1658,7 @@ export function ChatPage({ onBack }: { onBack: () => void }) {
 export function SettingsPage({ onBack }: { onBack: () => void }) {
   const [offers, setOffers] = usePersistentState("feirae:offers", true);
   const [orderUpdates, setOrderUpdates] = usePersistentState("feirae:order-updates", true);
-  const [whatsapp, setWhatsapp] = usePersistentState("feirae:whatsapp", true);
+  const [whatsapp, setWhatsapp] = usePersistentState("feirae:whatsapp", false);
   const [useGps, setUseGps] = usePersistentState("feirae:gps", true);
   const [compactCards, setCompactCards] = usePersistentState("feirae:compact-cards", false);
   return (
@@ -1515,8 +1677,8 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
           onChange={setOrderUpdates}
         />
         <Toggle
-          label="Avisos por WhatsApp"
-          description="Receber resumo do pedido e mudança de entrega"
+          label="Autorizo receber mensagens do Feiraê via WhatsApp"
+          description="Consentimento opcional para atualizações de pedidos e entregas; pode ser desativado a qualquer momento."
           checked={whatsapp}
           onChange={setWhatsapp}
         />
