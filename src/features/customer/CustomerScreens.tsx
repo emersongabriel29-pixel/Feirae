@@ -21,6 +21,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { categories, fairs, products, vendorMetrics } from "../../data";
+import { fairHoursForName } from "../../domain/fairHours";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
@@ -218,7 +219,7 @@ export function FairCard({
     <article className="fair-card">
       <div className={`fair-cover tone-${index % 3}`}>
         <span aria-hidden="true">🧺</span>
-        <small>{fair.status}</small>
+        <small>{fairHoursForName(fair.name).label}</small>
       </div>
       <div className="p-5">
         <h3>{fair.name}</h3>
@@ -467,7 +468,11 @@ export function FairDetail({
   const fairProducts = products.filter((product) => product.fair === fair.name);
 
   return (
-    <Panel title={fair.name} subtitle={`${fair.place} · ${fair.status}`} onBack={onBack}>
+    <Panel
+      title={fair.name}
+      subtitle={`${fair.place} · ${fairHoursForName(fair.name).label}`}
+      onBack={onBack}
+    >
       <div className="detail-banner">
         <div>
           <span className="eyebrow light">Feira selecionada</span>
