@@ -10,6 +10,7 @@ import {
   Plus,
   Star,
   Truck,
+  Trash2,
   Upload,
   Wallet,
   XCircle,
@@ -87,6 +88,74 @@ function orderWeight(order: VendorOrder) {
   return order.items.reduce((sum, item) => sum + (item.actualWeightKg || item.estimatedWeightKg), 0);
 }
 
+const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+function minutesFromTime(value: string) {
+  const [hour, minute] = value.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function vendorScheduleStatus(schedule: VendorScheduleDay[], now = new Date()) {
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const todayIndex = now.getDay();
+  const today = schedule.find((item) => item.day === dayNames[todayIndex]);
+  const previous = schedule.find((item) => item.day === dayNames[(todayIndex + 6) % 7]);
+
+  if (previous?.enabled && previous.open && previous.close) {
+    const previousOpen = minutesFromTime(previous.open);
+    const previousClose = minutesFromTime(previous.close);
+    if (previousClose < previousOpen && currentMinutes < previousClose) {
+      return { open: true, label: `Aberta agora · fecha às ${previous.close}` };
+    }
+  }
+
+  if (today?.enabled && today.open && today.close) {
+    const open = minutesFromTime(today.open);
+    const close = minutesFromTime(today.close);
+    const overnight = close < open;
+    const isOpen = overnight ? currentMinutes >= open : currentMinutes >= open && currentMinutes < close;
+    if (isOpen) {
+      if (today.breakStart && today.breakEnd) {
+        const breakStart = minutesFromTime(today.breakStart);
+        const breakEnd = minutesFromTime(today.breakEnd);
+        if (currentMinutes >= breakStart && currentMinutes < breakEnd) {
+          return { open: false, label: `Em pausa · volta às ${today.breakEnd}` };
+        }
+      }
+      return {
+        open: true,
+        label: overnight
+          ? `Aberta agora · fecha às ${today.close} do dia seguinte`
+          : `Aberta agora · fecha às ${today.close}`,
+      };
+    }
+  }
+
+  for (let offset = 0; offset < 7; offset += 1) {
+    const index = (todayIndex + offset) % 7;
+    const candidate = schedule.find((item) => item.day === dayNames[index] && item.enabled);
+    if (!candidate?.open) continue;
+    if (offset === 0 && currentMinutes < minutesFromTime(candidate.open)) {
+      return { open: false, label: `Fechada · abre hoje às ${candidate.open}` };
+    }
+    if (offset > 0) {
+      return { open: false, label: `Fechada · abre ${candidate.day.toLocaleLowerCase("pt-BR")} às ${candidate.open}` };
+    }
+  }
+  return { open: false, label: "Fechada · sem próximo horário configurado" };
+}
+
+function promotionStatus(promotion: VendorPromotion) {
+  if (!promotion.active) return "Encerrada";
+  const now = Date.now();
+  const start = promotion.startsAt ? Date.parse(promotion.startsAt) : Number.NEGATIVE_INFINITY;
+  const end = promotion.endsAt ? Date.parse(promotion.endsAt) : Number.POSITIVE_INFINITY;
+  if (now < start) return "Agendada";
+  if (now > end) return "Encerrada";
+  if (promotion.usageLimit > 0 && promotion.usedCount >= promotion.usageLimit) return "Encerrada";
+  return "Ativa";
+}
+
 export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
   const [active, setActive] = useState("Central");
   const [storeOpen, setStoreOpen] = usePersistentState<boolean>("feirae:vendor-store-open", true);
@@ -160,7 +229,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [promotionEditingId, setPromotionEditingId] = useState<string | null>(null);
   const [promotionDraft, setPromotionDraft] = useState<VendorPromotion>({
     id: "",
-    type: "combo",
+    type: "percentual",
     name: "",
     rule: "",
     startsAt: "",
@@ -169,6 +238,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     vendorPaysDelivery: false,
     usageLimit: 0,
     usedCount: 0,
+    minimumOrder: 0,
+    discountValue: 0,
+    target: "",
   });
   const [stockReason, setStockReason] = useState("Ajuste manual");
   const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
@@ -181,7 +253,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
   );
   const lowStockCount = vendorItems.filter((item) => item.active && item.stock <= item.minStock).length;
-  const pausedCount = vendorItems.filter((item) => !item.active).length;
+  const pausedCount = vendorItems.filter((item) => !item.active && item.stock > 0).length;
+  const outOfStockCount = vendorItems.filter((item) => item.stock <= 0).length;
   const totalStock = vendorItems.reduce((sum, item) => sum + item.stock, 0);
   const averageRating = reviews.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
@@ -206,6 +279,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         : "Documentação pendente";
 
   const officialHours = fairHoursForName(bankProfile.fairName);
+  const scheduleForStatus =
+    useFairHours && bankProfile.fairName === "Feira do Produtor Rural" ? initialVendorSchedule : schedule;
+  const currentScheduleStatus = vendorScheduleStatus(scheduleForStatus);
+  const effectiveStoreOpen = storeOpen && currentScheduleStatus.open;
 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
@@ -304,7 +381,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     const nextProduct = {
       ...productDraft,
       id: productEditorId === "new" ? Date.now() : productDraft.id,
-      active: productDraft.photoDataUrl ? productDraft.active : false,
+      active: productDraft.stock > 0 ? productDraft.active : false,
     };
     setVendorItems((current) =>
       productEditorId === "new"
@@ -312,11 +389,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         : current.map((item) => (item.id === nextProduct.id ? nextProduct : item)),
     );
     setProductEditorId(null);
-    showNotice(
-      nextProduct.photoDataUrl
-        ? "Produto salvo."
-        : "Produto salvo como pausado. Adicione uma foto antes de colocá-lo à venda.",
-    );
+    showNotice(nextProduct.stock > 0 ? "Produto salvo." : "Produto salvo como esgotado.");
   }
 
   function adjustStock(item: VendorProduct, delta: number) {
@@ -347,7 +420,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     setSchedule((current) => current.map((item) => (item.day === day ? { ...item, ...update } : item)));
   }
 
-  function startPromotion(type: VendorPromotionType = "combo") {
+  function startPromotion(type: VendorPromotionType = "percentual") {
     setPromotionEditingId(null);
     setPromotionDraft({
       id: "",
@@ -360,6 +433,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       vendorPaysDelivery: type === "freteGratis",
       usageLimit: 0,
       usedCount: 0,
+      minimumOrder: 0,
+      discountValue: 0,
+      target: "",
     });
     setPromotionEditorOpen(true);
   }
@@ -409,55 +485,57 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
 
   const inventory = (
     <div className="operation-list">
-      {vendorItems.map((item) => (
-        <article key={item.id}>
-          <span className={item.stock <= item.minStock ? "inventory-dot warning" : "inventory-dot"} />
-          <div>
-            <b>{item.name}</b>
-            <small>
-              {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} · peso logístico{" "}
-              {item.weightKg} kg · mínimo {item.minStock}
-            </small>
-          </div>
-          {active === "Estoque" ? (
-            <div className="stock-controls">
-              <button onClick={() => adjustStock(item, -1)}>−</button>
-              <strong>{item.stock}</strong>
-              <button onClick={() => adjustStock(item, 1)}>+</button>
+      {vendorItems.map((item) => {
+        const status = item.stock <= 0 ? "Estoque esgotado" : item.active ? "À venda" : "Pausado pelo feirante";
+        return (
+          <article key={item.id}>
+            <span className={item.stock <= item.minStock ? "inventory-dot warning" : "inventory-dot"} />
+            <div>
+              <b>{item.name}</b>
+              <small>
+                {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} · peso logístico{" "}
+                {item.weightKg} kg · mínimo {item.minStock}
+              </small>
+              <small>Status: {status}</small>
             </div>
-          ) : (
-            <div className="item-actions">
-              <button className="mini-toggle" onClick={() => openProductEditor(item)}>
-                Editar produto
-              </button>
-              <button
-                className={item.active ? "mini-toggle active" : "mini-toggle"}
-                onClick={() =>
-                  setVendorItems((current) =>
-                    current.map((product) =>
-                      product.id === item.id
-                        ? {
-                            ...product,
-                            active: product.photoDataUrl && product.stock > 0 ? !product.active : false,
-                          }
-                        : product,
-                    ),
-                  )
-                }
-              >
-                {item.active ? "À venda" : "Pausado"}
-              </button>
-            </div>
-          )}
-        </article>
-      ))}
+            {active === "Estoque" ? (
+              <div className="stock-controls">
+                <button onClick={() => adjustStock(item, -1)}>−</button>
+                <strong>{item.stock}</strong>
+                <button onClick={() => adjustStock(item, 1)}>+</button>
+              </div>
+            ) : (
+              <div className="item-actions">
+                <button className="mini-toggle" onClick={() => openProductEditor(item)}>
+                  Editar produto
+                </button>
+                <button
+                  className={item.active && item.stock > 0 ? "mini-toggle active" : "mini-toggle"}
+                  disabled={item.stock <= 0}
+                  onClick={() =>
+                    setVendorItems((current) =>
+                      current.map((product) =>
+                        product.id === item.id
+                          ? { ...product, active: product.stock > 0 ? !product.active : false }
+                          : product,
+                      ),
+                    )
+                  }
+                >
+                  {status}
+                </button>
+              </div>
+            )}
+          </article>
+        );
+      })}
     </div>
   );
 
   return (
     <Panel
       title="Operação do feirante"
-      subtitle="Fluxos funcionais locais; integração real entra na etapa de backend"
+      subtitle="Gerencie pedidos, banca, produtos, horários, promoções e financeiro."
       onBack={onBack}
     >
       {notice && <p className="inline-success">{notice}</p>}
@@ -472,7 +550,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             </div>
             <div className="operation-metrics">
               <article>
-                <strong>{storeOpen ? "Aberta" : "Fechada"}</strong>
+                <strong>{effectiveStoreOpen ? "Aberta agora" : "Fechada"}</strong>
                 <span>
                   {bankProfile.name} · Banca {bankProfile.box || "sem número"}
                 </span>
@@ -1110,7 +1188,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                         onClick={() => setStoreOpen((value) => !value)}
                         disabled={approvalStatus !== "Aprovado"}
                       >
-                        {storeOpen ? "Aberta" : "Fechada"}
+                        {effectiveStoreOpen ? "Aberta agora" : "Fechada"}
                       </button>
                     </div>
                     <div className="module-action-row">
