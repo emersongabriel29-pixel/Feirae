@@ -31,6 +31,7 @@ import { useAppNavigation } from "./hooks/useAppNavigation";
 import { useDemoCart } from "./hooks/useDemoCart";
 import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
+import { useUnifiedOrderRevision } from "./hooks/useUnifiedOrderRevision";
 import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 import {
   marketplaceProducts,
@@ -71,6 +72,7 @@ export default function App() {
   const [locationLabel, setLocationLabel] = useState("Planaltina, DF");
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast, notify } = useToast();
+  const unifiedOrderRevision = useUnifiedOrderRevision();
   const {
     cart,
     setCart,
@@ -153,7 +155,7 @@ export default function App() {
       });
       return Array.from(byId.values());
     });
-  }, [role, session?.email, setOrders]);
+  }, [role, session?.email, setOrders, unifiedOrderRevision]);
 
   function login(nextRole: Role, email: string, name: string, isNewAccount: boolean) {
     startSession(nextRole, email, name, isNewAccount);
