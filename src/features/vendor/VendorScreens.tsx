@@ -2051,7 +2051,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <ModuleHeader
                   badge="Receitas e repasses"
                   title="Financeiro da banca"
-                  description="Valores separados por estado. Taxas comerciais reais só serão aplicadas quando o provedor for integrado."
+                  description="Acompanhe valores pendentes, disponíveis, solicitados e recebidos."
                 />
                 <div className="operation-metrics">
                   <article>
@@ -2074,15 +2074,15 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </p>
                   <p>
                     <span>Taxa Feiraê</span>
-                    <strong>A definir</strong>
+                    <strong>Não configurada</strong>
                   </p>
                   <p>
-                    <span>Taxa do provedor</span>
-                    <strong>A definir</strong>
+                    <span>Taxa de processamento</span>
+                    <strong>Não configurada</strong>
                   </p>
                   <p>
                     <span>Próximo repasse</span>
-                    <strong>Depende do provedor</strong>
+                    <strong>{vendorRequestedPayout > 0 ? "Solicitado" : "Aguardando solicitação"}</strong>
                   </p>
                 </div>
                 {activeFreeShipping || deliverySettings.absorbDeliveryFee ? (
@@ -2265,7 +2265,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <ModuleHeader
                   badge="Dados pessoais e recebimento"
                   title="Minha conta"
-                  description="Dados do responsável e destino de recebimento. O provedor real validará titularidade e pagamentos."
+                  description="Dados do responsável e destino de recebimento."
                 />
                 <form
                   className="form-card"
@@ -2433,7 +2433,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       </label>
                     </div>
                   )}
-                  {accountSaved && <p className="inline-success">Alterações salvas neste dispositivo.</p>}
+                  {accountSaved && <p className="inline-success">Alterações salvas.</p>}
                   <button className="primary-action" type="submit">
                     <Edit3 size={17} /> Salvar alterações
                   </button>
