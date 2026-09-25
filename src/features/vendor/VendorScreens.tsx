@@ -202,6 +202,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       deliveryEnabled: true,
       pickupEnabled: true,
       absorbDeliveryFee: false,
+      acceptCashOnDelivery: true,
+      acceptCardOnDelivery: true,
       pickupInstructions: "Retirada no box da banca após confirmação de pedido pronto.",
     },
   );
@@ -436,6 +438,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       deliveryEnabled: deliverySettings.deliveryEnabled,
       pickupEnabled: deliverySettings.pickupEnabled,
       absorbDeliveryFee: deliverySettings.absorbDeliveryFee,
+      acceptCashOnDelivery: deliverySettings.acceptCashOnDelivery,
+      acceptCardOnDelivery: deliverySettings.acceptCardOnDelivery,
       promotions,
       products: vendorItems,
     });
@@ -445,6 +449,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     deliverySettings.absorbDeliveryFee,
     deliverySettings.deliveryEnabled,
     deliverySettings.pickupEnabled,
+    deliverySettings.acceptCashOnDelivery,
+    deliverySettings.acceptCardOnDelivery,
     effectiveStoreOpen,
     promotions,
     session.email,
@@ -1653,6 +1659,22 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   checked={deliverySettings.pickupEnabled}
                   onChange={(checked) =>
                     setDeliverySettings((current) => ({ ...current, pickupEnabled: checked }))
+                  }
+                />
+                <Toggle
+                  label="Aceitar dinheiro na entrega"
+                  description="Libera pagamento em dinheiro ao receber. O cliente pode informar valor para troco."
+                  checked={deliverySettings.acceptCashOnDelivery}
+                  onChange={(checked) =>
+                    setDeliverySettings((current) => ({ ...current, acceptCashOnDelivery: checked }))
+                  }
+                />
+                <Toggle
+                  label="Aceitar cartão na maquininha"
+                  description="Libera pagamento por cartão no recebimento quando a operação possui maquininha."
+                  checked={deliverySettings.acceptCardOnDelivery}
+                  onChange={(checked) =>
+                    setDeliverySettings((current) => ({ ...current, acceptCardOnDelivery: checked }))
                   }
                 />
                 <Toggle
