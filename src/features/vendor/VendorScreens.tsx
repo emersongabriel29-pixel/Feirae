@@ -956,6 +956,26 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                             >
                               Indisponível
                             </button>
+                            {item.unavailable && item.note.trim() && (
+                              <button
+                                className="mini-toggle"
+                                onClick={() => {
+                                  patchUnifiedOrder(
+                                    selectedOrder.id,
+                                    {},
+                                    eventNow(
+                                      `substitution-${item.productId ?? item.id}`,
+                                      `Substituição solicitada para ${item.name}`,
+                                      "vendor",
+                                      { details: item.note.trim() },
+                                    ),
+                                  );
+                                  showNotice("Opção de substituição enviada ao cliente.");
+                                }}
+                              >
+                                Enviar substituição ao cliente
+                              </button>
+                            )}
                           </div>
                         )}
                       </article>
