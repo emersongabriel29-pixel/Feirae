@@ -480,7 +480,7 @@ export default function App() {
           <DeliveryOperations
             session={session}
             onBack={() => openRoleRoot("delivery")}
-            onMap={() => openMap(-15.621, -47.657)}
+            onMap={(destination) => openMap(destination ?? "-15.621,-47.657")}
           />
         )}
       </div>
