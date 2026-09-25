@@ -4,13 +4,7 @@ import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
 import { filterProducts, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
-import {
-  CartDrawer,
-  Header,
-  LoginPage,
-  MobileNavigation,
-  RoleDashboard,
-} from "./components/AppComponents";
+import { CartDrawer, Header, LoginPage, MobileNavigation, RoleDashboard } from "./components/AppComponents";
 import {
   AccountPage,
   AddressesPage,
@@ -183,11 +177,7 @@ export default function App() {
               />
             )}
             {tab === "fairs" && (
-              <FairsPage
-                fairItems={fairsWithDistance}
-                onFair={openFair}
-                onMap={openMap}
-              />
+              <FairsPage fairItems={fairsWithDistance} onFair={openFair} onMap={openMap} />
             )}
             {tab === "products" && (
               <CatalogPage
@@ -231,10 +221,7 @@ export default function App() {
           />
         )}
         {screen === "vendors" && (
-          <VendorsPage
-            onBack={() => openCustomerTab("home")}
-            onVendor={openVendor}
-          />
+          <VendorsPage onBack={() => openCustomerTab("home")} onVendor={openVendor} />
         )}
         {screen === "tracking" && <DeliveryTracking onBack={() => openCustomerTab("orders")} />}
         {screen === "checkout" && (
@@ -273,15 +260,10 @@ export default function App() {
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "feiranteOps" && (
-          <FeiranteOperations
-            onBack={() => openRoleRoot("feirante")}
-          />
+          <FeiranteOperations onBack={() => openRoleRoot("feirante")} />
         )}
         {screen === "deliveryOps" && (
-          <DeliveryOperations
-            onBack={() => openRoleRoot("delivery")}
-            onMap={() => openMap(-15.621, -47.657)}
-          />
+          <DeliveryOperations onBack={() => openRoleRoot("delivery")} onMap={() => openMap(-15.621, -47.657)} />
         )}
       </div>
 
