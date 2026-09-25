@@ -71,6 +71,10 @@ export function DeliveryOperations({
   const [accepted, setAccepted] = useState<string | null>(null);
   const [stage, setStage] = useState(0);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelDetails, setCancelDetails] = useState("");
+  const [deliveryCancellationLog, setDeliveryCancellationLog] = usePersistentState<
+    { id: string; deliveryId: string; reason: string; details: string; createdAt: string }[]
+  >(`feirae:delivery-cancellations:${session.email}`, []);
   const [active, setActive] = useState("Central");
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
   const [helpProtocol, setHelpProtocol] = useState("");
@@ -396,14 +400,37 @@ export function DeliveryOperations({
   ).length;
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
+  const activeDeliveryVehicle = activeDelivery
+    ? compatibleVehicleForWeight(activeDelivery.weight)
+    : null;
   const activeDeliverySection = activeDelivery ? (
     <section className="active-delivery">
       <span className="eyebrow">Entrega em andamento</span>
       <h3>{activeDelivery.id}</h3>
       <p>{activeDelivery.route}</p>
-      <small>
-        {activeDelivery.weight} kg · veículo indicado: {activeDelivery.vehicle}
-      </small>
+      <div className="finance-breakdown">
+        <p><span>Feira</span><strong>{activeDelivery.fair}</strong></p>
+        <p><span>Banca</span><strong>{activeDelivery.bank}</strong></p>
+        <p><span>Peso</span><strong>{activeDelivery.weight.toLocaleString("pt-BR")} kg</strong></p>
+        <p>
+          <span>Veículo compatível em uso</span>
+          <strong>{activeDeliveryVehicle ? `${activeDeliveryVehicle.type} · ${activeDeliveryVehicle.capacityKg} kg` : "Nenhum"}</strong>
+        </p>
+        <p><span>Distância total</span><strong>{activeDelivery.totalDistanceKm.toLocaleString("pt-BR")} km</strong></p>
+        <p><span>Previsão</span><strong>{activeDelivery.etaMinutes} min</strong></p>
+        <p><span>Ganho</span><strong>{activeDelivery.fee}</strong></p>
+      </div>
+      <div className="operation-list detailed">
+        {activeDelivery.items.map((item) => (
+          <article key={item}>
+            <Package />
+            <div>
+              <b>{item}</b>
+              <small>Item da corrida</small>
+            </div>
+          </article>
+        ))}
+      </div>
       <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
         {deliveryStages.map((label, index) => (
           <span className={index <= stage ? "done" : ""} key={label}>
@@ -431,6 +458,8 @@ export function DeliveryOperations({
               ]);
               setAccepted(null);
               setStage(0);
+              setCancelReason("");
+              setCancelDetails("");
             } else setStage((value) => value + 1);
           }}
         >
@@ -439,19 +468,54 @@ export function DeliveryOperations({
       </div>
       <div className="cancel-panel">
         <b>Cancelar entrega</b>
-        <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
+        <select
+          value={cancelReason}
+          onChange={(event) => {
+            setCancelReason(event.target.value);
+            setCancelDetails("");
+          }}
+        >
           <option value="">Motivo do cancelamento</option>
           <option>Veículo com problema</option>
           <option>Peso/volume incompatível</option>
           <option>Banca atrasou a retirada</option>
           <option>Endereço inseguro ou incorreto</option>
           <option>Cliente não responde</option>
+          <option>Outro</option>
         </select>
+        {cancelReason === "Outro" && (
+          <label>
+            Descreva o motivo
+            <textarea
+              rows={3}
+              value={cancelDetails}
+              onChange={(event) => setCancelDetails(event.target.value)}
+              placeholder="Explique por que não pode concluir a corrida."
+            />
+          </label>
+        )}
         <button
           className="secondary-action"
+          disabled={!cancelReason || (cancelReason === "Outro" && !cancelDetails.trim())}
           onClick={() => {
+            const createdAt = new Intl.DateTimeFormat("pt-BR", {
+              dateStyle: "short",
+              timeStyle: "short",
+            }).format(new Date());
+            setDeliveryCancellationLog((current) => [
+              {
+                id: String(Date.now()),
+                deliveryId: activeDelivery.id,
+                reason: cancelReason,
+                details: cancelDetails.trim(),
+                createdAt,
+              },
+              ...current,
+            ]);
             setAccepted(null);
             setStage(0);
+            setCancelReason("");
+            setCancelDetails("");
           }}
         >
           <XCircle size={17} /> Cancelar corrida
@@ -461,48 +525,75 @@ export function DeliveryOperations({
   ) : (
     <Empty title="Nenhuma entrega ativa" text="Aceite uma entrega disponível para acompanhar as etapas." />
   );
+
   const deliveryList = (
     <div className="mt-6 space-y-3">
       <span className="eyebrow">Entregas disponíveis</span>
-      {deliveries
-        .filter((delivery) => delivery.id !== accepted)
-        .map((delivery) => {
-          const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
-          return (
-            <article className="delivery-row" key={delivery.id}>
-              <span>
-                <Bike />
-              </span>
-              <div>
-                <b>
-                  {delivery.id} · {delivery.route}
-                </b>
-                <small>
-                  {delivery.distance} · {delivery.weight} kg ·{" "}
-                  {compatibleVehicle
-                    ? `compatível com ${compatibleVehicle.type} (${compatibleVehicle.capacityKg} kg)`
-                    : "sem veículo ativo compatível"}{" "}
-                  · ganho {delivery.fee}
-                </small>
-              </div>
-              <button
-                disabled={!online || approvalStatus !== "Aprovado" || accepted !== null || !compatibleVehicle}
-                onClick={() => {
-                  if (!compatibleVehicle) return;
-                  setAccepted(delivery.id);
-                  setStage(0);
-                  setActive("Em andamento");
-                }}
-              >
-                {compatibleVehicle ? "Aceitar" : "Veículo incompatível"}
-              </button>
-            </article>
-          );
-        })}
+      {!availableNow && (
+        <div className="region-strip">
+          <Info size={18} />
+          <div>
+            <b>Você não está disponível para novas corridas</b>
+            <p>
+              {approvalStatus !== "Aprovado"
+                ? `Cadastro: ${approvalStatus}.`
+                : online && !scheduleAllowsNow
+                  ? "Sua agenda automática está fora do horário configurado."
+                  : "Ative sua disponibilidade para receber corridas."}
+            </p>
+          </div>
+        </div>
+      )}
+      {visibleDeliveries.filter((delivery) => delivery.id !== accepted).length === 0 ? (
+        <Empty
+          title="Nenhuma corrida dentro dos seus filtros"
+          text="Aumente o raio, altere as regiões ou aguarde uma nova corrida."
+        />
+      ) : (
+        visibleDeliveries
+          .filter((delivery) => delivery.id !== accepted)
+          .map((delivery) => {
+            const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
+            return (
+              <article className="delivery-row" key={delivery.id}>
+                <span><Bike /></span>
+                <div>
+                  <b>{delivery.id} · {delivery.fair} · {delivery.bank}</b>
+                  <small>
+                    Destino: {delivery.region} · {delivery.weight.toLocaleString("pt-BR")} kg · {delivery.items.length} item(ns)
+                  </small>
+                  <small>
+                    Até a banca {delivery.toBankKm.toLocaleString("pt-BR")} km · banca → cliente{" "}
+                    {delivery.bankToCustomerKm.toLocaleString("pt-BR")} km · total{" "}
+                    {delivery.totalDistanceKm.toLocaleString("pt-BR")} km · {delivery.etaMinutes} min
+                  </small>
+                  <small>{delivery.items.join(" · ")}</small>
+                  <small>
+                    {compatibleVehicle
+                      ? `Veículo compatível: ${compatibleVehicle.type} (${compatibleVehicle.capacityKg} kg)`
+                      : "Nenhum veículo ativo/documentado suporta o peso"}
+                    {" · "}ganho {delivery.fee}
+                  </small>
+                </div>
+                <button
+                  disabled={!availableNow || accepted !== null || !compatibleVehicle}
+                  onClick={() => {
+                    if (!compatibleVehicle || !availableNow) return;
+                    setAccepted(delivery.id);
+                    setStage(0);
+                    setActive("Em andamento");
+                  }}
+                >
+                  {compatibleVehicle ? "Aceitar" : "Veículo incompatível"}
+                </button>
+              </article>
+            );
+          })
+      )}
     </div>
   );
   return (
-    <Panel title="Central do entregador" subtitle="Entregas locais demonstrativas" onBack={onBack}>
+    <Panel title="Central do entregador" subtitle="Gerencie disponibilidade, veículos, filtros, corridas e ganhos." onBack={onBack}>
       {active === "Central" ? (
         <div className="ops-home">
           <div className="ops-summary">
@@ -514,7 +605,7 @@ export function DeliveryOperations({
             <div className="operation-metrics">
               <article>
                 <strong>
-                  {approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}
+                  {approvalStatus === "Aprovado" ? (availableNow ? "Disponível" : "Indisponível") : approvalStatus}
                 </strong>
                 <span>disponibilidade atual</span>
               </article>
@@ -525,7 +616,7 @@ export function DeliveryOperations({
               <article>
                 <strong>
                   {money(
-                    deliveries
+                    visibleDeliveries
                       .filter((delivery) => compatibleVehicleForWeight(delivery.weight))
                       .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
                   )}
@@ -555,7 +646,7 @@ export function DeliveryOperations({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <span className="eyebrow">Disponibilidade</span>
-                    <h2>{online ? "Você está online" : "Você está offline"}</h2>
+                    <h2>{availableNow ? "Você está disponível" : "Você está indisponível"}</h2>
                   </div>
                   <button
                     onClick={() => {
@@ -563,9 +654,9 @@ export function DeliveryOperations({
                       setOnline((value) => !value);
                     }}
                     disabled={approvalStatus !== "Aprovado"}
-                    className={online ? "status-button active" : "status-button"}
+                    className={availableNow ? "status-button active" : "status-button"}
                   >
-                    {approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}
+                    {approvalStatus === "Aprovado" ? (online ? "Desligar" : "Ficar disponível") : approvalStatus}
                   </button>
                 </div>
                 <div className="operation-metrics">
@@ -596,7 +687,7 @@ export function DeliveryOperations({
                 <ModuleHeader
                   badge="Corridas liberadas"
                   title="Entregas compatíveis"
-                  description="Cada corrida mostra rota, peso, veículo indicado e ganho antes do aceite."
+                  description="Cada corrida mostra peso, itens, distâncias, previsão, ganho e um veículo compatível antes do aceite."
                 />
                 {deliveryList}
               </>
