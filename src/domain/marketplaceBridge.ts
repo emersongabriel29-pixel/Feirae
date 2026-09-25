@@ -202,6 +202,23 @@ function promotionIsActive(promotion: SharedPromotion) {
   return true;
 }
 
+export function registerPromotionUsage(promotionNames: string[]) {
+  if (!promotionNames.length) return;
+  const current = readMarketplace();
+  const names = new Set(promotionNames);
+  writeMarketplace({
+    ...current,
+    stores: current.stores.map((store) => ({
+      ...store,
+      promotions: store.promotions.map((promotion) =>
+        names.has(promotion.name)
+          ? { ...promotion, usedCount: promotion.usedCount + 1 }
+          : promotion,
+      ),
+    })),
+  });
+}
+
 export function calculateCheckoutPromotions(
   items: Product[],
   cart: Record<number, number>,
