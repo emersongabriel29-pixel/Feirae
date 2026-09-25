@@ -36,6 +36,7 @@ import { marketplaceProducts, readStoreByIdentity } from "./domain/marketplaceBr
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import { consumeWallet } from "./domain/walletBridge";
+import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 
 export default function App() {
   const { session, role, startSession, clearSession } = useDemoSession();
@@ -249,6 +250,11 @@ export default function App() {
     },
   ) {
     const id = `FE-${String(Date.now()).slice(-8)}`;
+    const reservation = reserveInventory(id, products, cart);
+    if (!reservation.ok) {
+      notify(reservation.message);
+      return;
+    }
     const now = new Date();
     const date = new Intl.DateTimeFormat("pt-BR", {
       dateStyle: "short",
@@ -362,6 +368,7 @@ export default function App() {
       ),
     );
     const unifiedOrder = readUnifiedOrders(session?.email).find((order) => order.id === orderId);
+    releaseInventory(orderId);
     const shouldRefund = unifiedOrder?.paymentStatus === "authorized";
     patchUnifiedOrder(
       orderId,
