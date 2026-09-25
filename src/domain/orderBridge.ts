@@ -127,6 +127,7 @@ export type UnifiedOrderRecord = {
   reviews?: UnifiedReview[];
 };
 
+export const UNIFIED_ORDER_EVENT = "feirae:unified-orders-changed";
 const STORAGE_KEY = "feirae:unified-orders:v2";
 const LEGACY_STORAGE_KEY = "feirae:unified-orders:v1";
 
@@ -208,6 +209,7 @@ export function readUnifiedOrders(customerKey?: string): UnifiedOrderRecord[] {
 export function writeUnifiedOrders(orders: UnifiedOrderRecord[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(orders.map(normalizeOrder)));
+  window.dispatchEvent(new Event(UNIFIED_ORDER_EVENT));
 }
 
 export function upsertUnifiedOrder(order: UnifiedOrderRecord) {
