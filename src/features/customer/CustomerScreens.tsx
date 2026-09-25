@@ -24,7 +24,8 @@ import {
 import { categories, fairs, products, vendorMetrics } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
 import { calculateCheckoutPromotions, marketplaceProducts, readStoreByIdentity } from "../../domain/marketplaceBridge";
-import { scopedStorageKey } from "../../domain/storage";
+import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
+import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import { appendReview, appendSupportTicket, readUnifiedOrders } from "../../domain/orderBridge";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
@@ -1090,6 +1091,7 @@ export function Checkout({
       deliverySubsidy: number;
       customerDeliveryFee: number;
       promotionDiscount: number;
+      walletUsed: number;
       changeFor?: number;
     },
   ) => void;
@@ -1099,6 +1101,7 @@ export function Checkout({
   const [needsChange, setNeedsChange] = useState(false);
   const [changeFor, setChangeFor] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
+  const [useWallet, setUseWallet] = useState(false);
   const [addresses] = usePersistentState<Address[]>(scopedStorageKey("feirae:addresses"), []);
   const [cards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
@@ -1134,7 +1137,10 @@ export function Checkout({
         )
       : 0;
   const customerDeliveryFee = Math.max(0, calculatedDeliveryFee - deliverySubsidy);
-  const total = Math.max(0, subtotal - promotionDiscount + customerDeliveryFee);
+  const beforeWallet = Math.max(0, subtotal - promotionDiscount + customerDeliveryFee);
+  const availableWallet = walletBalance(currentAccountKey());
+  const walletUsed = useWallet ? Math.min(availableWallet, beforeWallet) : 0;
+  const total = Math.max(0, beforeWallet - walletUsed);
   const cardPayment = payment === "Cartão";
   const cashPayment = payment === "Dinheiro na entrega";
   const parsedChangeFor = Number(changeFor.replace(/[^0-9,.-]/g, "").replace(",", "."));
@@ -1290,6 +1296,17 @@ export function Checkout({
             )}
           </Step>
 
+          {availableWallet > 0 && (
+            <div className="form-card compact">
+              <Toggle
+                label="Usar saldo da carteira"
+                description={`Você tem ${money(availableWallet)} em créditos de reembolso.`}
+                checked={useWallet}
+                onChange={setUseWallet}
+              />
+            </div>
+          )}
+
           {hasVariableWeight && (
             <div className="region-strip">
               <Package size={18} />
@@ -1365,6 +1382,12 @@ export function Checkout({
             {promotionResult.appliedPromotions.length > 0 && (
               <small>Promoções aplicadas: {promotionResult.appliedPromotions.join(" · ")}</small>
             )}
+            {walletUsed > 0 && (
+              <p>
+                <span>Crédito da carteira</span>
+                <b>−{money(walletUsed)}</b>
+              </p>
+            )}
             <p>
               <span>Pagamento</span>
               <b>{payment}</b>
@@ -1389,6 +1412,7 @@ export function Checkout({
                 deliverySubsidy,
                 customerDeliveryFee,
                 promotionDiscount,
+                walletUsed,
                 changeFor: cashPayment && needsChange && Number.isFinite(parsedChangeFor) ? parsedChangeFor : undefined,
               })
             }
@@ -2250,17 +2274,19 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
 
         <div className="surface-card wallet-card">
           <span className="eyebrow">Carteira</span>
-          <h2>R$ 18,90</h2>
-          <p>Crédito de reembolso disponível para a próxima compra.</p>
-          <div className="finance-breakdown">
-            <p>
-              <span>Reembolso</span>
-              <strong>R$ 18,90</strong>
-            </p>
-            <p>
-              <span>Uso</span>
-              <strong>Próxima compra</strong>
-            </p>
+          <h2>{money(walletBalance(currentAccountKey()))}</h2>
+          <p>Créditos de reembolso podem ser usados no checkout.</p>
+          <div className="operation-list detailed">
+            {walletHistory(currentAccountKey()).slice(0, 6).map((entry) => (
+              <article key={entry.id}>
+                <Wallet />
+                <div>
+                  <b>{entry.label}</b>
+                  <small>{entry.orderId}</small>
+                </div>
+                <strong>{entry.type === "credit" ? "+" : "−"}{money(entry.amount)}</strong>
+              </article>
+            ))}
           </div>
         </div>
       </div>
