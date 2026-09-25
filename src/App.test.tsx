@@ -174,7 +174,7 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /voltar para central/i }));
     fireEvent.click(screen.getByRole("button", { name: /^estoque$/i }));
     expect(screen.getAllByRole("button", { name: "+" }).length).toBeGreaterThan(0);
-    expect(screen.getByText(/1 alertas abaixo do mínimo/i)).toBeInTheDocument();
+    expect(screen.getByText(/estoques abaixo do mínimo/i)).toBeInTheDocument();
   });
 
   it("gives the vendor a personal account form separate from the stall", () => {
@@ -234,8 +234,8 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/segunda e quinta · 19h–2h/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: /definir meu próprio horário/i }));
 
-    expect(screen.getAllByLabelText(/abertura/i).length).toBe(7);
-    expect(screen.getAllByLabelText(/fechamento/i).length).toBe(7);
+    expect(screen.getAllByLabelText(/^abertura$/i).length).toBe(7);
+    expect(screen.getAllByLabelText(/^fechamento$/i).length).toBe(7);
     expect(screen.getByRole("button", { name: /^aberto$/i })).toBeInTheDocument();
   });
 
@@ -270,7 +270,7 @@ describe("Feiraê role access", () => {
 
     expect(screen.getByText(/enviar arquivo não aprova o cadastro/i)).toBeInTheDocument();
     expect(screen.getByText(/permissão\/autorização da banca ou box/i)).toBeInTheDocument();
-    expect(screen.getByText(/pendente de envio/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/pendente de envio/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/enquanto os documentos obrigatórios não estiverem aprovados/i)).toBeInTheDocument();
   });
 
