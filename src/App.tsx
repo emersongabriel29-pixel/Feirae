@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
@@ -31,6 +31,7 @@ import { useAppNavigation } from "./hooks/useAppNavigation";
 import { useDemoCart } from "./hooks/useDemoCart";
 import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
+import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
 export default function App() {
   const { session, role, startSession, clearSession } = useDemoSession();
@@ -82,6 +83,53 @@ export default function App() {
     orders.find((order) => order.id === selectedOrderId) ??
     orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
     orders[0];
+
+  useEffect(() => {
+    if (role !== "customer") return;
+    const unified = readUnifiedOrders();
+    if (!unified.length) return;
+    const statusMap = {
+      received: "Recebido",
+      preparing: "Preparando",
+      ready_for_pickup: "Coleta",
+      driver_assigned: "Coleta",
+      collected: "Em rota",
+      out_for_delivery: "Em rota",
+      delivered: "Entregue",
+      cancelled: "Cancelado",
+    } as const;
+    setOrders((current) => {
+      const byId = new Map(current.map((order) => [order.id, order]));
+      unified.forEach((record) => {
+        const existing = byId.get(record.id);
+        const eventList = record.events.map((event) => ({
+          key: event.key,
+          label: event.label,
+          at: event.at,
+        }));
+        byId.set(record.id, {
+          id: record.id,
+          date:
+            existing?.date ??
+            new Intl.DateTimeFormat("pt-BR", {
+              dateStyle: "short",
+              timeStyle: "short",
+            }).format(new Date(record.createdAt)),
+          createdAt: record.createdAt,
+          status: statusMap[record.status],
+          value: record.total,
+          fairName: record.fairName,
+          fulfillment: record.fulfillment,
+          paymentMethod: record.paymentMethod,
+          cancelReason: record.cancelReason,
+          cancelDetails: record.cancelDetails,
+          driver: record.driver ?? existing?.driver,
+          events: eventList.length ? eventList : existing?.events,
+        });
+      });
+      return Array.from(byId.values());
+    });
+  }, [role, setOrders]);
 
   function login(nextRole: Role, email: string) {
     startSession(nextRole, email);
@@ -150,7 +198,18 @@ export default function App() {
   }
   function confirmOrder(
     total: number,
-    details: { fulfillment: "delivery" | "pickup"; paymentMethod: string; fairName: string },
+    details: {
+      fulfillment: "delivery" | "pickup";
+      paymentMethod: string;
+      fairName: string;
+      customerCity?: string;
+      customerAddress?: string;
+      customerLat?: number;
+      customerLng?: number;
+      calculatedDeliveryFee: number;
+      deliverySubsidy: number;
+      customerDeliveryFee: number;
+    },
   ) {
     const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
     const now = new Date();
@@ -172,6 +231,42 @@ export default function App() {
       },
       ...current,
     ]);
+    upsertUnifiedOrder({
+      id,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      fairName: details.fairName,
+      customerName: session?.name ?? "Cliente",
+      customerCity: details.customerCity,
+      customerAddress: details.customerAddress,
+      customerLat: details.customerLat,
+      customerLng: details.customerLng,
+      fulfillment: details.fulfillment,
+      paymentMethod: details.paymentMethod,
+      subtotal,
+      calculatedDeliveryFee: details.calculatedDeliveryFee,
+      deliverySubsidy: details.deliverySubsidy,
+      customerDeliveryFee: details.customerDeliveryFee,
+      total,
+      items: cartProducts.map((product) => ({
+        productId: product.id,
+        name: product.name,
+        vendor: product.feirante,
+        quantity: cart[product.id] ?? 0,
+        unit: product.unit,
+        unitPrice: product.price,
+        weightKg: product.weightKg * (cart[product.id] ?? 0),
+      })),
+      status: "received",
+      events: [
+        {
+          key: "received",
+          label: "Pedido recebido",
+          at: date,
+          actor: "customer",
+        },
+      ],
+    });
     setNotifications((current) => current + 1);
     setSelectedOrderId(id);
     setCart({});
@@ -199,6 +294,11 @@ export default function App() {
             }
           : order,
       ),
+    );
+    patchUnifiedOrder(
+      orderId,
+      { status: "cancelled", cancelReason: reason, cancelDetails: details },
+      eventNow("cancelled", "Pedido cancelado", "customer", { reason, details }),
     );
     notify(`Cancelamento do pedido ${orderId} registrado.`);
   }
