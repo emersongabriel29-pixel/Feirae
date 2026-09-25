@@ -163,10 +163,18 @@ describe("Feiraê role access", () => {
     loginAs("feirante");
     fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^produtos$/i }));
-    expect(screen.getByText(/30 unidades disponíveis/i)).toBeInTheDocument();
+    expect(screen.getByText(/30 cesta\(s\)/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /editar r\$/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /editar produto/i }));
+    expect(screen.getByLabelText(/foto principal/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/categoria/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/unidade de venda/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/peso logístico/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /cancelar/i }));
     fireEvent.click(screen.getByRole("button", { name: /voltar para central/i }));
     fireEvent.click(screen.getByRole("button", { name: /^estoque$/i }));
     expect(screen.getAllByRole("button", { name: "+" }).length).toBeGreaterThan(0);
+    expect(screen.getByText(/1 alertas abaixo do mínimo/i)).toBeInTheDocument();
   });
 
   it("gives the vendor a personal account form separate from the stall", () => {
@@ -180,6 +188,90 @@ describe("Feiraê role access", () => {
     expect(screen.getByLabelText(/tipo de cadastro/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/cnpj/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/chave pix/i)).toBeInTheDocument();
+  });
+
+  it("keeps the vendor order flow sequential and hands delivery stages to the driver", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
+
+    const firstOrder = screen.getByText(/FE-1027 · Dona Marta/i).closest("article");
+    expect(firstOrder).not.toBeNull();
+    fireEvent.click(within(firstOrder as HTMLElement).getByRole("button", { name: /abrir pedido/i }));
+
+    expect(screen.getByRole("button", { name: /aceitar pedido/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /coletado/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /aceitar pedido/i }));
+
+    screen.getAllByRole("button", { name: /marcar separado/i }).forEach((button) => fireEvent.click(button));
+    fireEvent.click(screen.getByRole("button", { name: /marcar pedido como pronto/i }));
+
+    expect(screen.getByText(/aguardando entregador/i)).toBeInTheDocument();
+    expect(screen.getByText(/coleta, rota e entrega pertencem ao fluxo do entregador/i)).toBeInTheDocument();
+  });
+
+  it("opens real bank editing instead of inert cards", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /minha banca/i }));
+    fireEvent.click(screen.getByRole("button", { name: /editar banca/i }));
+
+    expect(screen.getByLabelText(/nome da banca/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^feira$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/box\/banca/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/foto de capa/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^logo$/i)).toBeInTheDocument();
+  });
+
+  it("uses the selected fair official schedule and allows custom day-by-day hours", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^horários$/i }));
+
+    expect(screen.getByText(/segunda e quinta · 19h–2h/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("checkbox", { name: /definir meu próprio horário/i }));
+
+    expect(screen.getAllByLabelText(/abertura/i).length).toBe(7);
+    expect(screen.getAllByLabelText(/fechamento/i).length).toBe(7);
+    expect(screen.getByRole("button", { name: /^aberto$/i })).toBeInTheDocument();
+  });
+
+  it("configures delivery, pickup and vendor-sponsored free shipping without a fixed 20 kg rule", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /entrega\/retirada/i }));
+
+    expect(screen.queryByText(/até 20 kg para moto/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/capacidade real disponível/i)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /frete grátis pago pela banca/i })).toBeInTheDocument();
+  });
+
+  it("explains vendor receiving status and keeps real fees unconfigured", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^financeiro$/i }));
+
+    expect(screen.getByText(/taxa feiraê/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/a definir/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/depende do provedor/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cadastrar destino de recebimento/i })).toBeInTheDocument();
+  });
+
+  it("keeps document uploads under review instead of treating upload as approval", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
+
+    expect(screen.getByText(/enviar arquivo não aprova o cadastro/i)).toBeInTheDocument();
+    expect(screen.getByText(/permissão\/autorização da banca ou box/i)).toBeInTheDocument();
+    expect(screen.getByText(/pendente de envio/i)).toBeInTheDocument();
+    expect(screen.getByText(/enquanto os documentos obrigatórios não estiverem aprovados/i)).toBeInTheDocument();
   });
 
   it("opens the delivery experience selected at login", () => {
