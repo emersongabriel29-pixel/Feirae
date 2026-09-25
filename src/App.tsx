@@ -355,10 +355,23 @@ export default function App() {
           : order,
       ),
     );
+    const unifiedOrder = readUnifiedOrders(session?.email).find((order) => order.id === orderId);
+    const shouldRefund = unifiedOrder?.paymentStatus === "authorized";
     patchUnifiedOrder(
       orderId,
-      { status: "cancelled", cancelReason: reason, cancelDetails: details },
-      eventNow("cancelled", "Pedido cancelado", "customer", { reason, details }),
+      {
+        status: "cancelled",
+        cancelReason: reason,
+        cancelDetails: details,
+        paymentStatus: shouldRefund ? "refunded" : unifiedOrder?.paymentStatus,
+        refundAmount: shouldRefund ? unifiedOrder?.total : unifiedOrder?.refundAmount,
+      },
+      eventNow(
+        "cancelled",
+        shouldRefund ? "Pedido cancelado · reembolso liberado" : "Pedido cancelado",
+        "customer",
+        { reason, details },
+      ),
     );
     notify(`Cancelamento do pedido ${orderId} registrado.`);
   }
