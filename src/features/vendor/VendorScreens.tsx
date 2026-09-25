@@ -432,6 +432,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       name: bankProfile.name,
       fairName: bankProfile.fairName,
       isOpen: effectiveStoreOpen,
+      approved: approvalStatus === "Aprovado",
       deliveryEnabled: deliverySettings.deliveryEnabled,
       pickupEnabled: deliverySettings.pickupEnabled,
       absorbDeliveryFee: deliverySettings.absorbDeliveryFee,
