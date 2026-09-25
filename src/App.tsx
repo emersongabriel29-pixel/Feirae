@@ -37,6 +37,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const [favorites, setFavorites] = usePersistentState<number[]>("feirae:favorites", [2]);
+  const [vendorFavorites, setVendorFavorites] = usePersistentState<string[]>("feirae:vendor-favorites", []);
   const [orders, setOrders] = usePersistentState<DemoOrder[]>("feirae:orders", initialOrders);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -97,6 +98,18 @@ export default function App() {
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
   }
+
+  function toggleVendorFavorite(name: string) {
+    setVendorFavorites((current) =>
+      current.includes(name) ? current.filter((item) => item !== name) : [...current, name],
+    );
+  }
+
+  function openFavoriteVendor(name: string) {
+    const product = products.find((item) => item.feirante === name);
+    if (product) setSelectedFair(product.fair);
+    openVendor(name);
+  }
   function addProductToCart(id: number) {
     const product = products.find((item) => item.id === id);
     if (product && !cartFairName) setSelectedFair(product.fair);
@@ -135,15 +148,59 @@ export default function App() {
       "noopener,noreferrer",
     );
   }
-  function confirmOrder(total: number) {
+  function confirmOrder(
+    total: number,
+    details: { fulfillment: "delivery" | "pickup"; paymentMethod: string; fairName: string },
+  ) {
     const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
-    const date = new Intl.DateTimeFormat("pt-BR").format(new Date());
-    setOrders((current) => [{ id, date, status: "Recebido", value: total }, ...current]);
+    const now = new Date();
+    const date = new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(now);
+    setOrders((current) => [
+      {
+        id,
+        date,
+        createdAt: now.toISOString(),
+        status: "Recebido",
+        value: total,
+        fairName: details.fairName,
+        fulfillment: details.fulfillment,
+        paymentMethod: details.paymentMethod,
+        events: [{ key: "received", label: "Pedido recebido", at: date }],
+      },
+      ...current,
+    ]);
     setNotifications((current) => current + 1);
     setSelectedOrderId(id);
     setCart({});
     openCustomerTab("orders");
-    notify(`Pedido ${id} criado no modo demonstração.`);
+    notify(`Pedido ${id} criado e vinculado à ${details.fairName}.`);
+  }
+
+  function cancelOrder(orderId: string, reason: string, details: string) {
+    const at = new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date());
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === orderId
+          ? {
+              ...order,
+              status: "Cancelado" as const,
+              cancelReason: reason,
+              cancelDetails: details,
+              events: [
+                ...(order.events ?? []),
+                { key: "cancelled", label: "Pedido cancelado", at },
+              ],
+            }
+          : order,
+      ),
+    );
+    notify(`Cancelamento do pedido ${orderId} registrado.`);
   }
 
   function openOrderTracking(orderId?: string) {
@@ -211,6 +268,7 @@ export default function App() {
                 onFair={openFair}
                 onVendors={() => openScreen("vendors")}
                 onTracking={() => openOrderTracking()}
+                onAdd={addProductToCart}
               />
             )}
             {tab === "fairs" && <FairsPage fairItems={fairsWithDistance} onFair={openFair} onMap={openMap} />}
@@ -256,6 +314,8 @@ export default function App() {
             onAdd={addProductToCart}
             favorites={favorites}
             onFavorite={toggleFavorite}
+            storeFavorite={vendorFavorites.includes(selectedVendor)}
+            onStoreFavorite={() => toggleVendorFavorite(selectedVendor)}
           />
         )}
         {screen === "vendors" && (
@@ -263,10 +323,16 @@ export default function App() {
             fairName={selectedFair}
             onBack={() => openCustomerTab("fairs")}
             onVendor={openVendor}
+            vendorFavorites={vendorFavorites}
+            onVendorFavorite={toggleVendorFavorite}
           />
         )}
         {screen === "tracking" && trackedOrder && (
-          <DeliveryTracking order={trackedOrder} onBack={() => openCustomerTab("orders")} />
+          <DeliveryTracking
+            order={trackedOrder}
+            onBack={() => openCustomerTab("orders")}
+            onCancel={cancelOrder}
+          />
         )}
         {screen === "checkout" && (
           <Checkout
@@ -280,8 +346,11 @@ export default function App() {
         {screen === "favorites" && (
           <FavoritesPage
             ids={favorites}
+            vendorFavorites={vendorFavorites}
             onAdd={addProductToCart}
             onFavorite={toggleFavorite}
+            onVendorFavorite={toggleVendorFavorite}
+            onVendor={openFavoriteVendor}
             onBack={() => openCustomerTab("profile")}
             onExplore={() => openCustomerTab("products")}
           />
