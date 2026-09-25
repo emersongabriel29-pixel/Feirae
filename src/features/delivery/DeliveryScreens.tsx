@@ -1577,15 +1577,23 @@ export function DeliveryOperations({
                 <ModuleHeader
                   badge="Campanhas"
                   title="Vantagens do entregador"
-                  description="Benefícios, metas e comunicações especiais para quem mantém boa avaliação."
+                  description="Benefícios e metas opcionais para entregadores elegíveis."
                 />
                 <div className="promo-card">
                   <span>🎁</span>
                   <div>
                     <b>Bônus por horário de feira</b>
-                    <small>Complete 5 entregas entre 7h e 11h para liberar bônus demonstrativo.</small>
+                    <small>
+                      Complete 5 entregas elegíveis entre 7h e 11h. Regras e valor do bônus devem vir da
+                      campanha real.
+                    </small>
                   </div>
-                  <span className="document-status">Novo</span>
+                  <button
+                    className={joinedBonus ? "mini-toggle active" : "mini-toggle"}
+                    onClick={() => setJoinedBonus((value) => !value)}
+                  >
+                    {joinedBonus ? "Participando" : "Participar"}
+                  </button>
                 </div>
               </>
             ) : (
