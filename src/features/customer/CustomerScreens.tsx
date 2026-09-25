@@ -1031,42 +1031,131 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
 export function AccountPage({ session, onBack }: { session: DemoSession; onBack: () => void }) {
   const [profile, setProfile] = usePersistentState(`feirae:account:${session.email}`, {
     name: session.name,
+    cpf: "",
+    birthDate: "",
     email: session.email,
     phone: "",
+    cep: "",
+    address: "",
+    number: "",
+    complement: "",
+    city: "Planaltina",
+    state: "DF",
     password: "",
   });
   const [saved, setSaved] = useState(false);
+
   function submit(event: FormEvent) {
     event.preventDefault();
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2200);
   }
+
   return (
-    <Panel title="Minha conta" subtitle="Dados básicos para editar sua conta no Feiraê." onBack={onBack}>
+    <Panel title="Minha conta" subtitle="Dados pessoais, contato, endereço e segurança da sua conta." onBack={onBack}>
       <form className="form-card max-w-2xl" onSubmit={submit}>
-        <label>
-          Nome
-          <input
-            value={profile.name}
-            onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
-          />
-        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label>
+            Nome completo
+            <input
+              value={profile.name}
+              onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
+              autoComplete="name"
+            />
+          </label>
+          <label>
+            CPF
+            <input
+              value={profile.cpf}
+              onChange={(event) => setProfile((current) => ({ ...current, cpf: event.target.value }))}
+              placeholder="000.000.000-00"
+              inputMode="numeric"
+            />
+          </label>
+          <label>
+            Data de nascimento
+            <input
+              value={profile.birthDate}
+              type="date"
+              onChange={(event) => setProfile((current) => ({ ...current, birthDate: event.target.value }))}
+            />
+          </label>
+          <label>
+            Telefone
+            <input
+              value={profile.phone}
+              onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
+              placeholder="(61) 99999-9999"
+              autoComplete="tel"
+            />
+          </label>
+        </div>
+
         <label>
           E-mail
           <input
             value={profile.email}
             type="email"
             onChange={(event) => setProfile((current) => ({ ...current, email: event.target.value }))}
+            autoComplete="email"
           />
         </label>
-        <label>
-          Telefone
-          <input
-            value={profile.phone}
-            onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
-            placeholder="(61) 99999-9999"
-          />
-        </label>
+
+        <div className="grid gap-3 sm:grid-cols-[.7fr_1.3fr]">
+          <label>
+            CEP
+            <input
+              value={profile.cep}
+              onChange={(event) => setProfile((current) => ({ ...current, cep: event.target.value }))}
+              placeholder="00000-000"
+              inputMode="numeric"
+            />
+          </label>
+          <label>
+            Endereço
+            <input
+              value={profile.address}
+              onChange={(event) => setProfile((current) => ({ ...current, address: event.target.value }))}
+              placeholder="Rua, avenida, quadra..."
+              autoComplete="street-address"
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label>
+            Número
+            <input
+              value={profile.number}
+              onChange={(event) => setProfile((current) => ({ ...current, number: event.target.value }))}
+              placeholder="Número/lote"
+            />
+          </label>
+          <label>
+            Complemento
+            <input
+              value={profile.complement}
+              onChange={(event) => setProfile((current) => ({ ...current, complement: event.target.value }))}
+              placeholder="Apartamento, bloco, referência"
+            />
+          </label>
+          <label>
+            Cidade/região
+            <input
+              value={profile.city}
+              onChange={(event) => setProfile((current) => ({ ...current, city: event.target.value }))}
+            />
+          </label>
+          <label>
+            Estado
+            <input
+              value={profile.state}
+              onChange={(event) => setProfile((current) => ({ ...current, state: event.target.value }))}
+              maxLength={2}
+            />
+          </label>
+        </div>
+
         <label>
           Nova senha
           <input
@@ -1074,6 +1163,7 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
             onChange={(event) => setProfile((current) => ({ ...current, password: event.target.value }))}
             type="password"
             placeholder="Mínimo 6 caracteres"
+            autoComplete="new-password"
           />
         </label>
         {saved && <p className="inline-success">Alterações salvas neste dispositivo.</p>}
