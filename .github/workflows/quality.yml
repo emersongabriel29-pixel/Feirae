@@ -20,10 +20,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Show App Prettier diff
-        run: |
-          npx prettier --write src/App.tsx
-          git diff -- src/App.tsx
-          exit 1
       - run: npm run check
       - run: npm run format:check
