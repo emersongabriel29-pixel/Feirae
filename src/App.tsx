@@ -65,7 +65,6 @@ export default function App() {
     screen,
     selectedFair,
     selectedVendor,
-    setScreen,
     setSelectedFair,
     openCustomerTab,
     openScreen,
