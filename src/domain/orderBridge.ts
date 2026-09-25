@@ -92,6 +92,7 @@ export type UnifiedOrderRecord = {
   fulfillment: "delivery" | "pickup";
   paymentMethod: string;
   paymentStatus?: UnifiedPaymentStatus;
+  refundAmount?: number;
   changeFor?: number;
   subtotal: number;
   promotionDiscount?: number;
