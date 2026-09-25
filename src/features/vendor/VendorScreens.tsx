@@ -16,13 +16,13 @@ import {
 } from "lucide-react";
 import { ModuleHeader, OperationsMenu, Panel, Toggle } from "../../components/AppComponents";
 import { fairs } from "../../data";
+import { fairHoursForName } from "../../domain/fairHours";
 import { vehicleRules } from "../../domain/marketplace";
 import { vendorModuleDetails } from "../../domain/operations";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
 import {
-  fairHoursByName,
   initialBankProfile,
   initialVendorDocuments,
   initialVendorOrders,
@@ -205,10 +205,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         ? "Em análise"
         : "Documentação pendente";
 
-  const officialHours = fairHoursByName[bankProfile.fairName] ?? {
-    label: "Horário oficial a confirmar",
-    verification: "Sem fonte específica validada no cadastro atual",
-  };
+  const officialHours = fairHoursForName(bankProfile.fairName);
 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
