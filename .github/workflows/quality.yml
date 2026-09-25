@@ -20,5 +20,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Show availability Prettier diff
+        run: |
+          npx prettier --write docs/DELIVERY_PRICING_AND_ROUTING.md src/App.test.tsx src/domain/operations.ts src/features/delivery/DeliveryScreens.tsx
+          git diff -- docs/DELIVERY_PRICING_AND_ROUTING.md src/App.test.tsx src/domain/operations.ts src/features/delivery/DeliveryScreens.tsx
+          exit 1
       - run: npm run check
       - run: npm run format:check
