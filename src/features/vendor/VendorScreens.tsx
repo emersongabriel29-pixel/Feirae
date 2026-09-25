@@ -14,7 +14,7 @@ import {
   Wallet,
   XCircle,
 } from "lucide-react";
-import { ModuleHeader, OperationsMenu, Panel, Toggle } from "../../components/AppComponents";
+import { ModuleHeader, OperationsMenu, Panel, SectionHeading, Toggle } from "../../components/AppComponents";
 import { fairs } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
 import { vehicleRules } from "../../domain/marketplace";
