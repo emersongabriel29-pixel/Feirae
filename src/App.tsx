@@ -35,6 +35,7 @@ import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } fr
 import { marketplaceProducts, readStoreByIdentity } from "./domain/marketplaceBridge";
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
+import { consumeWallet } from "./domain/walletBridge";
 
 export default function App() {
   const { session, role, startSession, clearSession } = useDemoSession();
@@ -243,6 +244,7 @@ export default function App() {
       deliverySubsidy: number;
       customerDeliveryFee: number;
       promotionDiscount: number;
+      walletUsed: number;
       changeFor?: number;
     },
   ) {
@@ -285,6 +287,7 @@ export default function App() {
       changeFor: details.changeFor,
       subtotal,
       promotionDiscount: details.promotionDiscount,
+      walletUsed: details.walletUsed,
       calculatedDeliveryFee: details.calculatedDeliveryFee,
       deliverySubsidy: details.deliverySubsidy,
       customerDeliveryFee: details.customerDeliveryFee,
@@ -331,6 +334,9 @@ export default function App() {
         },
       ],
     });
+    if (details.walletUsed > 0 && session?.email) {
+      consumeWallet(session.email, id, details.walletUsed);
+    }
     setSelectedOrderId(id);
     setCart({});
     openCustomerTab("orders");
