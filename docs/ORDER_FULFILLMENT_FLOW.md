@@ -19,6 +19,7 @@ Estado do pedido:
 `paid_waiting_vendor`
 
 Ações:
+
 - gerar pedido;
 - registrar itens/preços/peso estimado;
 - notificar o feirante imediatamente;
@@ -26,6 +27,7 @@ Ações:
 - cliente vê “Aguardando confirmação da banca”.
 
 Notificações:
+
 - push/in-app para feirante;
 - badge de novo pedido;
 - opcionalmente som/vibração no app quando suportado.
@@ -40,6 +42,7 @@ Novo estado:
 `preparing`
 
 Registrar:
+
 - usuário;
 - timestamp;
 - previsão de preparo;
@@ -51,6 +54,7 @@ Cliente recebe:
 #### Recusar
 
 Exigir motivo:
+
 - item indisponível;
 - banca fechada;
 - erro de estoque;
@@ -58,6 +62,7 @@ Exigir motivo:
 - outro.
 
 O sistema:
+
 - cancela ou recalcula apenas a parcela afetada;
 - inicia estorno quando aplicável;
 - notifica cliente;
@@ -102,6 +107,7 @@ Cada oferta deve informar antes do aceite:
 - observações de carga.
 
 Somente entregadores:
+
 - aprovados;
 - online;
 - dentro da área;
@@ -119,10 +125,12 @@ Pedido pode exibir:
 “Entregador a caminho da banca.”
 
 Notificar:
+
 - cliente;
 - feirante.
 
 Registrar:
+
 - entregador;
 - veículo;
 - valor da corrida;
@@ -137,6 +145,7 @@ Depois:
 **Confirmar coleta**
 
 A coleta deve ser confirmada pelo fluxo definido, por exemplo:
+
 - PIN;
 - QR;
 - confirmação cruzada feirante + entregador;
@@ -158,6 +167,7 @@ Estado:
 `out_for_delivery`
 
 Cliente vê:
+
 - “Seu pedido está a caminho”;
 - previsão de chegada;
 - mapa/rastreamento quando integração estiver disponível;
@@ -175,6 +185,7 @@ Estado:
 `delivered`
 
 Evidência futura:
+
 - PIN do cliente;
 - foto autorizada quando aplicável;
 - geolocalização;
@@ -182,6 +193,7 @@ Evidência futura:
 - confirmação do cliente.
 
 Após conclusão:
+
 - liberar recebível do entregador conforme regra financeira;
 - liberar recebível do feirante conforme regra financeira;
 - permitir avaliações;
@@ -200,6 +212,7 @@ A retirada deve ter confirmação de entrega/retirada para liberar o financeiro.
 ## Notificações obrigatórias
 
 ### Feirante
+
 - novo pedido;
 - pagamento aprovado;
 - pedido próximo do SLA de aceite;
@@ -210,6 +223,7 @@ A retirada deve ter confirmação de entrega/retirada para liberar o financeiro.
 - repasse liberado.
 
 ### Entregador
+
 - nova corrida compatível;
 - corrida aceita;
 - pedido pronto;
@@ -218,6 +232,7 @@ A retirada deve ter confirmação de entrega/retirada para liberar o financeiro.
 - ocorrência/suporte.
 
 ### Cliente
+
 - pagamento aprovado;
 - pedido aceito;
 - preparo iniciado;
