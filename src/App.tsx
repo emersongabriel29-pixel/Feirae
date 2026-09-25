@@ -570,6 +570,7 @@ export default function App() {
         {screen === "notifications" && (
           <NotificationsPage
             orders={orders}
+            readKeys={readNotificationKeys}
             onBack={() => openCustomerTab("home")}
             onClear={() => {
               setReadNotificationKeys(notificationKeys);
