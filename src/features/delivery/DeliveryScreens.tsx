@@ -12,6 +12,7 @@ import {
   Trash2,
   Truck,
   Upload,
+  Wallet,
   XCircle,
 } from "lucide-react";
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
