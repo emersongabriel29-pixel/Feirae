@@ -22,7 +22,9 @@ import {
   XCircle,
 } from "lucide-react";
 import { categories, fairs, products, vendorMetrics } from "../../data";
+import { calculateDeliveryQuote } from "../../domain/deliveryPricing";
 import { fairHoursForName } from "../../domain/fairHours";
+import type { DeliveryVehicleType } from "../../domain/vehicles";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
@@ -806,7 +808,16 @@ export function Checkout({
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const vehicle = vehicleForWeight(totalWeight);
-  const deliveryFee = fulfillment === "delivery" && subtotal < 80 ? 8.9 : 0;
+  const pickupCount = new Set(items.map((product) => product.feirante)).size;
+  const fairName = items[0]?.fair ?? "Feira";
+  const demoRouteDistanceKm = 4.2;
+  const deliveryQuote = calculateDeliveryQuote({
+    vehicleType: vehicle.name as DeliveryVehicleType,
+    distanceKm: demoRouteDistanceKm,
+    weightKg: totalWeight,
+    pickupCount,
+  });
+  const deliveryFee = fulfillment === "delivery" ? deliveryQuote.customerFee : 0;
   const total = subtotal + deliveryFee;
   if (!items.length)
     return (
@@ -850,8 +861,12 @@ export function Checkout({
                 <div>
                   <b>{vehicle.name} indicado para esta compra</b>
                   <p>
-                    Peso estimado: {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg ·
-                    limite sugerido: {vehicle.maxKg} kg · {vehicle.note}.
+                    {fairName} · {pickupCount} banca(s) na mesma feira · peso estimado{" "}
+                    {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg.
+                  </p>
+                  <p>
+                    Frete estimado: {money(deliveryQuote.customerFee)} · entregador{" "}
+                    {money(deliveryQuote.driverPay)} · taxa logística {money(deliveryQuote.platformFee)}.
                   </p>
                 </div>
               </div>
@@ -923,8 +938,14 @@ export function Checkout({
             </p>
             <p>
               <span>{fulfillment === "delivery" ? "Entrega" : "Retirada"}</span>
-              <b>{deliveryFee ? money(deliveryFee) : "Grátis"}</b>
+              <b>{fulfillment === "delivery" ? money(deliveryFee) : "Retirada"}</b>
             </p>
+            {fulfillment === "delivery" && pickupCount > 1 && (
+              <small>
+                Compra consolidada em {pickupCount} bancas da mesma feira. Cada banca extra entra no cálculo da
+                coleta.
+              </small>
+            )}
             <p className="total">
               <span>{hasVariableWeight ? "Total estimado" : "Total"}</span>
               <b>{money(total)}</b>
