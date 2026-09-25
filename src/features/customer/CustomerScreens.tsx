@@ -942,8 +942,8 @@ export function Checkout({
             </p>
             {fulfillment === "delivery" && pickupCount > 1 && (
               <small>
-                Compra consolidada em {pickupCount} bancas da mesma feira. Cada banca extra entra no cálculo da
-                coleta.
+                Compra consolidada em {pickupCount} bancas da mesma feira. Cada banca extra entra no cálculo
+                da coleta.
               </small>
             )}
             <p className="total">
