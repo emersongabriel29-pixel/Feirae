@@ -11,7 +11,11 @@ describe("marketplace domain rules", () => {
   it("selects a vehicle that supports the cart weight", () => {
     expect(vehicleForWeight(4).name).toBe("Bicicleta");
     expect(vehicleForWeight(12).name).toBe("Moto");
-    expect(vehicleForWeight(21).name).toBe("Carro");
+    expect(vehicleForWeight(18).name).toBe("Moto com baú");
+    expect(vehicleForWeight(21).name).toBe("Bicicleta cargueira/triciclo");
+    expect(vehicleForWeight(50).name).toBe("Carro");
+    expect(vehicleForWeight(200).name).toBe("Utilitário/Pickup");
+    expect(vehicleForWeight(400).name).toBe("Van");
   });
 
   it("uses a safe fallback for vendors without metrics", () => {
