@@ -285,6 +285,7 @@ export const fairs: Fair[] = [
   {
     name: "Feira Central de Brasília",
     place: "Plano Piloto",
+    active: false,
     status: "Cadastro demonstrativo",
     source: "demo",
     feirantes: 60,
@@ -298,6 +299,7 @@ export const fairs: Fair[] = [
   {
     name: "Feira Permanente de Planaltina",
     place: "Planaltina",
+    active: false,
     status: "Cadastro demonstrativo",
     source: "demo",
     feirantes: 42,
