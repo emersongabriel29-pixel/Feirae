@@ -75,9 +75,15 @@ export function DeliveryOperations({
       baseLabel: "Localização não definida",
     },
   );
-  const [accepted, setAccepted] = useState<string | null>(null);
+  const [accepted, setAccepted] = usePersistentState<string | null>(
+    `feirae:delivery-active:${session.email}`,
+    null,
+  );
   const [, setRouteRevision] = useState(0);
-  const [stage, setStage] = useState(0);
+  const [stage, setStage] = usePersistentState<number>(
+    `feirae:delivery-stage:${session.email}`,
+    0,
+  );
   const [cancelReason, setCancelReason] = useState("");
   const [cancelDetails, setCancelDetails] = useState("");
   const [deliveryCancellationLog, setDeliveryCancellationLog] = usePersistentState<
@@ -117,18 +123,20 @@ export function DeliveryOperations({
   );
   const [vehicles, setVehicles] = usePersistentState<DeliveryVehicle[]>(
     `feirae:delivery-vehicles:${session.email}`,
-    [
-      {
-        id: "demo-moto",
-        type: "Moto",
-        capacityKg: suggestedCapacityForVehicle("Moto"),
-        brandModel: "",
-        plate: "ABC1D23",
-        active: true,
-        documentFileName: "crlv-demo.pdf",
-        documentStatus: "approved",
-      },
-    ],
+    session.isNewAccount
+      ? []
+      : [
+          {
+            id: "demo-moto",
+            type: "Moto",
+            capacityKg: suggestedCapacityForVehicle("Moto"),
+            brandModel: "",
+            plate: "ABC1D23",
+            active: true,
+            documentFileName: "crlv-demo.pdf",
+            documentStatus: "approved",
+          },
+        ],
   );
 
   const [deliveryLedger, setDeliveryLedger] = usePersistentState<
@@ -155,7 +163,7 @@ export function DeliveryOperations({
       status: "available",
     },
   ]);
-  const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
+  const session.isNewAccount ? [] : [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
     {
       id: string;
       name: string;
