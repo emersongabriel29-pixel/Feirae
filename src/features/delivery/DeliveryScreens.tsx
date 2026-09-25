@@ -211,6 +211,7 @@ export function DeliveryOperations({
     const baseLat = deliveryPreferences.baseLat;
     const baseLng = deliveryPreferences.baseLng;
     if (baseLat === null || baseLng === null) return;
+    const basePoint = { lat: baseLat, lng: baseLng };
     let cancelled = false;
 
     async function calculatePendingRoutes() {
@@ -241,7 +242,7 @@ export function DeliveryOperations({
         if (!fairPoint || !customerPoint) continue;
 
         const toVendor = await drivingRoute(
-          { lat: baseLat, lng: baseLng },
+          basePoint,
           fairPoint,
         );
         const toCustomer = await drivingRoute(fairPoint, customerPoint);
