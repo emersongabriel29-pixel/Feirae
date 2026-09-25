@@ -1625,23 +1625,111 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
               <>
                 <ModuleHeader
                   badge={`${averageRating.toFixed(1)} ★`}
-                  title="Avaliações recebidas"
-                  description="Média no topo e avaliações individuais com pedido, data, comentário e resposta da banca."
+                  title="Avaliações da banca"
+                  description="Receba avaliações e, após concluir o pedido, avalie entregador e cliente."
                 />
                 <div className="operation-metrics">
                   <article>
                     <strong>{averageRating.toFixed(1)} ★</strong>
-                    <span>média geral</span>
+                    <span>média recebida</span>
                   </article>
                   <article>
                     <strong>{reviews.length}</strong>
-                    <span>avaliações demonstrativas</span>
+                    <span>avaliações recebidas</span>
                   </article>
                   <article>
-                    <strong>{reviews.filter((review) => review.response).length}</strong>
-                    <span>respondidas</span>
+                    <strong>{pendingVendorEvaluations.length}</strong>
+                    <span>pedidos para avaliar</span>
                   </article>
                 </div>
+
+                {selectedVendorEvaluationOrder ? (
+                  <form
+                    className="form-card"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setVendorEvaluationsGiven((current) => [
+                        {
+                          id: String(Date.now()),
+                          orderId: selectedVendorEvaluationOrder.id,
+                          driverRating: Number(driverRating),
+                          customerRating: Number(customerRating),
+                          note: vendorRatingNote.trim(),
+                          createdAt: new Date().toISOString(),
+                        },
+                        ...current,
+                      ]);
+                      setVendorRatingOrderId(null);
+                      setDriverRating("5");
+                      setCustomerRating("5");
+                      setVendorRatingNote("");
+                    }}
+                  >
+                    <b>Avaliar pedido {selectedVendorEvaluationOrder.id}</b>
+                    <small>
+                      Cliente {selectedVendorEvaluationOrder.customer} · entregador{" "}
+                      {selectedVendorEvaluationOrder.driverName || "não informado"}
+                    </small>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Nota do entregador
+                        <select value={driverRating} onChange={(event) => setDriverRating(event.target.value)}>
+                          {[5, 4, 3, 2, 1].map((value) => (
+                            <option value={value} key={value}>
+                              {value} estrela(s)
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Nota do cliente
+                        <select
+                          value={customerRating}
+                          onChange={(event) => setCustomerRating(event.target.value)}
+                        >
+                          {[5, 4, 3, 2, 1].map((value) => (
+                            <option value={value} key={value}>
+                              {value} estrela(s)
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <label>
+                      Observação operacional
+                      <textarea
+                        rows={3}
+                        value={vendorRatingNote}
+                        onChange={(event) => setVendorRatingNote(event.target.value)}
+                        placeholder="Pontualidade, cuidado na coleta, comunicação, retirada..."
+                      />
+                    </label>
+                    <button className="primary-action" type="submit">
+                      Enviar avaliações
+                    </button>
+                  </form>
+                ) : (
+                  <p className="operation-footnote">Nenhum pedido entregue aguardando avaliação da banca.</p>
+                )}
+
+                {vendorEvaluationsGiven.length > 0 && (
+                  <div className="operation-list detailed">
+                    {vendorEvaluationsGiven.map((evaluation) => (
+                      <article key={evaluation.id}>
+                        <Star />
+                        <div>
+                          <b>{evaluation.orderId}</b>
+                          <small>
+                            Entregador {evaluation.driverRating} ★ · Cliente {evaluation.customerRating} ★
+                            {evaluation.note ? ` · ${evaluation.note}` : ""}
+                          </small>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                <SectionHeading eyebrow="Recebidas" title="O que clientes e entregadores avaliaram" />
                 <div className="review-grid compact">
                   {reviews.map((review) => (
                     <article className="review-card" key={review.id}>
@@ -1695,6 +1783,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     </article>
                   ))}
                 </div>
+                <p className="operation-footnote">
+                  Avaliações cruzadas devem ficar ocultas até ambas as partes enviarem ou a janela terminar,
+                  reduzindo retaliação.
+                </p>
               </>
             ) : active === "Conta" ? (
               <>
