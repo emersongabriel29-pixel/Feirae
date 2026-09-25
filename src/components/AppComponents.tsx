@@ -188,10 +188,6 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
               <ChevronRight size={18} />
             </button>
           </form>
-          <p className="demo-notice">
-            Modo demonstração: as credenciais ainda não são validadas. O login real será ativado com o
-            Supabase.
-          </p>
         </div>
       </section>
     </main>
@@ -363,7 +359,6 @@ export function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void
       <div className="role-heading">
         <span>{config.icon}</span>
         <div>
-          <small>MODO DEMONSTRAÇÃO</small>
           <h1>{config.title}</h1>
           <p>{config.subtitle}</p>
         </div>
