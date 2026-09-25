@@ -1502,8 +1502,51 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <ModuleHeader
                   badge="Receitas e repasses"
                   title="Financeiro da banca"
-                  description="Valores separados por estado. Taxas comerciais reais só serão aplicadas quando o provedor for integrado."
+                  description="Acompanhe vendas por período, ticket médio, produtos mais pedidos e valores a receber."
                 />
+                <div className="operation-metrics">
+                  <article>
+                    <strong>{money(totalSales(todaySales))}</strong>
+                    <span>vendas hoje</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthGross)}</strong>
+                    <span>mês atual</span>
+                  </article>
+                  <article>
+                    <strong>{money(yearGross)}</strong>
+                    <span>total no ano</span>
+                  </article>
+                </div>
+                <div className="module-kpi-strip">
+                  <article>
+                    <strong>{monthSales.length}</strong>
+                    <span>pedidos no mês</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthTicket)}</strong>
+                    <span>ticket médio</span>
+                  </article>
+                  <article>
+                    <strong>
+                      {monthComparison >= 0 ? "+" : ""}
+                      {monthComparison.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
+                    </strong>
+                    <span>vs. mês anterior</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthDiscounts)}</strong>
+                    <span>descontos no mês</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthDeliverySubsidy)}</strong>
+                    <span>frete patrocinado</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthRefunds)}</strong>
+                    <span>estornos/reembolsos</span>
+                  </article>
+                </div>
                 <div className="operation-metrics">
                   <article>
                     <strong>{money(pendingGross)}</strong>
@@ -1514,22 +1557,36 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     <span>bruto elegível após entrega</span>
                   </article>
                   <article>
-                    <strong>{vendorAccount.pixKey ? "Cadastrado" : "Pendente"}</strong>
+                    <strong>{receivingConfigured ? "Cadastrado" : "Pendente"}</strong>
                     <span>destino de recebimento</span>
                   </article>
                 </div>
+                <div className="surface-card">
+                  <span className="eyebrow">Mais pedidos</span>
+                  <h3>Produtos mais vendidos</h3>
+                  <div className="finance-breakdown">
+                    {productRanking.slice(0, 5).map((product, index) => (
+                      <p key={product.name}>
+                        <span>
+                          {index + 1}. {product.name}
+                        </span>
+                        <strong>{product.quantity} unidade(s)</strong>
+                      </p>
+                    ))}
+                  </div>
+                </div>
                 <div className="finance-breakdown">
                   <p>
-                    <span>Total demonstrativo dos pedidos</span>
-                    <strong>{money(grossOrders)}</strong>
-                  </p>
-                  <p>
                     <span>Taxa Feiraê</span>
-                    <strong>A definir</strong>
+                    <strong>A definir no provedor</strong>
                   </p>
                   <p>
                     <span>Taxa do provedor</span>
                     <strong>A definir</strong>
+                  </p>
+                  <p>
+                    <span>Como o repasse funciona</span>
+                    <strong>Pendente → disponível → solicitado/processado → pago</strong>
                   </p>
                   <p>
                     <span>Próximo repasse</span>
@@ -1538,26 +1595,27 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 </div>
                 {activeFreeShipping || deliverySettings.absorbDeliveryFee ? (
                   <p className="inline-success">
-                    Frete grátis patrocinado está ativo: o custo da entrega será abatido do recebível do
-                    feirante, sem reduzir a remuneração do entregador.
+                    Frete grátis patrocinado está ativo: o custo da entrega é abatido do recebível da banca,
+                    sem reduzir a remuneração do entregador.
                   </p>
                 ) : null}
                 <div className="operation-list detailed">
-                  {orders.map((order) => (
-                    <article key={order.id}>
+                  {salesHistory.map((sale) => (
+                    <article key={sale.id}>
                       <Wallet />
                       <div>
                         <b>
-                          {order.id} · {money(order.value)}
+                          {new Date(sale.date).toLocaleDateString("pt-BR")} · {money(sale.total)}
                         </b>
                         <small>
-                          {vendorOrderStatusLabel(order.status)} · valor bruto antes de taxas/repasses reais
+                          desconto {money(sale.discount)} · frete patrocinado {money(sale.deliverySubsidy)} ·
+                          estorno {money(sale.refund)}
                         </small>
                       </div>
                     </article>
                   ))}
                 </div>
-                {!vendorAccount.pixKey && (
+                {!receivingConfigured && (
                   <button className="primary-action" onClick={() => setActive("Conta")}>
                     Cadastrar destino de recebimento
                   </button>
