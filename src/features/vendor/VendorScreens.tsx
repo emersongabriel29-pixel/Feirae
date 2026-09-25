@@ -180,9 +180,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const pendingOrders = orders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
   );
-  const lowStockCount = vendorItems.filter(
-    (item) => item.active && item.stock <= item.minStock,
-  ).length;
+  const lowStockCount = vendorItems.filter((item) => item.active && item.stock <= item.minStock).length;
   const pausedCount = vendorItems.filter((item) => !item.active).length;
   const totalStock = vendorItems.reduce((sum, item) => sum + item.stock, 0);
   const averageRating = reviews.length
@@ -349,9 +347,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   }
 
   function updateScheduleDay(day: string, update: Partial<VendorScheduleDay>) {
-    setSchedule((current) =>
-      current.map((item) => (item.day === day ? { ...item, ...update } : item)),
-    );
+    setSchedule((current) => current.map((item) => (item.day === day ? { ...item, ...update } : item)));
   }
 
   function startPromotion(type: VendorPromotionType = "combo") {
@@ -386,8 +382,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     const next = {
       ...promotionDraft,
       id: promotionEditingId ?? String(Date.now()),
-      vendorPaysDelivery:
-        promotionDraft.type === "freteGratis" ? true : promotionDraft.vendorPaysDelivery,
+      vendorPaysDelivery: promotionDraft.type === "freteGratis" ? true : promotionDraft.vendorPaysDelivery,
     };
     setPromotions((current) =>
       promotionEditingId
@@ -446,8 +441,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       product.id === item.id
                         ? {
                             ...product,
-                            active:
-                              product.photoDataUrl && product.stock > 0 ? !product.active : false,
+                            active: product.photoDataUrl && product.stock > 0 ? !product.active : false,
                           }
                         : product,
                     ),
@@ -583,7 +577,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       </div>
                       <div className="cancel-panel">
                         <b>Recusar pedido</b>
-                        <select value={rejectReason} onChange={(event) => setRejectReason(event.target.value)}>
+                        <select
+                          value={rejectReason}
+                          onChange={(event) => setRejectReason(event.target.value)}
+                        >
                           <option>Item indisponível</option>
                           <option>Banca fechou mais cedo</option>
                           <option>Erro de estoque</option>
@@ -685,7 +682,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       <div>
                         <b>Aguardando entregador</b>
                         <p>
-                          O feirante terminou sua etapa. Coleta, rota e entrega pertencem ao fluxo do entregador.
+                          O feirante terminou sua etapa. Coleta, rota e entrega pertencem ao fluxo do
+                          entregador.
                         </p>
                       </div>
                     </div>
@@ -720,8 +718,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                             {order.id} · {order.customer}
                           </b>
                           <small>
-                            {vendorOrderStatusLabel(order.status)} · {order.items.length} itens · {money(order.value)} ·{" "}
-                            {order.createdAt}
+                            {vendorOrderStatusLabel(order.status)} · {order.items.length} itens ·{" "}
+                            {money(order.value)} · {order.createdAt}
                           </small>
                         </div>
                         <button className="mini-toggle" onClick={() => setSelectedOrderId(order.id)}>
@@ -888,9 +886,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       label="Disponível para venda"
                       description="Para publicar, o produto precisa ter foto e estoque."
                       checked={productDraft.active}
-                      onChange={(checked) =>
-                        setProductDraft((current) => ({ ...current, active: checked }))
-                      }
+                      onChange={(checked) => setProductDraft((current) => ({ ...current, active: checked }))}
                     />
                     <div className="module-action-row">
                       <button type="submit" className="primary-action">
@@ -1287,7 +1283,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                         <b>
                           {vehicle.name} · até {vehicle.maxKg} kg de referência
                         </b>
-                        <small>{vehicle.note}. O entregador informa a capacidade real do próprio veículo.</small>
+                        <small>
+                          {vehicle.note}. O entregador informa a capacidade real do próprio veículo.
+                        </small>
                       </div>
                     </article>
                   ))}
@@ -1330,9 +1328,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                               onClick={() =>
                                 setPromotions((current) =>
                                   current.map((item) =>
-                                    item.id === promotion.id
-                                      ? { ...item, active: !item.active }
-                                      : item,
+                                    item.id === promotion.id ? { ...item, active: !item.active } : item,
                                   ),
                                 )
                               }
@@ -1428,8 +1424,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     </div>
                     {promotionDraft.type === "freteGratis" && (
                       <p className="inline-success">
-                        O entregador continua recebendo a remuneração da corrida; o custo é descontado do recebível
-                        da banca.
+                        O entregador continua recebendo a remuneração da corrida; o custo é descontado do
+                        recebível da banca.
                       </p>
                     )}
                     <div className="module-action-row">
@@ -1488,8 +1484,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 </div>
                 {activeFreeShipping || deliverySettings.absorbDeliveryFee ? (
                   <p className="inline-success">
-                    Frete grátis patrocinado está ativo: o custo da entrega será abatido do recebível do feirante,
-                    sem reduzir a remuneração do entregador.
+                    Frete grátis patrocinado está ativo: o custo da entrega será abatido do recebível do
+                    feirante, sem reduzir a remuneração do entregador.
                   </p>
                 ) : null}
                 <div className="operation-list detailed">
