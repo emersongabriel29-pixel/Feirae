@@ -7,15 +7,34 @@ import {
   ChevronRight,
   Info,
   MapPin,
+  Plus,
   Star,
+  Trash2,
   Truck,
   User,
   XCircle,
 } from "lucide-react";
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
 import { deliveryModuleDetails } from "../../domain/operations";
+import {
+  requiresPlate,
+  suggestedCapacityForVehicle,
+  vehicleTypeOptions,
+  type DeliveryVehicle,
+  type DeliveryVehicleType,
+} from "../../domain/vehicles";
+import type { DemoSession } from "../../types";
+import { usePersistentState } from "../../usePersistentState";
 
-export function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () => void }) {
+export function DeliveryOperations({
+  session,
+  onBack,
+  onMap,
+}: {
+  session: DemoSession;
+  onBack: () => void;
+  onMap: () => void;
+}) {
   const modules = [
     "Painel",
     "Entregas",
@@ -39,6 +58,58 @@ export function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMa
   const [active, setActive] = useState("Central");
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
   const [helpProtocol, setHelpProtocol] = useState("");
+  const [accountSaved, setAccountSaved] = useState(false);
+  const [vehicleFormOpen, setVehicleFormOpen] = useState(false);
+  const [vehicleType, setVehicleType] = useState<DeliveryVehicleType>("Moto");
+  const [vehicleCapacity, setVehicleCapacity] = useState(suggestedCapacityForVehicle("Moto"));
+  const [vehicleBrandModel, setVehicleBrandModel] = useState("");
+  const [vehiclePlate, setVehiclePlate] = useState("");
+  const [deliveryAccount, setDeliveryAccount] = usePersistentState(
+    `feirae:delivery-account:${session.email}`,
+    {
+      name: session.name,
+      cpf: "",
+      birthDate: "",
+      email: session.email,
+      phone: "",
+      pixKey: "",
+      cnh: "",
+      cnhCategory: "",
+      cep: "",
+      city: "Planaltina",
+      state: "DF",
+    },
+  );
+  const [vehicles, setVehicles] = usePersistentState<DeliveryVehicle[]>(
+    `feirae:delivery-vehicles:${session.email}`,
+    [
+      {
+        id: "demo-moto",
+        type: "Moto",
+        capacityKg: suggestedCapacityForVehicle("Moto"),
+        brandModel: "",
+        plate: "",
+        active: true,
+      },
+    ],
+  );
+
+  function addVehicle() {
+    setVehicles((current) => [
+      ...current,
+      {
+        id: String(Date.now()),
+        type: vehicleType,
+        capacityKg: Math.max(1, vehicleCapacity),
+        brandModel: vehicleBrandModel.trim(),
+        plate: vehiclePlate.trim().toUpperCase(),
+        active: true,
+      },
+    ]);
+    setVehicleBrandModel("");
+    setVehiclePlate("");
+    setVehicleFormOpen(false);
+  }
   const deliveries = [
     {
       id: "FE-1024",
@@ -272,30 +343,160 @@ export function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMa
                   ))}
                 </div>
               </>
-            ) : active === "Veículos" || active === "Forma de entrega" ? (
+            ) : active === "Veículos" ? (
               <>
                 <ModuleHeader
-                  badge={active === "Veículos" ? "Capacidade" : "Preferências"}
-                  title={active === "Veículos" ? "Veículos cadastrados" : "Forma de entrega"}
-                  description="O app filtra corridas por peso, volume, raio de atuação e tipo de veículo."
+                  badge="Capacidade"
+                  title="Meus veículos"
+                  description="Cadastre os veículos que realmente usa. A capacidade em kg pode ser ajustada conforme o seu veículo."
                 />
+                <button className="primary-action" onClick={() => setVehicleFormOpen((value) => !value)}>
+                  <Plus size={17} /> Cadastrar veículo
+                </button>
+
+                {vehicleFormOpen && (
+                  <div className="form-card">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Tipo de veículo
+                        <select
+                          value={vehicleType}
+                          onChange={(event) => {
+                            const nextType = event.target.value as DeliveryVehicleType;
+                            setVehicleType(nextType);
+                            setVehicleCapacity(suggestedCapacityForVehicle(nextType));
+                          }}
+                        >
+                          {vehicleTypeOptions.map((type) => (
+                            <option value={type} key={type}>
+                              {type} · sugestão {suggestedCapacityForVehicle(type)} kg
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Capacidade máxima usada no Feiraê
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={vehicleCapacity}
+                          onChange={(event) => setVehicleCapacity(Number(event.target.value))}
+                        />
+                        <small>Valor editável para filtrar corridas compatíveis.</small>
+                      </label>
+                      <label>
+                        Marca/modelo
+                        <input
+                          value={vehicleBrandModel}
+                          onChange={(event) => setVehicleBrandModel(event.target.value)}
+                          placeholder="Ex.: Honda CG 160"
+                        />
+                      </label>
+                      {requiresPlate(vehicleType) && (
+                        <label>
+                          Placa
+                          <input
+                            value={vehiclePlate}
+                            onChange={(event) => setVehiclePlate(event.target.value)}
+                            placeholder="ABC1D23"
+                          />
+                        </label>
+                      )}
+                    </div>
+                    <div className="module-action-row">
+                      <button type="button" className="primary-action" onClick={addVehicle}>
+                        Salvar veículo
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-action"
+                        onClick={() => setVehicleFormOpen(false)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="operation-list detailed">
-                  {[
-                    ["Moto cadastrada", "Até 12 kg · documentos em análise · baú pequeno"],
-                    ["Moto com baú", "Até 20 kg · ideal para compras médias de feira"],
-                    ["Carro", "Até 80 kg · compras pesadas, caixas e múltiplas bancas"],
-                  ].map(([title, text]) => (
-                    <article key={title}>
-                      <Truck />
+                  {vehicles.map((vehicle) => (
+                    <article key={vehicle.id}>
+                      {vehicle.type.includes("Bicicleta") ? <Bike /> : <Truck />}
                       <div>
-                        <b>{title}</b>
-                        <small>{text}</small>
+                        <b>{vehicle.type}</b>
+                        <small>
+                          Até {vehicle.capacityKg} kg
+                          {vehicle.brandModel ? ` · ${vehicle.brandModel}` : ""}
+                          {vehicle.plate ? ` · ${vehicle.plate}` : ""}
+                        </small>
                       </div>
-                      <span className="document-status">
-                        {title === "Moto cadastrada" ? "Ativo" : "Opcional"}
-                      </span>
+                      <div className="item-actions">
+                        <button
+                          className={vehicle.active ? "mini-toggle active" : "mini-toggle"}
+                          onClick={() =>
+                            setVehicles((current) =>
+                              current.map((item) =>
+                                item.id === vehicle.id ? { ...item, active: !item.active } : item,
+                              ),
+                            )
+                          }
+                        >
+                          {vehicle.active ? "Ativo" : "Pausado"}
+                        </button>
+                        <button
+                          className="mini-toggle"
+                          aria-label={`Excluir ${vehicle.type}`}
+                          onClick={() =>
+                            setVehicles((current) => current.filter((item) => item.id !== vehicle.id))
+                          }
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </article>
                   ))}
+                </div>
+
+                <div className="surface-card">
+                  <span className="eyebrow">Referência inicial do Feiraê</span>
+                  <p>
+                    Estes valores são sugestões de operação e podem ser alterados no cadastro de cada veículo.
+                  </p>
+                  <div className="finance-breakdown">
+                    {vehicleTypeOptions
+                      .filter((type) => type !== "Outro")
+                      .map((type) => (
+                        <p key={type}>
+                          <span>{type}</span>
+                          <strong>{suggestedCapacityForVehicle(type)} kg</strong>
+                        </p>
+                      ))}
+                  </div>
+                </div>
+              </>
+            ) : active === "Forma de entrega" ? (
+              <>
+                <ModuleHeader
+                  badge="Preferências"
+                  title="Forma de entrega"
+                  description="O app usa peso, capacidade dos veículos ativos, raio e preferências para oferecer corridas compatíveis."
+                />
+                <div className="operation-list detailed">
+                  <article>
+                    <MapPin />
+                    <div>
+                      <b>Raio de atuação</b>
+                      <small>Defina posteriormente a distância máxima que deseja percorrer.</small>
+                    </div>
+                  </article>
+                  <article>
+                    <Truck />
+                    <div>
+                      <b>Capacidade por veículo</b>
+                      <small>Somente veículos ativos entram no filtro de peso das corridas.</small>
+                    </div>
+                  </article>
                 </div>
               </>
             ) : active === "Desempenho" ? (
@@ -503,33 +704,139 @@ export function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMa
             ) : active === "Conta" ? (
               <>
                 <ModuleHeader
-                  badge="Perfil validado"
-                  title="Conta do entregador"
-                  description="Dados pessoais, foto, telefone, documentos e status de validação."
+                  badge="Dados pessoais"
+                  title="Minha conta"
+                  description="Dados pessoais, contato, repasse, endereço e habilitação quando necessária."
                 />
-                <div className="vendor-profile-card">
-                  <span>👤</span>
-                  <div>
-                    <b>Entregador Feiraê</b>
-                    <small>Foto obrigatória · CNH/documento · telefone confirmado</small>
+                <form
+                  className="form-card"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setAccountSaved(true);
+                    window.setTimeout(() => setAccountSaved(false), 2200);
+                  }}
+                >
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      Nome completo
+                      <input
+                        value={deliveryAccount.name}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, name: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      CPF
+                      <input
+                        value={deliveryAccount.cpf}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, cpf: event.target.value }))
+                        }
+                        placeholder="000.000.000-00"
+                        inputMode="numeric"
+                      />
+                    </label>
+                    <label>
+                      Data de nascimento
+                      <input
+                        type="date"
+                        value={deliveryAccount.birthDate}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, birthDate: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Telefone
+                      <input
+                        value={deliveryAccount.phone}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, phone: event.target.value }))
+                        }
+                        placeholder="(61) 99999-9999"
+                      />
+                    </label>
                   </div>
-                  <span className="document-status">Em análise</span>
-                </div>
-                <div className="operation-list detailed">
-                  {[
-                    "Editar foto de perfil",
-                    "Atualizar telefone e Pix de repasse",
-                    "Enviar documento do veículo",
-                  ].map((item) => (
-                    <article key={item}>
-                      <User />
-                      <div>
-                        <b>{item}</b>
-                        <small>Essas informações impactam segurança, pagamento e suporte.</small>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                  <label>
+                    E-mail
+                    <input
+                      type="email"
+                      value={deliveryAccount.email}
+                      onChange={(event) =>
+                        setDeliveryAccount((current) => ({ ...current, email: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      Chave Pix para repasse
+                      <input
+                        value={deliveryAccount.pixKey}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, pixKey: event.target.value }))
+                        }
+                        placeholder="CPF, e-mail, telefone ou chave"
+                      />
+                    </label>
+                    <label>
+                      CEP
+                      <input
+                        value={deliveryAccount.cep}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, cep: event.target.value }))
+                        }
+                        placeholder="00000-000"
+                      />
+                    </label>
+                    <label>
+                      Cidade/região
+                      <input
+                        value={deliveryAccount.city}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, city: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Estado
+                      <input
+                        value={deliveryAccount.state}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, state: event.target.value }))
+                        }
+                        maxLength={2}
+                      />
+                    </label>
+                    <label>
+                      CNH
+                      <input
+                        value={deliveryAccount.cnh}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, cnh: event.target.value }))
+                        }
+                        placeholder="Para veículos que exigem habilitação"
+                      />
+                    </label>
+                    <label>
+                      Categoria da CNH
+                      <input
+                        value={deliveryAccount.cnhCategory}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, cnhCategory: event.target.value }))
+                        }
+                        placeholder="Ex.: A, B, AB"
+                      />
+                    </label>
+                  </div>
+                  <p className="operation-footnote">
+                    Bicicletas não exigem preenchimento de CNH no cadastro do Feiraê.
+                  </p>
+                  {accountSaved && <p className="inline-success">Dados da conta salvos neste dispositivo.</p>}
+                  <button type="submit" className="primary-action">
+                    Salvar alterações
+                  </button>
+                </form>
               </>
             ) : active === "Vantagens" ? (
               <>
