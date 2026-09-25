@@ -265,6 +265,12 @@ export default function App() {
       dateStyle: "short",
       timeStyle: "short",
     }).format(now);
+    const paymentOnDelivery = details.paymentMethod.toLocaleLowerCase("pt-BR").includes("entrega");
+    const paymentEvent = {
+      key: paymentOnDelivery ? "payment-on-delivery" : "payment-authorized",
+      label: paymentOnDelivery ? "Pagamento na entrega selecionado" : "Pagamento confirmado",
+      at: date,
+    };
     setOrders((current) => [
       {
         id,
@@ -275,7 +281,7 @@ export default function App() {
         fairName: details.fairName,
         fulfillment: details.fulfillment,
         paymentMethod: details.paymentMethod,
-        events: [{ key: "received", label: "Pedido recebido", at: date }],
+        events: [paymentEvent, { key: "received", label: "Pedido recebido", at: date }],
       },
       ...current,
     ]);
@@ -292,9 +298,7 @@ export default function App() {
       fulfillment: details.fulfillment,
       customerKey: session?.email,
       paymentMethod: details.paymentMethod,
-      paymentStatus: details.paymentMethod.toLocaleLowerCase("pt-BR").includes("entrega")
-        ? "due_on_delivery"
-        : "authorized",
+      paymentStatus: paymentOnDelivery ? "due_on_delivery" : "authorized",
       changeFor: details.changeFor,
       subtotal,
       promotionDiscount: details.promotionDiscount,
@@ -337,6 +341,12 @@ export default function App() {
       ),
       status: "received",
       events: [
+        {
+          key: paymentOnDelivery ? "payment-on-delivery" : "payment-authorized",
+          label: paymentOnDelivery ? "Pagamento na entrega selecionado" : "Pagamento confirmado",
+          at: date,
+          actor: "system",
+        },
         {
           key: "received",
           label: "Pedido recebido",
