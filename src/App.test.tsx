@@ -574,6 +574,29 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("checkbox", { name: /^sobradinho$/i })).toBeChecked();
   });
 
+
+  it("lets the delivery person go offline manually or use automatic hours", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /forma de entrega/i }));
+
+    expect(screen.getByRole("button", { name: /^manual$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /horário automático/i })).toBeInTheDocument();
+
+    const stopButton = screen.getByRole("button", { name: /desligar corridas/i });
+    fireEvent.click(stopButton);
+    expect(screen.getByRole("button", { name: /ligar corridas/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /ligar corridas/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /horário automático/i }));
+    expect(screen.getByRole("button", { name: /pausar agora/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /^segunda$/i })).toBeInTheDocument();
+    expect(screen.getByText(/a pausa manual interrompe as corridas/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^manual$/i }));
+  });
+
   it("opens the active route in Google Maps and Waze", () => {
     const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
     render(<App />);
