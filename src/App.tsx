@@ -48,6 +48,11 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const accountKey = session?.email ?? "guest";
+  const [gpsEnabled] = usePersistentState<boolean>(scopedStorageKey("feirae:gps", accountKey), true);
+  const [orderUpdatesEnabled] = usePersistentState<boolean>(
+    scopedStorageKey("feirae:order-updates", accountKey),
+    true,
+  );
   const catalog = marketplaceProducts(products);
   const [favorites, setFavorites] = usePersistentState<number[]>(scopedStorageKey("feirae:favorites", accountKey), [2]);
   const [vendorFavorites, setVendorFavorites] = usePersistentState<string[]>(
@@ -67,7 +72,9 @@ export default function App() {
   const notificationKeys = orders.flatMap((order) =>
     (order.events ?? []).map((event) => `${order.id}:${event.key}:${event.at}`),
   );
-  const notifications = notificationKeys.filter((key) => !readNotificationKeys.includes(key)).length;
+  const notifications = orderUpdatesEnabled
+    ? notificationKeys.filter((key) => !readNotificationKeys.includes(key)).length
+    : 0;
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLabel, setLocationLabel] = useState("Planaltina, DF");
   const [locationLoading, setLocationLoading] = useState(false);
@@ -196,14 +203,9 @@ export default function App() {
     addToCart(id);
   }
   function requestLocation() {
-    try {
-      const gpsPreference = window.localStorage.getItem(scopedStorageKey("feirae:gps", accountKey));
-      if (gpsPreference === "false") {
-        notify("Ative o uso de localização nas Configurações para ordenar feiras próximas.");
-        return;
-      }
-    } catch {
-      // Segue para a tentativa de GPS quando a preferência local não puder ser lida.
+    if (!gpsEnabled) {
+      notify("Ative o uso de localização nas Configurações para ordenar feiras próximas.");
+      return;
     }
     if (!navigator.geolocation) {
       setLocationLabel("Localização indisponível");
