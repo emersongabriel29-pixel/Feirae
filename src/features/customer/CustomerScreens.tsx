@@ -429,7 +429,7 @@ export function ProfilePage({
     ["Favoritos", "Produtos salvos", <Heart />, "favorites"],
     ["Minhas avaliações", "Produtos, bancas, entregas e app", <Star />, "ratings"],
     ["Notificações", "Pedidos e novidades", <Bell />, "notifications"],
-    ["Falar com o suporte", "Atendimento demonstrativo", <MessageCircle />, "chat"],
+    ["Falar com o suporte", "Ajuda com pedidos e conta", <MessageCircle />, "chat"],
     ["Configurações", "Preferências do aplicativo", <Settings />, "settings"],
   ];
   return (
@@ -439,7 +439,7 @@ export function ProfilePage({
           <User />
         </div>
         <div>
-          <small>CONTA DEMONSTRATIVA · CLIENTE</small>
+          <small>CONTA · CLIENTE</small>
           <h1>Olá, {session.name}</h1>
           <p>{session.email} · dados locais até a conexão com o Supabase.</p>
         </div>
@@ -1153,7 +1153,7 @@ export function NotificationsPage({
   });
 
   return (
-    <Panel title="Notificações" subtitle="Eventos reais da demonstração de pedidos." onBack={onBack}>
+    <Panel title="Notificações" subtitle="Atualizações dos seus pedidos e avisos da conta." onBack={onBack}>
       <div className="mb-4 flex justify-end">
         <button onClick={onClear} className="text-button">
           Marcar todas como lidas
