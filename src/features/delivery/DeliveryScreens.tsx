@@ -438,6 +438,10 @@ export function DeliveryOperations({
         etaMinutes: route.etaMinutes,
         fee: money(order.calculatedDeliveryFee),
         feeAmount: order.calculatedDeliveryFee,
+        paymentMethod: order.paymentMethod,
+        changeFor: order.changeFor,
+        available: order.status === "ready_for_pickup" && !order.driver,
+        assignedDriverKey: order.driver?.driverKey,
         weight,
         items: order.items.map((item) => `${item.quantity}× ${item.name}`),
       };
@@ -445,7 +449,15 @@ export function DeliveryOperations({
   const sharedIds = new Set(sharedDeliveries.map((delivery) => delivery.id));
   const deliveries = [
     ...sharedDeliveries,
-    ...deliveryFixtures.filter((delivery) => !sharedIds.has(delivery.id)),
+    ...deliveryFixtures
+      .filter((delivery) => !sharedIds.has(delivery.id))
+      .map((delivery) => ({
+        ...delivery,
+        available: true,
+        paymentMethod: "Pago no aplicativo",
+        changeFor: undefined as number | undefined,
+        assignedDriverKey: undefined as string | undefined,
+      })),
   ];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
   const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
@@ -509,6 +521,7 @@ export function DeliveryOperations({
       .filter((vehicle) => vehicle.capacityKg >= weight && vehicleReady(vehicle))
       .sort((a, b) => a.capacityKg - b.capacityKg)[0] ?? null;
   const visibleDeliveries = deliveries
+    .filter((delivery) => delivery.available !== false)
     .filter((delivery) => delivery.totalDistanceKm <= deliveryPreferences.radiusKm)
     .filter(
       (delivery) =>
@@ -523,7 +536,11 @@ export function DeliveryOperations({
     compatibleVehicleForWeight(delivery.weight),
   ).length;
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
-  const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
+  const activeDelivery = deliveries.find(
+    (delivery) =>
+      delivery.id === accepted ||
+      (delivery.assignedDriverKey === session.email && delivery.available === false),
+  );
   const activeDeliveryVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
   const activeDeliverySection = activeDelivery ? (
     <section className="active-delivery">
@@ -563,6 +580,16 @@ export function DeliveryOperations({
           <span>Ganho</span>
           <strong>{activeDelivery.fee}</strong>
         </p>
+        <p>
+          <span>Pagamento</span>
+          <strong>{activeDelivery.paymentMethod}</strong>
+        </p>
+        {typeof activeDelivery.changeFor === "number" && (
+          <p>
+            <span>Troco para</span>
+            <strong>{money(activeDelivery.changeFor)}</strong>
+          </p>
+        )}
       </div>
       <div className="operation-list detailed">
         {activeDelivery.items.map((item) => (
@@ -604,12 +631,14 @@ export function DeliveryOperations({
                 { status: "collected" },
                 eventNow("collected", "Pedido coletado", "delivery"),
               );
+              setStage(2);
             } else if (stage === 2) {
               patchUnifiedOrder(
                 activeDelivery.id,
                 { status: "out_for_delivery" },
                 eventNow("out-for-delivery", "A caminho do cliente", "delivery"),
               );
+              setStage(3);
             } else if (stage === deliveryStages.length - 1) {
               patchUnifiedOrder(
                 activeDelivery.id,
@@ -778,6 +807,7 @@ export function DeliveryOperations({
                       {
                         status: "driver_assigned",
                         driver: {
+                          driverKey: session.email,
                           name: deliveryAccount.name || session.name,
                           vehicle: compatibleVehicle.type,
                           plateMasked: compatibleVehicle.plate
@@ -887,7 +917,7 @@ export function DeliveryOperations({
                   <article>
                     <strong>
                       {money(
-                        deliveries
+                        visibleDeliveries
                           .filter((delivery) => compatibleVehicleForWeight(delivery.weight))
                           .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
                       )}
