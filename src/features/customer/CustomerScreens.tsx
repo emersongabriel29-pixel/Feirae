@@ -26,7 +26,14 @@ import { fairHoursForName } from "../../domain/fairHours";
 import { calculateCheckoutPromotions, marketplaceProducts, readStoreByIdentity } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
-import { appendReview, appendSupportTicket, readUnifiedOrders } from "../../domain/orderBridge";
+import {
+  appendReview,
+  appendSupportTicket,
+  eventNow,
+  patchUnifiedOrder,
+  patchUnifiedOrderItem,
+  readUnifiedOrders,
+} from "../../domain/orderBridge";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
@@ -799,6 +806,8 @@ export function DeliveryTracking({
         ];
   const config = statusConfig[order.status];
   const collected = ["collected", "out_for_delivery", "delivered"].includes(unifiedOrder?.status ?? "");
+  const pendingSubstitutions =
+    unifiedOrder?.items.filter((item) => item.unavailable && item.note?.trim()) ?? [];
   const needsSupport = collected;
   const otherSelected = cancelReason === "Outro";
   const canSubmit = Boolean(cancelReason && (!otherSelected || cancelDetails.trim()));
@@ -922,6 +931,54 @@ export function DeliveryTracking({
               </div>
             );
           })}
+
+          {pendingSubstitutions.length > 0 && order.status !== "Cancelado" && (
+            <div className="surface-card">
+              <span className="eyebrow">Substituição aguardando sua decisão</span>
+              {pendingSubstitutions.map((item) => (
+                <div className="timeline-item" key={`substitution-${item.productId}`}>
+                  <Package size={17} />
+                  <div>
+                    <b>{item.name}</b>
+                    <small>{item.note}</small>
+                    <div className="module-action-row">
+                      <button
+                        className="primary-action"
+                        onClick={() => {
+                          if (!item.vendorId) return;
+                          patchUnifiedOrderItem(order.id, item.vendorId, item.productId, {
+                            unavailable: false,
+                            note: `Substituição aceita: ${item.note}`,
+                          });
+                          patchUnifiedOrder(
+                            order.id,
+                            {},
+                            eventNow(
+                              `substitution-accepted-${item.productId}`,
+                              `Substituição aceita para ${item.name}`,
+                              "customer",
+                            ),
+                          );
+                          setRequestSent(true);
+                        }}
+                      >
+                        Aceitar substituição
+                      </button>
+                      <button
+                        className="secondary-action"
+                        onClick={() => {
+                          setCancelReason("Item indisponível / substituição recusada");
+                          setCancelDetails(item.name);
+                        }}
+                      >
+                        Não aceitar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {order.status !== "Entregue" && order.status !== "Cancelado" && (
             <div className="cancel-panel">
