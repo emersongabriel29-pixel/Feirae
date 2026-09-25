@@ -59,6 +59,24 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("heading", { name: /feiras em destaque/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /outras feiras/i })).toBeInTheDocument();
   });
+
+  it("lists all registered fair regions and filters fairs when the region changes", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getAllByRole("button", { name: /^feiras$/i })[0]);
+
+    const regionSelect = screen.getByLabelText(/cidade\/região/i);
+    expect(screen.getByRole("option", { name: "Gama" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Taguatinga" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Samambaia" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Fercal" })).toBeInTheDocument();
+
+    fireEvent.change(regionSelect, { target: { value: "Ceilândia" } });
+
+    expect(screen.getByRole("heading", { name: /feiras em ceilândia/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /feira da guariroba/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /feira do produtor rural/i })).not.toBeInTheDocument();
+  });
 });
 
 describe("Feiraê role access", () => {
