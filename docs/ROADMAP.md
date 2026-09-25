@@ -37,7 +37,14 @@ Inclui cadastro/aprovação, disponibilidade, aceite, coleta, rota, localizaçã
 
 ## 💰 Pagamentos
 
-Integrar pagamento real somente depois do modelo de pedidos estar estável. Preparar Pix, cartão, confirmação automática, webhooks idempotentes, reembolso, comissão Feiraê, repasse ao feirante e valor do entregador.
+Integrar pagamento real somente depois do modelo de pedidos estar estável. O fluxo financeiro alvo está em [MONEY_FLOW.md](MONEY_FLOW.md): provedor de marketplace, ledger, saldo pendente/disponível, split entre feirante/plataforma/entregador, saque/repasse e frete grátis patrocinado.
+
+## ✅ Especificações que devem orientar a implementação
+
+- [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — aceite, preparo, coleta, rota, entrega e notificações.
+- [PRODUCT_MEASUREMENT_MATRIX.md](PRODUCT_MEASUREMENT_MATRIX.md) — unidade, peso, preço e fotos por categoria.
+- [ONBOARDING_AND_APPROVAL.md](ONBOARDING_AND_APPROVAL.md) — documentação e aprovação antes de operar.
+- [FAIR_HOURS.md](FAIR_HOURS.md) — agenda individual das feiras e fontes oficiais.
 
 ## 🧑‍🌾 Painel do feirante
 

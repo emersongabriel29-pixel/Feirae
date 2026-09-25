@@ -52,14 +52,16 @@ export type VendorMetrics = {
 export type Fair = {
   name: string;
   place: string;
+  address?: string;
   status: string;
-  feirantes: number;
-  rating: number;
-  reviewCount: number;
-  deliveryMinutes: [number, number];
-  deliveryFee: number;
-  lat: number;
-  lng: number;
+  source?: "official" | "demo";
+  feirantes?: number;
+  rating?: number;
+  reviewCount?: number;
+  deliveryMinutes?: [number, number];
+  deliveryFee?: number;
+  lat?: number;
+  lng?: number;
 };
 
 export type DemoOrder = {
@@ -74,4 +76,12 @@ export type Address = {
   label: string;
   details: string;
   isDefault: boolean;
+  cep?: string;
+  state?: string;
+  city?: string;
+  neighborhood?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  reference?: string;
 };

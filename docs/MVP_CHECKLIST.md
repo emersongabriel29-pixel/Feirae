@@ -25,11 +25,19 @@
 
 ## Fase 3 — Operações
 
-- [ ] Permitir ao feirante cadastrar, editar, pausar e reabastecer produtos.
-- [ ] Permitir ao feirante aceitar e atualizar pedidos.
-- [ ] Permitir ao entregador aceitar uma entrega compatível com veículo e região.
-- [ ] Registrar eventos de auditoria para mudanças críticas.
-- [ ] Notificar cliente sobre mudanças relevantes de status.
+- [ ] Exigir aprovação documental antes de liberar venda/entrega.
+- [ ] Permitir ao feirante criar e editar banca de verdade.
+- [ ] Permitir ao feirante cadastrar produto com foto, categoria, unidade, preço, estoque e peso logístico.
+- [ ] Permitir editar produtos existentes sem atalhos implícitos de preço.
+- [ ] Implementar aceite/recusa do pedido pelo feirante e preparo item a item.
+- [ ] Notificar feirante sobre novo pedido e mudanças relevantes.
+- [ ] Usar o horário da feira vinculada, com fonte/verificação própria.
+- [ ] Implementar “Pronto para coleta” como última etapa controlada pelo feirante.
+- [ ] Permitir ao entregador aceitar apenas entrega compatível com veículo/região/documentação.
+- [ ] Entregador controla chegada, coleta, início de rota e entrega.
+- [ ] Registrar eventos de auditoria para todas as mudanças críticas.
+- [ ] Notificar cliente, feirante e entregador nas transições definidas em ORDER_FULFILLMENT_FLOW.md.
+- [ ] Implementar saldo pendente/disponível e repasse conforme MONEY_FLOW.md.
 
 ## Fase 4 — Qualidade e operação
 

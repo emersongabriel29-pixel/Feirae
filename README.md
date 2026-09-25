@@ -66,9 +66,18 @@ profiles, vendor_profiles, delivery_profiles, fairs, fair_vendor_memberships, ve
 
 ## Organização do código
 
-O componente raiz coordena a demonstração e a composição das telas, enquanto as regras puras do marketplace ficam em `src/domain/marketplace.ts` e a validação de sessão fica em `src/domain/session.ts`. Os tokens e estilos base vivem em `src/styles/tokens.css`; a folha principal mantém os estilos específicos das telas durante a migração gradual para módulos por domínio. Essa separação permite testar regras sem renderizar a aplicação e prepara a troca de `src/data.ts` por adapters de backend.
+O `App.tsx` funciona como shell/orquestrador. As telas foram separadas por domínio em `src/features/customer`, `src/features/vendor` e `src/features/delivery`; componentes reutilizáveis ficam em `src/components`; sessão, navegação, carrinho e feedback em `src/hooks`; e regras puras em `src/domain`. Os estilos também estão separados por domínio, preservando a tecnologia atual.
 
-Para a revisão formal, os riscos conhecidos e os comentários de PR estão em [docs/TECHNICAL_REVIEW.md](docs/TECHNICAL_REVIEW.md). O plano de transformação do protótipo em MVP está em [docs/MVP_CHECKLIST.md](docs/MVP_CHECKLIST.md).
+## Documentação de produto
+
+- [Revisão técnica](docs/TECHNICAL_REVIEW.md)
+- [Checklist do MVP](docs/MVP_CHECKLIST.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Fluxo financeiro e repasses](docs/MONEY_FLOW.md)
+- [Fluxo de pedido e entrega](docs/ORDER_FULFILLMENT_FLOW.md)
+- [Produtos, unidades e métricas](docs/PRODUCT_MEASUREMENT_MATRIX.md)
+- [Cadastro, documentos e aprovação](docs/ONBOARDING_AND_APPROVAL.md)
+- [Horários das feiras](docs/FAIR_HOURS.md)
 
 ## Desenvolvimento
 
