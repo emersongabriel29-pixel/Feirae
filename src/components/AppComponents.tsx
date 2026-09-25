@@ -24,7 +24,7 @@ import {
 import { fairs } from "../data";
 import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
-import { cartWeight, productWeight, vehicleForWeight } from "../domain/marketplace";
+import { cartWeight, productWeight } from "../domain/marketplace";
 
 const roleLabels: Record<Role, string> = {
   customer: "Cliente",
@@ -451,7 +451,6 @@ export function CartDrawer({
   onCheckout: () => void;
 }) {
   const totalWeight = cartWeight(items, cart);
-  const vehicle = vehicleForWeight(totalWeight);
   const fairName = items[0]?.fair ?? "";
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   return (
@@ -534,10 +533,6 @@ export function CartDrawer({
                 valor estimado.
               </small>
             )}
-            <p>
-              <span>Entrega indicada</span>
-              <b>{vehicle.name}</b>
-            </p>
             <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>
