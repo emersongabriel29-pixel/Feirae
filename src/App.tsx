@@ -272,12 +272,17 @@ export default function App() {
         {screen === "ratings" && <RatingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
-        {screen === "feiranteOps" && <FeiranteOperations onBack={() => openRoleRoot("feirante")} />}
+        {screen === "feiranteOps" && session && (
+          <FeiranteOperations session={session} onBack={() => openRoleRoot("feirante")} />
+        )}
         {screen === "deliveryOps" && (
-          <DeliveryOperations
-            onBack={() => openRoleRoot("delivery")}
-            onMap={() => openMap(-15.621, -47.657)}
-          />
+          session && (
+            <DeliveryOperations
+              session={session}
+              onBack={() => openRoleRoot("delivery")}
+              onMap={() => openMap(-15.621, -47.657)}
+            />
+          )
         )}
       </div>
 
