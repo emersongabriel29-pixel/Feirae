@@ -671,9 +671,7 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
             </div>
             <div className="operation-metrics">
               <article>
-                <strong>
-                  {approvalStatus === "Aprovado" ? availability.label : approvalStatus}
-                </strong>
+                <strong>{approvalStatus === "Aprovado" ? availability.label : approvalStatus}</strong>
                 <span>disponibilidade atual</span>
               </article>
               <article>
@@ -1059,9 +1057,7 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
                       >
                         {manualOnline ? "Desligar corridas" : "Ligar corridas"}
                       </button>
-                      <small>
-                        Quando estiver offline, nenhuma nova corrida poderá ser aceita.
-                      </small>
+                      <small>Quando estiver offline, nenhuma nova corrida poderá ser aceita.</small>
                     </div>
                   ) : (
                     <>
