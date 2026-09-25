@@ -15,12 +15,7 @@ export type VendorProduct = {
 };
 
 export type VendorOrderStatus =
-  | "new"
-  | "preparing"
-  | "ready_for_pickup"
-  | "collected"
-  | "delivered"
-  | "rejected";
+  "new" | "preparing" | "ready_for_pickup" | "collected" | "delivered" | "rejected";
 
 export type VendorOrderItem = {
   id: string;
