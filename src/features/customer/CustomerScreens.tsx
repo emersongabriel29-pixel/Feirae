@@ -700,7 +700,23 @@ export function DeliveryTracking({
   const [cancelDetails, setCancelDetails] = useState("");
   const [showReview, setShowReview] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
+  const [productScore, setProductScore] = useState(5);
+  const [vendorScore, setVendorScore] = useState(5);
+  const [deliveryScore, setDeliveryScore] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSaved, setReviewSaved] = useState(false);
+  const [reviews, setReviews] = usePersistentState<
+    {
+      id: string;
+      type: string;
+      target: string;
+      orderId: string;
+      rating: number;
+      text: string;
+    }[]
+  >(scopedStorageKey("feirae:customer-reviews"), []);
 
+  const unifiedOrder = readUnifiedOrders().find((item) => item.id === order.id);
   const statusConfig: Record<
     DemoOrder["status"],
     { title: string; description: string; activeStep: number }
@@ -712,22 +728,40 @@ export function DeliveryTracking({
     },
     Preparando: {
       title: "Seu pedido está sendo preparado",
-      description: "A banca confirmou e está separando os produtos.",
+      description: "As bancas do pedido estão separando os produtos.",
       activeStep: 2,
     },
     Coleta: {
-      title: "Pedido pronto para coleta",
-      description: "A corrida pode ser aceita por um entregador compatível.",
-      activeStep: 3,
+      title:
+        order.fulfillment === "pickup"
+          ? "Pedido pronto para retirada"
+          : unifiedOrder?.status === "driver_assigned"
+            ? "Entregador a caminho da banca"
+            : "Pedido pronto para coleta",
+      description:
+        order.fulfillment === "pickup"
+          ? "Apresente o pedido na banca para concluir a retirada."
+          : unifiedOrder?.status === "driver_assigned"
+            ? "A corrida foi aceita e o entregador segue para a banca."
+            : "A corrida pode ser aceita por um entregador compatível.",
+      activeStep:
+        order.fulfillment === "pickup"
+          ? 3
+          : unifiedOrder?.status === "driver_assigned"
+            ? 4
+            : 3,
     },
     "Em rota": {
       title: "Seu pedido está a caminho",
       description: "O pedido já foi coletado e segue para o endereço de entrega.",
-      activeStep: 6,
+      activeStep: unifiedOrder?.status === "collected" ? 5 : 6,
     },
     Entregue: {
-      title: "Pedido entregue",
-      description: "A entrega foi concluída.",
+      title: order.fulfillment === "pickup" ? "Pedido retirado" : "Pedido entregue",
+      description:
+        order.fulfillment === "pickup"
+          ? "A retirada foi confirmada pela banca."
+          : "A entrega foi concluída.",
       activeStep: 7,
     },
     Cancelado: {
@@ -739,31 +773,90 @@ export function DeliveryTracking({
     },
   };
 
-  const timeline = [
-    "Pedido recebido",
-    "Confirmado pela banca",
-    "Em separação",
-    "Pronto para coleta",
-    "Entregador a caminho da banca",
-    "Pedido coletado",
-    "A caminho do cliente",
-    "Entregue",
-  ];
+  const timeline =
+    order.fulfillment === "pickup"
+      ? [
+          "Pedido recebido",
+          "Confirmado pela banca",
+          "Em separação",
+          "Pronto para retirada",
+          "Retirado na banca",
+        ]
+      : [
+          "Pedido recebido",
+          "Confirmado pela banca",
+          "Em separação",
+          "Pronto para coleta",
+          "Entregador a caminho da banca",
+          "Pedido coletado",
+          "A caminho do cliente",
+          "Entregue",
+        ];
   const config = statusConfig[order.status];
-  const needsSupport = ["Coleta", "Em rota"].includes(order.status);
+  const collected = ["collected", "out_for_delivery", "delivered"].includes(unifiedOrder?.status ?? "");
+  const needsSupport = collected;
   const otherSelected = cancelReason === "Outro";
   const canSubmit = Boolean(cancelReason && (!otherSelected || cancelDetails.trim()));
+  const alreadyReviewed =
+    reviews.some((review) => review.orderId === order.id) ||
+    Boolean(unifiedOrder?.reviews?.some((review) => review.authorRole === "customer"));
+
+  function saveReview() {
+    if (alreadyReviewed || reviewSaved) return;
+    const now = new Date().toISOString();
+    const vendorName = unifiedOrder?.vendors?.[0]?.vendorName ?? order.fairName ?? "Banca";
+    const entries = [
+      {
+        id: `customer-product-${order.id}-${Date.now()}`,
+        type: "Produto",
+        target: unifiedOrder?.items[0]?.name ?? "Pedido",
+        orderId: order.id,
+        rating: productScore,
+        text: reviewComment.trim(),
+      },
+      {
+        id: `customer-vendor-${order.id}-${Date.now()}`,
+        type: "Banca",
+        target: vendorName,
+        orderId: order.id,
+        rating: vendorScore,
+        text: reviewComment.trim(),
+      },
+      {
+        id: `customer-delivery-${order.id}-${Date.now()}`,
+        type: "Entrega",
+        target: unifiedOrder?.driver?.name ?? "Entrega",
+        orderId: order.id,
+        rating: deliveryScore,
+        text: reviewComment.trim(),
+      },
+    ];
+    setReviews((current) => [...entries, ...current]);
+    for (const entry of entries) {
+      appendReview(order.id, {
+        id: entry.id,
+        authorRole: "customer",
+        targetRole:
+          entry.type === "Produto" ? "product" : entry.type === "Banca" ? "vendor" : "delivery",
+        targetId: entry.target,
+        rating: entry.rating,
+        comment: entry.text,
+        createdAt: now,
+      });
+    }
+    setReviewSaved(true);
+  }
 
   return (
     <Panel
-      title="Acompanhar entrega"
+      title="Acompanhar pedido"
       subtitle={"Pedido " + order.id + " · " + (order.fairName ?? "Feiraê") + " · " + order.status}
       onBack={onBack}
     >
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="tracking-map">
           <span aria-hidden="true">
-            {order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : "🛵"}
+            {order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : order.fulfillment === "pickup" ? "🧺" : "🛵"}
           </span>
           <div className="route-line">
             {timeline.map((step, index) => (
@@ -775,7 +868,7 @@ export function DeliveryTracking({
           </div>
           <h2>{config.title}</h2>
           <p>{config.description}</p>
-          {["Coleta", "Em rota", "Entregue"].includes(order.status) && (
+          {order.fulfillment === "delivery" && ["Coleta", "Em rota", "Entregue"].includes(order.status) && (
             <div className="surface-card">
               <span className="eyebrow">Entrega</span>
               {order.driver ? (
@@ -789,9 +882,7 @@ export function DeliveryTracking({
                     {typeof order.driver.distanceKm === "number" && (
                       <span>{order.driver.distanceKm.toLocaleString("pt-BR")} km</span>
                     )}
-                    {typeof order.driver.etaMinutes === "number" && (
-                      <span>{order.driver.etaMinutes} min</span>
-                    )}
+                    {typeof order.driver.etaMinutes === "number" && <span>{order.driver.etaMinutes} min</span>}
                     <span>Suporte disponível</span>
                   </div>
                 </>
@@ -831,7 +922,7 @@ export function DeliveryTracking({
               <b>{needsSupport ? "Pedir ajuda com este pedido" : "Cancelar pedido"}</b>
               <p>
                 {needsSupport
-                  ? "Depois que a coleta começou, o cancelamento vira uma ocorrência de suporte."
+                  ? "Depois da coleta, qualquer interrupção vira uma ocorrência de suporte."
                   : "Antes da coleta, escolha o motivo do cancelamento."}
               </p>
               <select
@@ -877,8 +968,18 @@ export function DeliveryTracking({
                 className="secondary-action"
                 disabled={!canSubmit}
                 onClick={() => {
-                  if (needsSupport) setRequestSent(true);
-                  else {
+                  if (needsSupport) {
+                    appendSupportTicket(order.id, {
+                      id: `SUP-${Date.now()}`,
+                      actor: "customer",
+                      topic: cancelReason,
+                      details: cancelDetails.trim(),
+                      createdAt: new Date().toISOString(),
+                      priority: "normal",
+                      status: "open",
+                    });
+                    setRequestSent(true);
+                  } else {
                     onCancel(order.id, cancelReason, cancelDetails.trim());
                     setRequestSent(true);
                   }
@@ -890,7 +991,7 @@ export function DeliveryTracking({
               {requestSent && (
                 <p className="inline-success">
                   {needsSupport
-                    ? "Solicitação registrada com motivo, data e hora."
+                    ? "Solicitação registrada no histórico do pedido."
                     : "Cancelamento registrado no histórico do pedido."}
                 </p>
               )}
@@ -910,20 +1011,47 @@ export function DeliveryTracking({
           {order.status === "Entregue" && (
             <>
               <button className="primary-action w-full" onClick={() => setShowReview((value) => !value)}>
-                Avaliar pedido, banca e entrega
+                {alreadyReviewed || reviewSaved ? "Avaliação enviada" : "Avaliar pedido, banca e entrega"}
               </button>
-              {showReview && (
-                <div className="review-grid compact">
-                  {["Produto", "Banca", "Entrega"].map((item) => (
-                    <article className="review-card" key={item}>
-                      <strong>★ ★ ★ ★ ★</strong>
-                      <div>
-                        <b>{item}</b>
-                        <small>Toque para registrar a nota do {item.toLocaleLowerCase("pt-BR")}.</small>
-                      </div>
-                    </article>
+              {showReview && !alreadyReviewed && !reviewSaved && (
+                <div className="form-card compact">
+                  {[
+                    ["Produto", productScore, setProductScore],
+                    ["Banca", vendorScore, setVendorScore],
+                    ["Entrega", deliveryScore, setDeliveryScore],
+                  ].map(([label, value, setter]) => (
+                    <label key={String(label)}>
+                      {String(label)}
+                      <select
+                        value={Number(value)}
+                        onChange={(event) =>
+                          (setter as React.Dispatch<React.SetStateAction<number>>)(Number(event.target.value))
+                        }
+                      >
+                        {[5, 4, 3, 2, 1].map((score) => (
+                          <option value={score} key={score}>
+                            {score} estrela{score === 1 ? "" : "s"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                   ))}
+                  <label>
+                    Comentário
+                    <textarea
+                      rows={3}
+                      value={reviewComment}
+                      onChange={(event) => setReviewComment(event.target.value)}
+                      placeholder="Conte como foi sua experiência"
+                    />
+                  </label>
+                  <button className="primary-action" onClick={saveReview}>
+                    <Star size={17} /> Enviar avaliação
+                  </button>
                 </div>
+              )}
+              {(alreadyReviewed || reviewSaved) && (
+                <p className="inline-success">Avaliação registrada para este pedido.</p>
               )}
             </>
           )}
