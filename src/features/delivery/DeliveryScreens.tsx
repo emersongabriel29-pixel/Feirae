@@ -32,6 +32,7 @@ import {
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
+import { consumeInventory } from "../../domain/inventoryBridge";
 import {
   appendReview,
   appendSupportTicket,
@@ -656,6 +657,7 @@ export function DeliveryOperations({
               );
               setStage(3);
             } else if (stage === deliveryStages.length - 1) {
+              consumeInventory(activeDelivery.id);
               patchUnifiedOrder(
                 activeDelivery.id,
                 { status: "delivered" },
