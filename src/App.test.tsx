@@ -43,6 +43,18 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/cliente@feirae\.test/i)).toBeInTheDocument();
   });
 
+  it("shows CPF, birth date and address fields in the customer account", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /minha conta/i }));
+
+    expect(screen.getByLabelText(/^cpf$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/data de nascimento/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^cep$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^endereço$/i)).toBeInTheDocument();
+  });
+
   it("allows showing and hiding the password", () => {
     render(<App />);
     const password = screen.getByPlaceholderText(/digite sua senha/i);
@@ -129,6 +141,19 @@ describe("Feiraê role access", () => {
     expect(screen.getAllByRole("button", { name: "+" }).length).toBeGreaterThan(0);
   });
 
+  it("gives the vendor a personal account form separate from the stall", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^conta$/i }));
+
+    expect(screen.getByRole("heading", { name: /^minha conta$/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^cpf$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/tipo de cadastro/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/cnpj/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/chave pix/i)).toBeInTheDocument();
+  });
+
   it("opens the delivery experience selected at login", () => {
     render(<App />);
     loginAs("entregador");
@@ -144,6 +169,37 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/entrega em andamento/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /ir para a banca/i }));
     expect(screen.getByRole("button", { name: /confirmar coleta/i })).toBeInTheDocument();
+  });
+
+  it("offers all delivery vehicle types with editable carrying capacity", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^veículos$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cadastrar veículo/i }));
+
+    const vehicleType = screen.getByLabelText(/tipo de veículo/i);
+    expect(within(vehicleType).getByRole("option", { name: /bicicleta · sugestão 10 kg/i })).toBeInTheDocument();
+    expect(within(vehicleType).getByRole("option", { name: /moto com baú · sugestão 20 kg/i })).toBeInTheDocument();
+    expect(within(vehicleType).getByRole("option", { name: /carro · sugestão 80 kg/i })).toBeInTheDocument();
+    expect(within(vehicleType).getByRole("option", { name: /utilitário\/pickup · sugestão 250 kg/i })).toBeInTheDocument();
+    expect(within(vehicleType).getByRole("option", { name: /van · sugestão 500 kg/i })).toBeInTheDocument();
+
+    fireEvent.change(vehicleType, { target: { value: "Carro" } });
+    expect(screen.getByLabelText(/capacidade máxima usada no feiraê/i)).toHaveValue(80);
+  });
+
+  it("gives the delivery person a personal account with CPF and CNH fields", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^conta$/i }));
+
+    expect(screen.getByRole("heading", { name: /^minha conta$/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^cpf$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^cnh$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/categoria da cnh/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/chave pix/i)).toBeInTheDocument();
   });
 
   it("only allows changing the profile after logout", () => {
