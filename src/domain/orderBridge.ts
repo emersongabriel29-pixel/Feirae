@@ -200,8 +200,7 @@ export function readUnifiedOrders(customerKey?: string): UnifiedOrderRecord[] {
   return customerKey
     ? orders.filter(
         (order) =>
-          !order.customerKey ||
-          order.customerKey.toLocaleLowerCase("pt-BR") === customerKey.toLocaleLowerCase("pt-BR"),
+          order.customerKey?.toLocaleLowerCase("pt-BR") === customerKey.toLocaleLowerCase("pt-BR"),
       )
     : orders;
 }
