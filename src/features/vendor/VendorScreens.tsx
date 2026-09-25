@@ -324,7 +324,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             ? "delivered"
             : record.status === "cancelled" || vendorState?.status === "rejected"
               ? "rejected"
-              : vendorState?.status === "ready"
+              : ["collected", "out_for_delivery"].includes(record.status)
+                ? "collected"
+                : vendorState?.status === "ready"
                 ? "ready_for_pickup"
                 : vendorState?.status === "collected"
                   ? "collected"
@@ -546,6 +548,13 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       "rejected",
       eventNow("vendor-rejected", "Pedido cancelado", "vendor", { reason: rejectReason }),
     );
+    const unified = readUnifiedOrders().find((item) => item.id === order.id);
+    if (unified?.paymentStatus === "authorized") {
+      patchUnifiedOrder(order.id, {
+        paymentStatus: "refunded",
+        refundAmount: unified.total,
+      });
+    }
     showNotice(`Pedido ${order.id} recusado. Motivo registrado.`);
   }
 
