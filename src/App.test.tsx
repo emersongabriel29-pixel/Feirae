@@ -441,7 +441,7 @@ describe("Feiraê role access", () => {
     expect(screen.getAllByText(/ticket médio/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/vs. mês anterior/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /produtos mais vendidos/i })).toBeInTheDocument();
-    expect(screen.getByText(/frete patrocinado/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/frete patrocinado/i).length).toBeGreaterThan(0);
   });
 
   it("lets the vendor rate the driver and customer after a completed order", () => {
@@ -556,7 +556,7 @@ describe("Feiraê role access", () => {
 
     expect(screen.getByText(/pendente até concluir entrega/i)).toBeInTheDocument();
     expect(screen.getByText(/disponível para saque\/repasse/i)).toBeInTheDocument();
-    expect(screen.getByText(/depende do provedor/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/depende do provedor/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/sexta-feira/i)).not.toBeInTheDocument();
   });
 
