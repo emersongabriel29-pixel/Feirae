@@ -22,6 +22,7 @@ import { vehicleRules } from "../../domain/marketplace";
 import { vendorModuleDetails } from "../../domain/operations";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
+import { useUnifiedOrderRevision } from "../../hooks/useUnifiedOrderRevision";
 import { money } from "../../utils";
 import {
   appendReview,
@@ -171,6 +172,7 @@ function promotionStatus(promotion: VendorPromotion) {
 }
 
 export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
+  const unifiedOrderRevision = useUnifiedOrderRevision();
   const [active, setActive] = useState("Central");
   const [storeOpen, setStoreOpen] = usePersistentState<boolean>(
     `feirae:vendor-store-open:${session.email}`,
@@ -383,7 +385,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       });
       return Array.from(byId.values());
     });
-  }, [bankProfile.fairName, bankProfile.name, session.email, setOrders]);
+  }, [bankProfile.fairName, bankProfile.name, session.email, setOrders, unifiedOrderRevision]);
 
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
   const accountVendorId = vendorIdFor(session.email);
