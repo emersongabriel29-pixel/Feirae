@@ -20,5 +20,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Show timeline Prettier diff
+        run: |
+          npx prettier --write src/domain/timeline.ts
+          git diff -- src/domain/timeline.ts
+          exit 1
       - run: npm run check
       - run: npm run format:check
