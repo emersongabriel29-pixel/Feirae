@@ -20,5 +20,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Show documentation Prettier diff
+        run: |
+          npx prettier --write docs/FAIR_HOURS.md docs/MONEY_FLOW.md docs/ONBOARDING_AND_APPROVAL.md docs/ORDER_FULFILLMENT_FLOW.md docs/PRODUCT_MEASUREMENT_MATRIX.md docs/TECHNICAL_REVIEW.md
+          git diff -- docs/FAIR_HOURS.md docs/MONEY_FLOW.md docs/ONBOARDING_AND_APPROVAL.md docs/ORDER_FULFILLMENT_FLOW.md docs/PRODUCT_MEASUREMENT_MATRIX.md docs/TECHNICAL_REVIEW.md
+          exit 1
       - run: npm run check
       - run: npm run format:check
