@@ -73,7 +73,7 @@ describe("Feiraê customer flow", () => {
 
     fireEvent.change(regionSelect, { target: { value: "Ceilândia" } });
 
-    expect(screen.getByRole("heading", { name: /feiras em ceilândia/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^feiras em ceilândia$/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /feira da guariroba/i })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /feira do produtor rural/i })).not.toBeInTheDocument();
   });
