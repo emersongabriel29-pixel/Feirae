@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Info,
   MapPin,
+  Package,
   Plus,
   Star,
   Trash2,
@@ -29,6 +30,7 @@ import {
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
+import { eventNow, patchUnifiedOrder, readUnifiedOrders } from "../../domain/orderBridge";
 
 export function DeliveryOperations({
   session,
@@ -37,7 +39,7 @@ export function DeliveryOperations({
 }: {
   session: DemoSession;
   onBack: () => void;
-  onMap: () => void;
+  onMap: (destination?: string) => void;
 }) {
   const modules = [
     "Painel",
@@ -262,12 +264,13 @@ export function DeliveryOperations({
     resetVehicleForm();
     setVehicleFormOpen(false);
   }
-  const deliveries = [
+  const deliveryFixtures = [
     {
       id: "FE-1024",
       fair: "Feira do Produtor Rural",
       bank: "Sítio da Vó",
       region: "Planaltina",
+      customerAddress: "Planaltina, DF",
       route: "Feira do Produtor Rural → Planaltina",
       toBankKm: 1.4,
       bankToCustomerKm: 4.2,
@@ -283,6 +286,7 @@ export function DeliveryOperations({
       fair: "Feira Central",
       bank: "Banca do Cerrado",
       region: "Asa Norte",
+      customerAddress: "Asa Norte, Brasília - DF",
       route: "Feira Central → Asa Norte",
       toBankKm: 2.1,
       bankToCustomerKm: 6.8,
@@ -298,6 +302,7 @@ export function DeliveryOperations({
       fair: "Feira da Torre de TV",
       bank: "Mãos do DF",
       region: "Sudoeste",
+      customerAddress: "Sudoeste, Brasília - DF",
       route: "Feira da Torre de TV → Sudoeste",
       toBankKm: 3.4,
       bankToCustomerKm: 5.1,
@@ -313,6 +318,7 @@ export function DeliveryOperations({
       fair: "Feira do Produtor Rural",
       bank: "Atacado da Feira",
       region: "Planaltina",
+      customerAddress: "Planaltina, DF",
       route: "Feira do Produtor Rural → Planaltina",
       toBankKm: 5.2,
       bankToCustomerKm: 10.8,
@@ -323,6 +329,46 @@ export function DeliveryOperations({
       weight: 105,
       items: ["10× caixas de frutas", "5× sacos de hortaliças"],
     },
+  ];
+  const sharedOrders = readUnifiedOrders();
+  const sharedRoutePendingCount = sharedOrders.filter(
+    (order) =>
+      order.fulfillment === "delivery" &&
+      ["ready_for_pickup", "driver_assigned"].includes(order.status) &&
+      !order.route,
+  ).length;
+  const sharedDeliveries = sharedOrders
+    .filter(
+      (order) =>
+        order.fulfillment === "delivery" &&
+        ["ready_for_pickup", "driver_assigned", "collected", "out_for_delivery"].includes(order.status) &&
+        Boolean(order.route),
+    )
+    .map((order) => {
+      const route = order.route!;
+      const vendorNames = Array.from(new Set(order.items.map((item) => item.vendor)));
+      const weight = order.items.reduce((sum, item) => sum + item.weightKg, 0);
+      return {
+        id: order.id,
+        fair: order.fairName,
+        bank: vendorNames.join(" + "),
+        region: order.customerCity ?? "Destino",
+        customerAddress: order.customerAddress ?? order.customerCity ?? "Destino do cliente",
+        route: `${order.fairName} → ${order.customerCity ?? "cliente"}`,
+        toBankKm: route.toVendorKm,
+        bankToCustomerKm: route.vendorToCustomerKm,
+        totalDistanceKm: route.totalKm,
+        etaMinutes: route.etaMinutes,
+        fee: money(order.calculatedDeliveryFee),
+        feeAmount: order.calculatedDeliveryFee,
+        weight,
+        items: order.items.map((item) => `${item.quantity}× ${item.name}`),
+      };
+    });
+  const sharedIds = new Set(sharedDeliveries.map((delivery) => delivery.id));
+  const deliveries = [
+    ...sharedDeliveries,
+    ...deliveryFixtures.filter((delivery) => !sharedIds.has(delivery.id)),
   ];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
   const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
@@ -439,13 +485,39 @@ export function DeliveryOperations({
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <button onClick={onMap} className="secondary-action">
-          <MapPin size={17} /> Abrir rota
+        <button
+          onClick={() =>
+            onMap(
+              stage <= 1
+                ? `${activeDelivery.bank}, ${activeDelivery.fair}, DF`
+                : activeDelivery.customerAddress,
+            )
+          }
+          className="secondary-action"
+        >
+          <MapPin size={17} /> {stage <= 1 ? "Rota até a banca" : "Rota até o cliente"}
         </button>
         <button
           className="primary-action"
           onClick={() => {
-            if (stage === deliveryStages.length - 1) {
+            if (stage === 1) {
+              patchUnifiedOrder(
+                activeDelivery.id,
+                { status: "collected" },
+                eventNow("collected", "Pedido coletado", "delivery"),
+              );
+            } else if (stage === 2) {
+              patchUnifiedOrder(
+                activeDelivery.id,
+                { status: "out_for_delivery" },
+                eventNow("out-for-delivery", "A caminho do cliente", "delivery"),
+              );
+            } else if (stage === deliveryStages.length - 1) {
+              patchUnifiedOrder(
+                activeDelivery.id,
+                { status: "delivered" },
+                eventNow("delivered", "Entregue", "delivery"),
+              );
               setDeliveryLedger((current) => [
                 {
                   id: `ledger-${activeDelivery.id}-${Date.now()}`,
@@ -512,6 +584,14 @@ export function DeliveryOperations({
               },
               ...current,
             ]);
+            patchUnifiedOrder(
+              activeDelivery.id,
+              { status: "ready_for_pickup", driver: undefined },
+              eventNow("driver-cancelled", "Corrida devolvida à fila", "delivery", {
+                reason: cancelReason,
+                details: cancelDetails.trim(),
+              }),
+            );
             setAccepted(null);
             setStage(0);
             setCancelReason("");
@@ -529,6 +609,15 @@ export function DeliveryOperations({
   const deliveryList = (
     <div className="mt-6 space-y-3">
       <span className="eyebrow">Entregas disponíveis</span>
+      {sharedRoutePendingCount > 0 && (
+        <div className="region-strip">
+          <MapPin size={18} />
+          <div>
+            <b>{sharedRoutePendingCount} pedido(s) aguardando cálculo de rota</b>
+            <p>Uma corrida só entra na oferta quando distância e previsão estiverem disponíveis.</p>
+          </div>
+        </div>
+      )}
       {!availableNow && (
         <div className="region-strip">
           <Info size={18} />
@@ -581,6 +670,22 @@ export function DeliveryOperations({
                     if (!compatibleVehicle || !availableNow) return;
                     setAccepted(delivery.id);
                     setStage(0);
+                    patchUnifiedOrder(
+                      delivery.id,
+                      {
+                        status: "driver_assigned",
+                        driver: {
+                          name: deliveryAccount.name || session.name,
+                          vehicle: compatibleVehicle.type,
+                          plateMasked: compatibleVehicle.plate
+                            ? `***${compatibleVehicle.plate.slice(-4)}`
+                            : undefined,
+                          etaMinutes: delivery.etaMinutes,
+                          distanceKm: delivery.totalDistanceKm,
+                        },
+                      },
+                      eventNow("driver-assigned", "Entregador a caminho da banca", "delivery"),
+                    );
                     setActive("Em andamento");
                   }}
                 >
