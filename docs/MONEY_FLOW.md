@@ -129,21 +129,25 @@ Sem entregador:
 ## Cancelamentos e estornos
 
 ### Antes do aceite do feirante
+
 - cancelar pedido;
 - estornar integralmente a parcela correspondente;
 - não gerar ganho de entrega.
 
 ### Durante preparo
+
 - aplicar política configurável;
 - registrar motivo e ator;
 - recalcular itens e taxas antes de qualquer estorno parcial.
 
 ### Após coleta
+
 - não permitir cancelamento simples pelo frontend;
 - abrir ocorrência/suporte;
 - preservar rastreabilidade do valor do feirante e do entregador.
 
 ### Entrega cancelada por problema operacional
+
 - separar responsabilidade de cliente, feirante, entregador e plataforma;
 - não retirar automaticamente remuneração já devida sem regra e auditoria.
 
@@ -165,6 +169,7 @@ A periodicidade final (instantâneo, diário, semanal etc.) é decisão comercia
 ## Estados sugeridos
 
 ### Recebível
+
 - pending;
 - available;
 - withdrawal_requested;
@@ -175,6 +180,7 @@ A periodicidade final (instantâneo, diário, semanal etc.) é decisão comercia
 - disputed.
 
 ### Repasse
+
 - scheduled;
 - processing;
 - completed;
