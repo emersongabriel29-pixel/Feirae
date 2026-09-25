@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 function loginAs(role: "cliente" | "feirante" | "entregador") {
@@ -170,6 +170,25 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("button", { name: /abrir sacola com 1 itens/i })).toBeInTheDocument();
   });
 
+  it("allows products from different vendors when they belong to the same fair", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const search = screen.getByPlaceholderText(/busque produtos/i);
+    fireEvent.change(search, { target: { value: "cesta de frutas" } });
+    fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
+
+    fireEvent.change(search, { target: { value: "queijo artesanal" } });
+    fireEvent.click(screen.getByRole("button", { name: /adicionar queijo artesanal/i }));
+
+    expect(screen.queryByText(/finalize ou esvazie a sacola/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 2 itens/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
+
+    expect(screen.getByText(/2 banca\(s\) na mesma feira/i)).toBeInTheDocument();
+    expect(screen.getByText(/cada banca extra entra no cálculo da coleta/i)).toBeInTheDocument();
+  });
+
   it("finds products ignoring accents and clears the category constraint for global search", () => {
     render(<App />);
     loginAs("cliente");
@@ -277,6 +296,21 @@ describe("Feiraê customer flow", () => {
 });
 
 describe("Feiraê role access", () => {
+  it("shows a personalized onboarding guide during signup for vendor and delivery roles", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: /criar conta/i }));
+
+    fireEvent.click(screen.getByRole("radio", { name: /feirante/i }));
+    expect(screen.getByText(/guia inicial · feirante/i)).toBeInTheDocument();
+    expect(screen.getByText(/informe feira, banca\/box/i)).toBeInTheDocument();
+    expect(screen.getByText(/aguarde aprovação/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: /entregador/i }));
+    expect(screen.getByText(/guia inicial · entregador/i)).toBeInTheDocument();
+    expect(screen.getByText(/área de atuação/i)).toBeInTheDocument();
+    expect(screen.getByText(/cadastre veículo e capacidade/i)).toBeInTheDocument();
+  });
+
   it("discards an obsolete or invalid saved profile", () => {
     window.localStorage.setItem(
       "feirae:session",
@@ -397,6 +431,30 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("button", { name: /cadastrar destino de recebimento/i })).toBeInTheDocument();
   });
 
+  it("shows vendor monthly sales analytics, ticket and top products", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^financeiro$/i }));
+
+    expect(screen.getByText(/vendas hoje/i)).toBeInTheDocument();
+    expect(screen.getByText(/ticket médio/i)).toBeInTheDocument();
+    expect(screen.getByText(/vs. mês anterior/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /produtos mais vendidos/i })).toBeInTheDocument();
+    expect(screen.getByText(/frete patrocinado/i)).toBeInTheDocument();
+  });
+
+  it("lets the vendor rate the driver and customer after a completed order", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^avaliações$/i }));
+
+    expect(screen.getByText(/avaliar pedido fe-1024/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/nota do entregador/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/nota do cliente/i)).toBeInTheDocument();
+  });
+
   it("keeps document uploads under review instead of treating upload as approval", () => {
     render(<App />);
     loginAs("feirante");
@@ -417,15 +475,25 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
   });
 
-  it("lets the delivery person accept and advance a delivery", () => {
+  it("lets the delivery person accept and advance a staged route", () => {
     render(<App />);
     loginAs("entregador");
     fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /aceitar/i })[0]);
-    expect(screen.getByText(/entrega em andamento/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /ir para a banca/i }));
+
+    expect(screen.getByText(/em andamento · a caminho da banca/i)).toBeInTheDocument();
+    expect(screen.getByText(/2,1 km/i)).toBeInTheDocument();
+    expect(screen.getByText(/7 min/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /google maps/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /waze/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /cheguei à banca/i }));
     expect(screen.getByRole("button", { name: /confirmar coleta/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /confirmar coleta/i }));
+    expect(screen.getByRole("button", { name: /iniciar entrega/i })).toBeInTheDocument();
+    expect(screen.getByText(/4,2 km/i)).toBeInTheDocument();
+    expect(screen.getByText(/14 min/i)).toBeInTheDocument();
   });
 
   it("offers all delivery vehicle types with editable carrying capacity", () => {
@@ -490,6 +558,56 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/disponível para saque\/repasse/i)).toBeInTheDocument();
     expect(screen.getByText(/depende do provedor/i)).toBeInTheDocument();
     expect(screen.queryByText(/sexta-feira/i)).not.toBeInTheDocument();
+  });
+
+  it("filters deliveries by active collection area and pickup distance", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /forma de entrega/i }));
+
+    expect(screen.getByRole("checkbox", { name: /^planaltina$/i })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /^sobradinho$/i })).not.toBeChecked();
+    expect(screen.getByLabelText(/distância máxima até a coleta/i)).toHaveValue(8);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /^sobradinho$/i }));
+    expect(screen.getByRole("checkbox", { name: /^sobradinho$/i })).toBeChecked();
+  });
+
+  it("opens the active route in Google Maps and Waze", () => {
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /aceitar/i })[0]);
+
+    fireEvent.click(screen.getByRole("button", { name: /google maps/i }));
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.stringContaining("google.com/maps/dir"),
+      "_blank",
+      "noopener,noreferrer",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /waze/i }));
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.stringContaining("waze.com/ul"),
+      "_blank",
+      "noopener,noreferrer",
+    );
+    openSpy.mockRestore();
+  });
+
+  it("shows delivery monthly analytics and earnings per kilometer", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^financeiro$/i }));
+
+    expect(screen.getByText(/mês atual/i)).toBeInTheDocument();
+    expect(screen.getByText(/média por entrega/i)).toBeInTheDocument();
+    expect(screen.getByText(/ganho médio por km/i)).toBeInTheDocument();
+    expect(screen.getByText(/vs. mês anterior/i)).toBeInTheDocument();
   });
 
   it("requires delivery document approval before real operation", () => {
