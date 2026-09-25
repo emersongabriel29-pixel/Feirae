@@ -1583,41 +1583,53 @@ export function FavoritesPage({
 }
 export function NotificationsPage({
   orders,
+  readKeys,
   onBack,
   onClear,
 }: {
   orders: DemoOrder[];
+  readKeys: string[];
   onBack: () => void;
   onClear: () => void;
 }) {
-  const messages = orders.map((order) => {
-    const textByStatus: Record<DemoOrder["status"], string> = {
-      Recebido: `Pedido ${order.id} recebido e aguardando confirmação da banca.`,
-      Preparando: `Pedido ${order.id} está sendo preparado.`,
-      Coleta: `Pedido ${order.id} está pronto para coleta.`,
-      "Em rota": `Pedido ${order.id} saiu para entrega.`,
-      Entregue: `Pedido ${order.id} foi entregue. Você já pode avaliar.`,
-      Cancelado: `Pedido ${order.id} foi cancelado.`,
-    };
-    return textByStatus[order.status];
+  const fallbackText: Record<DemoOrder["status"], string> = {
+    Recebido: "Pedido recebido e aguardando confirmação da banca.",
+    Preparando: "Pedido em preparação.",
+    Coleta: "Pedido pronto para coleta ou retirada.",
+    "Em rota": "Pedido em rota.",
+    Entregue: "Pedido concluído. Você já pode avaliar.",
+    Cancelado: "Pedido cancelado.",
+  };
+  const messages = orders.flatMap((order) => {
+    const events = order.events?.length
+      ? order.events
+      : [{ key: "status", label: fallbackText[order.status], at: order.date }];
+    return events.map((event) => ({
+      key: `${order.id}:${event.key}:${event.at}`,
+      title: `${order.id} · ${event.label}`,
+      at: event.at,
+    }));
   });
 
   return (
-    <Panel title="Notificações" subtitle="Atualizações dos seus pedidos e avisos da conta." onBack={onBack}>
+    <Panel title="Notificações" subtitle="Histórico real das mudanças dos seus pedidos." onBack={onBack}>
       <div className="mb-4 flex justify-end">
         <button onClick={onClear} className="text-button">
           Marcar todas como lidas
         </button>
       </div>
       {messages.length ? (
-        messages.map((text, index) => (
-          <article key={text} className={index < 2 ? "notification unread" : "notification"}>
+        messages.map((message) => (
+          <article
+            key={message.key}
+            className={readKeys.includes(message.key) ? "notification" : "notification unread"}
+          >
             <span>
               <Bell size={18} />
             </span>
             <div>
-              <b>{text}</b>
-              <small>Gerado pelo estado atual do pedido</small>
+              <b>{message.title}</b>
+              <small>{message.at}</small>
             </div>
           </article>
         ))
@@ -1627,7 +1639,6 @@ export function NotificationsPage({
     </Panel>
   );
 }
-
 export function AddressesPage({ onBack }: { onBack: () => void }) {
   const [addresses, setAddresses] = usePersistentState<Address[]>(scopedStorageKey("feirae:addresses"), [
     {
