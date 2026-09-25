@@ -55,6 +55,34 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByLabelText(/^endereço$/i)).toBeInTheDocument();
   });
 
+  it("uses structured address fields and does not promise delivery before calculation", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /meus endereços/i }));
+    fireEvent.click(screen.getByRole("button", { name: /adicionar endereço/i }));
+
+    expect(screen.getByLabelText(/^cep$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^estado$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/cidade\/região/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/bairro\/setor/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/rua\/quadra/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/número\/lote/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/complemento/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/ponto de referência/i)).toBeInTheDocument();
+
+    expect(screen.queryByText(/taxa estimada r\$/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/complete o endereço/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/^cep$/i), { target: { value: "73300-000" } });
+    fireEvent.change(screen.getByLabelText(/cidade\/região/i), { target: { value: "Planaltina" } });
+    fireEvent.change(screen.getByLabelText(/rua\/quadra/i), { target: { value: "Quadra 1" } });
+    fireEvent.change(screen.getByLabelText(/número\/lote/i), { target: { value: "10" } });
+
+    expect(screen.getByText(/endereço pronto para validação/i)).toBeInTheDocument();
+    expect(screen.getByText(/calculados no checkout/i)).toBeInTheDocument();
+  });
+
   it("allows showing and hiding the password", () => {
     render(<App />);
     const password = screen.getByPlaceholderText(/digite sua senha/i);
