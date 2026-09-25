@@ -449,6 +449,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     promotions,
     session.email,
     vendorItems,
+    approvalStatus,
   ]);
 
   const activeFreeShipping = promotions.some(
