@@ -2357,6 +2357,83 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   );
 }
 
+function SectionHistoryReview({
+  orders,
+  selectedOrderId,
+  score,
+  comment,
+  onSelect,
+  onScore,
+  onComment,
+  onSubmit,
+}: {
+  orders: ReturnType<typeof readUnifiedOrders>;
+  selectedOrderId: string | null;
+  score: number;
+  comment: string;
+  onSelect: (id: string | null) => void;
+  onScore: (value: number) => void;
+  onComment: (value: string) => void;
+  onSubmit: (orderId: string) => void;
+}) {
+  return (
+    <div className="surface-card">
+      <span className="eyebrow">Avaliar cliente e entrega</span>
+      {orders.length ? (
+        <div className="operation-list detailed">
+          {orders.map((order) => (
+            <article key={order.id}>
+              <Star />
+              <div>
+                <b>{order.id} · {order.customerName}</b>
+                <small>{order.driver?.name ? `Entregador: ${order.driver.name}` : "Retirada pelo cliente"}</small>
+                {selectedOrderId === order.id && (
+                  <div className="form-card compact">
+                    <label>
+                      Nota
+                      <select value={score} onChange={(event) => onScore(Number(event.target.value))}>
+                        {[5, 4, 3, 2, 1].map((value) => (
+                          <option value={value} key={value}>
+                            {value} estrela{value === 1 ? "" : "s"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Comentário
+                      <textarea
+                        rows={3}
+                        value={comment}
+                        onChange={(event) => onComment(event.target.value)}
+                        placeholder="Como foi a entrega e o atendimento do cliente?"
+                      />
+                    </label>
+                    <div className="module-action-row">
+                      <button className="primary-action" onClick={() => onSubmit(order.id)}>
+                        Enviar avaliação
+                      </button>
+                      <button className="secondary-action" onClick={() => onSelect(null)}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {selectedOrderId !== order.id && (
+                <button className="mini-toggle" onClick={() => onSelect(order.id)}>
+                  Avaliar
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="operation-footnote">Nenhum pedido entregue aguardando avaliação da banca.</p>
+      )}
+    </div>
+  );
+}
+
 function SectionHistory({
   history,
 }: {
