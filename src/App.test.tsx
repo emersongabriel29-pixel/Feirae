@@ -89,7 +89,7 @@ describe("Feiraê customer flow", () => {
 
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^pedidos$/i })[0]);
 
     const orderCard = screen.getByText("FE-1029").closest("article");
     expect(orderCard).not.toBeNull();
