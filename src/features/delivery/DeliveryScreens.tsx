@@ -1043,36 +1043,41 @@ export function DeliveryOperations({
                 <ModuleHeader
                   badge="Qualidade"
                   title="Desempenho"
-                  description="Indicadores que afetam prioridade de corridas, suporte e campanhas."
+                  description="Indicadores calculados a partir do histórico local de corridas."
                 />
                 <div className="operation-metrics">
                   <article>
-                    <strong>96%</strong>
-                    <span>entregas no prazo</span>
+                    <strong>{performanceOnTime.toFixed(0)}%</strong>
+                    <span>índice operacional estimado</span>
                   </article>
                   <article>
-                    <strong>4,9 ★</strong>
-                    <span>avaliação média</span>
+                    <strong>{performanceDeliveryCount}</strong>
+                    <span>entregas registradas</span>
                   </article>
                   <article>
-                    <strong>1</strong>
-                    <span>cancelamento na semana</span>
+                    <strong>{performanceKm.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} km</strong>
+                    <span>km registrados</span>
+                  </article>
+                  <article>
+                    <strong>{performanceCancelCount}</strong>
+                    <span>cancelamentos nesta sessão</span>
                   </article>
                 </div>
                 <div className="operation-list detailed">
-                  {[
-                    "Pontualidade ótima",
-                    "Cuidado com embalagens aprovado",
-                    "Comunicação com cliente dentro do esperado",
-                  ].map((item) => (
-                    <article key={item}>
-                      <Check />
-                      <div>
-                        <b>{item}</b>
-                        <small>Baseado nas últimas entregas demonstrativas.</small>
-                      </div>
-                    </article>
-                  ))}
+                  <article>
+                    <Check />
+                    <div>
+                      <b>Avaliações feitas pelo entregador</b>
+                      <small>{driverEvaluations.length} avaliação(ões) registrada(s) após entregas.</small>
+                    </div>
+                  </article>
+                  <article>
+                    <Check />
+                    <div>
+                      <b>Área ativa</b>
+                      <small>{serviceAreas.join(", ") || "Nenhuma área selecionada"}.</small>
+                    </div>
+                  </article>
                 </div>
               </>
             ) : active === "Avaliações" ? (
