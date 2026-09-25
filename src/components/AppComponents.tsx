@@ -530,7 +530,8 @@ export function CartDrawer({
             </p>
             {hasVariableWeight && (
               <small>
-                Há item vendido por peso. Peso e valor finais podem variar na separação; o checkout mostra valor estimado.
+                Há item vendido por peso. Peso e valor finais podem variar na separação; o checkout mostra
+                valor estimado.
               </small>
             )}
             <p>
