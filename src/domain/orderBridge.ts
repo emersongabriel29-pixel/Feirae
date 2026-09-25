@@ -96,6 +96,7 @@ export type UnifiedOrderRecord = {
   changeFor?: number;
   subtotal: number;
   promotionDiscount?: number;
+  walletUsed?: number;
   calculatedDeliveryFee: number;
   deliverySubsidy: number;
   customerDeliveryFee: number;
