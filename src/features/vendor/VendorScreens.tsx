@@ -10,7 +10,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { money } from "../../utils";
-import { ModuleHeader, OperationsMenu, Panel, Toggle, vendorModuleDetails } from "../../components/AppComponents";
+import { vendorModuleDetails } from "../../domain/operations";
+import { ModuleHeader, OperationsMenu, Panel, Toggle } from "../../components/AppComponents";
 
 export function FeiranteOperations({ onBack }: { onBack: () => void }) {
   const modules = [
