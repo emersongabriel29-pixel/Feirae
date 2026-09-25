@@ -9,7 +9,6 @@ import {
   Package,
   Plus,
   Star,
-  Trash2,
   Truck,
   Upload,
   Wallet,
