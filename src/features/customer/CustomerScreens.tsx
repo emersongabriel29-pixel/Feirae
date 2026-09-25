@@ -2263,34 +2263,48 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
   );
 }
 export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: () => void }) {
-  const [reviews] = usePersistentState(scopedStorageKey("feirae:customer-reviews"), [
+  const [reviews, setReviews] = usePersistentState<
     {
-      id: "review-product-1",
-      type: "Produto",
-      target: "Cesta de frutas",
-      orderId: "FE-1019",
-      rating: 5,
-      text: "Frutas bonitas e bem embaladas.",
-    },
-    {
-      id: "review-vendor-1",
-      type: "Banca",
-      target: "Sítio da Vó",
-      orderId: "FE-1019",
-      rating: 4.9,
-      text: "Atendimento rápido na separação.",
-    },
-    {
-      id: "review-delivery-1",
-      type: "Entrega",
-      target: "Entregador do pedido",
-      orderId: "FE-1019",
-      rating: 4.8,
-      text: "Entrega cuidadosa.",
-    },
-  ]);
+      id: string;
+      type: string;
+      target: string;
+      orderId: string;
+      rating: number;
+      text: string;
+    }[]
+  >(scopedStorageKey("feirae:customer-reviews"), []);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
   const reviewedOrderIds = new Set(reviews.map((review) => review.orderId));
   const pending = orders.filter((order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id));
+
+  function submitPendingReview(order: DemoOrder) {
+    const unified = readUnifiedOrders().find((item) => item.id === order.id);
+    const vendor = unified?.vendors?.[0]?.vendorName ?? order.fairName ?? "Banca";
+    const id = `review-${order.id}-${Date.now()}`;
+    const entry = {
+      id,
+      type: "Pedido",
+      target: vendor,
+      orderId: order.id,
+      rating,
+      text: comment.trim(),
+    };
+    setReviews((current) => [entry, ...current]);
+    appendReview(order.id, {
+      id,
+      authorRole: "customer",
+      targetRole: "vendor",
+      targetId: unified?.vendors?.[0]?.vendorId ?? vendor,
+      rating,
+      comment: comment.trim(),
+      createdAt: new Date().toISOString(),
+    });
+    setSelectedOrderId(null);
+    setRating(5);
+    setComment("");
+  }
 
   return (
     <Panel
@@ -2306,9 +2320,44 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
               <Star />
               <div>
                 <b>{order.id}</b>
-                <small>Avalie produtos, banca e entrega deste pedido.</small>
+                <small>Avalie sua experiência com este pedido.</small>
+                {selectedOrderId === order.id && (
+                  <div className="form-card compact">
+                    <label>
+                      Nota
+                      <select value={rating} onChange={(event) => setRating(Number(event.target.value))}>
+                        {[5, 4, 3, 2, 1].map((score) => (
+                          <option value={score} key={score}>
+                            {score} estrela{score === 1 ? "" : "s"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Comentário
+                      <textarea
+                        rows={3}
+                        value={comment}
+                        onChange={(event) => setComment(event.target.value)}
+                        placeholder="Conte como foi sua experiência"
+                      />
+                    </label>
+                    <div className="module-action-row">
+                      <button className="primary-action" onClick={() => submitPendingReview(order)}>
+                        Enviar avaliação
+                      </button>
+                      <button className="secondary-action" onClick={() => setSelectedOrderId(null)}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <button className="mini-toggle">Avaliar</button>
+              {selectedOrderId !== order.id && (
+                <button className="mini-toggle" onClick={() => setSelectedOrderId(order.id)}>
+                  Avaliar
+                </button>
+              )}
             </article>
           ))}
         </div>
@@ -2317,24 +2366,27 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
       )}
 
       <SectionHeading eyebrow="Histórico" title="Avaliações já enviadas" />
-      <div className="review-grid">
-        {reviews.map((review) => (
-          <article className="review-card" key={review.id}>
-            <strong>{review.rating.toLocaleString("pt-BR")} ★</strong>
-            <div>
-              <b>
-                {review.type} · {review.target}
-              </b>
-              <small>{review.orderId}</small>
-              <p>{review.text}</p>
-            </div>
-          </article>
-        ))}
-      </div>
+      {reviews.length ? (
+        <div className="review-grid">
+          {reviews.map((review) => (
+            <article className="review-card" key={review.id}>
+              <strong>{review.rating.toLocaleString("pt-BR")} ★</strong>
+              <div>
+                <b>
+                  {review.type} · {review.target}
+                </b>
+                <small>{review.orderId}</small>
+                {review.text && <p>{review.text}</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="operation-footnote">Você ainda não enviou avaliações.</p>
+      )}
     </Panel>
   );
 }
-
 export function ChatPage({ onBack }: { onBack: () => void }) {
   const [topic, setTopic] = useState("Pedido em andamento");
   const [messages, setMessages] = useState(["Olá! Escolha o assunto e descreva o problema."]);
