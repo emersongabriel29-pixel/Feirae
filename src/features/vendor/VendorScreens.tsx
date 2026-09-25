@@ -33,6 +33,7 @@ import {
 } from "../../domain/orderBridge";
 import { syncVendorMarketplace } from "../../domain/marketplaceBridge";
 import { vendorIdFor } from "../../domain/identity";
+import { consumeInventory, releaseInventory } from "../../domain/inventoryBridge";
 import {
   initialBankProfile,
   initialVendorDocuments,
@@ -538,6 +539,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
 
   function rejectOrder(order: VendorOrder) {
     updateOrder(order.id, { status: "rejected", rejectReason });
+    releaseInventory(order.id);
     patchVendorStatus(
       order.id,
       order.vendorId ?? vendorIdFor(session.email),
@@ -980,6 +982,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                               selectedOrder.vendorId ?? vendorIdFor(session.email),
                               "delivered",
                             );
+                            consumeInventory(selectedOrder.id);
                             patchUnifiedOrder(
                               selectedOrder.id,
                               {
