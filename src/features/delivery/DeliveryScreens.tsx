@@ -11,7 +11,6 @@ import {
   Star,
   Trash2,
   Truck,
-  User,
   XCircle,
 } from "lucide-react";
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
