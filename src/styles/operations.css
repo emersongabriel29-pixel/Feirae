@@ -367,6 +367,37 @@
   font-size: 0.72rem;
   line-height: 1.35;
 }
+
+.product-editor-preview,
+.bank-cover-preview {
+  width: 100%;
+  max-height: 15rem;
+  border-radius: 1rem;
+  object-fit: cover;
+  border: 1px solid var(--fe-border);
+}
+
+.bank-logo-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.9rem;
+  object-fit: cover;
+}
+
+.operation-list article .form-card.compact {
+  margin-top: 0.65rem;
+}
+
+.operation-list article label {
+  min-width: 0;
+}
+
+.operation-list article input,
+.operation-list article textarea,
+.operation-list article select {
+  width: 100%;
+}
+
 .document-status {
   flex: none;
   border-radius: 999px;
