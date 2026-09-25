@@ -10,6 +10,7 @@ import {
   LogOut,
   MapPin,
   MessageCircle,
+  Package,
   Plus,
   Settings,
   Star,
