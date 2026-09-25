@@ -28,6 +28,7 @@ export type SharedStore = {
   pickupEnabled: boolean;
   absorbDeliveryFee: boolean;
   promotions: SharedPromotion[];
+  aliases?: string[];
   updatedAt: string;
 };
 
@@ -97,6 +98,9 @@ export function syncVendorMarketplace(input: {
     pickupEnabled: input.pickupEnabled,
     absorbDeliveryFee: input.absorbDeliveryFee,
     promotions: input.promotions,
+    aliases: Array.from(
+      new Set([...(previousStore?.aliases ?? []), previousStore?.name, input.name].filter(Boolean) as string[]),
+    ),
     updatedAt: new Date().toISOString(),
   };
   const products: SharedCatalogProduct[] = input.products.map((product) => ({
@@ -147,7 +151,9 @@ export function marketplaceProducts(baseProducts: Product[]): Product[] {
   }
 
   const dynamicStoreNames = new Set(
-    current.stores.map((store) => `${store.fairName}::${store.name}`),
+    current.stores.flatMap((store) =>
+      [store.name, ...(store.aliases ?? [])].map((name) => `${store.fairName}::${name}`),
+    ),
   );
   const staticProducts = baseProducts
     .filter((product) => !dynamicStoreNames.has(`${product.fair}::${product.feirante}`))
