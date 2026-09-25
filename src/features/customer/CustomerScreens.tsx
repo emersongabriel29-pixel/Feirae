@@ -2156,7 +2156,7 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
             autoComplete="new-password"
           />
         </label>
-        {saved && <p className="inline-success">Alterações salvas neste dispositivo.</p>}
+        {saved && <p className="inline-success">Alterações salvas.</p>}
         <button type="submit" className="primary-action">
           <Edit3 size={17} /> Salvar alterações
         </button>
@@ -2612,7 +2612,7 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
   const [useGps, setUseGps] = usePersistentState(scopedStorageKey("feirae:gps"), true);
   const [compactCards, setCompactCards] = usePersistentState(scopedStorageKey("feirae:compact-cards"), false);
   return (
-    <Panel title="Configurações" subtitle="Preferências salvas neste dispositivo." onBack={onBack}>
+    <Panel title="Configurações" subtitle="Preferências da sua conta." onBack={onBack}>
       <div className="surface-card max-w-2xl">
         <Toggle
           label="Ofertas e novidades"
