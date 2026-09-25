@@ -330,6 +330,46 @@ describe("Feiraê role access", () => {
     expect(screen.getByLabelText(/chave pix/i)).toBeInTheDocument();
   });
 
+  it("lets the delivery person choose Pix or bank account for payouts", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^conta$/i }));
+
+    const receivingMethod = screen.getByLabelText(/forma de recebimento/i);
+    expect(receivingMethod).toHaveValue("Pix");
+    fireEvent.change(receivingMethod, { target: { value: "Conta bancária" } });
+
+    expect(screen.getByLabelText(/^banco$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^agência$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^conta$/i)).toBeInTheDocument();
+  });
+
+  it("shows delivery payout states instead of a fixed Friday payout", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^financeiro$/i }));
+
+    expect(screen.getByText(/pendente até concluir entrega/i)).toBeInTheDocument();
+    expect(screen.getByText(/disponível para saque\/repasse/i)).toBeInTheDocument();
+    expect(screen.getByText(/depende do provedor/i)).toBeInTheDocument();
+    expect(screen.queryByText(/sexta-feira/i)).not.toBeInTheDocument();
+  });
+
+  it("requires delivery document approval before real operation", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
+
+    expect(screen.getByRole("heading", { name: /documentação e aprovação/i })).toBeInTheDocument();
+    expect(screen.getByText(/criar conta ou enviar documentos não libera corridas/i)).toBeInTheDocument();
+    expect(screen.getByText(/curso\/autorização de motofrete/i)).toBeInTheDocument();
+    expect(screen.getByText(/cnh compatível e válida/i)).toBeInTheDocument();
+    expect(screen.getByText(/crlv-e do veículo/i)).toBeInTheDocument();
+  });
+
   it("only allows changing the profile after logout", () => {
     render(<App />);
     loginAs("feirante");
