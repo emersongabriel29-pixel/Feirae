@@ -339,24 +339,6 @@ export function DeliveryOperations({
           )
         ? "Em análise"
         : "Documentação pendente";
-  const pendingAmount =
-    deliveryLedger
-      .filter((entry) => entry.status === "pending")
-      .reduce((sum, entry) => sum + entry.amount, 0) +
-    (accepted ? (activeQuote?.driverPay ?? 0) : 0);
-  const availableAmount = deliveryLedger
-    .filter((entry) => entry.status === "available")
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const requestedAmount = deliveryLedger
-    .filter((entry) => entry.status === "withdrawal_requested")
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const paidAmount = deliveryLedger
-    .filter((entry) => entry.status === "paid")
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const receivingConfigured =
-    deliveryAccount.receivingMethod === "Pix"
-      ? Boolean(deliveryAccount.pixKey)
-      : Boolean(deliveryAccount.bankName && deliveryAccount.agency && deliveryAccount.accountNumber);
   const compatibleVehicleForWeight = (weight: number) =>
     [...activeVehicles]
       .filter((vehicle) => vehicle.capacityKg >= weight)
@@ -388,6 +370,24 @@ export function DeliveryOperations({
         deliveryEtaMinutes: activeDelivery.deliveryEtaMinutes,
       })
     : null;
+  const pendingAmount =
+    deliveryLedger
+      .filter((entry) => entry.status === "pending")
+      .reduce((sum, entry) => sum + entry.amount, 0) +
+    (accepted ? (activeQuote?.driverPay ?? 0) : 0);
+  const availableAmount = deliveryLedger
+    .filter((entry) => entry.status === "available")
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const requestedAmount = deliveryLedger
+    .filter((entry) => entry.status === "withdrawal_requested")
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const paidAmount = deliveryLedger
+    .filter((entry) => entry.status === "paid")
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const receivingConfigured =
+    deliveryAccount.receivingMethod === "Pix"
+      ? Boolean(deliveryAccount.pixKey)
+      : Boolean(deliveryAccount.bankName && deliveryAccount.agency && deliveryAccount.accountNumber);
 
   function openNavigation(provider: "google" | "waze") {
     if (!activeDelivery || !activeRoute) return;
