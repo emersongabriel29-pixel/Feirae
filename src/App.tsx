@@ -903,7 +903,7 @@ function FairsPage({
       <div className="mt-7">
         <SectionHeading
           eyebrow={hasDistance ? "Perto de você" : "Catálogo oficial"}
-          title={hasDistance ? "Feiras em destaque" : "Feiras permanentes do DF"}
+          title="Feiras em destaque"
         />
         <div className="grid gap-4 md:grid-cols-3">
           {officialItems.slice(0, 3).map((fair, index) => (
