@@ -1177,6 +1177,8 @@ export function Checkout({
   ).filter(Boolean);
   const deliveryAllowed = stores.every((store) => store?.deliveryEnabled !== false);
   const pickupAllowed = stores.every((store) => store?.pickupEnabled !== false);
+  const cashOnDeliveryAllowed = stores.every((store) => store?.acceptCashOnDelivery !== false);
+  const cardOnDeliveryAllowed = stores.every((store) => store?.acceptCardOnDelivery !== false);
   const storesOpen = stores.every((store) => store?.isOpen !== false);
   const fallbackDeliveryFee = Math.max(
     0,
@@ -1206,6 +1208,8 @@ export function Checkout({
   const canConfirm =
     storesOpen &&
     (fulfillment === "pickup" ? pickupAllowed : Boolean(defaultAddress) && deliveryAllowed) &&
+    (payment !== "Dinheiro na entrega" || cashOnDeliveryAllowed) &&
+    (payment !== "Cartão na entrega" || cardOnDeliveryAllowed) &&
     (!cardPayment || Boolean(selectedCardId)) &&
     changeValid;
 
@@ -1302,17 +1306,17 @@ export function Checkout({
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Choice
                     active={payment === "Dinheiro na entrega"}
-                    onClick={() => setPayment("Dinheiro na entrega")}
+                    onClick={() => cashOnDeliveryAllowed && setPayment("Dinheiro na entrega")}
                     icon={<Wallet />}
                     title="Dinheiro"
-                    text="Pagamento ao receber"
+                    text={cashOnDeliveryAllowed ? "Pagamento ao receber" : "Não aceito por uma das bancas"}
                   />
                   <Choice
                     active={payment === "Cartão na entrega"}
-                    onClick={() => setPayment("Cartão na entrega")}
+                    onClick={() => cardOnDeliveryAllowed && setPayment("Cartão na entrega")}
                     icon={<CreditCard />}
                     title="Cartão na maquininha"
-                    text="Se disponível na operação"
+                    text={cardOnDeliveryAllowed ? "Pagamento ao receber" : "Não aceito por uma das bancas"}
                   />
                 </div>
               </>
