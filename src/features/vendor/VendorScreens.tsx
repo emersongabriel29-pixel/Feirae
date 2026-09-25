@@ -344,7 +344,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
 
   function acceptOrder(order: VendorOrder) {
     updateOrder(order.id, { status: "preparing", rejectReason: "" });
-    showNotice(`Pedido ${order.id} aceito. Cliente notificado na demonstração.`);
+    showNotice(`Pedido ${order.id} aceito. Cliente notificado na aplicativo.`);
   }
 
   function rejectOrder(order: VendorOrder) {
@@ -594,7 +594,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <div className="operation-metrics">
                   <article>
                     <strong>{money(grossOrders)}</strong>
-                    <span>pedidos demonstrativos</span>
+                    <span>pedidos</span>
                   </article>
                   <article>
                     <strong>{pendingOrders.length}</strong>
@@ -836,7 +836,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       <img className="product-editor-preview" src={productDraft.photoDataUrl} alt="" />
                     ) : (
                       <p className="operation-footnote">
-                        <Image size={15} /> Produto sem foto. Ele ficará pausado até receber uma imagem.
+                        <Image size={15} /> Produto sem foto. Adicione uma imagem para melhorar a vitrine.
                       </p>
                     )}
                     <label>
@@ -959,7 +959,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     </div>
                     <Toggle
                       label="Disponível para venda"
-                      description="Para publicar, o produto precisa ter foto e estoque."
+                      description="Com estoque maior que zero, você decide se o produto fica à venda ou pausado."
                       checked={productDraft.active}
                       onChange={(checked) => setProductDraft((current) => ({ ...current, active: checked }))}
                     />
@@ -974,6 +974,20 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       >
                         Cancelar
                       </button>
+                      {productEditorId !== "new" && productEditorId !== null && (
+                        <button
+                          type="button"
+                          className="secondary-action"
+                          onClick={() => {
+                            if (!window.confirm("Excluir este produto do catálogo? Pedidos antigos continuarão preservados no histórico.")) return;
+                            setVendorItems((current) => current.filter((item) => item.id !== productDraft.id));
+                            setProductEditorId(null);
+                            showNotice("Produto excluído do catálogo.");
+                          }}
+                        >
+                          <Trash2 size={17} /> Excluir produto
+                        </button>
+                      )}
                     </div>
                   </form>
                 </>
@@ -1008,7 +1022,11 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </article>
                   <article>
                     <strong>{pausedCount}</strong>
-                    <span>produtos pausados</span>
+                    <span>pausados pelo feirante</span>
+                  </article>
+                  <article>
+                    <strong>{outOfStockCount}</strong>
+                    <span>estoques esgotados</span>
                   </article>
                 </div>
                 <label>
@@ -1220,91 +1238,105 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             ) : active === "Horários" ? (
               <div className="space-y-3">
                 <ModuleHeader
-                  badge="Agenda da banca"
+                  badge={effectiveStoreOpen ? "Aberta agora" : "Fechada"}
                   title="Horários de venda"
-                  description="O horário padrão vem da feira realmente vinculada à banca."
+                  description="O status da banca respeita o horário da feira ou a agenda própria escolhida por você."
                 />
                 <div className="surface-card">
+                  <span className="eyebrow">{currentScheduleStatus.label}</span>
                   <b>{bankProfile.fairName}</b>
                   <p>{officialHours.label}</p>
                   <small>{officialHours.verification}</small>
+                  {useFairHours && bankProfile.fairName !== "Feira do Produtor Rural" && (
+                    <p className="operation-footnote">
+                      Para esta feira, o texto oficial está cadastrado, mas a agenda estruturada ainda precisa ser confirmada para calcular “aberta agora” automaticamente.
+                    </p>
+                  )}
                 </div>
                 <Toggle
                   label="Usar horário padrão da feira"
-                  description="Mantém a banca alinhada ao horário oficial cadastrado para essa feira."
+                  description="Ativa exclusivamente a agenda oficial cadastrada para a feira."
                   checked={useFairHours}
-                  onChange={setUseFairHours}
+                  onChange={(checked) => setUseFairHours(checked)}
                 />
                 <Toggle
                   label="Definir meu próprio horário"
-                  description="Escolha dias, abertura, fechamento e intervalos. Deve respeitar as regras da feira."
+                  description="Ao ativar, o horário padrão é desativado. Fechamentos após meia-noite pertencem ao dia seguinte."
                   checked={!useFairHours}
                   onChange={(checked) => setUseFairHours(!checked)}
                 />
+
                 {!useFairHours && (
                   <div className="operation-list detailed">
-                    {schedule.map((item) => (
-                      <article key={item.day}>
-                        <CalendarClock />
-                        <div>
-                          <b>{item.day}</b>
-                          <div className="grid gap-2 sm:grid-cols-2">
-                            <label>
-                              Abertura
-                              <input
-                                type="time"
-                                value={item.open}
-                                disabled={!item.enabled}
-                                onChange={(event) =>
-                                  updateScheduleDay(item.day, { open: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label>
-                              Fechamento
-                              <input
-                                type="time"
-                                value={item.close}
-                                disabled={!item.enabled}
-                                onChange={(event) =>
-                                  updateScheduleDay(item.day, { close: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label>
-                              Início da pausa
-                              <input
-                                type="time"
-                                value={item.breakStart}
-                                disabled={!item.enabled}
-                                onChange={(event) =>
-                                  updateScheduleDay(item.day, { breakStart: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label>
-                              Fim da pausa
-                              <input
-                                type="time"
-                                value={item.breakEnd}
-                                disabled={!item.enabled}
-                                onChange={(event) =>
-                                  updateScheduleDay(item.day, { breakEnd: event.target.value })
-                                }
-                              />
-                            </label>
+                    {schedule.map((item) => {
+                      const overnight =
+                        item.enabled &&
+                        item.open &&
+                        item.close &&
+                        minutesFromTime(item.close) < minutesFromTime(item.open);
+                      return (
+                        <article key={item.day}>
+                          <CalendarClock />
+                          <div>
+                            <b>{item.day}</b>
+                            {overnight && <small>Fecha no dia seguinte.</small>}
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <label>
+                                Abertura
+                                <input
+                                  type="time"
+                                  value={item.open}
+                                  disabled={!item.enabled}
+                                  onChange={(event) => updateScheduleDay(item.day, { open: event.target.value })}
+                                />
+                              </label>
+                              <label>
+                                Fechamento
+                                <input
+                                  type="time"
+                                  value={item.close}
+                                  disabled={!item.enabled}
+                                  onChange={(event) => updateScheduleDay(item.day, { close: event.target.value })}
+                                />
+                              </label>
+                              <label>
+                                Início da pausa
+                                <input
+                                  type="time"
+                                  value={item.breakStart}
+                                  disabled={!item.enabled}
+                                  onChange={(event) => updateScheduleDay(item.day, { breakStart: event.target.value })}
+                                />
+                              </label>
+                              <label>
+                                Fim da pausa
+                                <input
+                                  type="time"
+                                  value={item.breakEnd}
+                                  disabled={!item.enabled}
+                                  onChange={(event) => updateScheduleDay(item.day, { breakEnd: event.target.value })}
+                                />
+                              </label>
+                            </div>
                           </div>
-                        </div>
-                        <button
-                          className={item.enabled ? "mini-toggle active" : "mini-toggle"}
-                          onClick={() => updateScheduleDay(item.day, { enabled: !item.enabled })}
-                        >
-                          {item.enabled ? "Aberto" : "Fechado"}
-                        </button>
-                      </article>
-                    ))}
+                          <button
+                            className={item.enabled ? "mini-toggle active" : "mini-toggle"}
+                            onClick={() => updateScheduleDay(item.day, { enabled: !item.enabled })}
+                          >
+                            {item.enabled ? "Aberto" : "Fechado"}
+                          </button>
+                        </article>
+                      );
+                    })}
                   </div>
                 )}
+
+                <div className="surface-card">
+                  <b>Regra de virada do dia</b>
+                  <p>
+                    Um horário como 19:00 → 02:00 significa abertura às 19h e fechamento às 02h do dia seguinte.
+                  </p>
+                </div>
               </div>
             ) : active === "Entrega/retirada" ? (
               <>
@@ -1369,56 +1401,69 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             ) : active === "Promoções" ? (
               <>
                 <ModuleHeader
-                  badge={`${promotions.filter((promotion) => promotion.active).length} ativas`}
+                  badge={`${promotions.filter((promotion) => promotionStatus(promotion) === "Ativa").length} ativas`}
                   title="Promoções da banca"
-                  description="Crie, edite, encerre e acompanhe campanhas. Frete grátis deixa explícito quem paga a entrega."
+                  description="Crie campanhas com regra, período, limite de uso, pedido mínimo e público-alvo."
                 />
                 {!promotionEditorOpen ? (
                   <>
                     <div className="module-action-row">
-                      <button className="primary-action" onClick={() => startPromotion("combo")}>
+                      <button className="primary-action" onClick={() => startPromotion("percentual")}>
                         <Plus size={17} /> Nova promoção
-                      </button>
-                      <button className="secondary-action" onClick={() => startPromotion("freteGratis")}>
-                        Frete grátis
                       </button>
                     </div>
                     <div className="operation-list detailed">
-                      {promotions.map((promotion) => (
-                        <article key={promotion.id}>
-                          <Star />
-                          <div>
-                            <b>{promotion.name}</b>
-                            <small>
-                              {promotion.rule} · {promotion.usedCount}/{promotion.usageLimit || "∞"} usos ·{" "}
-                              {promotion.vendorPaysDelivery ? "banca paga o frete" : "sem subsídio de frete"}
-                            </small>
-                          </div>
-                          <div className="item-actions">
-                            <button className="mini-toggle" onClick={() => editPromotion(promotion)}>
-                              Editar
-                            </button>
-                            <button
-                              className={promotion.active ? "mini-toggle active" : "mini-toggle"}
-                              onClick={() =>
-                                setPromotions((current) =>
-                                  current.map((item) =>
-                                    item.id === promotion.id ? { ...item, active: !item.active } : item,
-                                  ),
-                                )
-                              }
-                            >
-                              {promotion.active ? "Ativa" : "Encerrada"}
-                            </button>
-                          </div>
-                        </article>
-                      ))}
+                      {promotions.map((promotion) => {
+                        const status = promotionStatus(promotion);
+                        return (
+                          <article key={promotion.id}>
+                            <Star />
+                            <div>
+                              <b>{promotion.name}</b>
+                              <small>
+                                {promotion.rule} · {promotion.usedCount}/{promotion.usageLimit || "∞"} usos
+                                {promotion.minimumOrder ? ` · pedido mínimo ${money(promotion.minimumOrder)}` : ""}
+                                {promotion.target ? ` · alvo: ${promotion.target}` : ""}
+                              </small>
+                              <small>
+                                {status}
+                                {promotion.vendorPaysDelivery ? " · banca paga o frete; entregador recebe normalmente" : ""}
+                              </small>
+                            </div>
+                            <div className="item-actions">
+                              <button className="mini-toggle" onClick={() => editPromotion(promotion)}>Editar</button>
+                              <button
+                                className={status === "Ativa" ? "mini-toggle active" : "mini-toggle"}
+                                onClick={() =>
+                                  setPromotions((current) =>
+                                    current.map((item) =>
+                                      item.id === promotion.id ? { ...item, active: !item.active } : item,
+                                    ),
+                                  )
+                                }
+                              >
+                                {promotion.active ? "Encerrar" : "Reativar"}
+                              </button>
+                              <button
+                                className="mini-toggle"
+                                onClick={() => {
+                                  if (!window.confirm("Excluir esta promoção? O histórico de pedidos que já usaram a campanha não será alterado.")) return;
+                                  setPromotions((current) => current.filter((item) => item.id !== promotion.id));
+                                  showNotice("Promoção excluída.");
+                                }}
+                              >
+                                <Trash2 size={15} /> Excluir
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
                   </>
                 ) : (
                   <form className="form-card" onSubmit={savePromotion}>
                     <label>
-                      Tipo
+                      Tipo de promoção
                       <select
                         value={promotionDraft.type}
                         onChange={(event) => {
@@ -1430,55 +1475,68 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           }));
                         }}
                       >
-                        <option value="combo">Combo</option>
+                        <option value="percentual">Desconto percentual</option>
+                        <option value="valorFixo">Desconto em valor fixo</option>
+                        <option value="compreLeve">Compre X, leve Y</option>
+                        <option value="produtoCategoria">Desconto por produto/categoria</option>
+                        <option value="freteGratis">Frete grátis pago pela banca</option>
                         <option value="horario">Oferta por horário</option>
                         <option value="cupom">Cupom</option>
-                        <option value="freteGratis">Frete grátis pago pela banca</option>
+                        <option value="combo">Combo</option>
                       </select>
                     </label>
                     <label>
                       Nome da campanha
                       <input
                         value={promotionDraft.name}
-                        onChange={(event) =>
-                          setPromotionDraft((current) => ({ ...current, name: event.target.value }))
-                        }
+                        onChange={(event) => setPromotionDraft((current) => ({ ...current, name: event.target.value }))}
                         required
                       />
                     </label>
                     <label>
-                      Regra
+                      Regra exibida ao cliente
                       <textarea
                         rows={3}
                         value={promotionDraft.rule}
-                        onChange={(event) =>
-                          setPromotionDraft((current) => ({ ...current, rule: event.target.value }))
-                        }
-                        placeholder="Ex.: frete grátis acima de R$ 80, limitado a 30 pedidos"
+                        onChange={(event) => setPromotionDraft((current) => ({ ...current, rule: event.target.value }))}
+                        placeholder="Ex.: 10% em frutas; compre 2 leve 3; frete grátis acima de R$ 80"
                         required
                       />
                     </label>
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {["percentual", "valorFixo", "produtoCategoria"].includes(promotionDraft.type) && (
+                        <label>
+                          {promotionDraft.type === "percentual" ? "Percentual de desconto (%)" : "Valor do desconto (R$)"}
+                          <input
+                            type="number"
+                            min="0"
+                            step={promotionDraft.type === "percentual" ? "1" : "0.01"}
+                            value={promotionDraft.discountValue ?? 0}
+                            onChange={(event) =>
+                              setPromotionDraft((current) => ({ ...current, discountValue: Number(event.target.value) }))
+                            }
+                          />
+                        </label>
+                      )}
+                      {["percentual", "valorFixo", "produtoCategoria", "compreLeve"].includes(promotionDraft.type) && (
+                        <label>
+                          Produto/categoria alvo
+                          <input
+                            value={promotionDraft.target ?? ""}
+                            onChange={(event) => setPromotionDraft((current) => ({ ...current, target: event.target.value }))}
+                            placeholder="Ex.: Cesta de frutas ou Hortifruti"
+                          />
+                        </label>
+                      )}
                       <label>
-                        Início
+                        Pedido mínimo (R$)
                         <input
-                          type="datetime-local"
-                          value={promotionDraft.startsAt}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={promotionDraft.minimumOrder ?? 0}
                           onChange={(event) =>
-                            setPromotionDraft((current) => ({
-                              ...current,
-                              startsAt: event.target.value,
-                            }))
-                          }
-                        />
-                      </label>
-                      <label>
-                        Fim
-                        <input
-                          type="datetime-local"
-                          value={promotionDraft.endsAt}
-                          onChange={(event) =>
-                            setPromotionDraft((current) => ({ ...current, endsAt: event.target.value }))
+                            setPromotionDraft((current) => ({ ...current, minimumOrder: Number(event.target.value) }))
                           }
                         />
                       </label>
@@ -1489,31 +1547,60 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           min="0"
                           value={promotionDraft.usageLimit}
                           onChange={(event) =>
-                            setPromotionDraft((current) => ({
-                              ...current,
-                              usageLimit: Number(event.target.value),
-                            }))
+                            setPromotionDraft((current) => ({ ...current, usageLimit: Number(event.target.value) }))
                           }
+                        />
+                        <small>0 = sem limite.</small>
+                      </label>
+                      <label>
+                        Início
+                        <input
+                          type="datetime-local"
+                          value={promotionDraft.startsAt}
+                          onChange={(event) => setPromotionDraft((current) => ({ ...current, startsAt: event.target.value }))}
+                        />
+                      </label>
+                      <label>
+                        Fim
+                        <input
+                          type="datetime-local"
+                          value={promotionDraft.endsAt}
+                          onChange={(event) => setPromotionDraft((current) => ({ ...current, endsAt: event.target.value }))}
                         />
                       </label>
                     </div>
                     {promotionDraft.type === "freteGratis" && (
                       <p className="inline-success">
-                        O entregador continua recebendo a remuneração da corrida; o custo é descontado do
-                        recebível da banca.
+                        Frete grátis é uma promoção: o cliente paga R$ 0, a banca absorve o custo e a remuneração do entregador não é reduzida.
                       </p>
                     )}
                     <div className="module-action-row">
-                      <button type="submit" className="primary-action">
-                        Salvar campanha
-                      </button>
+                      <button type="submit" className="primary-action">Salvar campanha</button>
                       <button
                         type="button"
                         className="secondary-action"
-                        onClick={() => setPromotionEditorOpen(false)}
+                        onClick={() => {
+                          setPromotionEditorOpen(false);
+                          setPromotionEditingId(null);
+                        }}
                       >
                         Cancelar
                       </button>
+                      {promotionEditingId && (
+                        <button
+                          type="button"
+                          className="secondary-action"
+                          onClick={() => {
+                            if (!window.confirm("Excluir esta promoção?")) return;
+                            setPromotions((current) => current.filter((item) => item.id !== promotionEditingId));
+                            setPromotionEditorOpen(false);
+                            setPromotionEditingId(null);
+                            showNotice("Promoção excluída.");
+                          }}
+                        >
+                          <Trash2 size={17} /> Excluir promoção
+                        </button>
+                      )}
                     </div>
                   </form>
                 )}
@@ -1541,7 +1628,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 </div>
                 <div className="finance-breakdown">
                   <p>
-                    <span>Total demonstrativo dos pedidos</span>
+                    <span>Total atual dos pedidos</span>
                     <strong>{money(grossOrders)}</strong>
                   </p>
                   <p>
@@ -1894,10 +1981,6 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         </div>
       )}
 
-      <p className="operation-footnote">
-        Este fluxo já funciona localmente para validação de produto. Aprovação, notificações, pagamentos,
-        repasses e sincronização definitiva dependem do backend/provedor.
-      </p>
     </Panel>
   );
 }
@@ -1929,7 +2012,7 @@ function SectionHistory({
           ))}
         </div>
       ) : (
-        <p>Nenhum ajuste registrado nesta demonstração.</p>
+        <p>Nenhum ajuste registrado nesta aplicativo.</p>
       )}
     </div>
   );
