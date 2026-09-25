@@ -3,16 +3,16 @@ import { vehicleCapacityDefaults } from "./vehicles";
 
 export const vehicleRules = [
   { name: "Bicicleta", maxKg: vehicleCapacityDefaults.Bicicleta, note: "pedidos leves e próximos" },
-  {
-    name: "Bicicleta cargueira/triciclo",
-    maxKg: vehicleCapacityDefaults["Bicicleta cargueira/triciclo"],
-    note: "cargas médias sem veículo motorizado",
-  },
   { name: "Moto", maxKg: vehicleCapacityDefaults.Moto, note: "sacola pequena ou média" },
   {
     name: "Moto com baú",
     maxKg: vehicleCapacityDefaults["Moto com baú"],
     note: "compras médias com volume controlado",
+  },
+  {
+    name: "Bicicleta cargueira/triciclo",
+    maxKg: vehicleCapacityDefaults["Bicicleta cargueira/triciclo"],
+    note: "cargas médias sem veículo motorizado",
   },
   { name: "Carro", maxKg: vehicleCapacityDefaults.Carro, note: "compras pesadas e múltiplas bancas" },
   {
