@@ -12,7 +12,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
+import { deliveryModuleDetails, Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
 
 export function DeliveryOperations({ onBack, onMap }: { onBack: () => void; onMap: () => void }) {
   const modules = [
