@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { fairs } from "../data";
+import { visibleCustomerFairs } from "../domain/fairAvailability";
 import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
 import { cartWeight, productWeight, vehicleForWeight } from "../domain/marketplace";
@@ -340,7 +341,7 @@ export function Header(props: HeaderProps) {
                   value={props.selectedFair}
                   onChange={(event) => props.onFairChange(event.target.value)}
                 >
-                  {fairs.map((fair) => (
+                  {visibleCustomerFairs(fairs).map((fair) => (
                     <option key={fair.name}>{fair.name}</option>
                   ))}
                 </select>
