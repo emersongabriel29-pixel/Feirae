@@ -381,16 +381,23 @@ export function OrdersPage({
   onTracking: (orderId: string) => void;
   onBuyAgain: (orderId: string) => void;
 }) {
+  const ordered = [...orders].sort((a, b) => {
+    const aTime = a.createdAt ? Date.parse(a.createdAt) : 0;
+    const bTime = b.createdAt ? Date.parse(b.createdAt) : 0;
+    if (aTime !== bTime) return bTime - aTime;
+    return b.id.localeCompare(a.id, "pt-BR", { numeric: true });
+  });
   return (
     <section className="mx-auto max-w-3xl">
-      <PageHeading title="Meus pedidos" subtitle="Acompanhe suas compras, retiradas e entregas." />
+      <PageHeading title="Meus pedidos" subtitle="Ordenados por data e hora mais recentes." />
       <div className="mt-6 space-y-3">
-        {orders.map((order) => (
+        {ordered.map((order) => (
           <article key={order.id} className="order-card">
             <div>
               <small>{order.date}</small>
               <h3>{order.id}</h3>
-              <p>Compra em múltiplas bancas</p>
+              <p>{order.fairName ?? "Compra em múltiplas bancas"}</p>
+              {order.paymentMethod && <small>{order.paymentMethod}</small>}
             </div>
             <div className="text-right">
               <span>{order.status}</span>
