@@ -574,7 +574,6 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("checkbox", { name: /^sobradinho$/i })).toBeChecked();
   });
 
-
   it("lets the delivery person go offline manually or use automatic hours", () => {
     render(<App />);
     loginAs("entregador");
