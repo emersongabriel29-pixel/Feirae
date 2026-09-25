@@ -101,9 +101,13 @@ export default function App() {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
     );
   }
-  function openMap(lat: number, lng: number) {
+  function openMap(destination: number | string, lng?: number) {
+    const target =
+      typeof destination === "number" && typeof lng === "number"
+        ? `${destination},${lng}`
+        : String(destination);
     window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}`,
       "_blank",
       "noopener,noreferrer",
     );
