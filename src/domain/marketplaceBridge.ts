@@ -44,6 +44,20 @@ type SharedMarketplace = {
 };
 
 const STORAGE_KEY = "feirae:marketplace:v2";
+const STATIC_ADJUSTMENT_KEY = "feirae:static-stock-adjustments:v1";
+
+function staticAdjustment(productId: number) {
+  if (typeof window === "undefined") return 0;
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(STATIC_ADJUSTMENT_KEY) ?? "{}") as Record<
+      string,
+      number
+    >;
+    return parsed[String(productId)] ?? 0;
+  } catch {
+    return 0;
+  }
+}
 
 function readMarketplace(): SharedMarketplace {
   if (typeof window === "undefined") return { stores: [], products: [] };
@@ -157,12 +171,16 @@ export function marketplaceProducts(baseProducts: Product[]): Product[] {
   );
   const staticProducts = baseProducts
     .filter((product) => !dynamicStoreNames.has(`${product.fair}::${product.feirante}`))
-    .map((product) => ({
-      ...product,
-      vendorId: product.vendorId ?? vendorIdFor(product.feirante),
-      storeId: product.storeId ?? storeIdFor(product.fair, product.feirante),
-      active: product.active ?? true,
-    }));
+    .map((product) => {
+      const stock = Math.max(0, product.stock + staticAdjustment(product.id));
+      return {
+        ...product,
+        stock,
+        vendorId: product.vendorId ?? vendorIdFor(product.feirante),
+        storeId: product.storeId ?? storeIdFor(product.fair, product.feirante),
+        active: (product.active ?? true) && stock > 0,
+      };
+    });
   return [...staticProducts, ...current.products].filter((product) => (product.active ?? true) && product.stock > 0);
 }
 
