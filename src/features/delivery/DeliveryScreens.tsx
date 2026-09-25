@@ -1236,8 +1236,8 @@ export function DeliveryOperations({
                     <span>avaliação média</span>
                   </article>
                   <article>
-                    <strong>1</strong>
-                    <span>cancelamento na semana</span>
+                    <strong>{deliveryCancellationLog.length}</strong>
+                    <span>cancelamentos registrados</span>
                   </article>
                 </div>
                 <div className="operation-list detailed">
