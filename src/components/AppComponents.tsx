@@ -57,7 +57,8 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
       text: "Aceitar entregas, rotas e acompanhar ganhos",
       icon: <Bike />,
     },
-  ];  const signupGuide =
+  ];
+  const signupGuide =
     selectedRole === "feirante"
       ? [
           "Preencha seus dados pessoais ou da empresa.",
@@ -77,8 +78,6 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
             "Depois da aprovação, fique online e aceite corridas da sua área.",
           ]
         : [];
-
-
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -194,9 +193,7 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
             </label>
             {mode === "signup" && signupGuide.length > 0 && (
               <div className="signup-requirements signup-guide">
-                <b>
-                  Guia inicial · {selectedRole === "feirante" ? "Feirante" : "Entregador"}
-                </b>
+                <b>Guia inicial · {selectedRole === "feirante" ? "Feirante" : "Entregador"}</b>
                 <ol>
                   {signupGuide.map((step, index) => (
                     <li key={step}>
@@ -206,8 +203,8 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
                   ))}
                 </ol>
                 <p>
-                  Criar a conta não libera a operação. Feirantes e entregadores só operam depois da
-                  aprovação dos documentos obrigatórios.
+                  Criar a conta não libera a operação. Feirantes e entregadores só operam depois da aprovação
+                  dos documentos obrigatórios.
                 </p>
               </div>
             )}
