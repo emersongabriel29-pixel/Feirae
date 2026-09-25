@@ -1175,8 +1175,9 @@ export function DeliveryOperations({
                 <ModuleHeader
                   badge="Prioridade"
                   title="Alertas graves"
-                  description="Ocorrências que precisam travar a corrida, avisar suporte ou proteger entregador e cliente."
+                  description="Registre ocorrências que exigem suporte e podem pausar sua disponibilidade."
                 />
+                {incidentMessage && <p className="inline-success">{incidentMessage}</p>}
                 <div className="operation-list detailed">
                   {[
                     "Acidente ou pane",
@@ -1188,8 +1189,19 @@ export function DeliveryOperations({
                       <XCircle />
                       <div>
                         <b>{item}</b>
-                        <small>Abre suporte prioritário e registra ocorrência da corrida.</small>
+                        <small>Abre ocorrência prioritária e deixa o entregador offline até revisão.</small>
                       </div>
+                      <button
+                        className="mini-toggle"
+                        onClick={() => {
+                          setIncidentMessage(
+                            `Ocorrência ${item} registrada${accepted ? ` na corrida ${accepted}` : ""}.`,
+                          );
+                          setOnline(false);
+                        }}
+                      >
+                        Registrar
+                      </button>
                     </article>
                   ))}
                 </div>
@@ -1287,30 +1299,6 @@ export function DeliveryOperations({
                       <div>
                         <b>{item}</b>
                         <small>Guia rápido para atendimento em campo.</small>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </>
-            ) : active === "Guia inicial" ? (
-              <>
-                <ModuleHeader
-                  badge="Primeiros passos"
-                  title="Começar a entregar"
-                  description="Fluxo de cadastro, validação, primeira corrida e boas práticas."
-                />
-                <div className="timeline-list">
-                  {[
-                    "Criar conta e enviar documentos",
-                    "Cadastrar veículo e capacidade",
-                    "Ficar online e aceitar corrida compatível",
-                    "Coletar, entregar e receber avaliação",
-                  ].map((step, index) => (
-                    <article key={step}>
-                      <span>{index + 1}</span>
-                      <div>
-                        <b>{step}</b>
-                        <small>Etapa demonstrativa para orientar o entregador.</small>
                       </div>
                     </article>
                   ))}
