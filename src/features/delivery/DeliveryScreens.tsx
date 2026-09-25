@@ -11,6 +11,7 @@ import {
   Star,
   Trash2,
   Truck,
+  Upload,
   XCircle,
 } from "lucide-react";
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
@@ -24,6 +25,7 @@ import {
 } from "../../domain/vehicles";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
+import { money } from "../../utils";
 
 export function DeliveryOperations({
   session,
@@ -47,6 +49,7 @@ export function DeliveryOperations({
     "Guia inicial",
     "Alertas graves",
     "Conta",
+    "Documentos",
     "Vantagens",
     "Avaliações",
   ];
@@ -72,6 +75,10 @@ export function DeliveryOperations({
       email: session.email,
       phone: "",
       pixKey: "",
+      receivingMethod: "Pix",
+      bankName: "",
+      agency: "",
+      accountNumber: "",
       cnh: "",
       cnhCategory: "",
       cep: "",
@@ -92,6 +99,82 @@ export function DeliveryOperations({
       },
     ],
   );
+
+  const [deliveryLedger, setDeliveryLedger] = usePersistentState<
+    {
+      id: string;
+      deliveryId: string;
+      label: string;
+      amount: number;
+      status: "pending" | "available" | "withdrawal_requested" | "paid";
+    }[]
+  >(`feirae:delivery-ledger:${session.email}`, [
+    {
+      id: "ledger-1022",
+      deliveryId: "FE-1022",
+      label: "Feira Central",
+      amount: 18.9,
+      status: "paid",
+    },
+    {
+      id: "ledger-1023",
+      deliveryId: "FE-1023",
+      label: "Torre",
+      amount: 24.2,
+      status: "available",
+    },
+  ]);
+  const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
+    {
+      id: string;
+      name: string;
+      description: string;
+      status: "pending" | "under_review" | "approved" | "correction_required";
+      fileName: string;
+      expiresAt: string;
+    }[]
+  >(`feirae:delivery-documents:${session.email}`, [
+    {
+      id: "identity",
+      name: "Documento oficial com foto",
+      description: "RG, CNH ou documento oficial válido.",
+      status: "approved",
+      fileName: "identidade.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "address",
+      name: "Comprovante de residência",
+      description: "Comprovante ou declaração de residência.",
+      status: "approved",
+      fileName: "residencia.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "cnh",
+      name: "CNH compatível e válida",
+      description: "Obrigatória para veículos motorizados que exigem habilitação.",
+      status: "approved",
+      fileName: "cnh.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "crlv",
+      name: "CRLV-e do veículo",
+      description: "Obrigatório para veículo motorizado cadastrado.",
+      status: "approved",
+      fileName: "crlv.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "motofrete",
+      name: "Curso/autorização de motofrete",
+      description: "Obrigatório quando a operação usar moto/motoneta para entrega remunerada.",
+      status: "approved",
+      fileName: "motofrete.pdf",
+      expiresAt: "",
+    },
+  ]);
 
   function addVehicle() {
     setVehicles((current) => [
@@ -115,6 +198,7 @@ export function DeliveryOperations({
       route: "Feira do Produtor → Planaltina",
       distance: "4,2 km",
       fee: "R$ 12,80",
+      feeAmount: 12.8,
       weight: 8.4,
       vehicle: "Moto",
     },
@@ -123,6 +207,7 @@ export function DeliveryOperations({
       route: "Feira Central → Asa Norte",
       distance: "6,8 km",
       fee: "R$ 17,40",
+      feeAmount: 17.4,
       weight: 16.8,
       vehicle: "Moto com baú",
     },
@@ -131,11 +216,55 @@ export function DeliveryOperations({
       route: "Feira da Torre → Sudoeste",
       distance: "5,1 km",
       fee: "R$ 24,20",
+      feeAmount: 24.2,
       weight: 31.5,
       vehicle: "Carro",
     },
   ];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
+  const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
+  const hasMoto = activeVehicles.some(
+    (vehicle) => vehicle.type === "Moto" || vehicle.type === "Moto com baú",
+  );
+  const requiredDocumentIds = [
+    "identity",
+    "address",
+    ...(hasMotorizedVehicle ? ["cnh", "crlv"] : []),
+    ...(hasMoto ? ["motofrete"] : []),
+  ];
+  const approvalStatus = requiredDocumentIds.every(
+    (id) => deliveryDocuments.find((document) => document.id === id)?.status === "approved",
+  )
+    ? "Aprovado"
+    : deliveryDocuments.some(
+          (document) =>
+            requiredDocumentIds.includes(document.id) && document.status === "correction_required",
+        )
+      ? "Correção necessária"
+      : deliveryDocuments.some(
+            (document) =>
+              requiredDocumentIds.includes(document.id) && document.status === "under_review",
+          )
+        ? "Em análise"
+        : "Documentação pendente";
+  const pendingAmount =
+    deliveryLedger
+      .filter((entry) => entry.status === "pending")
+      .reduce((sum, entry) => sum + entry.amount, 0) +
+    (accepted ? deliveries.find((delivery) => delivery.id === accepted)?.feeAmount ?? 0 : 0);
+  const availableAmount = deliveryLedger
+    .filter((entry) => entry.status === "available")
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const requestedAmount = deliveryLedger
+    .filter((entry) => entry.status === "withdrawal_requested")
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const paidAmount = deliveryLedger
+    .filter((entry) => entry.status === "paid")
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const receivingConfigured =
+    deliveryAccount.receivingMethod === "Pix"
+      ? Boolean(deliveryAccount.pixKey)
+      : Boolean(deliveryAccount.bankName && deliveryAccount.agency && deliveryAccount.accountNumber);
   const compatibleVehicleForWeight = (weight: number) =>
     [...activeVehicles]
       .filter((vehicle) => vehicle.capacityKg >= weight)
@@ -168,6 +297,16 @@ export function DeliveryOperations({
           className="primary-action"
           onClick={() => {
             if (stage === deliveryStages.length - 1) {
+              setDeliveryLedger((current) => [
+                {
+                  id: `ledger-${activeDelivery.id}-${Date.now()}`,
+                  deliveryId: activeDelivery.id,
+                  label: activeDelivery.route,
+                  amount: activeDelivery.feeAmount,
+                  status: "available",
+                },
+                ...current,
+              ]);
               setAccepted(null);
               setStage(0);
             } else setStage((value) => value + 1);
@@ -225,7 +364,7 @@ export function DeliveryOperations({
                 </small>
               </div>
               <button
-                disabled={!online || accepted !== null || !compatibleVehicle}
+                disabled={!online || approvalStatus !== "Aprovado" || accepted !== null || !compatibleVehicle}
                 onClick={() => {
                   if (!compatibleVehicle) return;
                   setAccepted(delivery.id);
@@ -252,7 +391,7 @@ export function DeliveryOperations({
             </div>
             <div className="operation-metrics">
               <article>
-                <strong>{online ? "Online" : "Offline"}</strong>
+                <strong>{approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}</strong>
                 <span>disponibilidade atual</span>
               </article>
               <article>
@@ -260,8 +399,14 @@ export function DeliveryOperations({
                 <span>corridas compatíveis</span>
               </article>
               <article>
-                <strong>R$ 54,40</strong>
-                <span>ganhos previstos</span>
+                <strong>
+                  {money(
+                    deliveries
+                      .filter((delivery) => compatibleVehicleForWeight(delivery.weight))
+                      .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
+                  )}
+                </strong>
+                <span>ganhos das corridas compatíveis</span>
               </article>
             </div>
           </div>
@@ -289,20 +434,30 @@ export function DeliveryOperations({
                     <h2>{online ? "Você está online" : "Você está offline"}</h2>
                   </div>
                   <button
-                    onClick={() => setOnline((value) => !value)}
+                    onClick={() => {
+                      if (approvalStatus !== "Aprovado") return;
+                      setOnline((value) => !value);
+                    }}
+                    disabled={approvalStatus !== "Aprovado"}
                     className={online ? "status-button active" : "status-button"}
                   >
-                    {online ? "Online" : "Offline"}
+                    {approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}
                   </button>
                 </div>
                 <div className="operation-metrics">
                   <article>
-                    <strong>3</strong>
-                    <span>corridas disponíveis</span>
+                    <strong>{compatibleDeliveryCount}</strong>
+                    <span>corridas compatíveis</span>
                   </article>
                   <article>
-                    <strong>R$ 54,40</strong>
-                    <span>ganhos previstos</span>
+                    <strong>
+                      {money(
+                        deliveries
+                          .filter((delivery) => compatibleVehicleForWeight(delivery.weight))
+                          .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
+                      )}
+                    </strong>
+                    <span>ganhos disponíveis para aceitar</span>
                   </article>
                   <article>
                     <strong>4,9 ★</strong>
@@ -328,35 +483,86 @@ export function DeliveryOperations({
                 <ModuleHeader
                   badge="Repasses"
                   title="Financeiro do entregador"
-                  description="Acompanhe ganhos por rota, taxa administrativa e previsão de pagamento."
+                  description="Acompanhe valores pendentes, disponíveis, saques solicitados e pagos por corrida."
                 />
                 <div className="operation-metrics">
                   <article>
-                    <strong>R$ 186,20</strong>
-                    <span>ganhos hoje</span>
+                    <strong>{money(pendingAmount)}</strong>
+                    <span>pendente até concluir entrega</span>
                   </article>
                   <article>
-                    <strong>R$ 42,50</strong>
-                    <span>taxas administrativas demonstrativas</span>
+                    <strong>{money(availableAmount)}</strong>
+                    <span>disponível para saque/repasse</span>
                   </article>
                   <article>
-                    <strong>12</strong>
-                    <span>corridas concluídas na semana</span>
+                    <strong>{money(paidAmount)}</strong>
+                    <span>já pago na demonstração</span>
                   </article>
                 </div>
                 <div className="finance-breakdown">
-                  {[
-                    ["FE-1022 · Feira Central", "R$ 18,90"],
-                    ["FE-1023 · Torre", "R$ 24,20"],
-                    ["FE-1024 · Produtor", "R$ 12,80"],
-                    ["Próximo repasse", "sexta-feira"],
-                  ].map(([label, value]) => (
-                    <p key={label}>
-                      <span>{label}</span>
-                      <strong>{value}</strong>
-                    </p>
+                  <p>
+                    <span>Destino de recebimento</span>
+                    <strong>{receivingConfigured ? "Cadastrado" : "Pendente"}</strong>
+                  </p>
+                  <p>
+                    <span>Solicitado ao provedor</span>
+                    <strong>{money(requestedAmount)}</strong>
+                  </p>
+                  <p>
+                    <span>Taxa administrativa Feiraê</span>
+                    <strong>A definir</strong>
+                  </p>
+                  <p>
+                    <span>Prazo do próximo repasse</span>
+                    <strong>Depende do provedor</strong>
+                  </p>
+                </div>
+                <div className="operation-list detailed">
+                  {deliveryLedger.map((entry) => (
+                    <article key={entry.id}>
+                      <Wallet />
+                      <div>
+                        <b>
+                          {entry.deliveryId} · {money(entry.amount)}
+                        </b>
+                        <small>
+                          {entry.label} ·{" "}
+                          {entry.status === "pending"
+                            ? "Pendente"
+                            : entry.status === "available"
+                              ? "Disponível"
+                              : entry.status === "withdrawal_requested"
+                                ? "Saque/repasse solicitado"
+                                : "Pago"}
+                        </small>
+                      </div>
+                    </article>
                   ))}
                 </div>
+                {!receivingConfigured ? (
+                  <button className="primary-action" onClick={() => setActive("Conta")}>
+                    Cadastrar destino de recebimento
+                  </button>
+                ) : availableAmount > 0 ? (
+                  <button
+                    className="primary-action"
+                    onClick={() =>
+                      setDeliveryLedger((current) =>
+                        current.map((entry) =>
+                          entry.status === "available"
+                            ? { ...entry, status: "withdrawal_requested" as const }
+                            : entry,
+                        ),
+                      )
+                    }
+                  >
+                    Solicitar saque/repasse
+                  </button>
+                ) : null}
+                <p className="operation-footnote">
+                  A solicitação é apenas simulada localmente. O envio real do dinheiro dependerá do provedor de
+                  pagamentos e do split do marketplace.
+                </p>
               </>
             ) : active === "Veículos" ? (
               <>
@@ -611,9 +817,17 @@ export function DeliveryOperations({
                 />
                 <div className="operation-list detailed">
                   {[
-                    ["Nova corrida compatível", "Feira do Produtor → Planaltina · 8,4 kg · R$ 12,80"],
-                    ["Pagamento previsto", "Repasse de R$ 186,20 programado para sexta."],
-                    ["Suporte respondeu", "Atualização sobre ocorrência FE-1019."],
+                    [
+                      "Novas corridas compatíveis",
+                      `${compatibleDeliveryCount} corrida(s) disponível(is) conforme seus veículos ativos.`,
+                    ],
+                    [
+                      "Financeiro",
+                      availableAmount > 0
+                        ? `${money(availableAmount)} disponível(is) para solicitar saque/repasse.`
+                        : "Nenhum valor disponível para saque neste momento.",
+                    ],
+                    ["Cadastro", `Status documental: ${approvalStatus}.`],
                   ].map(([title, text]) => (
                     <article key={title}>
                       <Bell />
@@ -719,9 +933,9 @@ export function DeliveryOperations({
             ) : active === "Conta" ? (
               <>
                 <ModuleHeader
-                  badge="Dados pessoais"
+                  badge="Dados pessoais e recebimento"
                   title="Minha conta"
-                  description="Dados pessoais, contato, repasse, endereço e habilitação quando necessária."
+                  description="Dados pessoais, contato, destino de recebimento, endereço e habilitação."
                 />
                 <form
                   className="form-card"
@@ -785,14 +999,19 @@ export function DeliveryOperations({
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label>
-                      Chave Pix para repasse
-                      <input
-                        value={deliveryAccount.pixKey}
+                      Forma de recebimento
+                      <select
+                        value={deliveryAccount.receivingMethod}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, pixKey: event.target.value }))
+                          setDeliveryAccount((current) => ({
+                            ...current,
+                            receivingMethod: event.target.value,
+                          }))
                         }
-                        placeholder="CPF, e-mail, telefone ou chave"
-                      />
+                      >
+                        <option>Pix</option>
+                        <option>Conta bancária</option>
+                      </select>
                     </label>
                     <label>
                       CEP
@@ -804,6 +1023,59 @@ export function DeliveryOperations({
                         placeholder="00000-000"
                       />
                     </label>
+                  </div>
+                  {deliveryAccount.receivingMethod === "Pix" ? (
+                    <label>
+                      Chave Pix para repasse
+                      <input
+                        value={deliveryAccount.pixKey}
+                        onChange={(event) =>
+                          setDeliveryAccount((current) => ({ ...current, pixKey: event.target.value }))
+                        }
+                        placeholder="CPF, e-mail, telefone ou chave"
+                      />
+                    </label>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label>
+                        Banco
+                        <input
+                          value={deliveryAccount.bankName}
+                          onChange={(event) =>
+                            setDeliveryAccount((current) => ({
+                              ...current,
+                              bankName: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Agência
+                        <input
+                          value={deliveryAccount.agency}
+                          onChange={(event) =>
+                            setDeliveryAccount((current) => ({
+                              ...current,
+                              agency: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Conta
+                        <input
+                          value={deliveryAccount.accountNumber}
+                          onChange={(event) =>
+                            setDeliveryAccount((current) => ({
+                              ...current,
+                              accountNumber: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <label>
                       Cidade/região
                       <input
@@ -838,20 +1110,93 @@ export function DeliveryOperations({
                       <input
                         value={deliveryAccount.cnhCategory}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, cnhCategory: event.target.value }))
+                          setDeliveryAccount((current) => ({
+                            ...current,
+                            cnhCategory: event.target.value,
+                          }))
                         }
                         placeholder="Ex.: A, B, AB"
                       />
                     </label>
                   </div>
                   <p className="operation-footnote">
-                    Bicicletas não exigem preenchimento de CNH no cadastro do Feiraê.
+                    Bicicletas não exigem CNH; veículos motorizados e motofrete têm documentação própria.
                   </p>
                   {accountSaved && <p className="inline-success">Dados da conta salvos neste dispositivo.</p>}
                   <button type="submit" className="primary-action">
                     Salvar alterações
                   </button>
                 </form>
+              </>
+            ) : active === "Documentos" ? (
+              <>
+                <ModuleHeader
+                  badge={approvalStatus}
+                  title="Documentação e aprovação"
+                  description="Criar conta ou enviar documentos não libera corridas. O cadastro precisa ser aprovado."
+                />
+                <div className="region-strip">
+                  <Check size={18} />
+                  <div>
+                    <b>Status: {approvalStatus}</b>
+                    <p>
+                      Documentos obrigatórios mudam conforme os veículos ativos. Enquanto a análise não for
+                      aprovada, o entregador não pode ficar online nem aceitar corridas reais.
+                    </p>
+                  </div>
+                </div>
+                <div className="operation-list detailed">
+                  {deliveryDocuments.map((document) => {
+                    const requiredNow = requiredDocumentIds.includes(document.id);
+                    return (
+                      <article key={document.id}>
+                        <Upload />
+                        <div>
+                          <b>
+                            {document.name} · {requiredNow ? "obrigatório agora" : "não obrigatório agora"}
+                          </b>
+                          <small>{document.description}</small>
+                          {document.fileName && <small>Arquivo: {document.fileName}</small>}
+                        </div>
+                        <div className="item-actions">
+                          <span className="document-status">
+                            {document.status === "approved"
+                              ? "Aprovado"
+                              : document.status === "under_review"
+                                ? "Em análise"
+                                : document.status === "correction_required"
+                                  ? "Correção necessária"
+                                  : "Pendente de envio"}
+                          </span>
+                          <label className="mini-toggle">
+                            {document.fileName ? "Substituir" : "Enviar"}
+                            <input
+                              type="file"
+                              accept=".pdf,image/*"
+                              hidden
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                if (!file) return;
+                                setDeliveryDocuments((current) =>
+                                  current.map((item) =>
+                                    item.id === document.id
+                                      ? {
+                                          ...item,
+                                          fileName: file.name,
+                                          status: "under_review",
+                                        }
+                                      : item,
+                                  ),
+                                );
+                                if (requiredNow) setOnline(false);
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
               </>
             ) : active === "Vantagens" ? (
               <>
