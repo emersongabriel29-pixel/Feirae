@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Bell,
@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
 import { deliveryModuleDetails } from "../../domain/operations";
+import { fairs } from "../../data";
+import { drivingRoute, geocodeAddress } from "../../domain/routing";
 import {
   isValidBrazilianPlate,
   normalizePlate,
@@ -68,9 +70,13 @@ export function DeliveryOperations({
       autoSchedule: false,
       scheduleStart: "08:00",
       scheduleEnd: "18:00",
+      baseLat: null as number | null,
+      baseLng: null as number | null,
+      baseLabel: "Localização não definida",
     },
   );
   const [accepted, setAccepted] = useState<string | null>(null);
+  const [, setRouteRevision] = useState(0);
   const [stage, setStage] = useState(0);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelDetails, setCancelDetails] = useState("");
@@ -200,6 +206,63 @@ export function DeliveryOperations({
       expiresAt: "",
     },
   ]);
+
+  useEffect(() => {
+    if (deliveryPreferences.baseLat === null || deliveryPreferences.baseLng === null) return;
+    let cancelled = false;
+
+    async function calculatePendingRoutes() {
+      const pending = readUnifiedOrders().filter(
+        (order) =>
+          order.fulfillment === "delivery" &&
+          ["ready_for_pickup", "driver_assigned"].includes(order.status) &&
+          !order.route,
+      );
+      if (!pending.length) return;
+
+      for (const order of pending) {
+        if (cancelled) return;
+        const fair = fairs.find((item) => item.name === order.fairName);
+        const fairPoint =
+          typeof fair?.lat === "number" && typeof fair.lng === "number"
+            ? { lat: fair.lat, lng: fair.lng }
+            : fair?.address
+              ? await geocodeAddress(fair.address)
+              : null;
+        const customerPoint =
+          typeof order.customerLat === "number" && typeof order.customerLng === "number"
+            ? { lat: order.customerLat, lng: order.customerLng }
+            : order.customerAddress
+              ? await geocodeAddress(order.customerAddress)
+              : null;
+
+        if (!fairPoint || !customerPoint) continue;
+
+        const toVendor = await drivingRoute(
+          { lat: deliveryPreferences.baseLat, lng: deliveryPreferences.baseLng },
+          fairPoint,
+        );
+        const toCustomer = await drivingRoute(fairPoint, customerPoint);
+        if (!toVendor || !toCustomer || cancelled) continue;
+
+        patchUnifiedOrder(order.id, {
+          route: {
+            toVendorKm: toVendor.distanceKm,
+            vendorToCustomerKm: toCustomer.distanceKm,
+            totalKm: Math.round((toVendor.distanceKm + toCustomer.distanceKm) * 10) / 10,
+            etaMinutes: toVendor.durationMinutes + toCustomer.durationMinutes,
+            source: "osrm",
+          },
+        });
+      }
+      if (!cancelled) setRouteRevision((value) => value + 1);
+    }
+
+    void calculatePendingRoutes();
+    return () => {
+      cancelled = true;
+    };
+  }, [deliveryPreferences.baseLat, deliveryPreferences.baseLng]);
 
   function resetVehicleForm() {
     setVehicleEditingId(null);
@@ -1066,6 +1129,36 @@ export function DeliveryOperations({
                 />
 
                 <div className="form-card">
+                  <div className="region-strip">
+                    <MapPin size={18} />
+                    <div>
+                      <b>Localização usada para calcular distância até a banca</b>
+                      <p>{deliveryPreferences.baseLabel}</p>
+                    </div>
+                    <button
+                      className="mini-toggle"
+                      onClick={() => {
+                        if (!navigator.geolocation) return;
+                        navigator.geolocation.getCurrentPosition(
+                          ({ coords }) =>
+                            setDeliveryPreferences((current) => ({
+                              ...current,
+                              baseLat: coords.latitude,
+                              baseLng: coords.longitude,
+                              baseLabel: "Localização atual atualizada",
+                            })),
+                          () =>
+                            setDeliveryPreferences((current) => ({
+                              ...current,
+                              baseLabel: "Não foi possível acessar sua localização",
+                            })),
+                          { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
+                        );
+                      }}
+                    >
+                      Usar GPS
+                    </button>
+                  </div>
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <b>Estou disponível agora</b>
