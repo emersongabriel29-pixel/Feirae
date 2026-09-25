@@ -19,6 +19,7 @@ export type VendorOrderStatus =
 
 export type VendorOrderItem = {
   id: string;
+  productId?: number;
   name: string;
   quantityLabel: string;
   estimatedWeightKg: number;
@@ -30,6 +31,8 @@ export type VendorOrderItem = {
 
 export type VendorOrder = {
   id: string;
+  fulfillment?: "delivery" | "pickup";
+  vendorId?: string;
   customer: string;
   createdAt: string;
   status: VendorOrderStatus;
