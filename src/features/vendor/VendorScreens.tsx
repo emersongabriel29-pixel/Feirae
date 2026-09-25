@@ -268,6 +268,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     minimumOrder: 0,
     discountValue: 0,
     target: "",
+    couponCode: "",
+    payQuantity: 2,
+    takeQuantity: 3,
   });
   const [stockReason, setStockReason] = useState("Ajuste manual");
   const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
@@ -697,6 +700,17 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     event.preventDefault();
     if (!promotionDraft.name.trim() || !promotionDraft.rule.trim()) {
       showNotice("Informe o nome e a regra da campanha.");
+      return;
+    }
+    if (promotionDraft.type === "cupom" && !promotionDraft.couponCode?.trim()) {
+      showNotice("Informe o código do cupom.");
+      return;
+    }
+    if (
+      promotionDraft.type === "compreLeve" &&
+      (promotionDraft.takeQuantity ?? 0) <= (promotionDraft.payQuantity ?? 0)
+    ) {
+      showNotice("Em Compre X Leve Y, a quantidade levada deve ser maior que a quantidade paga.");
       return;
     }
     const next = {
@@ -1860,7 +1874,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           <input
                             type="number"
                             min="0"
-                            step={promotionDraft.type === "percentual" ? "1" : "0.01"}
+                            step={promotionDraft.type === "valorFixo" ? "0.01" : "1"}
                             value={promotionDraft.discountValue ?? 0}
                             onChange={(event) =>
                               setPromotionDraft((current) => ({
@@ -1884,6 +1898,59 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                             placeholder="Ex.: Cesta de frutas ou Hortifruti"
                           />
                         </label>
+                      )}
+                      {promotionDraft.type === "cupom" && (
+                        <label>
+                          Código do cupom
+                          <input
+                            value={promotionDraft.couponCode ?? ""}
+                            onChange={(event) =>
+                              setPromotionDraft((current) => ({
+                                ...current,
+                                couponCode: event.target.value.toLocaleUpperCase("pt-BR"),
+                              }))
+                            }
+                            placeholder="Ex.: FEIRA10"
+                            required
+                          />
+                        </label>
+                      )}
+                      {promotionDraft.type === "compreLeve" && (
+                        <>
+                          <label>
+                            Pague por X unidades
+                            <input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={promotionDraft.payQuantity ?? 2}
+                              onChange={(event) =>
+                                setPromotionDraft((current) => ({
+                                  ...current,
+                                  payQuantity: Math.max(1, Number(event.target.value) || 1),
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            Leve Y unidades
+                            <input
+                              type="number"
+                              min={(promotionDraft.payQuantity ?? 2) + 1}
+                              step="1"
+                              value={promotionDraft.takeQuantity ?? 3}
+                              onChange={(event) =>
+                                setPromotionDraft((current) => ({
+                                  ...current,
+                                  takeQuantity: Math.max(
+                                    (current.payQuantity ?? 2) + 1,
+                                    Number(event.target.value) || 3,
+                                  ),
+                                }))
+                              }
+                            />
+                          </label>
+                        </>
                       )}
                       <label>
                         Pedido mínimo (R$)
