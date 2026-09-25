@@ -25,6 +25,12 @@ import {
 } from "../../domain/driverAvailability";
 import { deliveryModuleDetails } from "../../domain/operations";
 import {
+  formatDateTime,
+  localPeriodKey,
+  localPeriodKeys,
+  sortByCreatedAtNewestFirst,
+} from "../../domain/timeline";
+import {
   requiresPlate,
   suggestedCapacityForVehicle,
   vehicleTypeOptions,
@@ -460,17 +466,22 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  const todayKey = "2026-09-25";
-  const currentMonthKey = "2026-09";
-  const previousMonthKey = "2026-08";
-  const currentYearKey = "2026";
-  const ledgerForPrefix = (prefix: string) =>
-    deliveryLedger.filter((entry) => (entry.createdAt ?? "").startsWith(prefix));
+  const orderedDeliveryLedger = sortByCreatedAtNewestFirst(deliveryLedger);
+  const orderedDriverEvaluations = sortByCreatedAtNewestFirst(driverEvaluations);
+  const periods = localPeriodKeys();
   const sumLedger = (entries: typeof deliveryLedger) => entries.reduce((sum, entry) => sum + entry.amount, 0);
-  const todayEntries = ledgerForPrefix(todayKey);
-  const monthEntries = ledgerForPrefix(currentMonthKey);
-  const previousMonthEntries = ledgerForPrefix(previousMonthKey);
-  const yearEntries = ledgerForPrefix(currentYearKey);
+  const todayEntries = deliveryLedger.filter(
+    (entry) => localPeriodKey(entry.createdAt, "day") === periods.day,
+  );
+  const monthEntries = deliveryLedger.filter(
+    (entry) => localPeriodKey(entry.createdAt, "month") === periods.month,
+  );
+  const previousMonthEntries = deliveryLedger.filter(
+    (entry) => localPeriodKey(entry.createdAt, "month") === periods.previousMonth,
+  );
+  const yearEntries = deliveryLedger.filter(
+    (entry) => localPeriodKey(entry.createdAt, "year") === periods.year,
+  );
   const monthKm = monthEntries.reduce((sum, entry) => sum + (entry.distanceKm ?? 0), 0);
   const monthAverage = monthEntries.length ? sumLedger(monthEntries) / monthEntries.length : 0;
   const monthPerKm = monthKm ? sumLedger(monthEntries) / monthKm : 0;
@@ -835,7 +846,7 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
                   </p>
                 </div>
                 <div className="operation-list detailed">
-                  {deliveryLedger.map((entry) => (
+                  {orderedDeliveryLedger.map((entry) => (
                     <article key={entry.id}>
                       <Wallet />
                       <div>
@@ -843,7 +854,7 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
                           {entry.deliveryId} · {money(entry.amount)}
                         </b>
                         <small>
-                          {entry.label} · {entry.distanceKm ?? 0} km ·{" "}
+                          {formatDateTime(entry.createdAt)} · {entry.label} · {entry.distanceKm ?? 0} km ·{" "}
                           {entry.status === "pending"
                             ? "Pendente"
                             : entry.status === "available"
@@ -1309,11 +1320,12 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
                   <p className="inline-success">Nenhuma corrida concluída aguardando sua avaliação.</p>
                 )}
                 <div className="operation-list detailed">
-                  {driverEvaluations.map((evaluation) => (
+                  {orderedDriverEvaluations.map((evaluation) => (
                     <article key={evaluation.id}>
                       <Star />
                       <div>
                         <b>{evaluation.deliveryId}</b>
+                        <small>{formatDateTime(evaluation.createdAt)}</small>
                         <small>
                           Banca {evaluation.bankRating} ★ · Cliente {evaluation.customerRating} ★
                           {evaluation.note ? ` · ${evaluation.note}` : ""}
