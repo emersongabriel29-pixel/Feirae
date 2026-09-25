@@ -1047,6 +1047,22 @@ export function DeliveryOperations({
                     Solicitar saque/repasse
                   </button>
                 ) : null}
+                {requestedAmount > 0 && (
+                  <button
+                    className="secondary-action"
+                    onClick={() =>
+                      setDeliveryLedger((current) =>
+                        current.map((entry) =>
+                          entry.status === "withdrawal_requested"
+                            ? { ...entry, status: "paid" as const }
+                            : entry,
+                        ),
+                      )
+                    }
+                  >
+                    Registrar repasse recebido
+                  </button>
+                )}
                 <p className="operation-footnote">
                   A solicitação é apenas simulada localmente. O envio real do dinheiro dependerá do provedor
                   de pagamentos e do split do marketplace.
