@@ -341,3 +341,54 @@ Referências:
   https://www.gov.br/antt/pt-br/assuntos/noticias-defeso-eleitoral/antt-atualiza-pisos-minimos-de-frete-do-transporte-rodoviario-de-cargas
 - Detran-DF — requisitos de motofrete:
   https://sisman.maestro.detran.df.gov.br/visualizar-carta/pdf/?area=28&layout=true
+
+
+## 14. Disponibilidade do entregador
+
+O entregador possui dois modos de disponibilidade:
+
+### Manual
+
+- **Online:** recebe e pode aceitar novas corridas compatíveis.
+- **Offline:** não recebe novas corridas.
+- Ficar offline não cancela uma corrida que já esteja em andamento.
+
+### Horário automático
+
+O entregador configura, por dia da semana:
+
+- dia ativo/inativo;
+- horário de início;
+- horário de fim.
+
+O sistema verifica a agenda automaticamente e muda a disponibilidade sem exigir que o entregador abra a tela. Janelas que atravessam a meia-noite também são suportadas.
+
+Exemplo:
+
+- quinta-feira 19:00 → 02:00 mantém o entregador disponível até 02:00 da sexta-feira.
+
+Mesmo no modo automático existe **Pausar agora**, para o entregador interromper corridas sem apagar seus horários. Depois ele usa **Retomar agenda automática**.
+
+A conta só fica online quando:
+
+1. documentação obrigatória está aprovada;
+2. o modo escolhido autoriza disponibilidade;
+3. não existe pausa manual da agenda;
+4. a corrida atende área, distância, veículo e capacidade.
+
+## 15. Feira ativa ou inativa
+
+`Fair.active` representa a disponibilidade operacional da feira dentro do Feiraê.
+
+- `active: true` ou campo ausente: feira disponível.
+- `active: false`: feira inativa e escondida das escolhas do cliente.
+
+Feiras inativas não aparecem:
+
+- na lista de feiras;
+- no seletor de feira do cabeçalho;
+- como destino válido por link interno.
+
+Esse estado é diferente de **aberta/fechada pelo horário**. Uma feira pode estar ativa no Feiraê, mas fechada naquele momento por causa do horário de funcionamento.
+
+No produto final, ativar/desativar uma feira deve ser permissão administrativa da plataforma, não do feirante individual.
