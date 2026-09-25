@@ -32,10 +32,15 @@ const roleLabels: Record<Role, string> = {
   delivery: "Entregador",
 };
 
-export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) => void }) {
+export function LoginPage({
+  onLogin,
+}: {
+  onLogin: (role: Role, email: string, name: string, isNewAccount: boolean) => void;
+}) {
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const options: Array<{ role: Role; title: string; text: string; icon: ReactNode }> = [
@@ -61,7 +66,7 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    onLogin(selectedRole, email.trim());
+    onLogin(selectedRole, email.trim(), name.trim(), mode === "signup");
   }
 
   return (
@@ -136,7 +141,13 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
             {mode === "signup" && (
               <label>
                 Nome completo
-                <input placeholder="Seu nome" autoComplete="name" required />
+                <input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Seu nome"
+                  autoComplete="name"
+                  required
+                />
               </label>
             )}
             <label>
