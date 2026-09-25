@@ -713,10 +713,49 @@ export function DeliveryOperations({
             ) : active === "Financeiro" ? (
               <>
                 <ModuleHeader
-                  badge="Repasses"
+                  badge="Ganhos e repasses"
                   title="Financeiro do entregador"
-                  description="Acompanhe valores pendentes, disponíveis, saques solicitados e pagos por corrida."
+                  description="Acompanhe ganhos por período, eficiência da rota e o caminho do dinheiro até o saque."
                 />
+                <div className="operation-metrics">
+                  <article>
+                    <strong>{money(sumLedger(todayEntries))}</strong>
+                    <span>ganhos hoje</span>
+                  </article>
+                  <article>
+                    <strong>{money(sumLedger(monthEntries))}</strong>
+                    <span>mês atual</span>
+                  </article>
+                  <article>
+                    <strong>{money(sumLedger(yearEntries))}</strong>
+                    <span>total no ano</span>
+                  </article>
+                </div>
+                <div className="module-kpi-strip">
+                  <article>
+                    <strong>{monthEntries.length}</strong>
+                    <span>entregas no mês</span>
+                  </article>
+                  <article>
+                    <strong>{monthKm.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} km</strong>
+                    <span>km registrados no mês</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthAverage)}</strong>
+                    <span>média por entrega</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthPerKm)}</strong>
+                    <span>ganho médio por km</span>
+                  </article>
+                  <article>
+                    <strong>
+                      {monthComparison >= 0 ? "+" : ""}
+                      {monthComparison.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
+                    </strong>
+                    <span>vs. mês anterior</span>
+                  </article>
+                </div>
                 <div className="operation-metrics">
                   <article>
                     <strong>{money(pendingAmount)}</strong>
@@ -727,8 +766,12 @@ export function DeliveryOperations({
                     <span>disponível para saque/repasse</span>
                   </article>
                   <article>
+                    <strong>{money(requestedAmount)}</strong>
+                    <span>saque/repasse solicitado</span>
+                  </article>
+                  <article>
                     <strong>{money(paidAmount)}</strong>
-                    <span>já pago na demonstração</span>
+                    <span>já pago</span>
                   </article>
                 </div>
                 <div className="finance-breakdown">
@@ -737,12 +780,12 @@ export function DeliveryOperations({
                     <strong>{receivingConfigured ? "Cadastrado" : "Pendente"}</strong>
                   </p>
                   <p>
-                    <span>Solicitado ao provedor</span>
-                    <strong>{money(requestedAmount)}</strong>
+                    <span>Como o saque funciona</span>
+                    <strong>Disponível → solicitado → processado → pago</strong>
                   </p>
                   <p>
                     <span>Taxa administrativa Feiraê</span>
-                    <strong>A definir</strong>
+                    <strong>A definir no provedor</strong>
                   </p>
                   <p>
                     <span>Prazo do próximo repasse</span>
@@ -758,7 +801,7 @@ export function DeliveryOperations({
                           {entry.deliveryId} · {money(entry.amount)}
                         </b>
                         <small>
-                          {entry.label} ·{" "}
+                          {entry.label} · {entry.distanceKm ?? 0} km ·{" "}
                           {entry.status === "pending"
                             ? "Pendente"
                             : entry.status === "available"
@@ -788,12 +831,12 @@ export function DeliveryOperations({
                       )
                     }
                   >
-                    Solicitar saque/repasse
+                    Solicitar saque/repasse de {money(availableAmount)}
                   </button>
                 ) : null}
                 <p className="operation-footnote">
-                  A solicitação é apenas simulada localmente. O envio real do dinheiro dependerá do provedor
-                  de pagamentos e do split do marketplace.
+                  A solicitação é simulada localmente. O movimento real do dinheiro depende do provedor de
+                  pagamentos e da conta/Pix validada.
                 </p>
               </>
             ) : active === "Veículos" ? (
