@@ -22,46 +22,46 @@ Portanto:
 
 ## Tabela
 
-| Feira | Região | Horário localizado | Status |
-|---|---|---|---|
-| Feira da Torre de TV | Plano Piloto | A confirmar em fonte oficial específica | PENDENTE |
-| Feira Permanente do Gama | Gama | Ter–Dom 07h–18h | CONFIRMADO ATUAL — OS 115/2024 |
-| Feira Modelo de Sobradinho | Sobradinho | A confirmar | PENDENTE |
-| Feira de Planaltina — Confecções e Utilidades | Planaltina | Ter–Sex 07h–18h30; Sáb 07h–19h; Dom 07h–18h; seg. fechada salvo datas comemorativas | CONFIRMADO ATUAL — OS 58/2026 |
-| Feira Permanente do Núcleo Bandeirante / Feira Ibaneis Rocha Barros Pai | Núcleo Bandeirante | Seg–Sáb 08h–18h; Dom até 15h, conforme comunicação oficial da CLDF em 2023 | OFICIAL / REVALIDAR |
-| Feira da Guariroba | Ceilândia | A confirmar | PENDENTE |
-| Feira Central de Ceilândia | Ceilândia | A confirmar | PENDENTE |
-| Feira Permanente do Guará | Guará | Qua–Dom 07h–18h; em dezembro, todos os dias | CONFIRMADO ATUAL — OS 165/2025 |
-| Feira Permanente do Cruzeiro | Cruzeiro | Ter–Dom 08h–18h; tolerância até 18h30 | OFICIAL / REVALIDAR — OS 63/2022 |
-| Feira Permanente de São Sebastião | São Sebastião | Regra geral Ter–Dom 08h–17h; Ala A: Ter–Sáb 08h–17h e Dom 08h–15h; Alas B/C: Ter–Sex 06h–17h e Sáb/Dom 04h–17h | OFICIAL / REVALIDAR — Portaria 44/2021 |
-| Shopping Popular da antiga Rodoferroviária | Plano Piloto | A confirmar | PENDENTE |
-| Shopping Popular do Gama | Gama | Ter–Sáb 09h–18h; Dom 09h–15h | CONFIRMADO ATUAL — OS 115/2024 |
-| Shopping Popular Taguatinga Sul | Taguatinga | A confirmar | PENDENTE |
-| Feira Permanente M Norte | Taguatinga | A confirmar | PENDENTE |
-| Feira dos Importados Taguatinga Centro | Taguatinga | A confirmar | PENDENTE |
-| Feira Permanente da QNJ/QNL | Taguatinga | A confirmar | PENDENTE |
-| Feira Central de Brazlândia | Brazlândia | Ter–Dom 07h–18h; 1h de tolerância para organização/fechamento | CONFIRMADO ATUAL — Regimento 20/05/2026 |
-| Feira do Produtor Rural | Planaltina | Seg 19h–02h do dia seguinte e Qui 19h–02h do dia seguinte | CONFIRMADO ATUAL — OS 58/2026 |
-| Feira de Hortifrutigranjeiros | Planaltina | Ter–Sex 07h–18h30; Sáb 07h–19h; Dom 07h–18h; seg. fechada salvo datas comemorativas | CONFIRMADO ATUAL — OS 58/2026 |
-| Feira Permanente do Paranoá | Paranoá | Ter–Dom 08h–18h na norma específica localizada | OFICIAL / REVALIDAR — OS 42/2000 |
-| Feira do Produtor | Ceilândia | A confirmar | PENDENTE |
-| Feira do P Sul | Ceilândia | A confirmar | PENDENTE |
-| Feira do P Norte | Ceilândia | A confirmar | PENDENTE |
-| Shopping Popular de Ceilândia | Ceilândia | A confirmar | PENDENTE |
-| Feira do Setor O | Ceilândia | A confirmar | PENDENTE |
-| Feira Permanente da QN 202 | Samambaia | A confirmar em ato específico atual | PENDENTE |
-| Feira Permanente da QN 210 | Samambaia | Ter–Dom 08h–18h em ato localizado de 2011 | OFICIAL / REVALIDAR — OS 171/2011 |
-| Feira Permanente de Santa Maria | Santa Maria | Ter–Dom 08h–18h; tolerância de encerramento até 19h | OFICIAL / REVALIDAR — Portaria 30/2021 |
-| Feira Permanente do Recanto das Emas | Recanto das Emas | A confirmar | PENDENTE |
-| Feira do Riacho Fundo I | Riacho Fundo I | Qua–Dom 07h–17h; praça de alimentação possui regra diferenciada em ato localizado | OFICIAL / REVALIDAR — OS 10/2019 |
-| Feira Permanente da Candangolândia | Candangolândia | A confirmar | PENDENTE |
-| Feira Permanente Riacho Fundo II | Riacho Fundo II | A confirmar | PENDENTE |
-| Feira Permanente da Cidade Estrutural | SCIA/Estrutural | A confirmar | PENDENTE |
-| Feira Permanente de Sobradinho II | Sobradinho II | A confirmar | PENDENTE |
-| Feira Permanente do Jardim Botânico | Jardim Botânico | A confirmar | PENDENTE |
-| Feira da Cultura, Arte e Beleza do SIA — FECAB | SIA | A confirmar | PENDENTE |
-| Feira do Produtor em Vicente Pires | Vicente Pires | A confirmar | PENDENTE |
-| Feira da Fercal | Fercal | A confirmar | PENDENTE |
+| Feira                                                                   | Região             | Horário localizado                                                                                             | Status                                  |
+| ----------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Feira da Torre de TV                                                    | Plano Piloto       | A confirmar em fonte oficial específica                                                                        | PENDENTE                                |
+| Feira Permanente do Gama                                                | Gama               | Ter–Dom 07h–18h                                                                                                | CONFIRMADO ATUAL — OS 115/2024          |
+| Feira Modelo de Sobradinho                                              | Sobradinho         | A confirmar                                                                                                    | PENDENTE                                |
+| Feira de Planaltina — Confecções e Utilidades                           | Planaltina         | Ter–Sex 07h–18h30; Sáb 07h–19h; Dom 07h–18h; seg. fechada salvo datas comemorativas                            | CONFIRMADO ATUAL — OS 58/2026           |
+| Feira Permanente do Núcleo Bandeirante / Feira Ibaneis Rocha Barros Pai | Núcleo Bandeirante | Seg–Sáb 08h–18h; Dom até 15h, conforme comunicação oficial da CLDF em 2023                                     | OFICIAL / REVALIDAR                     |
+| Feira da Guariroba                                                      | Ceilândia          | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Central de Ceilândia                                              | Ceilândia          | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Permanente do Guará                                               | Guará              | Qua–Dom 07h–18h; em dezembro, todos os dias                                                                    | CONFIRMADO ATUAL — OS 165/2025          |
+| Feira Permanente do Cruzeiro                                            | Cruzeiro           | Ter–Dom 08h–18h; tolerância até 18h30                                                                          | OFICIAL / REVALIDAR — OS 63/2022        |
+| Feira Permanente de São Sebastião                                       | São Sebastião      | Regra geral Ter–Dom 08h–17h; Ala A: Ter–Sáb 08h–17h e Dom 08h–15h; Alas B/C: Ter–Sex 06h–17h e Sáb/Dom 04h–17h | OFICIAL / REVALIDAR — Portaria 44/2021  |
+| Shopping Popular da antiga Rodoferroviária                              | Plano Piloto       | A confirmar                                                                                                    | PENDENTE                                |
+| Shopping Popular do Gama                                                | Gama               | Ter–Sáb 09h–18h; Dom 09h–15h                                                                                   | CONFIRMADO ATUAL — OS 115/2024          |
+| Shopping Popular Taguatinga Sul                                         | Taguatinga         | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Permanente M Norte                                                | Taguatinga         | A confirmar                                                                                                    | PENDENTE                                |
+| Feira dos Importados Taguatinga Centro                                  | Taguatinga         | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Permanente da QNJ/QNL                                             | Taguatinga         | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Central de Brazlândia                                             | Brazlândia         | Ter–Dom 07h–18h; 1h de tolerância para organização/fechamento                                                  | CONFIRMADO ATUAL — Regimento 20/05/2026 |
+| Feira do Produtor Rural                                                 | Planaltina         | Seg 19h–02h do dia seguinte e Qui 19h–02h do dia seguinte                                                      | CONFIRMADO ATUAL — OS 58/2026           |
+| Feira de Hortifrutigranjeiros                                           | Planaltina         | Ter–Sex 07h–18h30; Sáb 07h–19h; Dom 07h–18h; seg. fechada salvo datas comemorativas                            | CONFIRMADO ATUAL — OS 58/2026           |
+| Feira Permanente do Paranoá                                             | Paranoá            | Ter–Dom 08h–18h na norma específica localizada                                                                 | OFICIAL / REVALIDAR — OS 42/2000        |
+| Feira do Produtor                                                       | Ceilândia          | A confirmar                                                                                                    | PENDENTE                                |
+| Feira do P Sul                                                          | Ceilândia          | A confirmar                                                                                                    | PENDENTE                                |
+| Feira do P Norte                                                        | Ceilândia          | A confirmar                                                                                                    | PENDENTE                                |
+| Shopping Popular de Ceilândia                                           | Ceilândia          | A confirmar                                                                                                    | PENDENTE                                |
+| Feira do Setor O                                                        | Ceilândia          | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Permanente da QN 202                                              | Samambaia          | A confirmar em ato específico atual                                                                            | PENDENTE                                |
+| Feira Permanente da QN 210                                              | Samambaia          | Ter–Dom 08h–18h em ato localizado de 2011                                                                      | OFICIAL / REVALIDAR — OS 171/2011       |
+| Feira Permanente de Santa Maria                                         | Santa Maria        | Ter–Dom 08h–18h; tolerância de encerramento até 19h                                                            | OFICIAL / REVALIDAR — Portaria 30/2021  |
+| Feira Permanente do Recanto das Emas                                    | Recanto das Emas   | A confirmar                                                                                                    | PENDENTE                                |
+| Feira do Riacho Fundo I                                                 | Riacho Fundo I     | Qua–Dom 07h–17h; praça de alimentação possui regra diferenciada em ato localizado                              | OFICIAL / REVALIDAR — OS 10/2019        |
+| Feira Permanente da Candangolândia                                      | Candangolândia     | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Permanente Riacho Fundo II                                        | Riacho Fundo II    | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Permanente da Cidade Estrutural                                   | SCIA/Estrutural    | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Permanente de Sobradinho II                                       | Sobradinho II      | A confirmar                                                                                                    | PENDENTE                                |
+| Feira Permanente do Jardim Botânico                                     | Jardim Botânico    | A confirmar                                                                                                    | PENDENTE                                |
+| Feira da Cultura, Arte e Beleza do SIA — FECAB                          | SIA                | A confirmar                                                                                                    | PENDENTE                                |
+| Feira do Produtor em Vicente Pires                                      | Vicente Pires      | A confirmar                                                                                                    | PENDENTE                                |
+| Feira da Fercal                                                         | Fercal             | A confirmar                                                                                                    | PENDENTE                                |
 
 ## Fontes principais
 
@@ -131,12 +131,14 @@ https://www.sinj.df.gov.br/sinj/Norma/38862/Ordem_de_Servi_o_42_15_09_2000.html
 ## Próxima etapa de dados
 
 Para as linhas PENDENTES, a base real deve ser confirmada com:
+
 - SINJ/DODF;
 - Administração Regional competente;
 - regimento interno vigente;
 - eventual ordem de serviço posterior.
 
 No banco futuro, cada agenda deve guardar:
+
 - `source_url`;
 - `source_type`;
 - `verified_at`;
