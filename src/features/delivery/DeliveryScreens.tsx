@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Bell,
@@ -64,12 +64,18 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
   const [bankRating, setBankRating] = useState("5");
   const [customerRating, setCustomerRating] = useState("5");
   const [reviewNote, setReviewNote] = useState("");
+  const [availabilityClock, setAvailabilityClock] = useState(() => Date.now());
   const [accountSaved, setAccountSaved] = useState(false);
   const [vehicleFormOpen, setVehicleFormOpen] = useState(false);
   const [vehicleType, setVehicleType] = useState<DeliveryVehicleType>("Moto");
   const [vehicleCapacity, setVehicleCapacity] = useState<number>(suggestedCapacityForVehicle("Moto"));
   const [vehicleBrandModel, setVehicleBrandModel] = useState("");
   const [vehiclePlate, setVehiclePlate] = useState("");
+  useEffect(() => {
+    const timer = window.setInterval(() => setAvailabilityClock(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const [deliveryAccount, setDeliveryAccount] = usePersistentState(
     `feirae:delivery-account:${session.email}`,
     {
@@ -360,6 +366,7 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
     manualOnline,
     schedulePaused,
     schedule: availabilitySchedule,
+    now: new Date(availabilityClock),
   });
   const online = availability.online;
 
