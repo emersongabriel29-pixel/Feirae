@@ -374,7 +374,7 @@ export function OrdersPage({
   onBuyAgain,
 }: {
   orders: DemoOrder[];
-  onTracking: () => void;
+  onTracking: (orderId: string) => void;
   onBuyAgain: (orderId: string) => void;
 }) {
   return (
@@ -392,7 +392,7 @@ export function OrdersPage({
               <span>{order.status}</span>
               <strong>{money(order.value)}</strong>
               <div className="order-actions">
-                <button onClick={onTracking}>Ver detalhes</button>
+                <button onClick={() => onTracking(order.id)}>Ver detalhes</button>
                 <button onClick={() => onBuyAgain(order.id)}>Comprar novamente</button>
               </div>
             </div>
@@ -600,68 +600,141 @@ export function VendorStore({
     </Panel>
   );
 }
-export function DeliveryTracking({ onBack }: { onBack: () => void }) {
+export function DeliveryTracking({
+  order,
+  onBack,
+}: {
+  order: DemoOrder;
+  onBack: () => void;
+}) {
   const [cancelReason, setCancelReason] = useState("");
   const [showReview, setShowReview] = useState(false);
+
+  const statusConfig: Record<
+    DemoOrder["status"],
+    {
+      title: string;
+      description: string;
+      activeStep: number;
+    }
+  > = {
+    Recebido: {
+      title: "Pedido recebido",
+      description: "Aguardando a banca confirmar e iniciar a preparação.",
+      activeStep: 0,
+    },
+    Preparando: {
+      title: "Seu pedido está sendo preparado",
+      description: "As bancas estão separando os produtos do seu pedido.",
+      activeStep: 1,
+    },
+    Coleta: {
+      title: "Pedido pronto para coleta",
+      description: "O pedido está aguardando retirada pelo entregador.",
+      activeStep: 2,
+    },
+    "Em rota": {
+      title: "Seu pedido está a caminho",
+      description: "Previsão estimada: 20–35 minutos.",
+      activeStep: 3,
+    },
+    Entregue: {
+      title: "Pedido entregue",
+      description: "A entrega foi concluída.",
+      activeStep: 4,
+    },
+    Cancelado: {
+      title: "Pedido cancelado",
+      description: "Este pedido não seguirá para entrega.",
+      activeStep: -1,
+    },
+  };
+
+  const config = statusConfig[order.status];
+  const timeline = [
+    "Pedido confirmado",
+    "Produtos separados",
+    "Coleta concluída",
+    "Entregador em rota",
+  ];
+
   return (
-    <Panel title="Acompanhar entrega" subtitle="Pedido demonstrativo FE-1024" onBack={onBack}>
+    <Panel title="Acompanhar entrega" subtitle={`Pedido ${order.id} · ${order.status}`} onBack={onBack}>
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="tracking-map">
-          <span aria-hidden="true">🛵</span>
+          <span aria-hidden="true">{order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : "🛵"}</span>
           <div className="route-line">
-            <i />
-            <i />
-            <i />
-            <i />
+            {timeline.map((step, index) => (
+              <i
+                key={step}
+                className={config.activeStep >= index || order.status === "Entregue" ? "done" : undefined}
+              />
+            ))}
           </div>
-          <h2>Seu pedido está a caminho</h2>
-          <p>Previsão estimada: 20–35 minutos.</p>
+          <h2>{config.title}</h2>
+          <p>{config.description}</p>
         </div>
         <div className="surface-card">
           <h2>Linha do pedido</h2>
-          {["Pedido confirmado", "Produtos separados", "Coleta concluída", "Entregador em rota"].map(
-            (text, index) => (
+          {timeline.map((text, index) => {
+            const completed = order.status === "Entregue" || config.activeStep > index;
+            const current = config.activeStep === index;
+            return (
               <div className="timeline-item" key={text}>
-                <span>{index < 3 ? <Check size={15} /> : <Bike size={15} />}</span>
+                <span>{completed ? <Check size={15} /> : current ? <Bike size={15} /> : index + 1}</span>
                 <div>
                   <b>{text}</b>
-                  <small>{index < 3 ? "Concluído" : "Agora"}</small>
+                  <small>
+                    {order.status === "Cancelado"
+                      ? "Interrompido"
+                      : completed
+                        ? "Concluído"
+                        : current
+                          ? "Etapa atual"
+                          : "Aguardando"}
+                  </small>
                 </div>
               </div>
-            ),
-          )}
-          <div className="cancel-panel">
-            <b>Cancelar ou pedir ajuda</b>
-            <p>
-              Depois da coleta, o cancelamento precisa de suporte para proteger cliente, banca e entregador.
-            </p>
-            <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
-              <option value="">Escolha um motivo</option>
-              <option>Desisti do pedido</option>
-              <option>Endereço errado</option>
-              <option>Cliente ausente</option>
-              <option>Produto danificado</option>
-              <option>Emergência na entrega</option>
-            </select>
-            <button className="secondary-action">
-              <XCircle size={17} /> Solicitar cancelamento
-            </button>
-          </div>
-          <button className="primary-action w-full" onClick={() => setShowReview((value) => !value)}>
-            Avaliar pedido, banca e entrega
-          </button>
-          {showReview && (
-            <div className="review-grid compact">
-              {["Produto", "Banca", "Entrega"].map((item) => (
-                <article className="review-card" key={item}>
-                  <strong>★ ★ ★ ★ ★</strong>
-                  <div>
-                    <b>{item}</b>
-                    <small>Toque para registrar a nota do {item.toLocaleLowerCase("pt-BR")}.</small>
-                  </div>
-                </article>
-              ))}
+            );
+          })}
+          {order.status !== "Entregue" && order.status !== "Cancelado" && (
+            <div className="cancel-panel">
+              <b>Cancelar ou pedir ajuda</b>
+              <p>
+                Depois da coleta, o cancelamento precisa de suporte para proteger cliente, banca e entregador.
+              </p>
+              <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
+                <option value="">Escolha um motivo</option>
+                <option>Desisti do pedido</option>
+                <option>Endereço errado</option>
+                <option>Cliente ausente</option>
+                <option>Produto danificado</option>
+                <option>Emergência na entrega</option>
+              </select>
+              <button className="secondary-action">
+                <XCircle size={17} /> Solicitar cancelamento
+              </button>
             </div>
+          )}
+          {order.status === "Entregue" && (
+            <>
+              <button className="primary-action w-full" onClick={() => setShowReview((value) => !value)}>
+                Avaliar pedido, banca e entrega
+              </button>
+              {showReview && (
+                <div className="review-grid compact">
+                  {["Produto", "Banca", "Entrega"].map((item) => (
+                    <article className="review-card" key={item}>
+                      <strong>★ ★ ★ ★ ★</strong>
+                      <div>
+                        <b>{item}</b>
+                        <small>Toque para registrar a nota do {item.toLocaleLowerCase("pt-BR")}.</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
