@@ -548,7 +548,7 @@ export const products: Product[] = [
     id: 17,
     name: "Vaso de suculentas",
     feirante: "Jardim de Vicente",
-    fair: "Feira do Produtor de Vicente Pires",
+    fair: "Feira do Produtor em Vicente Pires",
     price: 24,
     category: "Plantas",
     emoji: "🌵",
