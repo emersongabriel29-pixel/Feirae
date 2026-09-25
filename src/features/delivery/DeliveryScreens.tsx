@@ -658,9 +658,14 @@ export function DeliveryOperations({
               setStage(3);
             } else if (stage === deliveryStages.length - 1) {
               consumeInventory(activeDelivery.id);
+              const unified = readUnifiedOrders().find((order) => order.id === activeDelivery.id);
               patchUnifiedOrder(
                 activeDelivery.id,
-                { status: "delivered" },
+                {
+                  status: "delivered",
+                  paymentStatus:
+                    unified?.paymentStatus === "due_on_delivery" ? "authorized" : unified?.paymentStatus,
+                },
                 eventNow("delivered", "Entregue", "delivery"),
               );
               setDeliveryLedger((current) => [
