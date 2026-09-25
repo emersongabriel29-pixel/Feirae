@@ -1,10 +1,26 @@
 import type { Product, VendorMetrics } from "../types";
+import { vehicleCapacityDefaults } from "./vehicles";
 
 export const vehicleRules = [
-  { name: "Bicicleta", maxKg: 5, note: "pedidos leves e próximos" },
-  { name: "Moto", maxKg: 12, note: "sacola pequena ou média" },
-  { name: "Moto com baú", maxKg: 20, note: "compras médias com volume controlado" },
-  { name: "Carro", maxKg: 80, note: "compras pesadas, caixas e várias bancas" },
+  { name: "Bicicleta", maxKg: vehicleCapacityDefaults.Bicicleta, note: "pedidos leves e próximos" },
+  {
+    name: "Bicicleta cargueira/triciclo",
+    maxKg: vehicleCapacityDefaults["Bicicleta cargueira/triciclo"],
+    note: "cargas médias sem veículo motorizado",
+  },
+  { name: "Moto", maxKg: vehicleCapacityDefaults.Moto, note: "sacola pequena ou média" },
+  {
+    name: "Moto com baú",
+    maxKg: vehicleCapacityDefaults["Moto com baú"],
+    note: "compras médias com volume controlado",
+  },
+  { name: "Carro", maxKg: vehicleCapacityDefaults.Carro, note: "compras pesadas e múltiplas bancas" },
+  {
+    name: "Utilitário/Pickup",
+    maxKg: vehicleCapacityDefaults["Utilitário/Pickup"],
+    note: "cargas maiores e caixas",
+  },
+  { name: "Van", maxKg: vehicleCapacityDefaults.Van, note: "grandes volumes dentro da operação configurada" },
 ] as const;
 
 export function productWeight(product: Product, quantity: number) {
