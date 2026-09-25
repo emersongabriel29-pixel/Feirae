@@ -230,8 +230,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
   );
-  const salesForPrefix = (prefix: string) =>
-    salesHistory.filter((sale) => sale.date.startsWith(prefix));
+  const salesForPrefix = (prefix: string) => salesHistory.filter((sale) => sale.date.startsWith(prefix));
   const totalSales = (entries: VendorSaleRecord[]) => entries.reduce((sum, sale) => sum + sale.total, 0);
   const todaySales = salesForPrefix("2026-09-25");
   const monthSales = salesForPrefix("2026-09");
@@ -249,7 +248,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const productRanking = Array.from(
     salesHistory
       .flatMap((sale) => sale.items)
-      .reduce((map, item) => map.set(item.name, (map.get(item.name) ?? 0) + item.quantity), new Map<string, number>()),
+      .reduce(
+        (map, item) => map.set(item.name, (map.get(item.name) ?? 0) + item.quantity),
+        new Map<string, number>(),
+      ),
   )
     .map(([name, quantity]) => ({ name, quantity }))
     .sort((a, b) => b.quantity - a.quantity);
@@ -266,7 +268,6 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     pendingVendorEvaluations.find((order) => order.id === vendorRatingOrderId) ??
     pendingVendorEvaluations[0] ??
     null;
-
 
   const dynamicModuleDetails = {
     ...vendorModuleDetails,
@@ -1673,7 +1674,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label>
                         Nota do entregador
-                        <select value={driverRating} onChange={(event) => setDriverRating(event.target.value)}>
+                        <select
+                          value={driverRating}
+                          onChange={(event) => setDriverRating(event.target.value)}
+                        >
                           {[5, 4, 3, 2, 1].map((value) => (
                             <option value={value} key={value}>
                               {value} estrela(s)
