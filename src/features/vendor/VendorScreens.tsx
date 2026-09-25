@@ -1,14 +1,5 @@
 import { FormEvent, useState } from "react";
-import {
-  ArrowLeft,
-  CalendarClock,
-  Check,
-  Edit3,
-  Package,
-  Plus,
-  Truck,
-  Wallet,
-} from "lucide-react";
+import { ArrowLeft, CalendarClock, Check, Edit3, Package, Plus, Truck, Wallet } from "lucide-react";
 import { money } from "../../utils";
 import { vendorModuleDetails } from "../../domain/operations";
 import { ModuleHeader, OperationsMenu, Panel, Toggle } from "../../components/AppComponents";
