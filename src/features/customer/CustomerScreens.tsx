@@ -25,6 +25,7 @@ import { categories, fairs, products, vendorMetrics } from "../../data";
 import { calculateDeliveryQuote } from "../../domain/deliveryPricing";
 import { isFairActive, visibleCustomerFairs } from "../../domain/fairAvailability";
 import { fairHoursForName } from "../../domain/fairHours";
+import { formatDateTime, sortOrdersNewestFirst } from "../../domain/timeline";
 import type { DeliveryVehicleType } from "../../domain/vehicles";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
@@ -395,14 +396,19 @@ export function OrdersPage({
   onTracking: (orderId: string) => void;
   onBuyAgain: (orderId: string) => void;
 }) {
+  const ordered = sortOrdersNewestFirst(orders);
+
   return (
     <section className="mx-auto max-w-3xl">
-      <PageHeading title="Meus pedidos" subtitle="Acompanhe suas compras, retiradas e entregas." />
+      <PageHeading
+        title="Meus pedidos"
+        subtitle="Ordenados pela data e hora reais em que cada pedido foi criado."
+      />
       <div className="mt-6 space-y-3">
-        {orders.map((order) => (
+        {ordered.map((order) => (
           <article key={order.id} className="order-card">
             <div>
-              <small>{order.date}</small>
+              <small>{formatDateTime(order.createdAt, order.date)}</small>
               <h3>{order.id}</h3>
               <p>Compra em múltiplas bancas</p>
             </div>
@@ -1007,7 +1013,7 @@ export function NotificationsPage({
   onBack: () => void;
   onClear: () => void;
 }) {
-  const messages = orders.map((order) => {
+  const messages = sortOrdersNewestFirst(orders).map((order) => {
     const textByStatus: Record<DemoOrder["status"], string> = {
       Recebido: `Pedido ${order.id} recebido e aguardando confirmação da banca.`,
       Preparando: `Pedido ${order.id} está sendo preparado.`,
@@ -1016,7 +1022,12 @@ export function NotificationsPage({
       Entregue: `Pedido ${order.id} foi entregue. Você já pode avaliar.`,
       Cancelado: `Pedido ${order.id} foi cancelado.`,
     };
-    return textByStatus[order.status];
+    return {
+      id: order.id,
+      text: textByStatus[order.status],
+      timestamp: order.updatedAt ?? order.createdAt,
+      fallbackDate: order.date,
+    };
   });
 
   return (
@@ -1027,14 +1038,14 @@ export function NotificationsPage({
         </button>
       </div>
       {messages.length ? (
-        messages.map((text, index) => (
-          <article key={text} className={index < 2 ? "notification unread" : "notification"}>
+        messages.map((message, index) => (
+          <article key={message.id} className={index < 2 ? "notification unread" : "notification"}>
             <span>
               <Bell size={18} />
             </span>
             <div>
-              <b>{text}</b>
-              <small>Gerado pelo estado atual do pedido</small>
+              <b>{message.text}</b>
+              <small>{formatDateTime(message.timestamp, message.fallbackDate)}</small>
             </div>
           </article>
         ))
@@ -1596,7 +1607,9 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
     },
   ]);
   const reviewedOrderIds = new Set(reviews.map((review) => review.orderId));
-  const pending = orders.filter((order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id));
+  const pending = sortOrdersNewestFirst(orders).filter(
+    (order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id),
+  );
 
   return (
     <Panel
