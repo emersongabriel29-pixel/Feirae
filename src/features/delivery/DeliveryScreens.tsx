@@ -1083,29 +1083,92 @@ export function DeliveryOperations({
             ) : active === "Avaliações" ? (
               <>
                 <ModuleHeader
-                  badge="Após cada etapa"
-                  title="Avaliações cruzadas"
-                  description="Cliente, entregador e banca se avaliam nos momentos certos, sem poluir a tela inicial."
+                  badge="Após concluir a entrega"
+                  title="Avaliações do entregador"
+                  description="Depois da corrida, o entregador avalia a banca e o cliente. A avaliação fica vinculada ao pedido."
                 />
+                {selectedEvaluationDeliveryId ? (
+                  <form
+                    className="form-card"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setDriverEvaluations((current) => [
+                        {
+                          id: String(Date.now()),
+                          deliveryId: selectedEvaluationDeliveryId,
+                          bankRating: Number(bankRating),
+                          customerRating: Number(customerRating),
+                          note: reviewNote.trim(),
+                          createdAt: new Date().toISOString(),
+                        },
+                        ...current,
+                      ]);
+                      setPendingReviewDeliveryId(null);
+                      setBankRating("5");
+                      setCustomerRating("5");
+                      setReviewNote("");
+                    }}
+                  >
+                    <b>Avaliar corrida {selectedEvaluationDeliveryId}</b>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Nota da banca
+                        <select value={bankRating} onChange={(event) => setBankRating(event.target.value)}>
+                          {[5, 4, 3, 2, 1].map((value) => (
+                            <option value={value} key={value}>
+                              {value} estrela(s)
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Nota do cliente
+                        <select
+                          value={customerRating}
+                          onChange={(event) => setCustomerRating(event.target.value)}
+                        >
+                          {[5, 4, 3, 2, 1].map((value) => (
+                            <option value={value} key={value}>
+                              {value} estrela(s)
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <label>
+                      Observação operacional
+                      <textarea
+                        rows={3}
+                        value={reviewNote}
+                        onChange={(event) => setReviewNote(event.target.value)}
+                        placeholder="Preparo, espera, comunicação, recebimento..."
+                      />
+                    </label>
+                    <button className="primary-action" type="submit">
+                      Enviar avaliações
+                    </button>
+                  </form>
+                ) : (
+                  <p className="inline-success">Nenhuma corrida concluída aguardando sua avaliação.</p>
+                )}
                 <div className="operation-list detailed">
-                  {[
-                    ["Depois da entrega", "Cliente avalia entregador e entrega."],
-                    ["Depois da entrega", "Entregador avalia cliente."],
-                    [
-                      "Depois da coleta",
-                      "Entregador avalia banca quando houver problema de preparo, embalagem ou peso.",
-                    ],
-                    ["Mensalmente", "Usuário pode avaliar o app uma vez por mês."],
-                  ].map(([title, text]) => (
-                    <article key={`${title}-${text}`}>
+                  {driverEvaluations.map((evaluation) => (
+                    <article key={evaluation.id}>
                       <Star />
                       <div>
-                        <b>{title}</b>
-                        <small>{text}</small>
+                        <b>{evaluation.deliveryId}</b>
+                        <small>
+                          Banca {evaluation.bankRating} ★ · Cliente {evaluation.customerRating} ★
+                          {evaluation.note ? ` · ${evaluation.note}` : ""}
+                        </small>
                       </div>
                     </article>
                   ))}
                 </div>
+                <p className="operation-footnote">
+                  No backend real, avaliações cruzadas devem ficar ocultas até ambas as partes enviarem ou a
+                  janela de avaliação terminar, reduzindo retaliação.
+                </p>
               </>
             ) : active === "Alertas graves" ? (
               <>
