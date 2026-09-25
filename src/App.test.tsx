@@ -165,7 +165,7 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /^produtos$/i }));
     expect(screen.getByText(/30 cesta\(s\)/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /editar r\$/i })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /editar produto/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /editar produto/i })[0]);
     expect(screen.getByLabelText(/foto principal/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/categoria/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/unidade de venda/i)).toBeInTheDocument();
