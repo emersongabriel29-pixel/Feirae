@@ -30,7 +30,19 @@ export function distanceInKm(lat1: number, lng1: number, lat2: number, lng2: num
 
 export function sortFairsByDistance(items: Fair[], coords: { lat: number; lng: number } | null) {
   if (!coords) return items.map((fair) => ({ ...fair, distance: null as number | null }));
+
   return items
-    .map((fair) => ({ ...fair, distance: distanceInKm(coords.lat, coords.lng, fair.lat, fair.lng) }))
-    .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+    .map((fair) => ({
+      ...fair,
+      distance:
+        typeof fair.lat === "number" && typeof fair.lng === "number"
+          ? distanceInKm(coords.lat, coords.lng, fair.lat, fair.lng)
+          : (null as number | null),
+    }))
+    .sort((a, b) => {
+      if (a.distance === null && b.distance === null) return 0;
+      if (a.distance === null) return 1;
+      if (b.distance === null) return -1;
+      return a.distance - b.distance;
+    });
 }

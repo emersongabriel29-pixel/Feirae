@@ -263,9 +263,13 @@ export default function App() {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
     );
   }
-  function openMap(lat: number, lng: number) {
+  function openMap(destination: number | string, lng?: number) {
+    const target =
+      typeof destination === "number" && typeof lng === "number"
+        ? `${destination},${lng}`
+        : String(destination);
     window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}`,
       "_blank",
       "noopener,noreferrer",
     );
@@ -865,8 +869,11 @@ function FairsPage({
 }: {
   fairItems: ReturnType<typeof sortFairsByDistance>;
   onFair: (name: string) => void;
-  onMap: (lat: number, lng: number) => void;
+  onMap: (destination: number | string, lng?: number) => void;
 }) {
+  const officialItems = fairItems.filter((fair) => fair.source !== "demo");
+  const hasDistance = officialItems.some((fair) => fair.distance !== null);
+
   return (
     <section>
       <PageHeading
@@ -894,9 +901,12 @@ function FairsPage({
         </label>
       </div>
       <div className="mt-7">
-        <SectionHeading eyebrow="Perto de você" title="Feiras em destaque" />
+        <SectionHeading
+          eyebrow={hasDistance ? "Perto de você" : "Catálogo oficial"}
+          title="Feiras em destaque"
+        />
         <div className="grid gap-4 md:grid-cols-3">
-          {fairItems.slice(0, 3).map((fair, index) => (
+          {officialItems.slice(0, 3).map((fair, index) => (
             <FairCard key={fair.name} fair={fair} index={index} onFair={onFair} onMap={onMap} />
           ))}
         </div>
@@ -904,7 +914,7 @@ function FairsPage({
       <section className="mt-12">
         <SectionHeading eyebrow="Explore por região" title="Outras feiras" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {fairItems.slice(3).map((fair, index) => (
+          {officialItems.slice(3).map((fair, index) => (
             <FairCard key={fair.name} fair={fair} index={index + 3} onFair={onFair} onMap={onMap} />
           ))}
         </div>
@@ -921,7 +931,7 @@ function FairCard({
   fair: ReturnType<typeof sortFairsByDistance>[number];
   index: number;
   onFair: (name: string) => void;
-  onMap: (lat: number, lng: number) => void;
+  onMap: (destination: number | string, lng?: number) => void;
 }) {
   return (
     <article className="fair-card">
@@ -935,22 +945,31 @@ function FairCard({
           <MapPin size={14} /> {fair.place}
         </p>
         <p>
-          <Store size={14} /> {fair.feirantes} feirantes{" "}
-          {fair.distance !== null && `· ${fair.distance.toFixed(1)} km`}
+          <Store size={14} />{" "}
+          {typeof fair.feirantes === "number" ? `${fair.feirantes} feirantes` : "Feirantes a cadastrar"}
+          {fair.distance !== null && ` · ${fair.distance.toFixed(1)} km`}
         </p>
+        {fair.address && <p>{fair.address}</p>}
         <div className="market-meta">
           <span>
-            <Star size={13} /> {ratingLabel(fair.rating)} ({fair.reviewCount})
+            <Star size={13} />{" "}
+            {typeof fair.rating === "number" && typeof fair.reviewCount === "number"
+              ? `${ratingLabel(fair.rating)} (${fair.reviewCount})`
+              : "Sem avaliações"}
           </span>
-          <span>{minutesLabel(fair.deliveryMinutes)}</span>
-          <span>{money(fair.deliveryFee)}</span>
+          <span>{fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Entrega a configurar"}</span>
+          <span>{typeof fair.deliveryFee === "number" ? money(fair.deliveryFee) : "Taxa a configurar"}</span>
         </div>
         <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
           <button onClick={() => onFair(fair.name)} className="primary-action">
             Ver feira
           </button>
           <button
-            onClick={() => onMap(fair.lat, fair.lng)}
+            onClick={() =>
+              typeof fair.lat === "number" && typeof fair.lng === "number"
+                ? onMap(fair.lat, fair.lng)
+                : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
+            }
             className="icon-button large"
             aria-label={`Abrir rota para ${fair.name}`}
           >
@@ -1160,7 +1179,7 @@ function FairDetail({
 }: {
   fairName: string;
   onBack: () => void;
-  onMap: (lat: number, lng: number) => void;
+  onMap: (destination: number | string, lng?: number) => void;
   onAdd: (id: number) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
@@ -1171,9 +1190,21 @@ function FairDetail({
         <div>
           <span className="eyebrow light">Feira selecionada</span>
           <h2>Compre de quem faz a cidade acontecer.</h2>
-          <p>{fair.feirantes} feirantes cadastrados nesta feira.</p>
+          <p>
+            {typeof fair.feirantes === "number"
+              ? `${fair.feirantes} feirantes cadastrados nesta feira.`
+              : "Cadastro de feirantes em atualização."}
+          </p>
+          {fair.address && <p>{fair.address}</p>}
         </div>
-        <button onClick={() => onMap(fair.lat, fair.lng)} className="secondary-action light">
+        <button
+          onClick={() =>
+            typeof fair.lat === "number" && typeof fair.lng === "number"
+              ? onMap(fair.lat, fair.lng)
+              : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
+          }
+          className="secondary-action light"
+        >
           <MapPin size={17} /> Abrir rota
         </button>
       </div>
