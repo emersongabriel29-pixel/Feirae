@@ -2,21 +2,24 @@ import { useMemo } from "react";
 import { products } from "../data";
 import { cartSubtotal } from "../utils";
 import { usePersistentState } from "../usePersistentState";
+import { marketplaceProducts } from "../domain/marketplaceBridge";
+import { scopedStorageKey } from "../domain/storage";
 
 export function useDemoCart(notify: (message: string) => void) {
-  const [cart, setCart] = usePersistentState<Record<number, number>>("feirae:cart", {});
+  const catalog = marketplaceProducts(products);
+  const [cart, setCart] = usePersistentState<Record<number, number>>(scopedStorageKey("feirae:cart"), {});
 
-  const cartProducts = useMemo(() => products.filter((product) => cart[product.id]), [cart]);
+  const cartProducts = useMemo(() => catalog.filter((product) => cart[product.id]), [cart, catalog]);
   const subtotal = useMemo(() => cartSubtotal(cartProducts, cart), [cartProducts, cart]);
   const itemCount = useMemo(() => Object.values(cart).reduce((sum, quantity) => sum + quantity, 0), [cart]);
   const cartFairName = cartProducts[0]?.fair ?? "";
 
   function addToCart(id: number) {
-    const product = products.find((item) => item.id === id);
+    const product = catalog.find((item) => item.id === id);
     if (!product) return;
 
     setCart((current) => {
-      const currentProduct = products.find((item) => current[item.id]);
+      const currentProduct = catalog.find((item) => current[item.id]);
       if (currentProduct && currentProduct.fair !== product.fair) {
         notify(
           `Sua sacola é da ${currentProduct.fair}. Finalize ou esvazie a sacola antes de comprar na ${product.fair}.`,
@@ -42,13 +45,13 @@ export function useDemoCart(notify: (message: string) => void) {
     });
   }
 
-  function restoreDemoBasket() {
-    const demoBasket: Record<number, number> = {
-      1: 1,
-      2: 1,
-      9: 2,
-    };
-    setCart((current) => ({ ...current, ...demoBasket }));
+  function restoreDemoBasket(items: Array<{ productId: number; quantity: number }> = []) {
+    const restored = items.reduce<Record<number, number>>((next, item) => {
+      const product = catalog.find((candidate) => candidate.id === item.productId);
+      if (product?.stock) next[item.productId] = Math.min(item.quantity, product.stock);
+      return next;
+    }, {});
+    if (Object.keys(restored).length) setCart(restored);
   }
 
   return {
