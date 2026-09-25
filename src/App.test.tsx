@@ -179,10 +179,16 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /cadastrar veículo/i }));
 
     const vehicleType = screen.getByLabelText(/tipo de veículo/i);
-    expect(within(vehicleType).getByRole("option", { name: /bicicleta · sugestão 10 kg/i })).toBeInTheDocument();
-    expect(within(vehicleType).getByRole("option", { name: /moto com baú · sugestão 20 kg/i })).toBeInTheDocument();
+    expect(
+      within(vehicleType).getByRole("option", { name: /bicicleta · sugestão 10 kg/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(vehicleType).getByRole("option", { name: /moto com baú · sugestão 20 kg/i }),
+    ).toBeInTheDocument();
     expect(within(vehicleType).getByRole("option", { name: /carro · sugestão 80 kg/i })).toBeInTheDocument();
-    expect(within(vehicleType).getByRole("option", { name: /utilitário\/pickup · sugestão 250 kg/i })).toBeInTheDocument();
+    expect(
+      within(vehicleType).getByRole("option", { name: /utilitário\/pickup · sugestão 250 kg/i }),
+    ).toBeInTheDocument();
     expect(within(vehicleType).getByRole("option", { name: /van · sugestão 500 kg/i })).toBeInTheDocument();
 
     fireEvent.change(vehicleType, { target: { value: "Carro" } });
