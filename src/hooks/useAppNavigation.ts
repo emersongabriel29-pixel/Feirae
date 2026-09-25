@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fairs } from "../data";
+import { isFairActive, visibleCustomerFairs } from "../domain/fairAvailability";
 import type { CustomerTab, Role, Screen } from "../types";
 import { routeForRole } from "../domain/session";
 
@@ -17,7 +18,7 @@ export function updateHash(route: string, replace = false) {
 export function useAppNavigation(role: Role | null, onNavigate?: () => void) {
   const [tab, setTab] = useState<CustomerTab>("home");
   const [screen, setScreen] = useState<Screen>("main");
-  const [selectedFair, setSelectedFair] = useState(fairs[0].name);
+  const [selectedFair, setSelectedFair] = useState(visibleCustomerFairs(fairs)[0]?.name ?? fairs[0].name);
   const [selectedVendor, setSelectedVendor] = useState("Sítio da Vó");
 
   useEffect(() => {
@@ -76,7 +77,8 @@ export function useAppNavigation(role: Role | null, onNavigate?: () => void) {
 
       if (route.startsWith("/feiras/")) {
         const fairName = route.slice("/feiras/".length);
-        if (fairs.some((fair) => fair.name === fairName)) setSelectedFair(fairName);
+        if (fairs.some((fair) => fair.name === fairName && isFairActive(fair) && fair.source !== "demo"))
+          setSelectedFair(fairName);
         setScreen("fair");
         return;
       }
