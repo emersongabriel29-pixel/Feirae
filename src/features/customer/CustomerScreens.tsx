@@ -21,7 +21,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { categories, fairs, products, vendorMetrics } from "../../data";
-import type { Address, DemoOrder, DemoSession, Product, Screen } from "../../types";
+import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
 import {
