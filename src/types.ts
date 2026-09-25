@@ -68,6 +68,8 @@ export type Fair = {
 export type DemoOrder = {
   id: string;
   date: string;
+  createdAt?: string;
+  updatedAt?: string;
   status: "Recebido" | "Preparando" | "Coleta" | "Em rota" | "Entregue" | "Cancelado";
   value: number;
 };
