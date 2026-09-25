@@ -937,24 +937,73 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
     {
       id: 1,
       label: "Casa",
-      details: "Planaltina - DF · próximo à Feira Permanente · entrega disponível",
+      details: "Planaltina - DF · próximo à Feira Permanente",
       isDefault: true,
+      city: "Planaltina",
+      state: "DF",
+      reference: "Próximo à Feira Permanente",
     },
   ]);
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
-  const [details, setDetails] = useState("");
+  const [cep, setCep] = useState("");
+  const [state, setState] = useState("DF");
+  const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [street, setStreet] = useState("");
+  const [number, setNumber] = useState("");
+  const [complement, setComplement] = useState("");
+  const [reference, setReference] = useState("");
+
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (!label.trim() || !details.trim()) return;
+    if (!label.trim() || !cep.trim() || !city.trim() || !street.trim() || !number.trim()) return;
+
+    const details = [
+      street.trim(),
+      number.trim(),
+      neighborhood.trim(),
+      city.trim(),
+      state.trim(),
+      cep.trim(),
+      complement.trim(),
+      reference.trim(),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
     setAddresses((current) => [
       ...current,
-      { id: Date.now(), label: label.trim(), details: details.trim(), isDefault: false },
+      {
+        id: Date.now(),
+        label: label.trim(),
+        details,
+        isDefault: false,
+        cep: cep.trim(),
+        state: state.trim(),
+        city: city.trim(),
+        neighborhood: neighborhood.trim(),
+        street: street.trim(),
+        number: number.trim(),
+        complement: complement.trim(),
+        reference: reference.trim(),
+      },
     ]);
+
     setLabel("");
-    setDetails("");
+    setCep("");
+    setState("DF");
+    setCity("");
+    setNeighborhood("");
+    setStreet("");
+    setNumber("");
+    setComplement("");
+    setReference("");
     setAdding(false);
   }
+
+  const minimumAddressFilled = Boolean(cep.trim() && city.trim() && street.trim() && number.trim());
+
   return (
     <Panel
       title="Meus endereços"
@@ -979,6 +1028,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
           </article>
         ))}
       </div>
+
       {adding ? (
         <form onSubmit={submit} className="form-card">
           <label>
@@ -990,26 +1040,98 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
               required
             />
           </label>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label>
+              CEP
+              <input
+                value={cep}
+                onChange={(event) => setCep(event.target.value)}
+                placeholder="00000-000"
+                inputMode="numeric"
+                required
+              />
+            </label>
+            <label>
+              Estado
+              <input
+                value={state}
+                onChange={(event) => setState(event.target.value.toUpperCase())}
+                maxLength={2}
+                placeholder="DF"
+                required
+              />
+            </label>
+            <label>
+              Cidade/região
+              <input
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+                placeholder="Ex.: Planaltina"
+                required
+              />
+            </label>
+            <label>
+              Bairro/setor
+              <input
+                value={neighborhood}
+                onChange={(event) => setNeighborhood(event.target.value)}
+                placeholder="Bairro, setor ou condomínio"
+              />
+            </label>
+          </div>
+
           <label>
-            Endereço completo
+            Rua/quadra
             <input
-              value={details}
-              onChange={(event) => setDetails(event.target.value)}
-              placeholder="CEP, estado, cidade, bairro, rua/quadra e número"
+              value={street}
+              onChange={(event) => setStreet(event.target.value)}
+              placeholder="Rua, avenida, quadra ou conjunto"
               required
             />
           </label>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label>
+              Número/lote
+              <input
+                value={number}
+                onChange={(event) => setNumber(event.target.value)}
+                placeholder="Número, lote ou casa"
+                required
+              />
+            </label>
+            <label>
+              Complemento
+              <input
+                value={complement}
+                onChange={(event) => setComplement(event.target.value)}
+                placeholder="Apto., bloco, fundos..."
+              />
+            </label>
+          </div>
+
           <label>
             Ponto de referência
-            <input placeholder="Ex.: perto da Feira Permanente" />
+            <input
+              value={reference}
+              onChange={(event) => setReference(event.target.value)}
+              placeholder="Ex.: perto da Feira Permanente"
+            />
           </label>
+
           <div className="region-strip">
             <MapPin size={18} />
             <div>
-              <b>Entrega disponível para essa região</b>
-              <p>Taxa estimada R$ 6,90 · 35-50 min · sujeito a peso e veículo.</p>
+              <b>{minimumAddressFilled ? "Endereço pronto para validação" : "Complete o endereço"}</b>
+              <p>
+                {minimumAddressFilled
+                  ? "A disponibilidade, a taxa e o prazo serão calculados no checkout com rota, peso e veículo compatível."
+                  : "Informe CEP, cidade/região, rua/quadra e número para validar a entrega."}
+              </p>
             </div>
           </div>
+
           <div className="flex gap-2">
             <button type="submit" className="primary-action">
               Salvar endereço
