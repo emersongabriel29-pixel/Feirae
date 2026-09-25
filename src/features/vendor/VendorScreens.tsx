@@ -23,7 +23,15 @@ import { vendorModuleDetails } from "../../domain/operations";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
-import { eventNow, patchUnifiedOrder, readUnifiedOrders } from "../../domain/orderBridge";
+import {
+  eventNow,
+  patchUnifiedOrder,
+  patchUnifiedOrderItem,
+  patchVendorStatus,
+  readUnifiedOrders,
+} from "../../domain/orderBridge";
+import { syncVendorMarketplace } from "../../domain/marketplaceBridge";
+import { vendorIdFor } from "../../domain/identity";
 import {
   initialBankProfile,
   initialVendorDocuments,
@@ -202,7 +210,13 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   );
   const [documents, setDocuments] = usePersistentState<VendorDocument[]>(
     `feirae:vendor-documents:${session.email}`,
-    initialVendorDocuments,
+    session.isNewAccount
+      ? initialVendorDocuments.map((document) => ({
+          ...document,
+          status: "pending" as const,
+          fileName: "",
+        }))
+      : initialVendorDocuments,
   );
   const [stockHistory, setStockHistory] = usePersistentState<
     { id: string; product: string; delta: number; reason: string; createdAt: string }[]
@@ -261,10 +275,14 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   }, [setPromotions]);
 
   useEffect(() => {
+    const accountVendorId = vendorIdFor(session.email);
     const sharedOrders = readUnifiedOrders().filter(
       (order) =>
         order.fairName === bankProfile.fairName &&
-        order.items.some((item) => item.vendor === bankProfile.name),
+        (order.vendors?.some(
+          (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+        ) ??
+          order.items.some((item) => item.vendor === bankProfile.name)),
     );
     if (!sharedOrders.length) return;
 
@@ -282,26 +300,40 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     setOrders((current) => {
       const byId = new Map(current.map((order) => [order.id, order]));
       sharedOrders.forEach((record) => {
-        const items = record.items.filter((item) => item.vendor === bankProfile.name);
+        const vendorState = record.vendors?.find(
+          (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+        );
+        const resolvedVendorId = vendorState?.vendorId ?? accountVendorId;
+        const items = record.items.filter(
+          (item) => item.vendorId === resolvedVendorId || item.vendor === bankProfile.name,
+        );
         const currentOrder = byId.get(record.id);
-        const alreadySeparated = [
-          "ready_for_pickup",
-          "driver_assigned",
-          "collected",
-          "out_for_delivery",
-          "delivered",
-        ].includes(record.status);
+        const localStatus =
+          record.status === "delivered"
+            ? "delivered"
+            : record.status === "cancelled" || vendorState?.status === "rejected"
+              ? "rejected"
+              : vendorState?.status === "ready"
+                ? "ready_for_pickup"
+                : vendorState?.status === "collected"
+                  ? "collected"
+                  : vendorState?.status === "accepted" || vendorState?.status === "preparing"
+                    ? "preparing"
+                    : statusMap[record.status];
+        const alreadySeparated = ["ready_for_pickup", "collected", "delivered"].includes(localStatus);
         byId.set(record.id, {
           id: record.id,
+          fulfillment: record.fulfillment,
+          vendorId: resolvedVendorId,
           customer: record.customerName,
           createdAt: new Intl.DateTimeFormat("pt-BR", {
             dateStyle: "short",
             timeStyle: "short",
           }).format(new Date(record.createdAt)),
-          status: statusMap[record.status],
+          status: localStatus,
           value: items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
           deliveryFee: record.calculatedDeliveryFee,
-          city: record.customerCity ?? "Entrega",
+          city: record.customerCity ?? (record.fulfillment === "pickup" ? "Retirada na feira" : "Entrega"),
           estimatedPickupMinutes: currentOrder?.estimatedPickupMinutes ?? 20,
           rejectReason: record.cancelReason ?? currentOrder?.rejectReason ?? "",
           driverName: record.driver?.name ?? currentOrder?.driverName ?? "",
@@ -309,20 +341,21 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             const oldItem = currentOrder?.items.find((old) => old.id === `${record.id}-${item.productId}`);
             return {
               id: `${record.id}-${item.productId}`,
+              productId: item.productId,
               name: item.name,
               quantityLabel: `${item.quantity} ${item.unit}`,
-              estimatedWeightKg: item.weightKg,
-              actualWeightKg: oldItem?.actualWeightKg ?? item.weightKg,
+              estimatedWeightKg: item.estimatedWeightKg ?? item.weightKg,
+              actualWeightKg: item.actualWeightKg ?? oldItem?.actualWeightKg ?? item.weightKg,
               separated: oldItem?.separated ?? alreadySeparated,
-              unavailable: oldItem?.unavailable ?? false,
-              note: oldItem?.note ?? "",
+              unavailable: item.unavailable ?? oldItem?.unavailable ?? false,
+              note: item.note ?? oldItem?.note ?? "",
             };
           }),
         });
       });
       return Array.from(byId.values());
     });
-  }, [bankProfile.fairName, bankProfile.name, setOrders]);
+  }, [bankProfile.fairName, bankProfile.name, session.email, setOrders]);
 
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
   const pendingOrders = orders.filter((order) =>
@@ -358,7 +391,31 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const scheduleForStatus =
     useFairHours && bankProfile.fairName === "Feira do Produtor Rural" ? initialVendorSchedule : schedule;
   const currentScheduleStatus = vendorScheduleStatus(scheduleForStatus);
-  const effectiveStoreOpen = storeOpen && currentScheduleStatus.open;
+  const effectiveStoreOpen = approvalStatus === "Aprovado" && storeOpen && currentScheduleStatus.open;
+
+  useEffect(() => {
+    syncVendorMarketplace({
+      accountKey: session.email,
+      name: bankProfile.name,
+      fairName: bankProfile.fairName,
+      isOpen: effectiveStoreOpen,
+      deliveryEnabled: deliverySettings.deliveryEnabled,
+      pickupEnabled: deliverySettings.pickupEnabled,
+      absorbDeliveryFee: deliverySettings.absorbDeliveryFee,
+      promotions,
+      products: vendorItems,
+    });
+  }, [
+    bankProfile.fairName,
+    bankProfile.name,
+    deliverySettings.absorbDeliveryFee,
+    deliverySettings.deliveryEnabled,
+    deliverySettings.pickupEnabled,
+    effectiveStoreOpen,
+    promotions,
+    session.email,
+    vendorItems,
+  ]);
 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
@@ -406,28 +463,55 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   }
 
   function updateOrderItem(orderId: string, itemId: string, update: Partial<VendorOrder["items"][number]>) {
+    const order = orders.find((item) => item.id === orderId);
+    const orderItem = order?.items.find((item) => item.id === itemId);
     setOrders((current) =>
-      current.map((order) =>
-        order.id === orderId
+      current.map((item) =>
+        item.id === orderId
           ? {
-              ...order,
-              items: order.items.map((item) => (item.id === itemId ? { ...item, ...update } : item)),
+              ...item,
+              items: item.items.map((child) => (child.id === itemId ? { ...child, ...update } : child)),
             }
-          : order,
+          : item,
       ),
     );
+    if (order?.vendorId && orderItem?.productId) {
+      patchUnifiedOrderItem(orderId, order.vendorId, orderItem.productId, {
+        actualWeightKg: update.actualWeightKg,
+        unavailable: update.unavailable,
+        note: update.note,
+      });
+    }
   }
 
   function acceptOrder(order: VendorOrder) {
+    if (approvalStatus !== "Aprovado") {
+      showNotice("Finalize a aprovação documental antes de aceitar pedidos.");
+      return;
+    }
+    const vendorId = order.vendorId ?? vendorIdFor(session.email);
     updateOrder(order.id, { status: "preparing", rejectReason: "" });
-    showNotice(`Pedido ${order.id} aceito. Cliente notificado na aplicativo.`);
+    patchVendorStatus(
+      order.id,
+      vendorId,
+      "accepted",
+      eventNow("vendor-confirmed", "Confirmado pela banca", "vendor"),
+    );
+    patchVendorStatus(
+      order.id,
+      vendorId,
+      "preparing",
+      eventNow("preparing", "Em separação", "vendor"),
+    );
+    showNotice(`Pedido ${order.id} aceito. Cliente notificado.`);
   }
 
   function rejectOrder(order: VendorOrder) {
     updateOrder(order.id, { status: "rejected", rejectReason });
-    patchUnifiedOrder(
+    patchVendorStatus(
       order.id,
-      { status: "cancelled", cancelReason: rejectReason },
+      order.vendorId ?? vendorIdFor(session.email),
+      "rejected",
       eventNow("vendor-rejected", "Pedido cancelado", "vendor", { reason: rejectReason }),
     );
     showNotice(`Pedido ${order.id} recusado. Motivo registrado.`);
@@ -439,13 +523,26 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       showNotice("Conclua ou resolva todos os itens antes de marcar o pedido como pronto.");
       return;
     }
+    if (approvalStatus !== "Aprovado") {
+      showNotice("Finalize a aprovação documental antes de liberar pedidos.");
+      return;
+    }
     updateOrder(order.id, { status: "ready_for_pickup" });
-    patchUnifiedOrder(
+    patchVendorStatus(
       order.id,
-      { status: "ready_for_pickup" },
-      eventNow("ready", "Pronto para coleta", "vendor"),
+      order.vendorId ?? vendorIdFor(session.email),
+      "ready",
+      eventNow(
+        "ready",
+        order.fulfillment === "pickup" ? "Pronto para retirada" : "Pronto para coleta",
+        "vendor",
+      ),
     );
-    showNotice(`Pedido ${order.id} pronto. Agora aguarda um entregador compatível.`);
+    showNotice(
+      order.fulfillment === "pickup"
+        ? `Pedido ${order.id} pronto para retirada do cliente.`
+        : `Pedido ${order.id} pronto. Aguarda as demais bancas e um entregador compatível.`,
+    );
   }
 
   function openNewProduct() {
