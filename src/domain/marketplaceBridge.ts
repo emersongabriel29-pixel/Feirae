@@ -15,6 +15,9 @@ export type SharedPromotion = {
   minimumOrder?: number;
   discountValue?: number;
   target?: string;
+  couponCode?: string;
+  payQuantity?: number;
+  takeQuantity?: number;
 };
 
 export type SharedStore = {
@@ -223,6 +226,7 @@ export function calculateCheckoutPromotions(
   items: Product[],
   cart: Record<number, number>,
   calculatedDeliveryFee: number,
+  couponCode = "",
 ) {
   const marketplace = readMarketplace();
   let promotionDiscount = 0;
@@ -255,18 +259,37 @@ export function calculateCheckoutPromotions(
         0,
       );
 
+      if (
+        promotion.type === "cupom" &&
+        (!promotion.couponCode ||
+          promotion.couponCode.toLocaleUpperCase("pt-BR") !== couponCode.trim().toLocaleUpperCase("pt-BR"))
+      ) {
+        continue;
+      }
+
       if (promotion.type === "freteGratis" && promotion.vendorPaysDelivery) {
         deliverySubsidy = Math.max(deliverySubsidy, calculatedDeliveryFee);
         applied.push(promotion.name);
-      } else if (promotion.type === "percentual" && (promotion.discountValue ?? 0) > 0) {
-        promotionDiscount += targetSubtotal * Math.min(100, promotion.discountValue ?? 0) / 100;
+      } else if (
+        ["percentual", "produtoCategoria", "horario", "combo", "cupom"].includes(promotion.type) &&
+        (promotion.discountValue ?? 0) > 0
+      ) {
+        promotionDiscount +=
+          targetSubtotal * Math.min(100, promotion.discountValue ?? 0) / 100;
         applied.push(promotion.name);
       } else if (promotion.type === "valorFixo" && (promotion.discountValue ?? 0) > 0) {
         promotionDiscount += Math.min(storeSubtotal, promotion.discountValue ?? 0);
         applied.push(promotion.name);
-      } else if (promotion.type === "produtoCategoria" && (promotion.discountValue ?? 0) > 0) {
-        promotionDiscount += targetSubtotal * Math.min(100, promotion.discountValue ?? 0) / 100;
-        applied.push(promotion.name);
+      } else if (promotion.type === "compreLeve") {
+        const pay = Math.max(1, promotion.payQuantity ?? 1);
+        const take = Math.max(pay + 1, promotion.takeQuantity ?? pay + 1);
+        const quantity = targetItems.reduce((sum, item) => sum + (cart[item.id] ?? 0), 0);
+        const freeUnits = Math.floor(quantity / take) * (take - pay);
+        if (freeUnits > 0 && targetItems.length) {
+          const lowestUnitPrice = Math.min(...targetItems.map((item) => item.price));
+          promotionDiscount += freeUnits * lowestUnitPrice;
+          applied.push(promotion.name);
+        }
       }
     }
   }
