@@ -135,6 +135,14 @@ export function DeliveryOperations({
       vehicle: "Carro",
     },
   ];
+  const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
+  const compatibleVehicleForWeight = (weight: number) =>
+    [...activeVehicles]
+      .filter((vehicle) => vehicle.capacityKg >= weight)
+      .sort((a, b) => a.capacityKg - b.capacityKg)[0] ?? null;
+  const compatibleDeliveryCount = deliveries.filter((delivery) =>
+    compatibleVehicleForWeight(delivery.weight),
+  ).length;
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
   const activeDeliverySection = activeDelivery ? (
@@ -197,31 +205,39 @@ export function DeliveryOperations({
       <span className="eyebrow">Entregas disponíveis</span>
       {deliveries
         .filter((delivery) => delivery.id !== accepted)
-        .map((delivery) => (
-          <article className="delivery-row" key={delivery.id}>
-            <span>
-              <Bike />
-            </span>
-            <div>
-              <b>
-                {delivery.id} · {delivery.route}
-              </b>
-              <small>
-                {delivery.distance} · {delivery.weight} kg · {delivery.vehicle} · ganho {delivery.fee}
-              </small>
-            </div>
-            <button
-              disabled={!online || accepted !== null}
-              onClick={() => {
-                setAccepted(delivery.id);
-                setStage(0);
-                setActive("Em andamento");
-              }}
-            >
-              Aceitar
-            </button>
-          </article>
-        ))}
+        .map((delivery) => {
+          const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
+          return (
+            <article className="delivery-row" key={delivery.id}>
+              <span>
+                <Bike />
+              </span>
+              <div>
+                <b>
+                  {delivery.id} · {delivery.route}
+                </b>
+                <small>
+                  {delivery.distance} · {delivery.weight} kg ·{" "}
+                  {compatibleVehicle
+                    ? `compatível com ${compatibleVehicle.type} (${compatibleVehicle.capacityKg} kg)`
+                    : "sem veículo ativo compatível"}{" "}
+                  · ganho {delivery.fee}
+                </small>
+              </div>
+              <button
+                disabled={!online || accepted !== null || !compatibleVehicle}
+                onClick={() => {
+                  if (!compatibleVehicle) return;
+                  setAccepted(delivery.id);
+                  setStage(0);
+                  setActive("Em andamento");
+                }}
+              >
+                {compatibleVehicle ? "Aceitar" : "Veículo incompatível"}
+              </button>
+            </article>
+          );
+        })}
     </div>
   );
   return (
@@ -240,8 +256,8 @@ export function DeliveryOperations({
                 <span>disponibilidade atual</span>
               </article>
               <article>
-                <strong>3</strong>
-                <span>corridas disponíveis</span>
+                <strong>{compatibleDeliveryCount}</strong>
+                <span>corridas compatíveis</span>
               </article>
               <article>
                 <strong>R$ 54,40</strong>
