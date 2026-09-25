@@ -881,7 +881,18 @@ export function Checkout({
   onBack: () => void;
   onConfirm: (
     total: number,
-    details: { fulfillment: "delivery" | "pickup"; paymentMethod: string; fairName: string },
+    details: {
+      fulfillment: "delivery" | "pickup";
+      paymentMethod: string;
+      fairName: string;
+      customerCity?: string;
+      customerAddress?: string;
+      customerLat?: number;
+      customerLng?: number;
+      calculatedDeliveryFee: number;
+      deliverySubsidy: number;
+      customerDeliveryFee: number;
+    },
   ) => void;
 }) {
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
@@ -1049,7 +1060,20 @@ export function Checkout({
           </div>
           <button
             disabled={!canConfirm || (cardPayment && !selectedCardId && cards.length > 0)}
-            onClick={() => onConfirm(total, { fulfillment, paymentMethod: payment, fairName })}
+            onClick={() =>
+              onConfirm(total, {
+                fulfillment,
+                paymentMethod: payment,
+                fairName,
+                customerCity: defaultAddress?.city,
+                customerAddress: defaultAddress?.details,
+                customerLat: defaultAddress?.lat,
+                customerLng: defaultAddress?.lng,
+                calculatedDeliveryFee,
+                deliverySubsidy,
+                customerDeliveryFee,
+              })
+            }
             className="primary-action w-full"
           >
             Confirmar pedido
