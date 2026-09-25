@@ -20,10 +20,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Show CustomerScreens Prettier diff
-        run: |
-          npx prettier --write src/features/customer/CustomerScreens.tsx
-          git diff -- src/features/customer/CustomerScreens.tsx
-          exit 1
       - run: npm run check
       - run: npm run format:check
