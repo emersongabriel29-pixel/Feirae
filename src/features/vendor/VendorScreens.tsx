@@ -19,6 +19,13 @@ import { fairs } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
 import { vehicleRules } from "../../domain/marketplace";
 import { vendorModuleDetails } from "../../domain/operations";
+import {
+  formatDateTime,
+  localPeriodKey,
+  localPeriodKeys,
+  sortByCreatedAtNewestFirst,
+  sortByIsoDateNewestFirst,
+} from "../../domain/timeline";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
@@ -196,8 +203,13 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [accountSaved, setAccountSaved] = useState(false);
   const [notice, setNotice] = useState("");
 
-  const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
-  const pendingOrders = orders.filter((order) =>
+  const orderedOrders = sortByCreatedAtNewestFirst(orders);
+  const orderedSalesHistory = sortByIsoDateNewestFirst(salesHistory, (sale) => sale.date);
+  const orderedReviews = sortByCreatedAtNewestFirst(reviews);
+  const orderedVendorEvaluations = sortByCreatedAtNewestFirst(vendorEvaluationsGiven);
+  const orderedStockHistory = sortByCreatedAtNewestFirst(stockHistory);
+  const selectedOrder = orderedOrders.find((order) => order.id === selectedOrderId) ?? null;
+  const pendingOrders = orderedOrders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
   );
   const lowStockCount = vendorItems.filter((item) => item.active && item.stock <= item.minStock).length;
@@ -230,12 +242,14 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
   );
-  const salesForPrefix = (prefix: string) => salesHistory.filter((sale) => sale.date.startsWith(prefix));
+  const periods = localPeriodKeys();
   const totalSales = (entries: VendorSaleRecord[]) => entries.reduce((sum, sale) => sum + sale.total, 0);
-  const todaySales = salesForPrefix("2026-09-25");
-  const monthSales = salesForPrefix("2026-09");
-  const previousMonthSales = salesForPrefix("2026-08");
-  const yearSales = salesForPrefix("2026");
+  const todaySales = salesHistory.filter((sale) => localPeriodKey(sale.date, "day") === periods.day);
+  const monthSales = salesHistory.filter((sale) => localPeriodKey(sale.date, "month") === periods.month);
+  const previousMonthSales = salesHistory.filter(
+    (sale) => localPeriodKey(sale.date, "month") === periods.previousMonth,
+  );
+  const yearSales = salesHistory.filter((sale) => localPeriodKey(sale.date, "year") === periods.year);
   const monthGross = totalSales(monthSales);
   const previousMonthGross = totalSales(previousMonthSales);
   const yearGross = totalSales(yearSales);
@@ -392,10 +406,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         product: item.name,
         delta: nextStock - item.stock,
         reason: stockReason,
-        createdAt: new Intl.DateTimeFormat("pt-BR", {
-          dateStyle: "short",
-          timeStyle: "short",
-        }).format(new Date()),
+        createdAt: new Date().toISOString(),
       },
       ...current,
     ]);
@@ -765,7 +776,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     description="Abra um pedido para aceitar, preparar e marcar como pronto. As etapas de entrega ficam com o entregador."
                   />
                   <div className="operation-list detailed">
-                    {orders.map((order) => (
+                    {orderedOrders.map((order) => (
                       <article key={order.id}>
                         <Package />
                         <div>
@@ -774,7 +785,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           </b>
                           <small>
                             {vendorOrderStatusLabel(order.status)} · {order.items.length} itens ·{" "}
-                            {money(order.value)} · {order.createdAt}
+                            {money(order.value)} · {formatDateTime(order.createdAt)}
                           </small>
                         </div>
                         <button className="mini-toggle" onClick={() => setSelectedOrderId(order.id)}>
@@ -1002,7 +1013,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </select>
                 </label>
                 {inventory}
-                <SectionHistory history={stockHistory} />
+                <SectionHistory history={orderedStockHistory} />
               </>
             ) : active === "Minha banca" ? (
               <>
@@ -1601,12 +1612,12 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </p>
                 ) : null}
                 <div className="operation-list detailed">
-                  {salesHistory.map((sale) => (
+                  {orderedSalesHistory.map((sale) => (
                     <article key={sale.id}>
                       <Wallet />
                       <div>
                         <b>
-                          {new Date(sale.date).toLocaleDateString("pt-BR")} · {money(sale.total)}
+                          {formatDateTime(sale.date)} · {money(sale.total)}
                         </b>
                         <small>
                           desconto {money(sale.discount)} · frete patrocinado {money(sale.deliverySubsidy)} ·
@@ -1718,11 +1729,12 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
 
                 {vendorEvaluationsGiven.length > 0 && (
                   <div className="operation-list detailed">
-                    {vendorEvaluationsGiven.map((evaluation) => (
+                    {orderedVendorEvaluations.map((evaluation) => (
                       <article key={evaluation.id}>
                         <Star />
                         <div>
                           <b>{evaluation.orderId}</b>
+                          <small>{formatDateTime(evaluation.createdAt)}</small>
                           <small>
                             Entregador {evaluation.driverRating} ★ · Cliente {evaluation.customerRating} ★
                             {evaluation.note ? ` · ${evaluation.note}` : ""}
@@ -1735,7 +1747,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
 
                 <SectionHeading eyebrow="Recebidas" title="O que clientes e entregadores avaliaram" />
                 <div className="review-grid compact">
-                  {reviews.map((review) => (
+                  {orderedReviews.map((review) => (
                     <article className="review-card" key={review.id}>
                       <strong>{review.rating.toFixed(1)} ★</strong>
                       <div>
@@ -1743,7 +1755,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           {review.type} · {review.author}
                         </b>
                         <small>
-                          {review.orderId} · {review.date}
+                          {review.orderId} · {formatDateTime(review.createdAt, review.date)}
                         </small>
                         <p>{review.comment}</p>
                         {review.response && <small>Resposta da banca: {review.response}</small>}
@@ -2055,7 +2067,7 @@ function SectionHistory({
                   {entry.delta}
                 </b>
                 <small>
-                  {entry.reason} · {entry.createdAt}
+                  {entry.reason} · {formatDateTime(entry.createdAt)}
                 </small>
               </div>
             </article>
