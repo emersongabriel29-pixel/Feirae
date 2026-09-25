@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { categories, fairs, products, vendorMetrics } from "../../data";
 import { calculateDeliveryQuote } from "../../domain/deliveryPricing";
+import { isFairActive, visibleCustomerFairs } from "../../domain/fairAvailability";
 import { fairHoursForName } from "../../domain/fairHours";
 import type { DeliveryVehicleType } from "../../domain/vehicles";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
@@ -133,7 +134,7 @@ export function FairsPage({
   onFair: (name: string) => void;
   onMap: (destination: number | string, lng?: number) => void;
 }) {
-  const officialItems = fairItems.filter((fair) => fair.source !== "demo");
+  const officialItems = fairItems.filter((fair) => isFairActive(fair) && fair.source !== "demo");
   const regions = Array.from(new Set(officialItems.map((fair) => fair.place))).sort((a, b) =>
     a.localeCompare(b, "pt-BR"),
   );
@@ -480,7 +481,10 @@ export function FairDetail({
   onMap: (destination: number | string, lng?: number) => void;
   onAdd: (id: number) => void;
 }) {
-  const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
+  const fair =
+    visibleCustomerFairs(fairs).find((item) => item.name === fairName) ??
+    visibleCustomerFairs(fairs)[0] ??
+    fairs[0];
   const fairProducts = products.filter((product) => product.fair === fair.name);
 
   return (
@@ -543,7 +547,7 @@ export function VendorsPage({
   onBack: () => void;
   onVendor: (name: string) => void;
 }) {
-  const fair = fairs.find((item) => item.name === fairName);
+  const fair = visibleCustomerFairs(fairs).find((item) => item.name === fairName);
   const fairProducts = products.filter((product) => product.fair === fairName);
   const vendors = vendorSummaries(fairProducts, vendorMetrics);
   return (
