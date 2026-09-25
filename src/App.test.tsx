@@ -26,7 +26,7 @@ describe("Feiraê customer flow", () => {
     render(<App />);
     loginAs("cliente");
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
-    fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
+    fireEvent.click(screen.getByRole("button", { name: /adicionar planta ornamental/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 itens/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     expect(screen.getByRole("heading", { name: /finalizar pedido/i })).toBeInTheDocument();
@@ -138,6 +138,143 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/pedido fe-1029 · recebido/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^pedido recebido$/i })).toBeInTheDocument();
     expect(screen.queryByText(/seu pedido está a caminho/i)).not.toBeInTheDocument();
+  });
+
+  it("shows only vendors from the selected fair", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    fireEvent.change(screen.getByLabelText(/^feira$/i), {
+      target: { value: "Feira do Produtor Rural" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^bancas$/i }));
+
+    expect(screen.getByRole("heading", { name: /bancas e feirantes/i })).toBeInTheDocument();
+    expect(screen.getByText("Sítio da Vó")).toBeInTheDocument();
+    expect(screen.getByText("Queijaria do Cerrado")).toBeInTheDocument();
+    expect(screen.queryByText("Mãos do DF")).not.toBeInTheDocument();
+  });
+
+  it("prevents mixing products from different fairs in one cart", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const search = screen.getByPlaceholderText(/busque produtos/i);
+    fireEvent.change(search, { target: { value: "cesta de frutas" } });
+    fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
+
+    fireEvent.change(search, { target: { value: "bolsa artesanal" } });
+    fireEvent.click(screen.getByRole("button", { name: /adicionar bolsa artesanal/i }));
+
+    expect(
+      screen.getByText(/sua sacola é da feira do produtor rural/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /abrir sacola com 1 itens/i })).toBeInTheDocument();
+  });
+
+  it("finds products ignoring accents and clears the category constraint for global search", () => {
+    render(<App />);
+    loginAs("cliente");
+    const search = screen.getByPlaceholderText(/busque produtos/i);
+
+    fireEvent.change(search, { target: { value: "paes" } });
+
+    expect(screen.getByRole("heading", { name: /resultados da busca/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /cesta de pães/i })).toBeInTheDocument();
+  });
+
+  it("uses verified fair hours in the customer fair list", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getAllByRole("button", { name: /^feiras$/i })[0]);
+
+    fireEvent.change(screen.getByLabelText(/cidade\/região/i), {
+      target: { value: "Gama" },
+    });
+
+    expect(screen.getByText(/ter–dom 7h–18h/i)).toBeInTheDocument();
+  });
+
+  it("removes cash from checkout and labels weighted products as estimates", () => {
+    render(<App />);
+    loginAs("cliente");
+    const search = screen.getByPlaceholderText(/busque produtos/i);
+    fireEvent.change(search, { target: { value: "tomate orgânico" } });
+    fireEvent.click(screen.getByRole("button", { name: /adicionar tomate orgânico/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 itens/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
+
+    expect(screen.getByRole("button", { name: /pix/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cartão/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /dinheiro/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/há produtos vendidos por peso/i)).toBeInTheDocument();
+    expect(screen.getByText(/total estimado/i)).toBeInTheDocument();
+  });
+
+  it("asks for complete card data but does not describe storing CVV", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /pagamentos e carteira/i }));
+    fireEvent.click(screen.getByRole("button", { name: /adicionar/i }));
+
+    expect(screen.getByLabelText(/nome no cartão/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/número do cartão/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/validade/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/cvv/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^tipo$/i)).toBeInTheDocument();
+    expect(screen.getByText(/cvv nunca será armazenado/i)).toBeInTheDocument();
+  });
+
+  it("separates client cancellation reasons from delivery incident reasons", () => {
+    window.localStorage.setItem(
+      "feirae:orders",
+      JSON.stringify([{ id: "FE-1030", date: "25/09/2026", status: "Recebido", value: 50 }]),
+    );
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getAllByRole("button", { name: /^pedidos$/i })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /ver detalhes/i }));
+
+    expect(screen.getByRole("option", { name: /desisti da compra/i })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /cliente ausente/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /emergência na entrega/i })).not.toBeInTheDocument();
+  });
+
+  it("builds notifications from the current order states", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /abrir notificações/i }));
+
+    expect(screen.getByText(/pedido fe-1024 saiu para entrega/i)).toBeInTheDocument();
+    expect(screen.getByText(/pedido fe-1019 foi entregue/i)).toBeInTheDocument();
+    expect(screen.queryByText(/novo desconto na feira/i)).not.toBeInTheDocument();
+  });
+
+  it("separates submitted reviews from delivered orders still waiting for a review", () => {
+    window.localStorage.setItem(
+      "feirae:orders",
+      JSON.stringify([{ id: "FE-1031", date: "25/09/2026", status: "Entregue", value: 72 }]),
+    );
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /minhas avaliações/i }));
+
+    expect(screen.getByRole("heading", { name: /pedidos para avaliar/i })).toBeInTheDocument();
+    expect(screen.getByText("FE-1031")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /avaliações já enviadas/i })).toBeInTheDocument();
+  });
+
+  it("makes WhatsApp consent explicit and optional", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /configurações/i }));
+
+    expect(
+      screen.getByRole("checkbox", { name: /autorizo receber mensagens do feiraê via whatsapp/i }),
+    ).toBeInTheDocument();
   });
 });
 
