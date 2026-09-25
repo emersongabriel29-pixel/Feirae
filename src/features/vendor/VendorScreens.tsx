@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarClock,
@@ -23,6 +23,7 @@ import { vendorModuleDetails } from "../../domain/operations";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
+import { eventNow, patchUnifiedOrder, readUnifiedOrders } from "../../domain/orderBridge";
 import {
   initialBankProfile,
   initialVendorDocuments,
@@ -248,6 +249,64 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [accountSaved, setAccountSaved] = useState(false);
   const [notice, setNotice] = useState("");
 
+  useEffect(() => {
+    const sharedOrders = readUnifiedOrders().filter(
+      (order) =>
+        order.fairName === bankProfile.fairName &&
+        order.items.some((item) => item.vendor === bankProfile.name),
+    );
+    if (!sharedOrders.length) return;
+
+    const statusMap = {
+      received: "new",
+      preparing: "preparing",
+      ready_for_pickup: "ready_for_pickup",
+      driver_assigned: "ready_for_pickup",
+      collected: "collected",
+      out_for_delivery: "collected",
+      delivered: "delivered",
+      cancelled: "rejected",
+    } as const;
+
+    setOrders((current) => {
+      const byId = new Map(current.map((order) => [order.id, order]));
+      sharedOrders.forEach((record) => {
+        const items = record.items.filter((item) => item.vendor === bankProfile.name);
+        const currentOrder = byId.get(record.id);
+        const alreadySeparated = ["ready_for_pickup", "driver_assigned", "collected", "out_for_delivery", "delivered"].includes(record.status);
+        byId.set(record.id, {
+          id: record.id,
+          customer: record.customerName,
+          createdAt: new Intl.DateTimeFormat("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          }).format(new Date(record.createdAt)),
+          status: statusMap[record.status],
+          value: items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+          deliveryFee: record.calculatedDeliveryFee,
+          city: record.customerCity ?? "Entrega",
+          estimatedPickupMinutes: currentOrder?.estimatedPickupMinutes ?? 20,
+          rejectReason: record.cancelReason ?? currentOrder?.rejectReason ?? "",
+          driverName: record.driver?.name ?? currentOrder?.driverName ?? "",
+          items: items.map((item) => {
+            const oldItem = currentOrder?.items.find((old) => old.id === `${record.id}-${item.productId}`);
+            return {
+              id: `${record.id}-${item.productId}`,
+              name: item.name,
+              quantityLabel: `${item.quantity} ${item.unit}`,
+              estimatedWeightKg: item.weightKg,
+              actualWeightKg: oldItem?.actualWeightKg ?? item.weightKg,
+              separated: oldItem?.separated ?? alreadySeparated,
+              unavailable: oldItem?.unavailable ?? false,
+              note: oldItem?.note ?? "",
+            };
+          }),
+        });
+      });
+      return Array.from(byId.values());
+    });
+  }, [bankProfile.fairName, bankProfile.name, setOrders]);
+
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
   const pendingOrders = orders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
@@ -349,6 +408,11 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
 
   function rejectOrder(order: VendorOrder) {
     updateOrder(order.id, { status: "rejected", rejectReason });
+    patchUnifiedOrder(
+      order.id,
+      { status: "cancelled", cancelReason: rejectReason },
+      eventNow("vendor-rejected", "Pedido cancelado", "vendor", { reason: rejectReason }),
+    );
     showNotice(`Pedido ${order.id} recusado. Motivo registrado.`);
   }
 
@@ -359,6 +423,11 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       return;
     }
     updateOrder(order.id, { status: "ready_for_pickup" });
+    patchUnifiedOrder(
+      order.id,
+      { status: "ready_for_pickup" },
+      eventNow("ready", "Pronto para coleta", "vendor"),
+    );
     showNotice(`Pedido ${order.id} pronto. Agora aguarda um entregador compatível.`);
   }
 
