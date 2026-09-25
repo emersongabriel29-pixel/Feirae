@@ -342,7 +342,6 @@ Referências:
 - Detran-DF — requisitos de motofrete:
   https://sisman.maestro.detran.df.gov.br/visualizar-carta/pdf/?area=28&layout=true
 
-
 ## 14. Disponibilidade do entregador
 
 O entregador possui dois modos de disponibilidade:
