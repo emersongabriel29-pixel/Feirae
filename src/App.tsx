@@ -188,6 +188,15 @@ export default function App() {
     addToCart(id);
   }
   function requestLocation() {
+    try {
+      const gpsPreference = window.localStorage.getItem(scopedStorageKey("feirae:gps", accountKey));
+      if (gpsPreference === "false") {
+        notify("Ative o uso de localização nas Configurações para ordenar feiras próximas.");
+        return;
+      }
+    } catch {
+      // Segue para a tentativa de GPS quando a preferência local não puder ser lida.
+    }
     if (!navigator.geolocation) {
       setLocationLabel("Localização indisponível");
       notify("Seu navegador não oferece geolocalização.");
@@ -463,6 +472,8 @@ export default function App() {
             onBack={() => openCustomerTab("fairs")}
             onMap={openMap}
             onAdd={addProductToCart}
+            favorites={favorites}
+            onFavorite={toggleFavorite}
           />
         )}
         {screen === "feirante" && (
