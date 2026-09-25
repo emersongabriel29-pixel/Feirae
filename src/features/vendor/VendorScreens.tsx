@@ -29,6 +29,7 @@ import {
   initialVendorProducts,
   initialVendorPromotions,
   initialVendorReviews,
+  initialVendorSalesHistory,
   initialVendorSchedule,
   productCategories,
   productSaleUnits,
@@ -41,6 +42,7 @@ import {
   type VendorPromotion,
   type VendorPromotionType,
   type VendorReview,
+  type VendorSaleRecord,
   type VendorScheduleDay,
 } from "./vendorModel";
 
@@ -127,6 +129,20 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     `feirae:vendor-reviews:${session.email}`,
     initialVendorReviews,
   );
+  const [salesHistory] = usePersistentState<VendorSaleRecord[]>(
+    `feirae:vendor-sales-history:${session.email}`,
+    initialVendorSalesHistory,
+  );
+  const [vendorEvaluationsGiven, setVendorEvaluationsGiven] = usePersistentState<
+    {
+      id: string;
+      orderId: string;
+      driverRating: number;
+      customerRating: number;
+      note: string;
+      createdAt: string;
+    }[]
+  >(`feirae:vendor-evaluations-given:${session.email}`, []);
   const [documents, setDocuments] = usePersistentState<VendorDocument[]>(
     `feirae:vendor-documents:${session.email}`,
     initialVendorDocuments,
@@ -173,6 +189,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [stockReason, setStockReason] = useState("Ajuste manual");
   const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
   const [reviewReply, setReviewReply] = useState("");
+  const [vendorRatingOrderId, setVendorRatingOrderId] = useState<string | null>(null);
+  const [driverRating, setDriverRating] = useState("5");
+  const [customerRating, setCustomerRating] = useState("5");
+  const [vendorRatingNote, setVendorRatingNote] = useState("");
   const [accountSaved, setAccountSaved] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -210,6 +230,43 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
   );
+  const salesForPrefix = (prefix: string) =>
+    salesHistory.filter((sale) => sale.date.startsWith(prefix));
+  const totalSales = (entries: VendorSaleRecord[]) => entries.reduce((sum, sale) => sum + sale.total, 0);
+  const todaySales = salesForPrefix("2026-09-25");
+  const monthSales = salesForPrefix("2026-09");
+  const previousMonthSales = salesForPrefix("2026-08");
+  const yearSales = salesForPrefix("2026");
+  const monthGross = totalSales(monthSales);
+  const previousMonthGross = totalSales(previousMonthSales);
+  const yearGross = totalSales(yearSales);
+  const monthTicket = monthSales.length ? monthGross / monthSales.length : 0;
+  const monthDiscounts = monthSales.reduce((sum, sale) => sum + sale.discount, 0);
+  const monthDeliverySubsidy = monthSales.reduce((sum, sale) => sum + sale.deliverySubsidy, 0);
+  const monthRefunds = monthSales.reduce((sum, sale) => sum + sale.refund, 0);
+  const monthComparison =
+    previousMonthGross > 0 ? ((monthGross - previousMonthGross) / previousMonthGross) * 100 : 0;
+  const productRanking = Array.from(
+    salesHistory
+      .flatMap((sale) => sale.items)
+      .reduce((map, item) => map.set(item.name, (map.get(item.name) ?? 0) + item.quantity), new Map<string, number>()),
+  )
+    .map(([name, quantity]) => ({ name, quantity }))
+    .sort((a, b) => b.quantity - a.quantity);
+  const receivingConfigured =
+    vendorAccount.receivingMethod === "Pix"
+      ? Boolean(vendorAccount.pixKey)
+      : Boolean(vendorAccount.bankName && vendorAccount.agency && vendorAccount.accountNumber);
+  const pendingVendorEvaluations = orders.filter(
+    (order) =>
+      order.status === "delivered" &&
+      !vendorEvaluationsGiven.some((evaluation) => evaluation.orderId === order.id),
+  );
+  const selectedVendorEvaluationOrder =
+    pendingVendorEvaluations.find((order) => order.id === vendorRatingOrderId) ??
+    pendingVendorEvaluations[0] ??
+    null;
+
 
   const dynamicModuleDetails = {
     ...vendorModuleDetails,
