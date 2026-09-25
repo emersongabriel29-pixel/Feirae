@@ -1,35 +1,140 @@
-import { FormEvent, useState } from "react";
-import { ArrowLeft, CalendarClock, Check, Edit3, Package, Plus, Truck, Wallet } from "lucide-react";
-import type { DemoSession } from "../../types";
-import { money } from "../../utils";
-import { usePersistentState } from "../../usePersistentState";
-import { vendorModuleDetails } from "../../domain/operations";
+import { FormEvent, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  CalendarClock,
+  Check,
+  Edit3,
+  Eye,
+  Image,
+  Package,
+  Plus,
+  Star,
+  Trash2,
+  Truck,
+  Upload,
+  Wallet,
+  XCircle,
+} from "lucide-react";
 import { ModuleHeader, OperationsMenu, Panel, Toggle } from "../../components/AppComponents";
+import { fairs } from "../../data";
+import { vehicleRules } from "../../domain/marketplace";
+import { vendorModuleDetails } from "../../domain/operations";
+import type { DemoSession } from "../../types";
+import { usePersistentState } from "../../usePersistentState";
+import { money } from "../../utils";
+import {
+  fairHoursByName,
+  initialBankProfile,
+  initialVendorDocuments,
+  initialVendorOrders,
+  initialVendorProducts,
+  initialVendorPromotions,
+  initialVendorReviews,
+  initialVendorSchedule,
+  productCategories,
+  productSaleUnits,
+  vendorDocumentStatusLabel,
+  vendorOrderStatusLabel,
+  type VendorBankProfile,
+  type VendorDocument,
+  type VendorOrder,
+  type VendorProduct,
+  type VendorPromotion,
+  type VendorPromotionType,
+  type VendorReview,
+  type VendorScheduleDay,
+} from "./vendorModel";
+
+const modules = [
+  "Painel",
+  "Pedidos",
+  "Minha banca",
+  "Produtos",
+  "Estoque",
+  "Horários",
+  "Entrega/retirada",
+  "Promoções",
+  "Financeiro",
+  "Avaliações",
+  "Conta",
+  "Documentos",
+];
+
+function emptyProduct(): VendorProduct {
+  return {
+    id: 0,
+    name: "",
+    category: "Frutas",
+    description: "",
+    stock: 0,
+    minStock: 3,
+    active: false,
+    price: 0,
+    saleUnit: "un",
+    packageSize: "1 un",
+    weightKg: 0.5,
+    photoDataUrl: "",
+    photoName: "",
+  };
+}
+
+function imageFileToDataUrl(file: File, onReady: (value: string) => void) {
+  const reader = new FileReader();
+  reader.onload = () => onReady(typeof reader.result === "string" ? reader.result : "");
+  reader.readAsDataURL(file);
+}
+
+function orderWeight(order: VendorOrder) {
+  return order.items.reduce((sum, item) => sum + (item.actualWeightKg || item.estimatedWeightKg), 0);
+}
 
 export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
-  const modules = [
-    "Painel",
-    "Pedidos",
-    "Minha banca",
-    "Produtos",
-    "Estoque",
-    "Horários",
-    "Entrega/retirada",
-    "Promoções",
-    "Financeiro",
-    "Avaliações",
-    "Conta",
-    "Documentos",
-  ];
   const [active, setActive] = useState("Central");
-  const [status, setStatus] = useState("Recebido");
-  const [storeOpen, setStoreOpen] = useState(true);
-  const [promotionActive, setPromotionActive] = useState(false);
-  const [promotionTool, setPromotionTool] = useState<"combo" | "horario" | "cupom">("combo");
-  const [customHours, setCustomHours] = useState(false);
-  const [newProductOpen, setNewProductOpen] = useState(false);
-  const [productName, setProductName] = useState("");
-  const [accountSaved, setAccountSaved] = useState(false);
+  const [storeOpen, setStoreOpen] = usePersistentState<boolean>("feirae:vendor-store-open", true);
+  const [vendorItems, setVendorItems] = usePersistentState<VendorProduct[]>(
+    `feirae:vendor-products:${session.email}`,
+    initialVendorProducts,
+  );
+  const [orders, setOrders] = usePersistentState<VendorOrder[]>(
+    `feirae:vendor-orders:${session.email}`,
+    initialVendorOrders,
+  );
+  const [bankProfile, setBankProfile] = usePersistentState<VendorBankProfile>(
+    `feirae:vendor-bank:${session.email}`,
+    initialBankProfile,
+  );
+  const [useFairHours, setUseFairHours] = usePersistentState<boolean>(
+    `feirae:vendor-use-fair-hours:${session.email}`,
+    true,
+  );
+  const [schedule, setSchedule] = usePersistentState<VendorScheduleDay[]>(
+    `feirae:vendor-schedule:${session.email}`,
+    initialVendorSchedule,
+  );
+  const [deliverySettings, setDeliverySettings] = usePersistentState(
+    `feirae:vendor-delivery-settings:${session.email}`,
+    {
+      deliveryEnabled: true,
+      pickupEnabled: true,
+      absorbDeliveryFee: false,
+      pickupInstructions: "Retirada no box da banca após confirmação de pedido pronto.",
+    },
+  );
+  const [promotions, setPromotions] = usePersistentState<VendorPromotion[]>(
+    `feirae:vendor-promotions:${session.email}`,
+    initialVendorPromotions,
+  );
+  const [reviews, setReviews] = usePersistentState<VendorReview[]>(
+    `feirae:vendor-reviews:${session.email}`,
+    initialVendorReviews,
+  );
+  const [documents, setDocuments] = usePersistentState<VendorDocument[]>(
+    `feirae:vendor-documents:${session.email}`,
+    initialVendorDocuments,
+  );
+  const [stockHistory, setStockHistory] = usePersistentState<
+    { id: string; product: string; delta: number; reason: string; createdAt: string }[]
+  >(`feirae:vendor-stock-history:${session.email}`, []);
   const [vendorAccount, setVendorAccount] = usePersistentState(`feirae:vendor-account:${session.email}`, {
     name: session.name,
     cpf: "",
@@ -40,62 +145,283 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     businessType: "Pessoa física",
     cnpj: "",
     responsibleDocument: "",
+    receivingMethod: "Pix",
+    bankName: "",
+    agency: "",
+    accountNumber: "",
   });
-  const [vendorItems, setVendorItems] = useState([
-    { id: 1, name: "Cesta de frutas", stock: 30, active: true, price: 24.9, weightKg: 4, unit: "cesta" },
-    { id: 9, name: "Tomate orgânico", stock: 4, active: true, price: 8.9, weightKg: 1, unit: "kg" },
-    { id: 11, name: "Cheiro-verde", stock: 0, active: false, price: 4.5, weightKg: 0.2, unit: "maço" },
-  ]);
 
-  function updateItem(id: number, update: Partial<(typeof vendorItems)[number]>) {
-    setVendorItems((current) => current.map((item) => (item.id === id ? { ...item, ...update } : item)));
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("Item indisponível");
+  const [productEditorId, setProductEditorId] = useState<number | "new" | null>(null);
+  const [productDraft, setProductDraft] = useState<VendorProduct>(emptyProduct());
+  const [bankEditing, setBankEditing] = useState(false);
+  const [bankPreview, setBankPreview] = useState(false);
+  const [promotionEditorOpen, setPromotionEditorOpen] = useState(false);
+  const [promotionEditingId, setPromotionEditingId] = useState<string | null>(null);
+  const [promotionDraft, setPromotionDraft] = useState<VendorPromotion>({
+    id: "",
+    type: "combo",
+    name: "",
+    rule: "",
+    startsAt: "",
+    endsAt: "",
+    active: true,
+    vendorPaysDelivery: false,
+    usageLimit: 0,
+    usedCount: 0,
+  });
+  const [stockReason, setStockReason] = useState("Ajuste manual");
+  const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
+  const [reviewReply, setReviewReply] = useState("");
+  const [accountSaved, setAccountSaved] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
+  const pendingOrders = orders.filter((order) =>
+    ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
+  );
+  const lowStockCount = vendorItems.filter(
+    (item) => item.active && item.stock <= item.minStock,
+  ).length;
+  const pausedCount = vendorItems.filter((item) => !item.active).length;
+  const totalStock = vendorItems.reduce((sum, item) => sum + item.stock, 0);
+  const averageRating = reviews.length
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    : 0;
+  const grossOrders = orders
+    .filter((order) => order.status !== "rejected")
+    .reduce((sum, order) => sum + order.value, 0);
+  const pendingGross = orders
+    .filter((order) => ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status))
+    .reduce((sum, order) => sum + order.value, 0);
+  const availableGross = orders
+    .filter((order) => order.status === "delivered")
+    .reduce((sum, order) => sum + order.value, 0);
+  const approvalStatus = documents
+    .filter((document) => document.required)
+    .every((document) => document.status === "approved")
+    ? "Aprovado"
+    : documents.some((document) => document.status === "correction_required")
+      ? "Correção necessária"
+      : documents.some((document) => document.status === "under_review")
+        ? "Em análise"
+        : "Documentação pendente";
+
+  const officialHours = fairHoursByName[bankProfile.fairName] ?? {
+    label: "Horário oficial a confirmar",
+    verification: "Sem fonte específica validada no cadastro atual",
+  };
+
+  const activeFreeShipping = promotions.some(
+    (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
+  );
+
+  function showNotice(message: string) {
+    setNotice(message);
+    window.setTimeout(() => setNotice(""), 2600);
   }
-  function addVendorItem(event: FormEvent) {
+
+  function updateOrder(id: string, update: Partial<VendorOrder>) {
+    setOrders((current) => current.map((order) => (order.id === id ? { ...order, ...update } : order)));
+  }
+
+  function updateOrderItem(orderId: string, itemId: string, update: Partial<VendorOrder["items"][number]>) {
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === orderId
+          ? {
+              ...order,
+              items: order.items.map((item) => (item.id === itemId ? { ...item, ...update } : item)),
+            }
+          : order,
+      ),
+    );
+  }
+
+  function acceptOrder(order: VendorOrder) {
+    updateOrder(order.id, { status: "preparing", rejectReason: "" });
+    showNotice(`Pedido ${order.id} aceito. Cliente notificado na demonstração.`);
+  }
+
+  function rejectOrder(order: VendorOrder) {
+    updateOrder(order.id, { status: "rejected", rejectReason });
+    showNotice(`Pedido ${order.id} recusado. Motivo registrado.`);
+  }
+
+  function markReady(order: VendorOrder) {
+    const unresolved = order.items.some((item) => !item.separated || item.unavailable);
+    if (unresolved) {
+      showNotice("Conclua ou resolva todos os itens antes de marcar o pedido como pronto.");
+      return;
+    }
+    updateOrder(order.id, { status: "ready_for_pickup" });
+    showNotice(`Pedido ${order.id} pronto. Agora aguarda um entregador compatível.`);
+  }
+
+  function openNewProduct() {
+    setProductDraft(emptyProduct());
+    setProductEditorId("new");
+  }
+
+  function openProductEditor(product: VendorProduct) {
+    setProductDraft({ ...product });
+    setProductEditorId(product.id);
+  }
+
+  function saveProduct(event: FormEvent) {
     event.preventDefault();
-    if (!productName.trim()) return;
-    setVendorItems((current) => [
-      ...current,
+    if (!productDraft.name.trim() || productDraft.price <= 0 || productDraft.weightKg <= 0) {
+      showNotice("Informe nome, preço e peso logístico válidos.");
+      return;
+    }
+    const nextProduct = {
+      ...productDraft,
+      id: productEditorId === "new" ? Date.now() : productDraft.id,
+      active: productDraft.photoDataUrl ? productDraft.active : false,
+    };
+    setVendorItems((current) =>
+      productEditorId === "new"
+        ? [...current, nextProduct]
+        : current.map((item) => (item.id === nextProduct.id ? nextProduct : item)),
+    );
+    setProductEditorId(null);
+    showNotice(
+      nextProduct.photoDataUrl
+        ? "Produto salvo."
+        : "Produto salvo como pausado. Adicione uma foto antes de colocá-lo à venda.",
+    );
+  }
+
+  function adjustStock(item: VendorProduct, delta: number) {
+    const nextStock = Math.max(0, item.stock + delta);
+    setVendorItems((current) =>
+      current.map((product) =>
+        product.id === item.id
+          ? { ...product, stock: nextStock, active: nextStock === 0 ? false : product.active }
+          : product,
+      ),
+    );
+    setStockHistory((current) => [
       {
-        id: Date.now(),
-        name: productName.trim(),
-        stock: 1,
-        active: true,
-        price: 0,
-        weightKg: 1,
-        unit: "unidade",
+        id: String(Date.now()),
+        product: item.name,
+        delta: nextStock - item.stock,
+        reason: stockReason,
+        createdAt: new Intl.DateTimeFormat("pt-BR", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }).format(new Date()),
       },
+      ...current,
     ]);
-    setProductName("");
-    setNewProductOpen(false);
+  }
+
+  function updateScheduleDay(day: string, update: Partial<VendorScheduleDay>) {
+    setSchedule((current) =>
+      current.map((item) => (item.day === day ? { ...item, ...update } : item)),
+    );
+  }
+
+  function startPromotion(type: VendorPromotionType = "combo") {
+    setPromotionEditingId(null);
+    setPromotionDraft({
+      id: "",
+      type,
+      name: "",
+      rule: "",
+      startsAt: "",
+      endsAt: "",
+      active: true,
+      vendorPaysDelivery: type === "freteGratis",
+      usageLimit: 0,
+      usedCount: 0,
+    });
+    setPromotionEditorOpen(true);
+  }
+
+  function editPromotion(promotion: VendorPromotion) {
+    setPromotionEditingId(promotion.id);
+    setPromotionDraft({ ...promotion });
+    setPromotionEditorOpen(true);
+  }
+
+  function savePromotion(event: FormEvent) {
+    event.preventDefault();
+    if (!promotionDraft.name.trim() || !promotionDraft.rule.trim()) {
+      showNotice("Informe o nome e a regra da campanha.");
+      return;
+    }
+    const next = {
+      ...promotionDraft,
+      id: promotionEditingId ?? String(Date.now()),
+      vendorPaysDelivery:
+        promotionDraft.type === "freteGratis" ? true : promotionDraft.vendorPaysDelivery,
+    };
+    setPromotions((current) =>
+      promotionEditingId
+        ? current.map((promotion) => (promotion.id === next.id ? next : promotion))
+        : [...current, next],
+    );
+    setPromotionEditorOpen(false);
+    setPromotionEditingId(null);
+    showNotice("Campanha salva.");
+  }
+
+  function uploadDocument(document: VendorDocument, file: File) {
+    setDocuments((current) =>
+      current.map((item) =>
+        item.id === document.id
+          ? {
+              ...item,
+              fileName: file.name,
+              status: "under_review",
+              correctionReason: "",
+            }
+          : item,
+      ),
+    );
+    showNotice(`${document.name} enviado. O envio não equivale à aprovação.`);
   }
 
   const inventory = (
     <div className="operation-list">
       {vendorItems.map((item) => (
         <article key={item.id}>
-          <span className={item.stock <= 4 ? "inventory-dot warning" : "inventory-dot"} />
+          <span className={item.stock <= item.minStock ? "inventory-dot warning" : "inventory-dot"} />
           <div>
             <b>{item.name}</b>
             <small>
-              {item.stock
-                ? `${item.stock} unidades disponíveis · ${item.stock} ${item.unit}(s) · ${money(item.price)} · ${item.weightKg} kg`
-                : "Produto esgotado"}
+              {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} · peso logístico{" "}
+              {item.weightKg} kg · mínimo {item.minStock}
             </small>
           </div>
           {active === "Estoque" ? (
             <div className="stock-controls">
-              <button onClick={() => updateItem(item.id, { stock: Math.max(0, item.stock - 1) })}>−</button>
+              <button onClick={() => adjustStock(item, -1)}>−</button>
               <strong>{item.stock}</strong>
-              <button onClick={() => updateItem(item.id, { stock: item.stock + 1, active: true })}>+</button>
+              <button onClick={() => adjustStock(item, 1)}>+</button>
             </div>
           ) : (
             <div className="item-actions">
-              <button className="mini-toggle" onClick={() => updateItem(item.id, { price: item.price + 1 })}>
-                Editar R$
+              <button className="mini-toggle" onClick={() => openProductEditor(item)}>
+                Editar produto
               </button>
               <button
                 className={item.active ? "mini-toggle active" : "mini-toggle"}
-                onClick={() => updateItem(item.id, { active: !item.active })}
+                onClick={() =>
+                  setVendorItems((current) =>
+                    current.map((product) =>
+                      product.id === item.id
+                        ? {
+                            ...product,
+                            active:
+                              product.photoDataUrl && product.stock > 0 ? !product.active : false,
+                          }
+                        : product,
+                    ),
+                  )
+                }
               >
                 {item.active ? "À venda" : "Pausado"}
               </button>
@@ -105,28 +431,37 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       ))}
     </div>
   );
+
   return (
-    <Panel title="Operação do feirante" subtitle="Dados locais demonstrativos" onBack={onBack}>
+    <Panel
+      title="Operação do feirante"
+      subtitle="Fluxos funcionais locais; integração real entra na etapa de backend"
+      onBack={onBack}
+    >
+      {notice && <p className="inline-success">{notice}</p>}
+
       {active === "Central" ? (
         <div className="ops-home">
           <div className="ops-summary">
             <div>
               <span className="eyebrow">Central</span>
               <h2>Escolha o que deseja gerenciar</h2>
-              <p>Pedidos, produtos, horários, documentos e financeiro ficam em telas separadas.</p>
+              <p>Pedidos, banca, produtos, horários, documentos e financeiro ficam em áreas próprias.</p>
             </div>
             <div className="operation-metrics">
               <article>
                 <strong>{storeOpen ? "Aberta" : "Fechada"}</strong>
-                <span>Sítio da Vó · Banca 18</span>
+                <span>
+                  {bankProfile.name} · Banca {bankProfile.box || "sem número"}
+                </span>
               </article>
               <article>
-                <strong>3</strong>
-                <span>pedidos pendentes</span>
+                <strong>{pendingOrders.length}</strong>
+                <span>pedidos em andamento</span>
               </article>
               <article>
-                <strong>4,9 ★</strong>
-                <span>avaliação média</span>
+                <strong>{approvalStatus}</strong>
+                <span>status cadastral</span>
               </article>
             </div>
           </div>
@@ -134,209 +469,736 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         </div>
       ) : (
         <div className="module-screen">
-          <button className="back-button" onClick={() => setActive("Central")}>
-            <ArrowLeft size={17} /> Voltar para central
+          <button
+            className="back-button"
+            onClick={() => {
+              if (selectedOrderId) setSelectedOrderId(null);
+              else if (productEditorId !== null) setProductEditorId(null);
+              else setActive("Central");
+            }}
+          >
+            <ArrowLeft size={17} />{" "}
+            {selectedOrderId || productEditorId !== null ? "Voltar" : "Voltar para central"}
           </button>
+
           <div className="surface-card operation-card">
             <span className="eyebrow">{active}</span>
-            <h2>
-              {active === "Pedidos" ? "Pedido FE-1027" : `Gerenciar ${active.toLocaleLowerCase("pt-BR")}`}
-            </h2>
+
             {active === "Painel" ? (
-              <div className="operation-metrics">
-                <article>
-                  <strong>{storeOpen ? "Aberta" : "Fechada"}</strong>
-                  <span>Sítio da Vó · Banca 18</span>
-                </article>
-                <article>
-                  <strong>4,9 ★</strong>
-                  <span>média de 126 avaliações</span>
-                </article>
-                <article>
-                  <strong>2</strong>
-                  <span>produtos com estoque baixo</span>
-                </article>
-              </div>
-            ) : active === "Pedidos" ? (
               <>
                 <ModuleHeader
-                  badge="Pedido em preparo"
-                  title="FE-1027 · Dona Marta"
-                  description="3 itens · R$ 86,80 · Planaltina · retirada prevista em 18 minutos"
+                  badge="Indicadores"
+                  title="Resumo operacional"
+                  description="Aqui entram indicadores diferentes dos atalhos da Central."
                 />
+                <div className="operation-metrics">
+                  <article>
+                    <strong>{money(grossOrders)}</strong>
+                    <span>pedidos demonstrativos</span>
+                  </article>
+                  <article>
+                    <strong>{pendingOrders.length}</strong>
+                    <span>pedidos em andamento</span>
+                  </article>
+                  <article>
+                    <strong>{lowStockCount}</strong>
+                    <span>estoques abaixo do mínimo</span>
+                  </article>
+                </div>
                 <div className="module-kpi-strip">
                   <article>
-                    <strong>8,4 kg</strong>
-                    <span>peso estimado</span>
+                    <strong>{averageRating.toFixed(1)} ★</strong>
+                    <span>média de {reviews.length} avaliações</span>
                   </article>
                   <article>
-                    <strong>Moto</strong>
-                    <span>veículo compatível</span>
+                    <strong>{vendorItems.filter((item) => item.active).length}</strong>
+                    <span>produtos publicados</span>
                   </article>
                   <article>
-                    <strong>R$ 12,80</strong>
-                    <span>entrega prevista</span>
+                    <strong>{promotions.filter((promotion) => promotion.active).length}</strong>
+                    <span>campanhas ativas</span>
                   </article>
-                </div>
-                <div className="module-action-row">
-                  {["Recebido", "Preparando", "Pronto para coleta", "Coletado"].map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => setStatus(item)}
-                      className={status === item ? "status-button active" : "status-button"}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-                <div className="operation-list detailed">
-                  {[
-                    "Cesta de frutas · 1 cesta · 4 kg",
-                    "Tomate orgânico · 2 kg",
-                    "Cheiro-verde · 2 maços",
-                  ].map((item) => (
-                    <article key={item}>
-                      <Package />
-                      <div>
-                        <b>{item}</b>
-                        <small>Separar, conferir peso e embalar antes da coleta.</small>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-                <div className="cancel-panel">
-                  <b>Cancelar pedido</b>
-                  <select>
-                    <option>Item indisponível</option>
-                    <option>Banca fechou mais cedo</option>
-                    <option>Peso acima do combinado</option>
-                    <option>Cliente solicitou cancelamento</option>
-                  </select>
                 </div>
               </>
+            ) : active === "Pedidos" ? (
+              selectedOrder ? (
+                <>
+                  <ModuleHeader
+                    badge={vendorOrderStatusLabel(selectedOrder.status)}
+                    title={`${selectedOrder.id} · ${selectedOrder.customer}`}
+                    description={`${selectedOrder.items.length} itens · ${money(selectedOrder.value)} · ${selectedOrder.city}`}
+                  />
+                  <div className="module-kpi-strip">
+                    <article>
+                      <strong>{orderWeight(selectedOrder).toFixed(1)} kg</strong>
+                      <span>peso atual do pedido</span>
+                    </article>
+                    <article>
+                      <strong>{vendorOrderStatusLabel(selectedOrder.status)}</strong>
+                      <span>etapa controlada pelo fluxo</span>
+                    </article>
+                    <article>
+                      <strong>{money(selectedOrder.deliveryFee)}</strong>
+                      <span>entrega estimada</span>
+                    </article>
+                  </div>
+
+                  {selectedOrder.status === "new" && (
+                    <>
+                      <div className="module-action-row">
+                        <button className="primary-action" onClick={() => acceptOrder(selectedOrder)}>
+                          <Check size={17} /> Aceitar pedido
+                        </button>
+                      </div>
+                      <div className="cancel-panel">
+                        <b>Recusar pedido</b>
+                        <select value={rejectReason} onChange={(event) => setRejectReason(event.target.value)}>
+                          <option>Item indisponível</option>
+                          <option>Banca fechou mais cedo</option>
+                          <option>Erro de estoque</option>
+                          <option>Impossibilidade operacional</option>
+                          <option>Outro</option>
+                        </select>
+                        <button className="secondary-action" onClick={() => rejectOrder(selectedOrder)}>
+                          <XCircle size={17} /> Confirmar recusa
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="operation-list detailed">
+                    {selectedOrder.items.map((item) => (
+                      <article key={item.id}>
+                        <Package />
+                        <div>
+                          <b>
+                            {item.name} · {item.quantityLabel}
+                          </b>
+                          <small>
+                            Peso estimado {item.estimatedWeightKg} kg ·{" "}
+                            {item.unavailable
+                              ? "Item indisponível"
+                              : item.separated
+                                ? "Separado e conferido"
+                                : "Aguardando separação"}
+                          </small>
+                          {selectedOrder.status === "preparing" && (
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <label>
+                                Peso real (kg)
+                                <input
+                                  type="number"
+                                  min="0.01"
+                                  step="0.01"
+                                  value={item.actualWeightKg}
+                                  onChange={(event) =>
+                                    updateOrderItem(selectedOrder.id, item.id, {
+                                      actualWeightKg: Number(event.target.value),
+                                    })
+                                  }
+                                />
+                              </label>
+                              <label>
+                                Substituição/observação
+                                <input
+                                  value={item.note}
+                                  onChange={(event) =>
+                                    updateOrderItem(selectedOrder.id, item.id, {
+                                      note: event.target.value,
+                                    })
+                                  }
+                                  placeholder="Ex.: substituir por item equivalente"
+                                />
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                        {selectedOrder.status === "preparing" && (
+                          <div className="item-actions">
+                            <button
+                              className={item.separated ? "mini-toggle active" : "mini-toggle"}
+                              onClick={() =>
+                                updateOrderItem(selectedOrder.id, item.id, {
+                                  separated: !item.separated,
+                                  unavailable: false,
+                                })
+                              }
+                            >
+                              {item.separated ? "Separado" : "Marcar separado"}
+                            </button>
+                            <button
+                              className={item.unavailable ? "mini-toggle active" : "mini-toggle"}
+                              onClick={() =>
+                                updateOrderItem(selectedOrder.id, item.id, {
+                                  unavailable: !item.unavailable,
+                                  separated: false,
+                                })
+                              }
+                            >
+                              Indisponível
+                            </button>
+                          </div>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+
+                  {selectedOrder.status === "preparing" && (
+                    <button className="primary-action" onClick={() => markReady(selectedOrder)}>
+                      Marcar pedido como pronto para coleta
+                    </button>
+                  )}
+                  {selectedOrder.status === "ready_for_pickup" && (
+                    <div className="region-strip">
+                      <Truck size={18} />
+                      <div>
+                        <b>Aguardando entregador</b>
+                        <p>
+                          O feirante terminou sua etapa. Coleta, rota e entrega pertencem ao fluxo do entregador.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedOrder.status === "collected" && (
+                    <p className="inline-success">
+                      Coleta confirmada pelo fluxo logístico. O feirante não altera mais o status da entrega.
+                    </p>
+                  )}
+                  {selectedOrder.status === "delivered" && (
+                    <p className="inline-success">Pedido entregue e elegível para liberação financeira.</p>
+                  )}
+                  {selectedOrder.status === "rejected" && (
+                    <p className="inline-success">
+                      Pedido encerrado. Motivo: {selectedOrder.rejectReason || "não informado"}.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <ModuleHeader
+                    badge={`${orders.filter((order) => order.status === "new").length} novos`}
+                    title="Pedidos da banca"
+                    description="Abra um pedido para aceitar, preparar e marcar como pronto. As etapas de entrega ficam com o entregador."
+                  />
+                  <div className="operation-list detailed">
+                    {orders.map((order) => (
+                      <article key={order.id}>
+                        <Package />
+                        <div>
+                          <b>
+                            {order.id} · {order.customer}
+                          </b>
+                          <small>
+                            {vendorOrderStatusLabel(order.status)} · {order.items.length} itens · {money(order.value)} ·{" "}
+                            {order.createdAt}
+                          </small>
+                        </div>
+                        <button className="mini-toggle" onClick={() => setSelectedOrderId(order.id)}>
+                          Abrir pedido
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              )
             ) : active === "Produtos" ? (
-              <>
-                <button className="primary-action" onClick={() => setNewProductOpen((value) => !value)}>
-                  <Plus size={17} /> Adicionar produto
-                </button>
-                {newProductOpen && (
-                  <form className="form-card" onSubmit={addVendorItem}>
+              productEditorId !== null ? (
+                <>
+                  <ModuleHeader
+                    badge={productEditorId === "new" ? "Novo produto" : "Editar produto"}
+                    title={productEditorId === "new" ? "Cadastrar produto" : productDraft.name}
+                    description="Preço, unidade comercial, peso logístico, estoque e foto são tratados separadamente."
+                  />
+                  <form className="form-card" onSubmit={saveProduct}>
+                    <label>
+                      Foto principal
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (!file) return;
+                          imageFileToDataUrl(file, (photoDataUrl) =>
+                            setProductDraft((current) => ({
+                              ...current,
+                              photoDataUrl,
+                              photoName: file.name,
+                            })),
+                          );
+                        }}
+                      />
+                    </label>
+                    {productDraft.photoDataUrl ? (
+                      <img className="product-editor-preview" src={productDraft.photoDataUrl} alt="" />
+                    ) : (
+                      <p className="operation-footnote">
+                        <Image size={15} /> Produto sem foto. Ele ficará pausado até receber uma imagem.
+                      </p>
+                    )}
                     <label>
                       Nome do produto
                       <input
-                        value={productName}
-                        onChange={(event) => setProductName(event.target.value)}
+                        value={productDraft.name}
+                        onChange={(event) =>
+                          setProductDraft((current) => ({ ...current, name: event.target.value }))
+                        }
                         required
                       />
                     </label>
-                    <div className="grid gap-2 sm:grid-cols-3">
+                    <label>
+                      Descrição
+                      <textarea
+                        value={productDraft.description}
+                        onChange={(event) =>
+                          setProductDraft((current) => ({ ...current, description: event.target.value }))
+                        }
+                        rows={3}
+                      />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <label>
-                        Preço
-                        <input placeholder="R$ 0,00" />
+                        Categoria
+                        <select
+                          value={productDraft.category}
+                          onChange={(event) =>
+                            setProductDraft((current) => ({ ...current, category: event.target.value }))
+                          }
+                        >
+                          {productCategories.map((category) => (
+                            <option key={category}>{category}</option>
+                          ))}
+                        </select>
                       </label>
                       <label>
-                        Peso
-                        <input placeholder="kg por unidade" />
+                        Unidade de venda
+                        <select
+                          value={productDraft.saleUnit}
+                          onChange={(event) =>
+                            setProductDraft((current) => ({ ...current, saleUnit: event.target.value }))
+                          }
+                        >
+                          {productSaleUnits.map((unit) => (
+                            <option key={unit}>{unit}</option>
+                          ))}
+                        </select>
                       </label>
                       <label>
-                        Unidade
-                        <input placeholder="kg, maço, cesta" />
+                        Preço por {productDraft.saleUnit}
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          value={productDraft.price}
+                          onChange={(event) =>
+                            setProductDraft((current) => ({
+                              ...current,
+                              price: Number(event.target.value),
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Apresentação
+                        <input
+                          value={productDraft.packageSize}
+                          onChange={(event) =>
+                            setProductDraft((current) => ({ ...current, packageSize: event.target.value }))
+                          }
+                          placeholder="Ex.: bandeja 500 g, 1 maço"
+                        />
+                      </label>
+                      <label>
+                        Peso logístico por item (kg)
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          value={productDraft.weightKg}
+                          onChange={(event) =>
+                            setProductDraft((current) => ({
+                              ...current,
+                              weightKg: Number(event.target.value),
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Estoque atual
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={productDraft.stock}
+                          onChange={(event) =>
+                            setProductDraft((current) => ({
+                              ...current,
+                              stock: Number(event.target.value),
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Estoque mínimo
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={productDraft.minStock}
+                          onChange={(event) =>
+                            setProductDraft((current) => ({
+                              ...current,
+                              minStock: Number(event.target.value),
+                            }))
+                          }
+                        />
                       </label>
                     </div>
-                    <button className="primary-action" type="submit">
-                      Salvar produto
-                    </button>
+                    <Toggle
+                      label="Disponível para venda"
+                      description="Para publicar, o produto precisa ter foto e estoque."
+                      checked={productDraft.active}
+                      onChange={(checked) =>
+                        setProductDraft((current) => ({ ...current, active: checked }))
+                      }
+                    />
+                    <div className="module-action-row">
+                      <button type="submit" className="primary-action">
+                        Salvar produto
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-action"
+                        onClick={() => setProductEditorId(null)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   </form>
-                )}
-                {inventory}
-              </>
+                </>
+              ) : (
+                <>
+                  <ModuleHeader
+                    badge={`${vendorItems.length} produtos`}
+                    title="Produtos da banca"
+                    description="Cadastre novos produtos ou abra um produto existente para editar todos os campos."
+                  />
+                  <button className="primary-action" onClick={openNewProduct}>
+                    <Plus size={17} /> Adicionar produto
+                  </button>
+                  {inventory}
+                </>
+              )
             ) : active === "Estoque" ? (
               <>
                 <ModuleHeader
-                  badge="Controle rápido"
+                  badge="Controle real"
                   title="Estoque da banca"
-                  description="Ajuste quantidade, pause item esgotado e evite venda sem produto."
+                  description="Os indicadores abaixo são calculados a partir dos próprios produtos."
                 />
                 <div className="module-kpi-strip">
                   <article>
-                    <strong>34</strong>
-                    <span>itens disponíveis</span>
+                    <strong>{totalStock}</strong>
+                    <span>unidades comerciais em estoque</span>
                   </article>
                   <article>
-                    <strong>2</strong>
-                    <span>alertas de baixo estoque</span>
+                    <strong>{lowStockCount}</strong>
+                    <span>alertas abaixo do mínimo</span>
                   </article>
                   <article>
-                    <strong>1</strong>
-                    <span>produto pausado</span>
+                    <strong>{pausedCount}</strong>
+                    <span>produtos pausados</span>
                   </article>
                 </div>
+                <label>
+                  Motivo do próximo ajuste
+                  <select value={stockReason} onChange={(event) => setStockReason(event.target.value)}>
+                    <option>Ajuste manual</option>
+                    <option>Venda presencial</option>
+                    <option>Perda/avaria</option>
+                    <option>Entrada de mercadoria</option>
+                    <option>Inventário/conferência</option>
+                  </select>
+                </label>
                 {inventory}
+                <SectionHistory history={stockHistory} />
               </>
             ) : active === "Minha banca" ? (
               <>
                 <ModuleHeader
                   badge="Perfil público"
-                  title="Sítio da Vó · Banca 18"
-                  description="Feira do Produtor, Planaltina. Hortifruti, cestas e produtos selecionados."
+                  title={bankProfile.name}
+                  description={`${bankProfile.fairName} · Banca ${bankProfile.box || "sem número"}`}
                 />
-                <div className="vendor-profile-card">
-                  <span>🥬</span>
-                  <div>
-                    <b>Banca verificada</b>
-                    <small>Box 18 · abre seg., qua. e sáb. · avaliação 4,9</small>
-                  </div>
-                  <button
-                    className={storeOpen ? "status-button active" : "status-button"}
-                    onClick={() => setStoreOpen((value) => !value)}
+                {bankEditing ? (
+                  <form
+                    className="form-card"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setBankEditing(false);
+                      showNotice("Dados da banca salvos.");
+                    }}
                   >
-                    {storeOpen ? "Aberta" : "Fechada"}
-                  </button>
-                </div>
-                <div className="operation-list detailed">
-                  {[
-                    "Editar nome, logo e foto da banca",
-                    "Atualizar feira, corredor, box e ponto de referência",
-                    "Definir categorias: hortifruti, orgânicos e cestas",
-                  ].map((item) => (
-                    <article key={item}>
-                      <Edit3 />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Nome da banca
+                        <input
+                          value={bankProfile.name}
+                          onChange={(event) =>
+                            setBankProfile((current) => ({ ...current, name: event.target.value }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Feira
+                        <select
+                          value={bankProfile.fairName}
+                          onChange={(event) =>
+                            setBankProfile((current) => ({ ...current, fairName: event.target.value }))
+                          }
+                        >
+                          {fairs
+                            .filter((fair) => fair.source !== "demo")
+                            .map((fair) => (
+                              <option key={fair.name} value={fair.name}>
+                                {fair.name} · {fair.place}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                      <label>
+                        Box/banca
+                        <input
+                          value={bankProfile.box}
+                          onChange={(event) =>
+                            setBankProfile((current) => ({ ...current, box: event.target.value }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Corredor/ala
+                        <input
+                          value={bankProfile.corridor}
+                          onChange={(event) =>
+                            setBankProfile((current) => ({ ...current, corridor: event.target.value }))
+                          }
+                        />
+                      </label>
+                    </div>
+                    <label>
+                      Descrição pública
+                      <textarea
+                        value={bankProfile.description}
+                        onChange={(event) =>
+                          setBankProfile((current) => ({ ...current, description: event.target.value }))
+                        }
+                        rows={3}
+                      />
+                    </label>
+                    <label>
+                      Categorias
+                      <input
+                        value={bankProfile.categories}
+                        onChange={(event) =>
+                          setBankProfile((current) => ({ ...current, categories: event.target.value }))
+                        }
+                        placeholder="Ex.: hortifruti, orgânicos, cestas"
+                      />
+                    </label>
+                    <label>
+                      Ponto de referência
+                      <input
+                        value={bankProfile.reference}
+                        onChange={(event) =>
+                          setBankProfile((current) => ({ ...current, reference: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Telefone comercial
+                        <input
+                          value={bankProfile.phone}
+                          onChange={(event) =>
+                            setBankProfile((current) => ({ ...current, phone: event.target.value }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        WhatsApp comercial
+                        <input
+                          value={bankProfile.whatsapp}
+                          onChange={(event) =>
+                            setBankProfile((current) => ({ ...current, whatsapp: event.target.value }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Logo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+                            imageFileToDataUrl(file, (logoDataUrl) =>
+                              setBankProfile((current) => ({ ...current, logoDataUrl })),
+                            );
+                          }}
+                        />
+                      </label>
+                      <label>
+                        Foto de capa
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+                            imageFileToDataUrl(file, (coverDataUrl) =>
+                              setBankProfile((current) => ({ ...current, coverDataUrl })),
+                            );
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <button className="primary-action" type="submit">
+                      Salvar banca
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <div className="vendor-profile-card">
+                      <span>
+                        {bankProfile.logoDataUrl ? (
+                          <img src={bankProfile.logoDataUrl} alt="" className="bank-logo-preview" />
+                        ) : (
+                          "🥬"
+                        )}
+                      </span>
                       <div>
-                        <b>{item}</b>
-                        <small>Essas informações aparecem para o cliente antes da compra.</small>
+                        <b>{approvalStatus === "Aprovado" ? "Banca verificada" : approvalStatus}</b>
+                        <small>
+                          Box {bankProfile.box || "—"} · {bankProfile.categories || "categorias a definir"}
+                        </small>
                       </div>
-                    </article>
-                  ))}
-                </div>
+                      <button
+                        className={storeOpen ? "status-button active" : "status-button"}
+                        onClick={() => setStoreOpen((value) => !value)}
+                        disabled={approvalStatus !== "Aprovado"}
+                      >
+                        {storeOpen ? "Aberta" : "Fechada"}
+                      </button>
+                    </div>
+                    <div className="module-action-row">
+                      <button className="primary-action" onClick={() => setBankEditing(true)}>
+                        <Edit3 size={17} /> Editar banca
+                      </button>
+                      <button className="secondary-action" onClick={() => setBankPreview((value) => !value)}>
+                        <Eye size={17} /> Visualizar como cliente
+                      </button>
+                    </div>
+                    {bankPreview && (
+                      <div className="surface-card">
+                        {bankProfile.coverDataUrl && (
+                          <img className="bank-cover-preview" src={bankProfile.coverDataUrl} alt="" />
+                        )}
+                        <span className="eyebrow">Prévia pública</span>
+                        <h3>{bankProfile.name}</h3>
+                        <p>{bankProfile.description}</p>
+                        <p>
+                          {bankProfile.fairName} · Banca {bankProfile.box || "—"} ·{" "}
+                          {bankProfile.reference || "sem referência"}
+                        </p>
+                        <p>{bankProfile.categories}</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </>
             ) : active === "Horários" ? (
               <div className="space-y-3">
                 <ModuleHeader
                   badge="Agenda da banca"
                   title="Horários de venda"
-                  description="Use o horário oficial da feira ou informe os dias que sua banca realmente estará aberta."
+                  description="O horário padrão vem da feira realmente vinculada à banca."
                 />
+                <div className="surface-card">
+                  <b>{bankProfile.fairName}</b>
+                  <p>{officialHours.label}</p>
+                  <small>{officialHours.verification}</small>
+                </div>
                 <Toggle
                   label="Usar horário padrão da feira"
-                  description="Feira do Produtor · segunda e quinta · 19h-2h"
-                  checked={!customHours}
-                  onChange={(checked) => setCustomHours(!checked)}
+                  description="Mantém a banca alinhada ao horário oficial cadastrado para essa feira."
+                  checked={useFairHours}
+                  onChange={setUseFairHours}
                 />
                 <Toggle
                   label="Definir meu próprio horário"
-                  description="Escolher dias, abertura, fechamento, pausas e exceções"
-                  checked={customHours}
-                  onChange={setCustomHours}
+                  description="Escolha dias, abertura, fechamento e intervalos. Deve respeitar as regras da feira."
+                  checked={!useFairHours}
+                  onChange={(checked) => setUseFairHours(!checked)}
                 />
-                {customHours && (
-                  <div className="operation-list">
-                    {["Segunda · 8h-17h", "Quarta · 8h-17h", "Sábado · 7h-14h"].map((schedule) => (
-                      <article key={schedule}>
+                {!useFairHours && (
+                  <div className="operation-list detailed">
+                    {schedule.map((item) => (
+                      <article key={item.day}>
                         <CalendarClock />
                         <div>
-                          <b>{schedule}</b>
-                          <small>Aberto com horário próprio da banca</small>
+                          <b>{item.day}</b>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <label>
+                              Abertura
+                              <input
+                                type="time"
+                                value={item.open}
+                                disabled={!item.enabled}
+                                onChange={(event) =>
+                                  updateScheduleDay(item.day, { open: event.target.value })
+                                }
+                              />
+                            </label>
+                            <label>
+                              Fechamento
+                              <input
+                                type="time"
+                                value={item.close}
+                                disabled={!item.enabled}
+                                onChange={(event) =>
+                                  updateScheduleDay(item.day, { close: event.target.value })
+                                }
+                              />
+                            </label>
+                            <label>
+                              Início da pausa
+                              <input
+                                type="time"
+                                value={item.breakStart}
+                                disabled={!item.enabled}
+                                onChange={(event) =>
+                                  updateScheduleDay(item.day, { breakStart: event.target.value })
+                                }
+                              />
+                            </label>
+                            <label>
+                              Fim da pausa
+                              <input
+                                type="time"
+                                value={item.breakEnd}
+                                disabled={!item.enabled}
+                                onChange={(event) =>
+                                  updateScheduleDay(item.day, { breakEnd: event.target.value })
+                                }
+                              />
+                            </label>
+                          </div>
                         </div>
+                        <button
+                          className={item.enabled ? "mini-toggle active" : "mini-toggle"}
+                          onClick={() => updateScheduleDay(item.day, { enabled: !item.enabled })}
+                        >
+                          {item.enabled ? "Aberto" : "Fechado"}
+                        </button>
                       </article>
                     ))}
                   </div>
@@ -347,22 +1209,54 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <ModuleHeader
                   badge="Logística"
                   title="Entrega e retirada"
-                  description="Defina como o pedido sai da banca e quais limites entram no cálculo da corrida."
+                  description="Configure as modalidades. O veículo é escolhido pela capacidade real disponível, sem limite fixo de 20 kg."
                 />
+                <Toggle
+                  label="Entrega pelo Feiraê"
+                  description="Disponibiliza o pedido para entregadores aprovados com veículo compatível."
+                  checked={deliverySettings.deliveryEnabled}
+                  onChange={(checked) =>
+                    setDeliverySettings((current) => ({ ...current, deliveryEnabled: checked }))
+                  }
+                />
+                <Toggle
+                  label="Retirada na banca"
+                  description="Cliente retira no box depois que o pedido estiver pronto."
+                  checked={deliverySettings.pickupEnabled}
+                  onChange={(checked) =>
+                    setDeliverySettings((current) => ({ ...current, pickupEnabled: checked }))
+                  }
+                />
+                <Toggle
+                  label="Oferecer frete grátis pago pela banca"
+                  description="O cliente paga R$ 0 pela entrega; a remuneração do entregador é abatida do recebível do feirante."
+                  checked={deliverySettings.absorbDeliveryFee}
+                  onChange={(checked) =>
+                    setDeliverySettings((current) => ({ ...current, absorbDeliveryFee: checked }))
+                  }
+                />
+                <label>
+                  Instruções para retirada
+                  <textarea
+                    rows={3}
+                    value={deliverySettings.pickupInstructions}
+                    onChange={(event) =>
+                      setDeliverySettings((current) => ({
+                        ...current,
+                        pickupInstructions: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
                 <div className="operation-list detailed">
-                  {[
-                    [
-                      "Entrega Feiraê",
-                      "Ativa · entregador recebe peso, volume, rota e ganho antes de aceitar.",
-                    ],
-                    ["Retirada na banca", "Cliente vê box, ponto de referência e horário de retirada."],
-                    ["Limite por pedido", "Até 20 kg para moto com baú; acima disso, direciona para carro."],
-                  ].map(([title, text]) => (
-                    <article key={title}>
+                  {vehicleRules.map((vehicle) => (
+                    <article key={vehicle.name}>
                       <Truck />
                       <div>
-                        <b>{title}</b>
-                        <small>{text}</small>
+                        <b>
+                          {vehicle.name} · até {vehicle.maxKg} kg de referência
+                        </b>
+                        <small>{vehicle.note}. O entregador informa a capacidade real do próprio veículo.</small>
                       </div>
                     </article>
                   ))}
@@ -371,138 +1265,293 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             ) : active === "Promoções" ? (
               <>
                 <ModuleHeader
-                  badge="Campanhas"
+                  badge={`${promotions.filter((promotion) => promotion.active).length} ativas`}
                   title="Promoções da banca"
-                  description="Monte ofertas simples para aparecer em destaques, vitrine e recompra."
+                  description="Crie, edite, encerre e acompanhe campanhas. Frete grátis deixa explícito quem paga a entrega."
                 />
-                <div className="promo-card">
-                  <span>🍎</span>
-                  <div>
-                    <b>10% na cesta de frutas</b>
-                    <small>Válida até domingo · aparece em Destaques da feira</small>
-                  </div>
-                  <button
-                    className={promotionActive ? "status-button active" : "status-button"}
-                    onClick={() => setPromotionActive((value) => !value)}
-                  >
-                    {promotionActive ? "Ativa" : "Ativar"}
-                  </button>
-                </div>
-                <div className="module-action-row">
-                  <button
-                    className={promotionTool === "combo" ? "status-button active" : "status-button"}
-                    onClick={() => setPromotionTool("combo")}
-                  >
-                    Criar combo
-                  </button>
-                  <button
-                    className={promotionTool === "horario" ? "status-button active" : "status-button"}
-                    onClick={() => setPromotionTool("horario")}
-                  >
-                    Oferta por horário
-                  </button>
-                  <button
-                    className={promotionTool === "cupom" ? "status-button active" : "status-button"}
-                    onClick={() => setPromotionTool("cupom")}
-                  >
-                    Cupom da banca
-                  </button>
-                </div>
-                <form className="form-card compact">
-                  {promotionTool === "combo" && (
-                    <>
+                {!promotionEditorOpen ? (
+                  <>
+                    <div className="module-action-row">
+                      <button className="primary-action" onClick={() => startPromotion("combo")}>
+                        <Plus size={17} /> Nova promoção
+                      </button>
+                      <button className="secondary-action" onClick={() => startPromotion("freteGratis")}>
+                        Frete grátis
+                      </button>
+                    </div>
+                    <div className="operation-list detailed">
+                      {promotions.map((promotion) => (
+                        <article key={promotion.id}>
+                          <Star />
+                          <div>
+                            <b>{promotion.name}</b>
+                            <small>
+                              {promotion.rule} · {promotion.usedCount}/{promotion.usageLimit || "∞"} usos ·{" "}
+                              {promotion.vendorPaysDelivery ? "banca paga o frete" : "sem subsídio de frete"}
+                            </small>
+                          </div>
+                          <div className="item-actions">
+                            <button className="mini-toggle" onClick={() => editPromotion(promotion)}>
+                              Editar
+                            </button>
+                            <button
+                              className={promotion.active ? "mini-toggle active" : "mini-toggle"}
+                              onClick={() =>
+                                setPromotions((current) =>
+                                  current.map((item) =>
+                                    item.id === promotion.id
+                                      ? { ...item, active: !item.active }
+                                      : item,
+                                  ),
+                                )
+                              }
+                            >
+                              {promotion.active ? "Ativa" : "Encerrada"}
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <form className="form-card" onSubmit={savePromotion}>
+                    <label>
+                      Tipo
+                      <select
+                        value={promotionDraft.type}
+                        onChange={(event) => {
+                          const type = event.target.value as VendorPromotionType;
+                          setPromotionDraft((current) => ({
+                            ...current,
+                            type,
+                            vendorPaysDelivery: type === "freteGratis",
+                          }));
+                        }}
+                      >
+                        <option value="combo">Combo</option>
+                        <option value="horario">Oferta por horário</option>
+                        <option value="cupom">Cupom</option>
+                        <option value="freteGratis">Frete grátis pago pela banca</option>
+                      </select>
+                    </label>
+                    <label>
+                      Nome da campanha
+                      <input
+                        value={promotionDraft.name}
+                        onChange={(event) =>
+                          setPromotionDraft((current) => ({ ...current, name: event.target.value }))
+                        }
+                        required
+                      />
+                    </label>
+                    <label>
+                      Regra
+                      <textarea
+                        rows={3}
+                        value={promotionDraft.rule}
+                        onChange={(event) =>
+                          setPromotionDraft((current) => ({ ...current, rule: event.target.value }))
+                        }
+                        placeholder="Ex.: frete grátis acima de R$ 80, limitado a 30 pedidos"
+                        required
+                      />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-3">
                       <label>
-                        Nome do combo
-                        <input defaultValue="Combo salada da semana" />
+                        Início
+                        <input
+                          type="datetime-local"
+                          value={promotionDraft.startsAt}
+                          onChange={(event) =>
+                            setPromotionDraft((current) => ({
+                              ...current,
+                              startsAt: event.target.value,
+                            }))
+                          }
+                        />
                       </label>
                       <label>
-                        Itens
-                        <input defaultValue="Tomate orgânico + cheiro-verde + alface" />
-                      </label>
-                    </>
-                  )}
-                  {promotionTool === "horario" && (
-                    <>
-                      <label>
-                        Janela da oferta
-                        <input defaultValue="Sábado · 7h às 10h" />
+                        Fim
+                        <input
+                          type="datetime-local"
+                          value={promotionDraft.endsAt}
+                          onChange={(event) =>
+                            setPromotionDraft((current) => ({ ...current, endsAt: event.target.value }))
+                          }
+                        />
                       </label>
                       <label>
-                        Desconto
-                        <input defaultValue="15%" />
+                        Limite de usos
+                        <input
+                          type="number"
+                          min="0"
+                          value={promotionDraft.usageLimit}
+                          onChange={(event) =>
+                            setPromotionDraft((current) => ({
+                              ...current,
+                              usageLimit: Number(event.target.value),
+                            }))
+                          }
+                        />
                       </label>
-                    </>
-                  )}
-                  {promotionTool === "cupom" && (
-                    <>
-                      <label>
-                        Código do cupom
-                        <input defaultValue="SITIO10" />
-                      </label>
-                      <label>
-                        Regra
-                        <input defaultValue="10% acima de R$ 50,00" />
-                      </label>
-                    </>
-                  )}
-                  <button type="button" className="primary-action">
-                    Salvar campanha
-                  </button>
-                </form>
+                    </div>
+                    {promotionDraft.type === "freteGratis" && (
+                      <p className="inline-success">
+                        O entregador continua recebendo a remuneração da corrida; o custo é descontado do recebível
+                        da banca.
+                      </p>
+                    )}
+                    <div className="module-action-row">
+                      <button type="submit" className="primary-action">
+                        Salvar campanha
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-action"
+                        onClick={() => setPromotionEditorOpen(false)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                )}
               </>
             ) : active === "Financeiro" ? (
               <>
                 <ModuleHeader
-                  badge="Receitas e custos"
+                  badge="Receitas e repasses"
                   title="Financeiro da banca"
-                  description="Visão de vendas, taxas, custos estimados e valores a receber."
+                  description="Valores separados por estado. Taxas comerciais reais só serão aplicadas quando o provedor for integrado."
                 />
                 <div className="operation-metrics">
                   <article>
-                    <strong>R$ 1.842,30</strong>
-                    <span>vendas no mês</span>
+                    <strong>{money(pendingGross)}</strong>
+                    <span>bruto pendente em pedidos abertos</span>
                   </article>
                   <article>
-                    <strong>R$ 286,40</strong>
-                    <span>a receber</span>
+                    <strong>{money(availableGross)}</strong>
+                    <span>bruto elegível após entrega</span>
                   </article>
                   <article>
-                    <strong>24</strong>
-                    <span>pedidos concluídos</span>
+                    <strong>{vendorAccount.pixKey ? "Cadastrado" : "Pendente"}</strong>
+                    <span>destino de recebimento</span>
                   </article>
                 </div>
                 <div className="finance-breakdown">
-                  {[
-                    ["Vendas brutas", "R$ 1.842,30"],
-                    ["Taxa Feiraê demonstrativa", "R$ 92,10"],
-                    ["Entrega repassada ao entregador", "R$ 214,60"],
-                    ["Previsão de repasse", "R$ 1.535,60"],
-                  ].map(([label, value]) => (
-                    <p key={label}>
-                      <span>{label}</span>
-                      <strong>{value}</strong>
-                    </p>
+                  <p>
+                    <span>Total demonstrativo dos pedidos</span>
+                    <strong>{money(grossOrders)}</strong>
+                  </p>
+                  <p>
+                    <span>Taxa Feiraê</span>
+                    <strong>A definir</strong>
+                  </p>
+                  <p>
+                    <span>Taxa do provedor</span>
+                    <strong>A definir</strong>
+                  </p>
+                  <p>
+                    <span>Próximo repasse</span>
+                    <strong>Depende do provedor</strong>
+                  </p>
+                </div>
+                {activeFreeShipping || deliverySettings.absorbDeliveryFee ? (
+                  <p className="inline-success">
+                    Frete grátis patrocinado está ativo: o custo da entrega será abatido do recebível do feirante,
+                    sem reduzir a remuneração do entregador.
+                  </p>
+                ) : null}
+                <div className="operation-list detailed">
+                  {orders.map((order) => (
+                    <article key={order.id}>
+                      <Wallet />
+                      <div>
+                        <b>
+                          {order.id} · {money(order.value)}
+                        </b>
+                        <small>
+                          {vendorOrderStatusLabel(order.status)} · valor bruto antes de taxas/repasses reais
+                        </small>
+                      </div>
+                    </article>
                   ))}
                 </div>
+                {!vendorAccount.pixKey && (
+                  <button className="primary-action" onClick={() => setActive("Conta")}>
+                    Cadastrar destino de recebimento
+                  </button>
+                )}
               </>
             ) : active === "Avaliações" ? (
               <>
                 <ModuleHeader
-                  badge="Reputação"
+                  badge={`${averageRating.toFixed(1)} ★`}
                   title="Avaliações recebidas"
-                  description="Média em cima, avaliações individuais embaixo, separadas por cliente, produto e entrega."
+                  description="Média no topo e avaliações individuais com pedido, data, comentário e resposta da banca."
                 />
+                <div className="operation-metrics">
+                  <article>
+                    <strong>{averageRating.toFixed(1)} ★</strong>
+                    <span>média geral</span>
+                  </article>
+                  <article>
+                    <strong>{reviews.length}</strong>
+                    <span>avaliações demonstrativas</span>
+                  </article>
+                  <article>
+                    <strong>{reviews.filter((review) => review.response).length}</strong>
+                    <span>respondidas</span>
+                  </article>
+                </div>
                 <div className="review-grid compact">
-                  {[
-                    ["Cliente", "4,9", "Produtos frescos e entrega cuidadosa."],
-                    ["Entregador", "5,0", "Pedido pronto no horário combinado."],
-                    ["Produto", "4,8", "Cesta bem montada e peso correto."],
-                  ].map(([source, rating, text]) => (
-                    <article className="review-card" key={source}>
-                      <strong>{rating} ★</strong>
+                  {reviews.map((review) => (
+                    <article className="review-card" key={review.id}>
+                      <strong>{review.rating.toFixed(1)} ★</strong>
                       <div>
-                        <b>{source}</b>
-                        <small>{text}</small>
+                        <b>
+                          {review.type} · {review.author}
+                        </b>
+                        <small>
+                          {review.orderId} · {review.date}
+                        </small>
+                        <p>{review.comment}</p>
+                        {review.response && <small>Resposta da banca: {review.response}</small>}
+                        {replyingReviewId === review.id ? (
+                          <div className="form-card compact">
+                            <label>
+                              Resposta
+                              <textarea
+                                value={reviewReply}
+                                onChange={(event) => setReviewReply(event.target.value)}
+                                rows={2}
+                              />
+                            </label>
+                            <button
+                              className="primary-action"
+                              onClick={() => {
+                                setReviews((current) =>
+                                  current.map((item) =>
+                                    item.id === review.id ? { ...item, response: reviewReply.trim() } : item,
+                                  ),
+                                );
+                                setReplyingReviewId(null);
+                                setReviewReply("");
+                              }}
+                            >
+                              Salvar resposta
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="mini-toggle"
+                            onClick={() => {
+                              setReplyingReviewId(review.id);
+                              setReviewReply(review.response);
+                            }}
+                          >
+                            Responder
+                          </button>
+                        )}
                       </div>
                     </article>
                   ))}
@@ -511,9 +1560,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             ) : active === "Conta" ? (
               <>
                 <ModuleHeader
-                  badge="Dados pessoais"
+                  badge="Dados pessoais e recebimento"
                   title="Minha conta"
-                  description="Dados do responsável pela banca, contato, repasse e identificação."
+                  description="Dados do responsável e destino de recebimento. O provedor real validará titularidade e pagamentos."
                 />
                 <form
                   className="form-card"
@@ -581,7 +1630,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       <select
                         value={vendorAccount.businessType}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({ ...current, businessType: event.target.value }))
+                          setVendorAccount((current) => ({
+                            ...current,
+                            businessType: event.target.value,
+                          }))
                         }
                       >
                         <option>Pessoa física</option>
@@ -599,16 +1651,6 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       />
                     </label>
                     <label>
-                      Chave Pix para repasse
-                      <input
-                        value={vendorAccount.pixKey}
-                        onChange={(event) =>
-                          setVendorAccount((current) => ({ ...current, pixKey: event.target.value }))
-                        }
-                        placeholder="CPF, e-mail, telefone ou chave"
-                      />
-                    </label>
-                    <label>
                       Documento do responsável
                       <input
                         value={vendorAccount.responsibleDocument}
@@ -621,8 +1663,74 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                         placeholder="RG/CNH"
                       />
                     </label>
+                    <label>
+                      Forma de recebimento
+                      <select
+                        value={vendorAccount.receivingMethod}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({
+                            ...current,
+                            receivingMethod: event.target.value,
+                          }))
+                        }
+                      >
+                        <option>Pix</option>
+                        <option>Conta bancária</option>
+                      </select>
+                    </label>
                   </div>
-                  {accountSaved && <p className="inline-success">Dados da conta salvos neste dispositivo.</p>}
+                  {vendorAccount.receivingMethod === "Pix" ? (
+                    <label>
+                      Chave Pix para repasse
+                      <input
+                        value={vendorAccount.pixKey}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({ ...current, pixKey: event.target.value }))
+                        }
+                        placeholder="CPF, e-mail, telefone ou chave"
+                      />
+                    </label>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label>
+                        Banco
+                        <input
+                          value={vendorAccount.bankName}
+                          onChange={(event) =>
+                            setVendorAccount((current) => ({
+                              ...current,
+                              bankName: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Agência
+                        <input
+                          value={vendorAccount.agency}
+                          onChange={(event) =>
+                            setVendorAccount((current) => ({
+                              ...current,
+                              agency: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Conta
+                        <input
+                          value={vendorAccount.accountNumber}
+                          onChange={(event) =>
+                            setVendorAccount((current) => ({
+                              ...current,
+                              accountNumber: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {accountSaved && <p className="inline-success">Alterações salvas neste dispositivo.</p>}
                   <button className="primary-action" type="submit">
                     <Edit3 size={17} /> Salvar alterações
                   </button>
@@ -631,50 +1739,96 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             ) : active === "Documentos" ? (
               <>
                 <ModuleHeader
-                  badge="Cadastro"
-                  title="Documentação e validação"
-                  description="Antes de vender de verdade, a banca precisa passar pela conferência."
+                  badge={approvalStatus}
+                  title="Documentação e aprovação"
+                  description="Enviar arquivo não aprova o cadastro. Documentos ficam em análise até a validação."
                 />
+                <div className="region-strip">
+                  <Check size={18} />
+                  <div>
+                    <b>Status do cadastro: {approvalStatus}</b>
+                    <p>
+                      Enquanto os documentos obrigatórios não estiverem aprovados, a banca não deve vender ou
+                      receber repasses no ambiente real.
+                    </p>
+                  </div>
+                </div>
                 <div className="operation-list detailed">
-                  {[
-                    ["Documento do responsável", "Aprovado"],
-                    ["Comprovante da banca/box", "Pendente de envio"],
-                    ["Validação de feirante", "Em análise"],
-                  ].map(([doc, statusText]) => (
-                    <article key={doc}>
-                      <Check />
+                  {documents.map((document) => (
+                    <article key={document.id}>
+                      <Upload />
                       <div>
-                        <b>{doc}</b>
-                        <small>Necessário para vender e receber repasses.</small>
+                        <b>
+                          {document.name}
+                          {!document.required && " · quando aplicável"}
+                        </b>
+                        <small>{document.description}</small>
+                        {document.fileName && <small>Arquivo: {document.fileName}</small>}
+                        {document.correctionReason && (
+                          <small>Correção solicitada: {document.correctionReason}</small>
+                        )}
                       </div>
-                      <span className="document-status">{statusText}</span>
+                      <div className="item-actions">
+                        <span className="document-status">{vendorDocumentStatusLabel(document.status)}</span>
+                        <label className="mini-toggle">
+                          {document.fileName ? "Substituir" : "Enviar"}
+                          <input
+                            type="file"
+                            accept=".pdf,image/*"
+                            hidden
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (file) uploadDocument(document, file);
+                            }}
+                          />
+                        </label>
+                      </div>
                     </article>
                   ))}
                 </div>
               </>
-            ) : (
-              <div className="operation-list">
-                {[
-                  "R$ 1.842,30 em vendas no mês",
-                  "R$ 286,40 a receber",
-                  "Custos e taxas serão detalhados",
-                ].map((item) => (
-                  <article key={item}>
-                    <Wallet />
-                    <div>
-                      <b>{item}</b>
-                      <small>Financeiro da banca</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       )}
+
       <p className="operation-footnote">
-        Alterações locais de demonstração. A sincronização real será feita pelo Supabase.
+        Este fluxo já funciona localmente para validação de produto. Aprovação, notificações, pagamentos,
+        repasses e sincronização definitiva dependem do backend/provedor.
       </p>
     </Panel>
+  );
+}
+
+function SectionHistory({
+  history,
+}: {
+  history: { id: string; product: string; delta: number; reason: string; createdAt: string }[];
+}) {
+  return (
+    <div className="surface-card">
+      <span className="eyebrow">Histórico</span>
+      <h3>Últimos ajustes de estoque</h3>
+      {history.length ? (
+        <div className="operation-list">
+          {history.slice(0, 6).map((entry) => (
+            <article key={entry.id}>
+              <Package />
+              <div>
+                <b>
+                  {entry.product} · {entry.delta > 0 ? "+" : ""}
+                  {entry.delta}
+                </b>
+                <small>
+                  {entry.reason} · {entry.createdAt}
+                </small>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p>Nenhum ajuste registrado nesta demonstração.</p>
+      )}
+    </div>
   );
 }
