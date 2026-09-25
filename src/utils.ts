@@ -2,14 +2,63 @@ import type { Fair, Product } from "./types";
 
 export const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+function normalizeSearch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function editDistanceAtMostOne(a: string, b: string) {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  if (a === b) return true;
+
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    edits += 1;
+    if (edits > 1) return false;
+    if (a.length > b.length) i += 1;
+    else if (b.length > a.length) j += 1;
+    else {
+      i += 1;
+      j += 1;
+    }
+  }
+  return edits + Number(i < a.length || j < b.length) <= 1;
+}
+
 export function filterProducts(items: Product[], query: string, category: string) {
-  const normalizedQuery = query.trim().toLocaleLowerCase("pt-BR");
+  const normalizedQuery = normalizeSearch(query);
+  const queryTokens = normalizedQuery.split(" ").filter(Boolean);
+
   return items.filter((product) => {
     const categoryMatches = category === "Todos" || product.category === category;
-    const text = [product.name, product.feirante, product.fair, product.category]
-      .join(" ")
-      .toLocaleLowerCase("pt-BR");
-    return categoryMatches && (!normalizedQuery || text.includes(normalizedQuery));
+    if (!categoryMatches) return false;
+    if (!normalizedQuery) return true;
+
+    const searchable = normalizeSearch(
+      [product.name, product.feirante, product.fair, product.category].join(" "),
+    );
+    if (searchable.includes(normalizedQuery)) return true;
+
+    const words = searchable.split(" ").filter(Boolean);
+    return queryTokens.every((token) =>
+      words.some(
+        (word) =>
+          word.includes(token) ||
+          token.includes(word) ||
+          (token.length >= 4 && word.length >= 4 && editDistanceAtMostOne(token, word)),
+      ),
+    );
   });
 }
 
