@@ -1,10 +1,12 @@
 import { FormEvent, useState } from "react";
 import { ArrowLeft, CalendarClock, Check, Edit3, Package, Plus, Truck, Wallet } from "lucide-react";
+import type { DemoSession } from "../../types";
 import { money } from "../../utils";
+import { usePersistentState } from "../../usePersistentState";
 import { vendorModuleDetails } from "../../domain/operations";
 import { ModuleHeader, OperationsMenu, Panel, Toggle } from "../../components/AppComponents";
 
-export function FeiranteOperations({ onBack }: { onBack: () => void }) {
+export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
   const modules = [
     "Painel",
     "Pedidos",
@@ -16,6 +18,7 @@ export function FeiranteOperations({ onBack }: { onBack: () => void }) {
     "Promoções",
     "Financeiro",
     "Avaliações",
+    "Conta",
     "Documentos",
   ];
   const [active, setActive] = useState("Central");
@@ -26,6 +29,18 @@ export function FeiranteOperations({ onBack }: { onBack: () => void }) {
   const [customHours, setCustomHours] = useState(false);
   const [newProductOpen, setNewProductOpen] = useState(false);
   const [productName, setProductName] = useState("");
+  const [accountSaved, setAccountSaved] = useState(false);
+  const [vendorAccount, setVendorAccount] = usePersistentState(`feirae:vendor-account:${session.email}`, {
+    name: session.name,
+    cpf: "",
+    birthDate: "",
+    email: session.email,
+    phone: "",
+    pixKey: "",
+    businessType: "Pessoa física",
+    cnpj: "",
+    responsibleDocument: "",
+  });
   const [vendorItems, setVendorItems] = useState([
     { id: 1, name: "Cesta de frutas", stock: 30, active: true, price: 24.9, weightKg: 4, unit: "cesta" },
     { id: 9, name: "Tomate orgânico", stock: 4, active: true, price: 8.9, weightKg: 1, unit: "kg" },
@@ -492,6 +507,126 @@ export function FeiranteOperations({ onBack }: { onBack: () => void }) {
                     </article>
                   ))}
                 </div>
+              </>
+            ) : active === "Conta" ? (
+              <>
+                <ModuleHeader
+                  badge="Dados pessoais"
+                  title="Minha conta"
+                  description="Dados do responsável pela banca, contato, repasse e identificação."
+                />
+                <form
+                  className="form-card"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setAccountSaved(true);
+                    window.setTimeout(() => setAccountSaved(false), 2200);
+                  }}
+                >
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      Nome completo
+                      <input
+                        value={vendorAccount.name}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({ ...current, name: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      CPF
+                      <input
+                        value={vendorAccount.cpf}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({ ...current, cpf: event.target.value }))
+                        }
+                        placeholder="000.000.000-00"
+                        inputMode="numeric"
+                      />
+                    </label>
+                    <label>
+                      Data de nascimento
+                      <input
+                        type="date"
+                        value={vendorAccount.birthDate}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({ ...current, birthDate: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Telefone
+                      <input
+                        value={vendorAccount.phone}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({ ...current, phone: event.target.value }))
+                        }
+                        placeholder="(61) 99999-9999"
+                      />
+                    </label>
+                  </div>
+                  <label>
+                    E-mail
+                    <input
+                      type="email"
+                      value={vendorAccount.email}
+                      onChange={(event) =>
+                        setVendorAccount((current) => ({ ...current, email: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      Tipo de cadastro
+                      <select
+                        value={vendorAccount.businessType}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({ ...current, businessType: event.target.value }))
+                        }
+                      >
+                        <option>Pessoa física</option>
+                        <option>Pessoa jurídica</option>
+                      </select>
+                    </label>
+                    <label>
+                      CNPJ (se houver)
+                      <input
+                        value={vendorAccount.cnpj}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({ ...current, cnpj: event.target.value }))
+                        }
+                        placeholder="00.000.000/0000-00"
+                      />
+                    </label>
+                    <label>
+                      Chave Pix para repasse
+                      <input
+                        value={vendorAccount.pixKey}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({ ...current, pixKey: event.target.value }))
+                        }
+                        placeholder="CPF, e-mail, telefone ou chave"
+                      />
+                    </label>
+                    <label>
+                      Documento do responsável
+                      <input
+                        value={vendorAccount.responsibleDocument}
+                        onChange={(event) =>
+                          setVendorAccount((current) => ({
+                            ...current,
+                            responsibleDocument: event.target.value,
+                          }))
+                        }
+                        placeholder="RG/CNH"
+                      />
+                    </label>
+                  </div>
+                  {accountSaved && <p className="inline-success">Dados da conta salvos neste dispositivo.</p>}
+                  <button className="primary-action" type="submit">
+                    <Edit3 size={17} /> Salvar alterações
+                  </button>
+                </form>
               </>
             ) : active === "Documentos" ? (
               <>
