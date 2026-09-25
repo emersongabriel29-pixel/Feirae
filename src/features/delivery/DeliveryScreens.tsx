@@ -163,7 +163,53 @@ export function DeliveryOperations({
       status: "available",
     },
   ]);
-  const session.isNewAccount ? [] : [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
+  const defaultDeliveryDocuments = [
+    {
+      id: "identity",
+      name: "Documento oficial com foto",
+      description: "RG, CNH ou documento oficial válido.",
+      status: "approved" as const,
+      fileName: "identidade.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "address",
+      name: "Comprovante de residência",
+      description: "Comprovante ou declaração de residência.",
+      status: "approved" as const,
+      fileName: "residencia.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "cnh",
+      name: "CNH compatível e válida",
+      description: "Obrigatória para veículos motorizados que exigem habilitação.",
+      status: "approved" as const,
+      fileName: "cnh.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "crlv",
+      name: "CRLV-e do veículo",
+      description: "Obrigatório para veículo motorizado cadastrado.",
+      status: "approved" as const,
+      fileName: "crlv.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "motofrete",
+      name: "Curso/autorização de motofrete",
+      description: "Obrigatório quando a operação usar moto/motoneta para entrega remunerada.",
+      status: "approved" as const,
+      fileName: "motofrete.pdf",
+      expiresAt: "",
+    },
+  ].map((document) =>
+    session.isNewAccount
+      ? { ...document, status: "pending" as const, fileName: "" }
+      : document,
+  );
+  const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
     {
       id: string;
       name: string;
@@ -172,48 +218,7 @@ export function DeliveryOperations({
       fileName: string;
       expiresAt: string;
     }[]
-  >(`feirae:delivery-documents:${session.email}`, [
-    {
-      id: "identity",
-      name: "Documento oficial com foto",
-      description: "RG, CNH ou documento oficial válido.",
-      status: "approved",
-      fileName: "identidade.pdf",
-      expiresAt: "",
-    },
-    {
-      id: "address",
-      name: "Comprovante de residência",
-      description: "Comprovante ou declaração de residência.",
-      status: "approved",
-      fileName: "residencia.pdf",
-      expiresAt: "",
-    },
-    {
-      id: "cnh",
-      name: "CNH compatível e válida",
-      description: "Obrigatória para veículos motorizados que exigem habilitação.",
-      status: "approved",
-      fileName: "cnh.pdf",
-      expiresAt: "",
-    },
-    {
-      id: "crlv",
-      name: "CRLV-e do veículo",
-      description: "Obrigatório para veículo motorizado cadastrado.",
-      status: "approved",
-      fileName: "crlv.pdf",
-      expiresAt: "",
-    },
-    {
-      id: "motofrete",
-      name: "Curso/autorização de motofrete",
-      description: "Obrigatório quando a operação usar moto/motoneta para entrega remunerada.",
-      status: "approved",
-      fileName: "motofrete.pdf",
-      expiresAt: "",
-    },
-  ]);
+  >(`feirae:delivery-documents:${session.email}`, defaultDeliveryDocuments);
 
   useEffect(() => {
     const baseLat = deliveryPreferences.baseLat;
