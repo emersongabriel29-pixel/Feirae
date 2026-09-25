@@ -383,37 +383,6 @@ export function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void
   );
 }
 
-export const vendorModuleDetails: Record<string, { text: string; badge: string }> = {
-  Painel: { text: "Resumo da banca, pendências e indicadores do dia.", badge: "Resumo" },
-  Pedidos: { text: "Acompanhar pedidos, preparar, cancelar e marcar coleta.", badge: "3 novos" },
-  "Minha banca": { text: "Editar banca, box, feira e status aberto/fechado.", badge: "Banca 18" },
-  Produtos: { text: "Cadastrar produtos, valores, unidade, peso e disponibilidade.", badge: "Editar" },
-  Estoque: { text: "Controlar quantidades e pausar itens esgotados.", badge: "2 alertas" },
-  Horários: { text: "Usar horário da feira ou definir dias e horários próprios.", badge: "Configurar" },
-  "Entrega/retirada": { text: "Definir retirada, entrega Feiraê e limites de peso.", badge: "Logística" },
-  Promoções: { text: "Criar ofertas e campanhas da banca.", badge: "Oferta" },
-  Financeiro: { text: "Ver vendas, taxas, custos e valores a receber.", badge: "R$" },
-  Avaliações: { text: "Notas recebidas de clientes, produtos e entregadores.", badge: "4,9 ★" },
-  Documentos: { text: "Enviar e acompanhar validação da banca.", badge: "Obrigatório" },
-};
-
-export const deliveryModuleDetails: Record<string, { text: string; badge: string }> = {
-  Painel: { text: "Resumo de disponibilidade, ganhos e rotas do dia.", badge: "Resumo" },
-  Entregas: { text: "Ver corridas disponíveis com peso, veículo e ganho.", badge: "3 disponíveis" },
-  "Em andamento": { text: "Acompanhar etapas, rota e cancelamento da corrida ativa.", badge: "Rota" },
-  Financeiro: { text: "Ganhos, taxas e histórico de repasses.", badge: "R$" },
-  Veículos: { text: "Cadastrar moto, baú ou carro e capacidade de peso.", badge: "Capacidade" },
-  "Forma de entrega": { text: "Configurar raio, preferências e tipo de entrega.", badge: "Preferências" },
-  Desempenho: { text: "Pontualidade, cancelamentos e nota média.", badge: "96%" },
-  Notificações: { text: "Avisos de corridas, pagamentos e suporte.", badge: "Avisos" },
-  Ajuda: { text: "Falar com suporte e tirar dúvidas operacionais.", badge: "Suporte" },
-  "Guia inicial": { text: "Passo a passo para começar a entregar.", badge: "Guia" },
-  "Alertas graves": { text: "Reportar acidente, pane ou endereço inseguro.", badge: "Urgente" },
-  Conta: { text: "Dados pessoais, foto, documentos e validação.", badge: "Perfil" },
-  Vantagens: { text: "Campanhas, benefícios e comunicações especiais.", badge: "Novo" },
-  Avaliações: { text: "Regras de avaliação após entrega e coleta.", badge: "Fluxo" },
-};
-
 export function ModuleHeader({ title, description, badge }: { title: string; description: string; badge?: string }) {
   return (
     <div className="module-header">
