@@ -347,6 +347,22 @@ export const initialVendorOrders: VendorOrder[] = [
   },
 ];
 
+export function newVendorBankProfile(name: string): VendorBankProfile {
+  return {
+    name: name ? `Banca de ${name}` : "Minha banca",
+    description: "",
+    fairName: "Feira do Produtor Rural",
+    box: "",
+    corridor: "",
+    reference: "",
+    categories: "",
+    phone: "",
+    whatsapp: "",
+    logoDataUrl: "",
+    coverDataUrl: "",
+  };
+}
+
 export const initialBankProfile: VendorBankProfile = {
   name: "Sítio da Vó",
   description: "Hortifruti, cestas e produtos selecionados.",
