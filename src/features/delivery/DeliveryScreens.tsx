@@ -782,16 +782,23 @@ export function DeliveryOperations({
             ) : active === "Veículos" ? (
               <>
                 <ModuleHeader
-                  badge="Capacidade"
+                  badge="Capacidade e documentação"
                   title="Meus veículos"
-                  description="Cadastre os veículos que realmente usa. A capacidade em kg pode ser ajustada conforme o seu veículo."
+                  description="Cadastre, edite, ative ou pause veículos. O peso da corrida apenas elimina veículos que não suportam a carga."
                 />
-                <button className="primary-action" onClick={() => setVehicleFormOpen((value) => !value)}>
+                <button
+                  className="primary-action"
+                  onClick={() => {
+                    if (!vehicleFormOpen) resetVehicleForm();
+                    setVehicleFormOpen((value) => !value);
+                  }}
+                >
                   <Plus size={17} /> Cadastrar veículo
                 </button>
 
                 {vehicleFormOpen && (
                   <div className="form-card">
+                    <h3>{vehicleEditingId ? "Editar veículo" : "Novo veículo"}</h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label>
                         Tipo de veículo
@@ -800,18 +807,23 @@ export function DeliveryOperations({
                           onChange={(event) => {
                             const nextType = event.target.value as DeliveryVehicleType;
                             setVehicleType(nextType);
-                            setVehicleCapacity(suggestedCapacityForVehicle(nextType));
+                            if (!vehicleEditingId) setVehicleCapacity(suggestedCapacityForVehicle(nextType));
+                            if (!requiresPlate(nextType)) {
+                              setVehiclePlate("");
+                              setVehicleDocumentName("");
+                            }
+                            setVehicleError("");
                           }}
                         >
                           {vehicleTypeOptions.map((type) => (
                             <option value={type} key={type}>
-                              {type} · sugestão {suggestedCapacityForVehicle(type)} kg
+                              {type} · referência {suggestedCapacityForVehicle(type)} kg
                             </option>
                           ))}
                         </select>
                       </label>
                       <label>
-                        Capacidade máxima usada no Feiraê
+                        Capacidade máxima deste veículo
                         <input
                           type="number"
                           min="1"
@@ -819,35 +831,65 @@ export function DeliveryOperations({
                           value={vehicleCapacity}
                           onChange={(event) => setVehicleCapacity(Number(event.target.value))}
                         />
-                        <small>Valor editável para filtrar corridas compatíveis.</small>
+                        <small>Ex.: um pedido de 10 kg pode ir em qualquer veículo ativo que suporte 10 kg ou mais.</small>
                       </label>
                       <label>
                         Marca/modelo
                         <input
                           value={vehicleBrandModel}
                           onChange={(event) => setVehicleBrandModel(event.target.value)}
-                          placeholder="Ex.: Honda CG 160"
+                          placeholder="Opcional · Ex.: Honda CG 160"
                         />
                       </label>
                       {requiresPlate(vehicleType) && (
-                        <label>
-                          Placa
-                          <input
-                            value={vehiclePlate}
-                            onChange={(event) => setVehiclePlate(event.target.value)}
-                            placeholder="ABC1D23"
-                          />
-                        </label>
+                        <>
+                          <label>
+                            Placa
+                            <input
+                              value={vehiclePlate}
+                              onChange={(event) => {
+                                setVehiclePlate(normalizePlate(event.target.value));
+                                setVehicleError("");
+                              }}
+                              placeholder="ABC1234 ou ABC1D23"
+                              maxLength={7}
+                              autoCapitalize="characters"
+                            />
+                            <small>Padrão brasileiro antigo ou Mercosul.</small>
+                          </label>
+                          <label>
+                            Documento do veículo
+                            <span className="mini-toggle">
+                              <Upload size={15} /> {vehicleDocumentName || "Selecionar CRLV/documento"}
+                              <input
+                                type="file"
+                                accept=".pdf,image/*"
+                                hidden
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  if (!file) return;
+                                  setVehicleDocumentName(file.name);
+                                  setVehicleError("");
+                                }}
+                              />
+                            </span>
+                            <small>O documento entra em análise quando for novo ou substituído.</small>
+                          </label>
+                        </>
                       )}
                     </div>
+                    {vehicleError && <p className="operation-footnote">{vehicleError}</p>}
                     <div className="module-action-row">
-                      <button type="button" className="primary-action" onClick={addVehicle}>
-                        Salvar veículo
+                      <button type="button" className="primary-action" onClick={saveVehicle}>
+                        {vehicleEditingId ? "Salvar alterações" : "Salvar veículo"}
                       </button>
                       <button
                         type="button"
                         className="secondary-action"
-                        onClick={() => setVehicleFormOpen(false)}
+                        onClick={() => {
+                          resetVehicleForm();
+                          setVehicleFormOpen(false);
+                        }}
                       >
                         Cancelar
                       </button>
@@ -862,12 +904,27 @@ export function DeliveryOperations({
                       <div>
                         <b>{vehicle.type}</b>
                         <small>
-                          Até {vehicle.capacityKg} kg
+                          Capacidade {vehicle.capacityKg} kg
                           {vehicle.brandModel ? ` · ${vehicle.brandModel}` : ""}
                           {vehicle.plate ? ` · ${vehicle.plate}` : ""}
                         </small>
+                        {requiresPlate(vehicle.type) && (
+                          <small>
+                            Documento: {vehicle.documentFileName || "não enviado"} ·{" "}
+                            {vehicle.documentStatus === "approved"
+                              ? "aprovado"
+                              : vehicle.documentStatus === "under_review"
+                                ? "em análise"
+                                : vehicle.documentStatus === "correction_required"
+                                  ? "correção necessária"
+                                  : "pendente"}
+                          </small>
+                        )}
                       </div>
                       <div className="item-actions">
+                        <button className="mini-toggle" onClick={() => editVehicle(vehicle)}>
+                          Editar
+                        </button>
                         <button
                           className={vehicle.active ? "mini-toggle active" : "mini-toggle"}
                           onClick={() =>
@@ -878,14 +935,12 @@ export function DeliveryOperations({
                             )
                           }
                         >
-                          {vehicle.active ? "Ativo" : "Pausado"}
+                          {vehicle.active ? "Ativo" : "Inativo"}
                         </button>
                         <button
                           className="mini-toggle"
                           aria-label={`Excluir ${vehicle.type}`}
-                          onClick={() =>
-                            setVehicles((current) => current.filter((item) => item.id !== vehicle.id))
-                          }
+                          onClick={() => setVehicles((current) => current.filter((item) => item.id !== vehicle.id))}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -893,46 +948,170 @@ export function DeliveryOperations({
                     </article>
                   ))}
                 </div>
-
-                <div className="surface-card">
-                  <span className="eyebrow">Referência inicial do Feiraê</span>
-                  <p>
-                    Estes valores são sugestões de operação e podem ser alterados no cadastro de cada veículo.
-                  </p>
-                  <div className="finance-breakdown">
-                    {vehicleTypeOptions
-                      .filter((type) => type !== "Outro")
-                      .map((type) => (
-                        <p key={type}>
-                          <span>{type}</span>
-                          <strong>{suggestedCapacityForVehicle(type)} kg</strong>
-                        </p>
-                      ))}
-                  </div>
-                </div>
+                {!vehicles.length && (
+                  <Empty title="Nenhum veículo cadastrado" text="Cadastre um veículo e defina a capacidade para receber corridas compatíveis." />
+                )}
               </>
             ) : active === "Forma de entrega" ? (
               <>
                 <ModuleHeader
                   badge="Preferências"
                   title="Forma de entrega"
-                  description="O app usa peso, capacidade dos veículos ativos, raio e preferências para oferecer corridas compatíveis."
+                  description="Disponibilidade, raio, regiões, distância preferida, agenda e veículos ativos determinam quais corridas chegam até você."
                 />
+
+                <div className="form-card">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <b>Estou disponível agora</b>
+                      <p>{availableNow ? "Novas corridas compatíveis podem aparecer." : "Você não receberá novas corridas agora."}</p>
+                    </div>
+                    <button
+                      className={availableNow ? "status-button active" : "status-button"}
+                      disabled={approvalStatus !== "Aprovado"}
+                      onClick={() => setOnline((value) => !value)}
+                    >
+                      {online ? "Desligar" : "Ligar"}
+                    </button>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      Raio máximo de atuação
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        step="1"
+                        value={deliveryPreferences.radiusKm}
+                        onChange={(event) =>
+                          setDeliveryPreferences((current) => ({
+                            ...current,
+                            radiusKm: Math.max(1, Number(event.target.value) || 1),
+                          }))
+                        }
+                      />
+                      <small>Até {deliveryPreferences.radiusKm} km de distância total da corrida.</small>
+                    </label>
+                    <label>
+                      Distância preferida
+                      <input
+                        type="number"
+                        min="1"
+                        max={deliveryPreferences.radiusKm}
+                        step="1"
+                        value={deliveryPreferences.preferredDistanceKm}
+                        onChange={(event) =>
+                          setDeliveryPreferences((current) => ({
+                            ...current,
+                            preferredDistanceKm: Math.max(1, Number(event.target.value) || 1),
+                          }))
+                        }
+                      />
+                      <small>Corridas até essa distância aparecem primeiro; não é um bloqueio.</small>
+                    </label>
+                  </div>
+
+                  <label>
+                    Regiões em que deseja trabalhar
+                    <input
+                      value={deliveryPreferences.regions.join(", ")}
+                      onChange={(event) =>
+                        setDeliveryPreferences((current) => ({
+                          ...current,
+                          regions: event.target.value
+                            .split(",")
+                            .map((item) => item.trim())
+                            .filter(Boolean),
+                        }))
+                      }
+                      placeholder="Planaltina, Sobradinho"
+                    />
+                    <small>Separe regiões por vírgula. Deixe vazio para não filtrar por região.</small>
+                  </label>
+
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={deliveryPreferences.autoSchedule}
+                      onChange={(event) =>
+                        setDeliveryPreferences((current) => ({
+                          ...current,
+                          autoSchedule: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>
+                      <b>Usar horário automático</b>
+                      <small className="block">Fora do horário configurado o app fica indisponível para novas corridas.</small>
+                    </span>
+                  </label>
+
+                  {deliveryPreferences.autoSchedule && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Início
+                        <input
+                          type="time"
+                          value={deliveryPreferences.scheduleStart}
+                          onChange={(event) =>
+                            setDeliveryPreferences((current) => ({
+                              ...current,
+                              scheduleStart: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Fim
+                        <input
+                          type="time"
+                          value={deliveryPreferences.scheduleEnd}
+                          onChange={(event) =>
+                            setDeliveryPreferences((current) => ({
+                              ...current,
+                              scheduleEnd: event.target.value,
+                            }))
+                          }
+                        />
+                        <small>Horários que atravessam a meia-noite também são aceitos.</small>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 <div className="operation-list detailed">
                   <article>
                     <MapPin />
                     <div>
-                      <b>Raio de atuação</b>
-                      <small>Defina posteriormente a distância máxima que deseja percorrer.</small>
+                      <b>Raio de atuação · {deliveryPreferences.radiusKm} km</b>
+                      <small>
+                        Regiões: {deliveryPreferences.regions.length ? deliveryPreferences.regions.join(", ") : "todas"} · preferência até{" "}
+                        {deliveryPreferences.preferredDistanceKm} km.
+                      </small>
                     </div>
                   </article>
                   <article>
                     <Truck />
                     <div>
-                      <b>Capacidade por veículo</b>
-                      <small>Somente veículos ativos entram no filtro de peso das corridas.</small>
+                      <b>Veículos ativos · {activeVehicles.length}</b>
+                      <small>
+                        {activeVehicles.length
+                          ? activeVehicles.map((vehicle) => `${vehicle.type} ${vehicle.capacityKg} kg`).join(" · ")
+                          : "Nenhum veículo ativo. Sem veículo compatível, a corrida não pode ser aceita."}
+                      </small>
                     </div>
+                    <button className="mini-toggle" onClick={() => setActive("Veículos")}>Gerenciar</button>
                   </article>
+                </div>
+
+                <div className="surface-card">
+                  <span className="eyebrow">Resultado dos filtros</span>
+                  <div className="operation-metrics">
+                    <article><strong>{visibleDeliveries.length}</strong><span>dentro do raio/regiões</span></article>
+                    <article><strong>{compatibleDeliveryCount}</strong><span>com peso compatível</span></article>
+                    <article><strong>{availableNow ? "Ativo" : "Pausado"}</strong><span>recebimento de corridas</span></article>
+                  </div>
                 </div>
               </>
             ) : active === "Desempenho" ? (
