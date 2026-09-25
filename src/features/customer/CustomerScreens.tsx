@@ -1177,6 +1177,7 @@ export function Checkout({
   ).filter(Boolean);
   const deliveryAllowed = stores.every((store) => store?.deliveryEnabled !== false);
   const pickupAllowed = stores.every((store) => store?.pickupEnabled !== false);
+  const storesOpen = stores.every((store) => store?.isOpen !== false);
   const fallbackDeliveryFee = Math.max(
     0,
     ...Array.from(new Set(items.map((item) => item.feirante))).map(
@@ -1203,6 +1204,7 @@ export function Checkout({
   const parsedChangeFor = Number(changeFor.replace(/[^0-9,.-]/g, "").replace(",", "."));
   const changeValid = !cashPayment || !needsChange || (Number.isFinite(parsedChangeFor) && parsedChangeFor >= total);
   const canConfirm =
+    storesOpen &&
     (fulfillment === "pickup" ? pickupAllowed : Boolean(defaultAddress) && deliveryAllowed) &&
     (!cardPayment || Boolean(selectedCardId)) &&
     changeValid;
@@ -1479,8 +1481,10 @@ export function Checkout({
           </button>
           {!canConfirm && (
             <small>
-              {!deliveryAllowed && fulfillment === "delivery"
-                ? "Uma das bancas não aceita entrega."
+              {!storesOpen
+                ? "Uma das bancas está fechada no momento."
+                : !deliveryAllowed && fulfillment === "delivery"
+                  ? "Uma das bancas não aceita entrega."
                 : !pickupAllowed && fulfillment === "pickup"
                   ? "Uma das bancas não aceita retirada."
                   : cardPayment && !selectedCardId
