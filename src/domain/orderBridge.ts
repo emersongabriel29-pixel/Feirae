@@ -60,7 +60,7 @@ export type UnifiedOrderRecord = {
     vendorToCustomerKm: number;
     totalKm: number;
     etaMinutes: number;
-    source: "routing_provider" | "local_fixture";
+    source: "routing_provider" | "local_fixture" | "osrm";
   };
   events: UnifiedOrderEvent[];
 };
