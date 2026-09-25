@@ -1159,6 +1159,7 @@ export function Checkout({
   const [needsChange, setNeedsChange] = useState(false);
   const [changeFor, setChangeFor] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
+  const [couponCode, setCouponCode] = useState("");
   const [useWallet, setUseWallet] = useState(false);
   const [addresses] = usePersistentState<Address[]>(scopedStorageKey("feirae:addresses"), []);
   const [cards] = usePersistentState<
@@ -1188,7 +1189,7 @@ export function Checkout({
     ),
   );
   const calculatedDeliveryFee = fulfillment === "delivery" ? fallbackDeliveryFee : 0;
-  const promotionResult = calculateCheckoutPromotions(items, cart, calculatedDeliveryFee);
+  const promotionResult = calculateCheckoutPromotions(items, cart, calculatedDeliveryFee, couponCode);
   const promotionDiscount = promotionResult.promotionDiscount;
   const deliverySubsidy =
     fulfillment === "delivery"
@@ -1359,6 +1360,20 @@ export function Checkout({
               </div>
             )}
           </Step>
+
+          <div className="form-card compact">
+            <label>
+              Cupom
+              <input
+                value={couponCode}
+                onChange={(event) => setCouponCode(event.target.value.toLocaleUpperCase("pt-BR"))}
+                placeholder="Digite o código, se tiver"
+              />
+            </label>
+            {couponCode && promotionResult.appliedPromotions.length === 0 && (
+              <small>Nenhum cupom válido foi aplicado a este carrinho.</small>
+            )}
+          </div>
 
           {availableWallet > 0 && (
             <div className="form-card compact">
