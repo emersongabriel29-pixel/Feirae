@@ -1052,7 +1052,11 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
   }
 
   return (
-    <Panel title="Minha conta" subtitle="Dados pessoais, contato, endereço e segurança da sua conta." onBack={onBack}>
+    <Panel
+      title="Minha conta"
+      subtitle="Dados pessoais, contato, endereço e segurança da sua conta."
+      onBack={onBack}
+    >
       <form className="form-card max-w-2xl" onSubmit={submit}>
         <div className="grid gap-3 sm:grid-cols-2">
           <label>
