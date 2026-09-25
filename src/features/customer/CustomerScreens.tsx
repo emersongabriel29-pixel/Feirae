@@ -1149,6 +1149,7 @@ export function Checkout({
       customerDeliveryFee: number;
       promotionDiscount: number;
       walletUsed: number;
+      appliedPromotions: string[];
       changeFor?: number;
     },
   ) => void;
@@ -1476,6 +1477,7 @@ export function Checkout({
                 customerDeliveryFee,
                 promotionDiscount,
                 walletUsed,
+                appliedPromotions: promotionResult.appliedPromotions,
                 changeFor: cashPayment && needsChange && Number.isFinite(parsedChangeFor) ? parsedChangeFor : undefined,
               })
             }
