@@ -31,6 +31,7 @@ import {
 } from "../../domain/vehicles";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
+import { useUnifiedOrderRevision } from "../../hooks/useUnifiedOrderRevision";
 import { money } from "../../utils";
 import { consumeInventory } from "../../domain/inventoryBridge";
 import {
@@ -50,6 +51,7 @@ export function DeliveryOperations({
   onBack: () => void;
   onMap: (destination?: string) => void;
 }) {
+  const unifiedOrderRevision = useUnifiedOrderRevision();
   const modules = [
     "Painel",
     "Entregas",
@@ -419,6 +421,7 @@ export function DeliveryOperations({
     },
   ];
   const sharedOrders = readUnifiedOrders();
+  void unifiedOrderRevision;
   const deliveredReviewOrders = sharedOrders.filter(
     (order) =>
       order.status === "delivered" &&
