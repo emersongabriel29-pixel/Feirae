@@ -974,23 +974,66 @@ export function DeliveryOperations({
             ) : active === "Forma de entrega" ? (
               <>
                 <ModuleHeader
-                  badge="Preferências"
+                  badge="Área e preferência"
                   title="Forma de entrega"
-                  description="O app usa peso, capacidade dos veículos ativos, raio e preferências para oferecer corridas compatíveis."
+                  description="Selecione onde deseja coletar pedidos e a distância máxima até a feira."
                 />
+                <div className="surface-card">
+                  <span className="eyebrow">Áreas de coleta</span>
+                  <p>
+                    Uma corrida só aparece se a feira de origem estiver em uma área marcada. Ex.: entregador
+                    de Planaltina não recebe coleta de Sobradinho sem habilitar Sobradinho.
+                  </p>
+                  <div className="choice-grid">
+                    {deliveryAreas.map((area) => (
+                      <label className="choice-line" key={area}>
+                        <input
+                          type="checkbox"
+                          checked={serviceAreas.includes(area)}
+                          onChange={(event) =>
+                            setServiceAreas((current) =>
+                              event.target.checked
+                                ? [...new Set([...current, area])]
+                                : current.filter((item) => item !== area),
+                            )
+                          }
+                        />
+                        <span>{area}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <label>
+                  Distância máxima até a coleta
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    step="1"
+                    value={maxPickupDistanceKm}
+                    onChange={(event) => setMaxPickupDistanceKm(Number(event.target.value))}
+                  />
+                  <small>Corridas com a feira além desse limite ficam indisponíveis.</small>
+                </label>
                 <div className="operation-list detailed">
-                  <article>
-                    <MapPin />
-                    <div>
-                      <b>Raio de atuação</b>
-                      <small>Defina posteriormente a distância máxima que deseja percorrer.</small>
-                    </div>
-                  </article>
                   <article>
                     <Truck />
                     <div>
-                      <b>Capacidade por veículo</b>
-                      <small>Somente veículos ativos entram no filtro de peso das corridas.</small>
+                      <b>Uma rota ativa por vez no MVP</b>
+                      <small>
+                        Evita atraso e desvio. Rota combinada ficará para fase futura e só poderá juntar pedidos
+                        da mesma feira/direção, respeitando peso, SLA e desvio máximo.
+                      </small>
+                    </div>
+                  </article>
+                  <article>
+                    <MapPin />
+                    <div>
+                      <b>{serviceAreas.join(", ") || "Nenhuma área selecionada"}</b>
+                      <small>
+                        {maxPickupDistanceKm} km máximos até a coleta · {compatibleDeliveryCount} corrida(s)
+                        disponível(is) agora.
+                      </small>
                     </div>
                   </article>
                 </div>
