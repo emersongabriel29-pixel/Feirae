@@ -589,39 +589,6 @@ export function DeliveryOperations({
     </div>
   );
   return (
-            <article className="delivery-row" key={delivery.id}>
-              <span>
-                <Bike />
-              </span>
-              <div>
-                <b>
-                  {delivery.id} · {delivery.route}
-                </b>
-                <small>
-                  {delivery.distance} · {delivery.weight} kg ·{" "}
-                  {compatibleVehicle
-                    ? `compatível com ${compatibleVehicle.type} (${compatibleVehicle.capacityKg} kg)`
-                    : "sem veículo ativo compatível"}{" "}
-                  · ganho {delivery.fee}
-                </small>
-              </div>
-              <button
-                disabled={!online || approvalStatus !== "Aprovado" || accepted !== null || !compatibleVehicle}
-                onClick={() => {
-                  if (!compatibleVehicle) return;
-                  setAccepted(delivery.id);
-                  setStage(0);
-                  setActive("Em andamento");
-                }}
-              >
-                {compatibleVehicle ? "Aceitar" : "Veículo incompatível"}
-              </button>
-            </article>
-          );
-        })}
-    </div>
-  );
-  return (
     <Panel title="Central do entregador" subtitle="Entregas locais demonstrativas" onBack={onBack}>
       {active === "Central" ? (
         <div className="ops-home">
