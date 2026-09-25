@@ -711,7 +711,7 @@ export function DeliveryOperations({
                   </article>
                   <article>
                     <strong>{money(paidAmount)}</strong>
-                    <span>já pago na demonstração</span>
+                    <span>já liquidado</span>
                   </article>
                 </div>
                 <div className="finance-breakdown">
@@ -1145,7 +1145,7 @@ export function DeliveryOperations({
                       <Check />
                       <div>
                         <b>{item}</b>
-                        <small>Baseado nas últimas entregas demonstrativas.</small>
+                        <small>Baseado nas últimas entregas registradas.</small>
                       </div>
                     </article>
                   ))}
@@ -1318,7 +1318,7 @@ export function DeliveryOperations({
                       <span>{index + 1}</span>
                       <div>
                         <b>{step}</b>
-                        <small>Etapa demonstrativa para orientar o entregador.</small>
+                        <small>Etapa operacional para orientar o entregador.</small>
                       </div>
                     </article>
                   ))}
@@ -1603,7 +1603,7 @@ export function DeliveryOperations({
                   <span>🎁</span>
                   <div>
                     <b>Bônus por horário de feira</b>
-                    <small>Complete 5 entregas entre 7h e 11h para liberar bônus demonstrativo.</small>
+                    <small>Complete 5 entregas entre 7h e 11h para liberar bônus da campanha.</small>
                   </div>
                   <span className="document-status">Novo</span>
                 </div>
