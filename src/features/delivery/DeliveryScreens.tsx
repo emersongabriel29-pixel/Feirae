@@ -1519,8 +1519,9 @@ export function DeliveryOperations({
                                 <button
                                   className="primary-action"
                                   onClick={() => {
+                                    const reviewSequence = (order.reviews?.length ?? 0) + 1;
                                     appendReview(order.id, {
-                                      id: `delivery-customer-${order.id}-${Date.now()}`,
+                                      id: `delivery-customer-${order.id}-${reviewSequence}`,
                                       authorRole: "delivery",
                                       targetRole: "customer",
                                       targetId: order.customerKey,
@@ -1530,7 +1531,7 @@ export function DeliveryOperations({
                                     });
                                     for (const vendor of order.vendors ?? []) {
                                       appendReview(order.id, {
-                                        id: `delivery-vendor-${vendor.vendorId}-${Date.now()}`,
+                                        id: `delivery-vendor-${vendor.vendorId}-${reviewSequence}`,
                                         authorRole: "delivery",
                                         targetRole: "vendor",
                                         targetId: vendor.vendorId,
@@ -1593,7 +1594,7 @@ export function DeliveryOperations({
                         disabled={!activeDelivery}
                         onClick={() => {
                           if (!activeDelivery) return;
-                          const ticketId = `URG-${Date.now()}`;
+                          const ticketId = `URG-${activeDelivery.id}-${incidentNotice ? 2 : 1}`;
                           appendSupportTicket(activeDelivery.id, {
                             id: ticketId,
                             actor: "delivery",
