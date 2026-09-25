@@ -427,7 +427,7 @@ describe("Feiraê role access", () => {
 
     expect(screen.getByText(/taxa feiraê/i)).toBeInTheDocument();
     expect(screen.getAllByText(/a definir/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/depende do provedor/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/depende do provedor/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /cadastrar destino de recebimento/i })).toBeInTheDocument();
   });
 
@@ -438,7 +438,7 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /^financeiro$/i }));
 
     expect(screen.getByText(/vendas hoje/i)).toBeInTheDocument();
-    expect(screen.getByText(/ticket médio/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/ticket médio/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/vs. mês anterior/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /produtos mais vendidos/i })).toBeInTheDocument();
     expect(screen.getByText(/frete patrocinado/i)).toBeInTheDocument();
