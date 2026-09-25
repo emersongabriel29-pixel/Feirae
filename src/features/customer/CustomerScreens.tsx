@@ -321,7 +321,7 @@ export function CatalogPage({
             <ProductCard
               key={product.id}
               product={product}
-              onAdd={sharedStore?.isOpen === false ? () => undefined : onAdd}
+              onAdd={onAdd}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
             />
