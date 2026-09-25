@@ -28,7 +28,8 @@ export const deliveryModuleDetails: Record<string, { text: string; badge: string
   Ajuda: { text: "Falar com suporte e tirar dúvidas operacionais.", badge: "Suporte" },
   "Guia inicial": { text: "Passo a passo para começar a entregar.", badge: "Guia" },
   "Alertas graves": { text: "Reportar acidente, pane ou endereço inseguro.", badge: "Urgente" },
-  Conta: { text: "Dados pessoais, foto, documentos e validação.", badge: "Perfil" },
+  Conta: { text: "Dados pessoais, recebimento, endereço e habilitação.", badge: "Perfil" },
+  Documentos: { text: "Enviar documentos e acompanhar aprovação para operar.", badge: "Aprovação" },
   Vantagens: { text: "Campanhas, benefícios e comunicações especiais.", badge: "Novo" },
   Avaliações: { text: "Regras de avaliação após entrega e coleta.", badge: "Fluxo" },
 };
