@@ -289,7 +289,8 @@ describe("Feiraê customer flow", () => {
     expect(created.fulfillment).toBe("pickup");
     expect(created.status).toBe("received");
 
-    fireEvent.click(screen.getByRole("button", { name: /sair/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /sair da conta/i }));
     loginAs("feirante");
     fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
