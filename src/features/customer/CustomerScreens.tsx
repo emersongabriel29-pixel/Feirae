@@ -809,9 +809,10 @@ export function DeliveryTracking({
     if (alreadyReviewed || reviewSaved) return;
     const now = new Date().toISOString();
     const vendorName = unifiedOrder?.vendors?.[0]?.vendorName ?? order.fairName ?? "Banca";
+    const reviewSequence = reviews.filter((review) => review.orderId === order.id).length + 1;
     const entries = [
       {
-        id: `customer-product-${order.id}-${Date.now()}`,
+        id: `customer-product-${order.id}-${reviewSequence}`,
         type: "Produto",
         target: unifiedOrder?.items[0]?.name ?? "Pedido",
         orderId: order.id,
@@ -819,7 +820,7 @@ export function DeliveryTracking({
         text: reviewComment.trim(),
       },
       {
-        id: `customer-vendor-${order.id}-${Date.now()}`,
+        id: `customer-vendor-${order.id}-${reviewSequence}`,
         type: "Banca",
         target: vendorName,
         orderId: order.id,
@@ -827,7 +828,7 @@ export function DeliveryTracking({
         text: reviewComment.trim(),
       },
       {
-        id: `customer-delivery-${order.id}-${Date.now()}`,
+        id: `customer-delivery-${order.id}-${reviewSequence}`,
         type: "Entrega",
         target: unifiedOrder?.driver?.name ?? "Entrega",
         orderId: order.id,
@@ -974,7 +975,7 @@ export function DeliveryTracking({
                 onClick={() => {
                   if (needsSupport) {
                     appendSupportTicket(order.id, {
-                      id: `SUP-${Date.now()}`,
+                      id: `SUP-${order.id}-${(unifiedOrder?.supportTickets?.length ?? 0) + 1}`,
                       actor: "customer",
                       topic: cancelReason,
                       details: cancelDetails.trim(),
@@ -2286,7 +2287,7 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
   function submitPendingReview(order: DemoOrder) {
     const unified = readUnifiedOrders().find((item) => item.id === order.id);
     const vendor = unified?.vendors?.[0]?.vendorName ?? order.fairName ?? "Banca";
-    const id = `review-${order.id}-${Date.now()}`;
+    const id = `review-${order.id}-${reviews.filter((review) => review.orderId === order.id).length + 1}`;
     const entry = {
       id,
       type: "Pedido",
