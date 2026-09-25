@@ -46,7 +46,6 @@ O Feiraê tem uma proposta de produto clara, boa diferenciação entre cliente, 
 
 O MVP só deve ser promovido quando houver autenticação real, autorização por papel, persistência server-side, estoque transacional, cálculo de preço no servidor, histórico de pedidos, tratamento de falhas e observabilidade mínima. A experiência atual deve continuar identificada como demo até esses critérios serem atendidos.
 
-
 ## Auditoria funcional do fluxo Feirante/Entregador — 25/09/2026
 
 ### P0 — financeiro sem fluxo de liquidação definido
