@@ -166,9 +166,7 @@ describe("Feiraê customer flow", () => {
     fireEvent.change(search, { target: { value: "bolsa artesanal" } });
     fireEvent.click(screen.getByRole("button", { name: /adicionar bolsa artesanal/i }));
 
-    expect(
-      screen.getByText(/sua sacola é da feira do produtor rural/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/sua sacola é da feira do produtor rural/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /abrir sacola com 1 itens/i })).toBeInTheDocument();
   });
 
