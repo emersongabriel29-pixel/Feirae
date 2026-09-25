@@ -70,6 +70,12 @@ O componente raiz coordena a demonstração e a composição das telas, enquanto
 
 Para a revisão formal, os riscos conhecidos e os comentários de PR estão em [docs/TECHNICAL_REVIEW.md](docs/TECHNICAL_REVIEW.md). O plano de transformação do protótipo em MVP está em [docs/MVP_CHECKLIST.md](docs/MVP_CHECKLIST.md).
 
+## Documentação
+
+A documentação funcional e técnica está centralizada em [docs/README.md](docs/README.md).
+
+Os documentos registram arquitetura, regras de negócio, fluxos dos três perfis, modelo de dados, pagamentos/taxas, entrega, sistema de design e decisões de produto. Eles devem ser atualizados junto com mudanças que alterem comportamento.
+
 ## Desenvolvimento
 
 ```bash
