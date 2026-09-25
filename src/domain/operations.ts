@@ -9,6 +9,7 @@ export const vendorModuleDetails: Record<string, { text: string; badge: string }
   Promoções: { text: "Criar ofertas e campanhas da banca.", badge: "Oferta" },
   Financeiro: { text: "Ver vendas, taxas, custos e valores a receber.", badge: "R$" },
   Avaliações: { text: "Notas recebidas de clientes, produtos e entregadores.", badge: "4,9 ★" },
+  Conta: { text: "Dados pessoais, CPF/CNPJ, contato e repasse do responsável.", badge: "Perfil" },
   Documentos: { text: "Enviar e acompanhar validação da banca.", badge: "Obrigatório" },
 };
 
@@ -17,7 +18,7 @@ export const deliveryModuleDetails: Record<string, { text: string; badge: string
   Entregas: { text: "Ver corridas disponíveis com peso, veículo e ganho.", badge: "3 disponíveis" },
   "Em andamento": { text: "Acompanhar etapas, rota e cancelamento da corrida ativa.", badge: "Rota" },
   Financeiro: { text: "Ganhos, taxas e histórico de repasses.", badge: "R$" },
-  Veículos: { text: "Cadastrar moto, baú ou carro e capacidade de peso.", badge: "Capacidade" },
+  Veículos: { text: "Cadastrar bicicleta, moto, carro, utilitário, van ou outro e definir capacidade.", badge: "Capacidade" },
   "Forma de entrega": { text: "Configurar raio, preferências e tipo de entrega.", badge: "Preferências" },
   Desempenho: { text: "Pontualidade, cancelamentos e nota média.", badge: "96%" },
   Notificações: { text: "Avisos de corridas, pagamentos e suporte.", badge: "Avisos" },
