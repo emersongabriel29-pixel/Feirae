@@ -18,6 +18,8 @@ import {
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
 import { deliveryModuleDetails } from "../../domain/operations";
 import {
+  isValidBrazilianPlate,
+  normalizePlate,
   requiresPlate,
   suggestedCapacityForVehicle,
   vehicleTypeOptions,
@@ -54,7 +56,18 @@ export function DeliveryOperations({
     "Vantagens",
     "Avaliações",
   ];
-  const [online, setOnline] = useState(true);
+  const [online, setOnline] = usePersistentState<boolean>(`feirae:delivery-online:${session.email}`, true);
+  const [deliveryPreferences, setDeliveryPreferences] = usePersistentState(
+    `feirae:delivery-preferences:${session.email}`,
+    {
+      radiusKm: 12,
+      preferredDistanceKm: 8,
+      regions: ["Planaltina"],
+      autoSchedule: false,
+      scheduleStart: "08:00",
+      scheduleEnd: "18:00",
+    },
+  );
   const [accepted, setAccepted] = useState<string | null>(null);
   const [stage, setStage] = useState(0);
   const [cancelReason, setCancelReason] = useState("");
@@ -63,6 +76,9 @@ export function DeliveryOperations({
   const [helpProtocol, setHelpProtocol] = useState("");
   const [accountSaved, setAccountSaved] = useState(false);
   const [vehicleFormOpen, setVehicleFormOpen] = useState(false);
+  const [vehicleEditingId, setVehicleEditingId] = useState<string | null>(null);
+  const [vehicleError, setVehicleError] = useState("");
+  const [vehicleDocumentName, setVehicleDocumentName] = useState("");
   const [vehicleType, setVehicleType] = useState<DeliveryVehicleType>("Moto");
   const [vehicleCapacity, setVehicleCapacity] = useState<number>(suggestedCapacityForVehicle("Moto"));
   const [vehicleBrandModel, setVehicleBrandModel] = useState("");
@@ -97,6 +113,8 @@ export function DeliveryOperations({
         brandModel: "",
         plate: "",
         active: true,
+        documentFileName: "crlv-demo.pdf",
+        documentStatus: "approved",
       },
     ],
   );
@@ -177,49 +195,129 @@ export function DeliveryOperations({
     },
   ]);
 
-  function addVehicle() {
-    setVehicles((current) => [
-      ...current,
-      {
-        id: String(Date.now()),
-        type: vehicleType,
-        capacityKg: Math.max(1, vehicleCapacity),
-        brandModel: vehicleBrandModel.trim(),
-        plate: vehiclePlate.trim().toUpperCase(),
-        active: true,
-      },
-    ]);
+  function resetVehicleForm() {
+    setVehicleEditingId(null);
+    setVehicleType("Moto");
+    setVehicleCapacity(suggestedCapacityForVehicle("Moto"));
     setVehicleBrandModel("");
     setVehiclePlate("");
+    setVehicleDocumentName("");
+    setVehicleError("");
+  }
+
+  function editVehicle(vehicle: DeliveryVehicle) {
+    setVehicleEditingId(vehicle.id);
+    setVehicleType(vehicle.type);
+    setVehicleCapacity(vehicle.capacityKg);
+    setVehicleBrandModel(vehicle.brandModel);
+    setVehiclePlate(vehicle.plate);
+    setVehicleDocumentName(vehicle.documentFileName ?? "");
+    setVehicleError("");
+    setVehicleFormOpen(true);
+  }
+
+  function saveVehicle() {
+    const plate = normalizePlate(vehiclePlate);
+    if (vehicleCapacity <= 0) {
+      setVehicleError("Informe uma capacidade maior que zero.");
+      return;
+    }
+    if (requiresPlate(vehicleType) && !isValidBrazilianPlate(plate)) {
+      setVehicleError("Informe uma placa brasileira válida no padrão ABC1234 ou Mercosul ABC1D23.");
+      return;
+    }
+    if (requiresPlate(vehicleType) && !vehicleDocumentName) {
+      setVehicleError("Envie o documento do veículo antes de salvar.");
+      return;
+    }
+
+    const nextVehicle: DeliveryVehicle = {
+      id: vehicleEditingId ?? String(Date.now()),
+      type: vehicleType,
+      capacityKg: Math.max(1, vehicleCapacity),
+      brandModel: vehicleBrandModel.trim(),
+      plate: requiresPlate(vehicleType) ? plate : "",
+      active: vehicleEditingId
+        ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.active ?? true
+        : true,
+      documentFileName: requiresPlate(vehicleType) ? vehicleDocumentName : "",
+      documentStatus: requiresPlate(vehicleType)
+        ? vehicleEditingId
+          ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFileName === vehicleDocumentName
+            ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentStatus ?? "under_review"
+            : "under_review"
+          : "under_review"
+        : "approved",
+    };
+
+    setVehicles((current) =>
+      vehicleEditingId
+        ? current.map((vehicle) => (vehicle.id === vehicleEditingId ? nextVehicle : vehicle))
+        : [...current, nextVehicle],
+    );
+    resetVehicleForm();
     setVehicleFormOpen(false);
   }
   const deliveries = [
     {
       id: "FE-1024",
-      route: "Feira do Produtor → Planaltina",
-      distance: "4,2 km",
+      fair: "Feira do Produtor Rural",
+      bank: "Sítio da Vó",
+      region: "Planaltina",
+      route: "Feira do Produtor Rural → Planaltina",
+      toBankKm: 1.4,
+      bankToCustomerKm: 4.2,
+      totalDistanceKm: 5.6,
+      etaMinutes: 24,
       fee: "R$ 12,80",
       feeAmount: 12.8,
       weight: 8.4,
-      vehicle: "Moto",
+      items: ["1× cesta de frutas", "2× tomate orgânico", "2× cheiro-verde"],
     },
     {
       id: "FE-1025",
+      fair: "Feira Central",
+      bank: "Banca do Cerrado",
+      region: "Asa Norte",
       route: "Feira Central → Asa Norte",
-      distance: "6,8 km",
+      toBankKm: 2.1,
+      bankToCustomerKm: 6.8,
+      totalDistanceKm: 8.9,
+      etaMinutes: 36,
       fee: "R$ 17,40",
       feeAmount: 17.4,
       weight: 16.8,
-      vehicle: "Moto com baú",
+      items: ["2× caixas de hortifruti", "1× queijo artesanal"],
     },
     {
       id: "FE-1026",
-      route: "Feira da Torre → Sudoeste",
-      distance: "5,1 km",
+      fair: "Feira da Torre de TV",
+      bank: "Mãos do DF",
+      region: "Sudoeste",
+      route: "Feira da Torre de TV → Sudoeste",
+      toBankKm: 3.4,
+      bankToCustomerKm: 5.1,
+      totalDistanceKm: 8.5,
+      etaMinutes: 33,
       fee: "R$ 24,20",
       feeAmount: 24.2,
       weight: 31.5,
-      vehicle: "Carro",
+      items: ["4× bolsas artesanais", "2× caixas"],
+    },
+    {
+      id: "FE-1027",
+      fair: "Feira do Produtor Rural",
+      bank: "Atacado da Feira",
+      region: "Planaltina",
+      route: "Feira do Produtor Rural → Planaltina",
+      toBankKm: 5.2,
+      bankToCustomerKm: 10.8,
+      totalDistanceKm: 16,
+      etaMinutes: 48,
+      fee: "R$ 31,50",
+      feeAmount: 31.5,
+      weight: 105,
+      items: ["10× caixas de frutas", "5× sacos de hortaliças"],
     },
   ];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
@@ -265,11 +363,35 @@ export function DeliveryOperations({
     deliveryAccount.receivingMethod === "Pix"
       ? Boolean(deliveryAccount.pixKey)
       : Boolean(deliveryAccount.bankName && deliveryAccount.agency && deliveryAccount.accountNumber);
+  const scheduleAllowsNow = (() => {
+    if (!deliveryPreferences.autoSchedule) return true;
+    const now = new Date();
+    const current = now.getHours() * 60 + now.getMinutes();
+    const [startHour, startMinute] = deliveryPreferences.scheduleStart.split(":").map(Number);
+    const [endHour, endMinute] = deliveryPreferences.scheduleEnd.split(":").map(Number);
+    const start = startHour * 60 + startMinute;
+    const end = endHour * 60 + endMinute;
+    return end >= start ? current >= start && current <= end : current >= start || current <= end;
+  })();
+  const availableNow = online && scheduleAllowsNow && approvalStatus === "Aprovado";
+  const vehicleReady = (vehicle: DeliveryVehicle) =>
+    !requiresPlate(vehicle.type) || vehicle.documentStatus === "approved";
   const compatibleVehicleForWeight = (weight: number) =>
     [...activeVehicles]
-      .filter((vehicle) => vehicle.capacityKg >= weight)
+      .filter((vehicle) => vehicle.capacityKg >= weight && vehicleReady(vehicle))
       .sort((a, b) => a.capacityKg - b.capacityKg)[0] ?? null;
-  const compatibleDeliveryCount = deliveries.filter((delivery) =>
+  const visibleDeliveries = deliveries
+    .filter((delivery) => delivery.totalDistanceKm <= deliveryPreferences.radiusKm)
+    .filter(
+      (delivery) =>
+        deliveryPreferences.regions.length === 0 || deliveryPreferences.regions.includes(delivery.region),
+    )
+    .sort((a, b) => {
+      const aPreferred = a.totalDistanceKm <= deliveryPreferences.preferredDistanceKm ? 0 : 1;
+      const bPreferred = b.totalDistanceKm <= deliveryPreferences.preferredDistanceKm ? 0 : 1;
+      return aPreferred - bPreferred || a.totalDistanceKm - b.totalDistanceKm;
+    });
+  const compatibleDeliveryCount = visibleDeliveries.filter((delivery) =>
     compatibleVehicleForWeight(delivery.weight),
   ).length;
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
