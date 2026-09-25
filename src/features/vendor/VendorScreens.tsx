@@ -935,18 +935,47 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       Marcar pedido como pronto para coleta
                     </button>
                   )}
-                  {selectedOrder.status === "ready_for_pickup" && (
-                    <div className="region-strip">
-                      <Truck size={18} />
-                      <div>
-                        <b>Aguardando entregador</b>
-                        <p>
-                          O feirante terminou sua etapa. Coleta, rota e entrega pertencem ao fluxo do
-                          entregador.
-                        </p>
+                  {selectedOrder.status === "ready_for_pickup" &&
+                    (selectedOrder.fulfillment === "pickup" ? (
+                      <div className="surface-card">
+                        <span className="eyebrow">Retirada na banca</span>
+                        <b>Pedido pronto para o cliente</b>
+                        <p>Confirme somente quando o pedido tiver sido entregue ao cliente no balcão.</p>
+                        <button
+                          className="primary-action"
+                          onClick={() => {
+                            updateOrder(selectedOrder.id, { status: "delivered" });
+                            patchVendorStatus(
+                              selectedOrder.id,
+                              selectedOrder.vendorId ?? vendorIdFor(session.email),
+                              "delivered",
+                            );
+                            patchUnifiedOrder(
+                              selectedOrder.id,
+                              {
+                                status: "delivered",
+                                pickupConfirmedAt: new Date().toISOString(),
+                              },
+                              eventNow("pickup-complete", "Retirado na banca", "vendor"),
+                            );
+                            showNotice(`Retirada do pedido ${selectedOrder.id} confirmada.`);
+                          }}
+                        >
+                          <Check size={17} /> Confirmar retirada pelo cliente
+                        </button>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="region-strip">
+                        <Truck size={18} />
+                        <div>
+                          <b>Aguardando entregador</b>
+                          <p>
+                            Sua parte está pronta. A corrida só é liberada quando todas as bancas do pedido
+                            estiverem prontas.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   {selectedOrder.status === "collected" && (
                     <p className="inline-success">
                       Coleta confirmada pelo fluxo logístico. O feirante não altera mais o status da entrega.
