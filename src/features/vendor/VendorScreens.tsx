@@ -250,6 +250,16 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
+    setPromotions((current) =>
+      current.filter(
+        (promotion) =>
+          !/também quero/i.test(promotion.name) &&
+          !/isso funciona\??/i.test(promotion.rule),
+      ),
+    );
+  }, [setPromotions]);
+
+  useEffect(() => {
     const sharedOrders = readUnifiedOrders().filter(
       (order) =>
         order.fairName === bankProfile.fairName &&
