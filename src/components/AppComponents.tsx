@@ -383,7 +383,15 @@ export function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void
   );
 }
 
-export function ModuleHeader({ title, description, badge }: { title: string; description: string; badge?: string }) {
+export function ModuleHeader({
+  title,
+  description,
+  badge,
+}: {
+  title: string;
+  description: string;
+  badge?: string;
+}) {
   return (
     <div className="module-header">
       <div>
@@ -534,7 +542,13 @@ export function CartDrawer({
     </div>
   );
 }
-export function MobileNavigation({ active, onTab }: { active: CustomerTab; onTab: (tab: CustomerTab) => void }) {
+export function MobileNavigation({
+  active,
+  onTab,
+}: {
+  active: CustomerTab;
+  onTab: (tab: CustomerTab) => void;
+}) {
   const items: Array<[CustomerTab, string, ReactNode]> = [
     ["home", "Início", <Home />],
     ["fairs", "Feiras", <Store />],
