@@ -43,6 +43,7 @@ import {
   initialVendorPromotions,
   initialVendorReviews,
   initialVendorSchedule,
+  newVendorBankProfile,
   productCategories,
   productSaleUnits,
   vendorDocumentStatusLabel,
@@ -174,21 +175,22 @@ function promotionStatus(promotion: VendorPromotion) {
 export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
   const unifiedOrderRevision = useUnifiedOrderRevision();
   const [active, setActive] = useState("Central");
+  const seedDemoData = session.email.endsWith("@feirae.test") && !session.isNewAccount;
   const [storeOpen, setStoreOpen] = usePersistentState<boolean>(
     `feirae:vendor-store-open:${session.email}`,
-    true,
+    seedDemoData,
   );
   const [vendorItems, setVendorItems] = usePersistentState<VendorProduct[]>(
     `feirae:vendor-products:${session.email}`,
-    initialVendorProducts,
+    seedDemoData ? initialVendorProducts : [],
   );
   const [orders, setOrders] = usePersistentState<VendorOrder[]>(
     `feirae:vendor-orders:${session.email}`,
-    initialVendorOrders,
+    seedDemoData ? initialVendorOrders : [],
   );
   const [bankProfile, setBankProfile] = usePersistentState<VendorBankProfile>(
     `feirae:vendor-bank:${session.email}`,
-    initialBankProfile,
+    seedDemoData ? initialBankProfile : newVendorBankProfile(session.name),
   );
   const [useFairHours, setUseFairHours] = usePersistentState<boolean>(
     `feirae:vendor-use-fair-hours:${session.email}`,
@@ -211,11 +213,11 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   );
   const [promotions, setPromotions] = usePersistentState<VendorPromotion[]>(
     `feirae:vendor-promotions:${session.email}`,
-    initialVendorPromotions,
+    seedDemoData ? initialVendorPromotions : [],
   );
   const [reviews, setReviews] = usePersistentState<VendorReview[]>(
     `feirae:vendor-reviews:${session.email}`,
-    initialVendorReviews,
+    seedDemoData ? initialVendorReviews : [],
   );
   const [documents, setDocuments] = usePersistentState<VendorDocument[]>(
     `feirae:vendor-documents:${session.email}`,
