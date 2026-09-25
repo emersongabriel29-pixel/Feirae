@@ -14,6 +14,7 @@ account_created
 ```
 
 Alternativas:
+
 - correction_required;
 - rejected;
 - suspended;
@@ -22,6 +23,7 @@ Alternativas:
 Enquanto não estiver `approved`:
 
 ### Feirante
+
 - pode completar perfil;
 - pode cadastrar rascunho de banca/produtos;
 - não pode publicar/vender;
@@ -29,6 +31,7 @@ Enquanto não estiver `approved`:
 - não recebe repasses.
 
 ### Entregador
+
 - pode completar perfil/veículos;
 - não fica online;
 - não aceita corrida;
@@ -39,6 +42,7 @@ Enquanto não estiver `approved`:
 ### Identidade básica
 
 Solicitar:
+
 - documento oficial com foto;
 - CPF;
 - selfie/verificação de identidade na fase KYC real;
@@ -49,6 +53,7 @@ Solicitar:
 ### Direito de operar na feira
 
 Campo obrigatório para feira pública:
+
 - feira;
 - box/banca;
 - número/localização;
@@ -63,6 +68,7 @@ A Lei distrital nº 6.956/2021 estabelece que só pode comercializar em feira p�
 O cadastro pode ser PF quando admitido pela regra da feira.
 
 Coletar:
+
 - CPF;
 - identidade;
 - comprovante de residência;
@@ -72,6 +78,7 @@ Coletar:
 ### Pessoa jurídica
 
 Além dos itens do responsável:
+
 - CNPJ;
 - razão social/nome fantasia;
 - CF/DF quando aplicável;
@@ -82,6 +89,7 @@ Além dos itens do responsável:
 ### Evidências usadas em editais oficiais de feiras do DF
 
 Editais/projetos oficiais recentes listam, entre outros:
+
 - ficha de inscrição;
 - foto recente;
 - documento oficial com foto;
@@ -94,6 +102,7 @@ Editais/projetos oficiais recentes listam, entre outros:
 - declarações exigidas pelo edital.
 
 No Feiraê, esses documentos devem ser separados em:
+
 1. **obrigatórios para ativação na plataforma**;
 2. **documentos oficiais da permissão/licitação**, que podem variar por feira/editais.
 
@@ -104,6 +113,7 @@ Não exigir uma certidão só porque apareceu em um edital antigo sem conferir s
 Quando a atividade exigir, pedir os documentos/licenças sanitárias aplicáveis ao produto/atividade.
 
 O sistema deve ter campos para:
+
 - licença/registro sanitário quando aplicável;
 - validade;
 - órgão emissor;
@@ -114,6 +124,7 @@ A legislação das feiras exige respeito às normas sanitárias e manutenção d
 ## Entregador — documentação básica
 
 Para qualquer entregador:
+
 - documento oficial com foto;
 - CPF;
 - selfie/KYC na fase real;
@@ -129,6 +140,7 @@ Para qualquer entregador:
 Não exigir CNH.
 
 Cadastrar:
+
 - tipo;
 - foto do veículo;
 - capacidade declarada;
@@ -140,6 +152,7 @@ Pode haver regras municipais/distritais futuras específicas; manter configuraç
 ## Carro, utilitário ou van
 
 Exigir para operação remunerada:
+
 - CNH compatível e válida;
 - observação EAR quando aplicável à atividade remunerada;
 - CRLV-e vigente;
@@ -155,6 +168,7 @@ O Detran-DF informa que a avaliação psicológica/EAR se aplica quando a pessoa
 Tratar como categoria mais restritiva.
 
 O Detran-DF informa para motofrete, entre os requisitos/documentos:
+
 - idade mínima de 21 anos;
 - CNH categoria A há pelo menos 2 anos;
 - curso especializado de motofrete;
@@ -171,10 +185,13 @@ O Feiraê não deve liberar corridas de moto apenas porque o usuário enviou uma
 ## Fluxo de revisão
 
 ### 1. Envio
+
 Usuário envia documentos.
 
 ### 2. Validação automática
+
 Quando houver integração:
+
 - documento legível;
 - validade;
 - CPF/CNPJ;
@@ -183,39 +200,47 @@ Quando houver integração:
 - fraude básica.
 
 ### 3. Revisão
+
 Admin vê:
+
 - dados;
 - documentos;
 - status por item;
 - motivo de pendência.
 
 ### 4. Correção
+
 Estado:
 `correction_required`
 
 Usuário recebe exatamente:
+
 - qual documento;
 - qual problema;
 - como corrigir;
 - prazo quando aplicável.
 
 ### 5. Aprovação
+
 Estado:
 `approved`
 
 Só então:
+
 - Feirante pode publicar e aceitar pedidos.
 - Entregador pode ficar online e aceitar corridas.
 
 ## Revalidação
 
 Documentos com validade precisam de:
+
 - `issued_at`;
 - `expires_at`;
 - alerta antes do vencimento;
 - suspensão automática/configurável quando documento crítico expirar.
 
 Exemplos:
+
 - CNH;
 - CRLV;
 - licença/autorizações específicas;
@@ -224,6 +249,7 @@ Exemplos:
 ## Suspensão
 
 Motivos possíveis:
+
 - documento expirado;
 - permissão da feira suspensa/cassada;
 - fraude;
@@ -232,6 +258,7 @@ Motivos possíveis:
 - sanção da plataforma.
 
 Toda suspensão deve ter:
+
 - motivo;
 - autor;
 - timestamp;
