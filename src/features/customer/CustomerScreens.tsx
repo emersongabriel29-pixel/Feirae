@@ -956,6 +956,8 @@ export function Checkout({
       calculatedDeliveryFee: number;
       deliverySubsidy: number;
       customerDeliveryFee: number;
+      promotionDiscount: number;
+      changeFor?: number;
     },
   ) => void;
 }) {
@@ -972,13 +974,42 @@ export function Checkout({
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const fairName = items[0]?.fair ?? "Feiraê";
-  const calculatedDeliveryFee = fulfillment === "delivery" ? 8.9 : 0;
-  const deliverySubsidy = fulfillment === "delivery" && subtotal >= 80 ? calculatedDeliveryFee : 0;
+  const stores = Array.from(
+    new Map(
+      items.map((item) => {
+        const store = readStoreByIdentity(item.fair, item.feirante);
+        return [`${item.fair}::${item.feirante}`, store] as const;
+      }),
+    ).values(),
+  ).filter(Boolean);
+  const deliveryAllowed = stores.every((store) => store?.deliveryEnabled !== false);
+  const pickupAllowed = stores.every((store) => store?.pickupEnabled !== false);
+  const fallbackDeliveryFee = Math.max(
+    0,
+    ...Array.from(new Set(items.map((item) => item.feirante))).map(
+      (vendor) => metricForVendor(vendor, vendorMetrics).deliveryFee,
+    ),
+  );
+  const calculatedDeliveryFee = fulfillment === "delivery" ? fallbackDeliveryFee : 0;
+  const promotionResult = calculateCheckoutPromotions(items, cart, calculatedDeliveryFee);
+  const promotionDiscount = promotionResult.promotionDiscount;
+  const deliverySubsidy =
+    fulfillment === "delivery"
+      ? Math.max(
+          promotionResult.deliverySubsidy,
+          stores.some((store) => store?.absorbDeliveryFee) ? calculatedDeliveryFee : 0,
+        )
+      : 0;
   const customerDeliveryFee = Math.max(0, calculatedDeliveryFee - deliverySubsidy);
-  const total = subtotal + customerDeliveryFee;
+  const total = Math.max(0, subtotal - promotionDiscount + customerDeliveryFee);
   const cardPayment = payment === "Cartão";
   const cashPayment = payment === "Dinheiro na entrega";
-  const canConfirm = fulfillment === "pickup" || Boolean(defaultAddress);
+  const parsedChangeFor = Number(changeFor.replace(/[^0-9,.-]/g, "").replace(",", "."));
+  const changeValid = !cashPayment || !needsChange || (Number.isFinite(parsedChangeFor) && parsedChangeFor >= total);
+  const canConfirm =
+    (fulfillment === "pickup" ? pickupAllowed : Boolean(defaultAddress) && deliveryAllowed) &&
+    (!cardPayment || Boolean(selectedCardId)) &&
+    changeValid;
 
   if (!items.length)
     return (
@@ -999,17 +1030,17 @@ export function Checkout({
             <div className="grid grid-cols-2 gap-3">
               <Choice
                 active={fulfillment === "delivery"}
-                onClick={() => setFulfillment("delivery")}
+                onClick={() => deliveryAllowed && setFulfillment("delivery")}
                 icon={<Truck />}
                 title="Entrega"
-                text="Receba em casa"
+                text={deliveryAllowed ? "Receba em casa" : "Indisponível para uma das bancas"}
               />
               <Choice
                 active={fulfillment === "pickup"}
-                onClick={() => setFulfillment("pickup")}
+                onClick={() => pickupAllowed && setFulfillment("pickup")}
                 icon={<Store />}
                 title="Retirada"
-                text="Busque na feira"
+                text={pickupAllowed ? "Busque na feira" : "Indisponível para uma das bancas"}
               />
             </div>
           </Step>
@@ -1057,7 +1088,7 @@ export function Checkout({
                 onClick={() => setPayment("Pix")}
                 icon={<Wallet />}
                 title="Pix"
-                text="QR Code e copia e cola"
+                text="Pagamento confirmado pelo fluxo de checkout"
               />
               <Choice
                 active={payment === "Cartão"}
@@ -1182,7 +1213,7 @@ export function Checkout({
                 </p>
                 {deliverySubsidy > 0 && (
                   <p>
-                    <span>Desconto da banca</span>
+                    <span>Subsídio de entrega</span>
                     <b>−{money(deliverySubsidy)}</b>
                   </p>
                 )}
@@ -1191,6 +1222,15 @@ export function Checkout({
                   <b>{customerDeliveryFee ? money(customerDeliveryFee) : "Grátis"}</b>
                 </p>
               </>
+            )}
+            {promotionDiscount > 0 && (
+              <p>
+                <span>Descontos de promoções</span>
+                <b>−{money(promotionDiscount)}</b>
+              </p>
+            )}
+            {promotionResult.appliedPromotions.length > 0 && (
+              <small>Promoções aplicadas: {promotionResult.appliedPromotions.join(" · ")}</small>
             )}
             <p>
               <span>Pagamento</span>
@@ -1202,7 +1242,7 @@ export function Checkout({
             </p>
           </div>
           <button
-            disabled={!canConfirm || (cardPayment && !selectedCardId && cards.length > 0)}
+            disabled={!canConfirm}
             onClick={() =>
               onConfirm(total, {
                 fulfillment,
@@ -1215,13 +1255,27 @@ export function Checkout({
                 calculatedDeliveryFee,
                 deliverySubsidy,
                 customerDeliveryFee,
+                promotionDiscount,
+                changeFor: cashPayment && needsChange && Number.isFinite(parsedChangeFor) ? parsedChangeFor : undefined,
               })
             }
             className="primary-action w-full"
           >
             Confirmar pedido
           </button>
-          {!canConfirm && <small>Cadastre um endereço para entrega antes de confirmar.</small>}
+          {!canConfirm && (
+            <small>
+              {!deliveryAllowed && fulfillment === "delivery"
+                ? "Uma das bancas não aceita entrega."
+                : !pickupAllowed && fulfillment === "pickup"
+                  ? "Uma das bancas não aceita retirada."
+                  : cardPayment && !selectedCardId
+                    ? "Selecione um cartão salvo antes de confirmar."
+                    : cashPayment && needsChange && !changeValid
+                      ? "Informe um valor de troco igual ou maior que o total."
+                      : "Cadastre um endereço para entrega antes de confirmar."}
+            </small>
+          )}
         </aside>
       </div>
     </Panel>
