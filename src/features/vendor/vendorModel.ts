@@ -104,6 +104,17 @@ export type VendorDocument = {
   correctionReason: string;
 };
 
+export type VendorSaleRecord = {
+  id: string;
+  date: string;
+  total: number;
+  discount: number;
+  deliverySubsidy: number;
+  refund: number;
+  items: Array<{ name: string; quantity: number }>;
+};
+
+
 export const productCategories = [
   "Frutas",
   "Verduras e legumes",
@@ -442,6 +453,94 @@ export const initialVendorDocuments: VendorDocument[] = [
     fileName: "",
     expiresAt: "",
     correctionReason: "",
+  },
+];
+
+export const initialVendorSalesHistory: VendorSaleRecord[] = [
+  {
+    id: "sale-1024",
+    date: "2026-09-25T09:30:00-03:00",
+    total: 96.3,
+    discount: 0,
+    deliverySubsidy: 0,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 2 },
+      { name: "Tomate orgânico", quantity: 2 },
+    ],
+  },
+  {
+    id: "sale-1023",
+    date: "2026-09-24T16:10:00-03:00",
+    total: 86.8,
+    discount: 5,
+    deliverySubsidy: 0,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 1 },
+      { name: "Tomate orgânico", quantity: 3 },
+      { name: "Cheiro-verde", quantity: 2 },
+    ],
+  },
+  {
+    id: "sale-1018",
+    date: "2026-09-18T11:20:00-03:00",
+    total: 132.5,
+    discount: 0,
+    deliverySubsidy: 12.4,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 3 },
+      { name: "Tomate orgânico", quantity: 4 },
+    ],
+  },
+  {
+    id: "sale-1009",
+    date: "2026-09-08T14:05:00-03:00",
+    total: 74.9,
+    discount: 0,
+    deliverySubsidy: 0,
+    refund: 0,
+    items: [
+      { name: "Tomate orgânico", quantity: 5 },
+      { name: "Cheiro-verde", quantity: 3 },
+    ],
+  },
+  {
+    id: "sale-0991",
+    date: "2026-08-21T10:40:00-03:00",
+    total: 118.4,
+    discount: 8,
+    deliverySubsidy: 9.8,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 2 },
+      { name: "Tomate orgânico", quantity: 4 },
+    ],
+  },
+  {
+    id: "sale-0982",
+    date: "2026-08-11T17:15:00-03:00",
+    total: 92.6,
+    discount: 0,
+    deliverySubsidy: 0,
+    refund: 18.9,
+    items: [
+      { name: "Cesta de frutas", quantity: 1 },
+      { name: "Cheiro-verde", quantity: 5 },
+    ],
+  },
+  {
+    id: "sale-0944",
+    date: "2026-07-19T12:00:00-03:00",
+    total: 156.2,
+    discount: 10,
+    deliverySubsidy: 0,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 4 },
+      { name: "Tomate orgânico", quantity: 2 },
+    ],
   },
 ];
 
