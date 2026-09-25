@@ -86,9 +86,7 @@ export function upsertUnifiedOrder(order: UnifiedOrderRecord) {
   const current = readUnifiedOrders();
   const exists = current.some((item) => item.id === order.id);
   writeUnifiedOrders(
-    exists
-      ? current.map((item) => (item.id === order.id ? order : item))
-      : [order, ...current],
+    exists ? current.map((item) => (item.id === order.id ? order : item)) : [order, ...current],
   );
 }
 

@@ -241,10 +241,7 @@ export function DeliveryOperations({
 
         if (!fairPoint || !customerPoint) continue;
 
-        const toVendor = await drivingRoute(
-          basePoint,
-          fairPoint,
-        );
+        const toVendor = await drivingRoute(basePoint, fairPoint);
         const toCustomer = await drivingRoute(fairPoint, customerPoint);
         if (!toVendor || !toCustomer || cancelled) continue;
 
@@ -310,13 +307,14 @@ export function DeliveryOperations({
       brandModel: vehicleBrandModel.trim(),
       plate: requiresPlate(vehicleType) ? plate : "",
       active: vehicleEditingId
-        ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.active ?? true
+        ? (vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.active ?? true)
         : true,
       documentFileName: requiresPlate(vehicleType) ? vehicleDocumentName : "",
       documentStatus: requiresPlate(vehicleType)
         ? vehicleEditingId
-          ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFileName === vehicleDocumentName
-            ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentStatus ?? "under_review"
+          ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFileName ===
+            vehicleDocumentName
+            ? (vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentStatus ?? "under_review")
             : "under_review"
           : "under_review"
         : "approved",
@@ -513,25 +511,45 @@ export function DeliveryOperations({
   ).length;
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
-  const activeDeliveryVehicle = activeDelivery
-    ? compatibleVehicleForWeight(activeDelivery.weight)
-    : null;
+  const activeDeliveryVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
   const activeDeliverySection = activeDelivery ? (
     <section className="active-delivery">
       <span className="eyebrow">Entrega em andamento</span>
       <h3>{activeDelivery.id}</h3>
       <p>{activeDelivery.route}</p>
       <div className="finance-breakdown">
-        <p><span>Feira</span><strong>{activeDelivery.fair}</strong></p>
-        <p><span>Banca</span><strong>{activeDelivery.bank}</strong></p>
-        <p><span>Peso</span><strong>{activeDelivery.weight.toLocaleString("pt-BR")} kg</strong></p>
+        <p>
+          <span>Feira</span>
+          <strong>{activeDelivery.fair}</strong>
+        </p>
+        <p>
+          <span>Banca</span>
+          <strong>{activeDelivery.bank}</strong>
+        </p>
+        <p>
+          <span>Peso</span>
+          <strong>{activeDelivery.weight.toLocaleString("pt-BR")} kg</strong>
+        </p>
         <p>
           <span>Veículo compatível em uso</span>
-          <strong>{activeDeliveryVehicle ? `${activeDeliveryVehicle.type} · ${activeDeliveryVehicle.capacityKg} kg` : "Nenhum"}</strong>
+          <strong>
+            {activeDeliveryVehicle
+              ? `${activeDeliveryVehicle.type} · ${activeDeliveryVehicle.capacityKg} kg`
+              : "Nenhum"}
+          </strong>
         </p>
-        <p><span>Distância total</span><strong>{activeDelivery.totalDistanceKm.toLocaleString("pt-BR")} km</strong></p>
-        <p><span>Previsão</span><strong>{activeDelivery.etaMinutes} min</strong></p>
-        <p><span>Ganho</span><strong>{activeDelivery.fee}</strong></p>
+        <p>
+          <span>Distância total</span>
+          <strong>{activeDelivery.totalDistanceKm.toLocaleString("pt-BR")} km</strong>
+        </p>
+        <p>
+          <span>Previsão</span>
+          <strong>{activeDelivery.etaMinutes} min</strong>
+        </p>
+        <p>
+          <span>Ganho</span>
+          <strong>{activeDelivery.fee}</strong>
+        </p>
       </div>
       <div className="operation-list detailed">
         {activeDelivery.items.map((item) => (
@@ -712,11 +730,16 @@ export function DeliveryOperations({
             const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
             return (
               <article className="delivery-row" key={delivery.id}>
-                <span><Bike /></span>
+                <span>
+                  <Bike />
+                </span>
                 <div>
-                  <b>{delivery.id} · {delivery.fair} · {delivery.bank}</b>
+                  <b>
+                    {delivery.id} · {delivery.fair} · {delivery.bank}
+                  </b>
                   <small>
-                    Destino: {delivery.region} · {delivery.weight.toLocaleString("pt-BR")} kg · {delivery.items.length} item(ns)
+                    Destino: {delivery.region} · {delivery.weight.toLocaleString("pt-BR")} kg ·{" "}
+                    {delivery.items.length} item(ns)
                   </small>
                   <small>
                     Até a banca {delivery.toBankKm.toLocaleString("pt-BR")} km · banca → cliente{" "}
@@ -765,7 +788,11 @@ export function DeliveryOperations({
     </div>
   );
   return (
-    <Panel title="Central do entregador" subtitle="Gerencie disponibilidade, veículos, filtros, corridas e ganhos." onBack={onBack}>
+    <Panel
+      title="Central do entregador"
+      subtitle="Gerencie disponibilidade, veículos, filtros, corridas e ganhos."
+      onBack={onBack}
+    >
       {active === "Central" ? (
         <div className="ops-home">
           <div className="ops-summary">
@@ -777,7 +804,11 @@ export function DeliveryOperations({
             <div className="operation-metrics">
               <article>
                 <strong>
-                  {approvalStatus === "Aprovado" ? (availableNow ? "Disponível" : "Indisponível") : approvalStatus}
+                  {approvalStatus === "Aprovado"
+                    ? availableNow
+                      ? "Disponível"
+                      : "Indisponível"
+                    : approvalStatus}
                 </strong>
                 <span>disponibilidade atual</span>
               </article>
@@ -828,7 +859,11 @@ export function DeliveryOperations({
                     disabled={approvalStatus !== "Aprovado"}
                     className={availableNow ? "status-button active" : "status-button"}
                   >
-                    {approvalStatus === "Aprovado" ? (online ? "Desligar" : "Ficar disponível") : approvalStatus}
+                    {approvalStatus === "Aprovado"
+                      ? online
+                        ? "Desligar"
+                        : "Ficar disponível"
+                      : approvalStatus}
                   </button>
                 </div>
                 <div className="operation-metrics">
@@ -1003,7 +1038,9 @@ export function DeliveryOperations({
                           value={vehicleCapacity}
                           onChange={(event) => setVehicleCapacity(Number(event.target.value))}
                         />
-                        <small>Ex.: um pedido de 10 kg pode ir em qualquer veículo ativo que suporte 10 kg ou mais.</small>
+                        <small>
+                          Ex.: um pedido de 10 kg pode ir em qualquer veículo ativo que suporte 10 kg ou mais.
+                        </small>
                       </label>
                       <label>
                         Marca/modelo
@@ -1112,7 +1149,9 @@ export function DeliveryOperations({
                         <button
                           className="mini-toggle"
                           aria-label={`Excluir ${vehicle.type}`}
-                          onClick={() => setVehicles((current) => current.filter((item) => item.id !== vehicle.id))}
+                          onClick={() =>
+                            setVehicles((current) => current.filter((item) => item.id !== vehicle.id))
+                          }
                         >
                           <Trash2 size={15} />
                         </button>
@@ -1121,7 +1160,10 @@ export function DeliveryOperations({
                   ))}
                 </div>
                 {!vehicles.length && (
-                  <Empty title="Nenhum veículo cadastrado" text="Cadastre um veículo e defina a capacidade para receber corridas compatíveis." />
+                  <Empty
+                    title="Nenhum veículo cadastrado"
+                    text="Cadastre um veículo e defina a capacidade para receber corridas compatíveis."
+                  />
                 )}
               </>
             ) : active === "Forma de entrega" ? (
@@ -1166,7 +1208,11 @@ export function DeliveryOperations({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <b>Estou disponível agora</b>
-                      <p>{availableNow ? "Novas corridas compatíveis podem aparecer." : "Você não receberá novas corridas agora."}</p>
+                      <p>
+                        {availableNow
+                          ? "Novas corridas compatíveis podem aparecer."
+                          : "Você não receberá novas corridas agora."}
+                      </p>
                     </div>
                     <button
                       className={availableNow ? "status-button active" : "status-button"}
@@ -1245,7 +1291,9 @@ export function DeliveryOperations({
                     />
                     <span>
                       <b>Usar horário automático</b>
-                      <small className="block">Fora do horário configurado o app fica indisponível para novas corridas.</small>
+                      <small className="block">
+                        Fora do horário configurado o app fica indisponível para novas corridas.
+                      </small>
                     </span>
                   </label>
 
@@ -1288,8 +1336,11 @@ export function DeliveryOperations({
                     <div>
                       <b>Raio de atuação · {deliveryPreferences.radiusKm} km</b>
                       <small>
-                        Regiões: {deliveryPreferences.regions.length ? deliveryPreferences.regions.join(", ") : "todas"} · preferência até{" "}
-                        {deliveryPreferences.preferredDistanceKm} km.
+                        Regiões:{" "}
+                        {deliveryPreferences.regions.length
+                          ? deliveryPreferences.regions.join(", ")
+                          : "todas"}{" "}
+                        · preferência até {deliveryPreferences.preferredDistanceKm} km.
                       </small>
                     </div>
                   </article>
@@ -1299,20 +1350,33 @@ export function DeliveryOperations({
                       <b>Veículos ativos · {activeVehicles.length}</b>
                       <small>
                         {activeVehicles.length
-                          ? activeVehicles.map((vehicle) => `${vehicle.type} ${vehicle.capacityKg} kg`).join(" · ")
+                          ? activeVehicles
+                              .map((vehicle) => `${vehicle.type} ${vehicle.capacityKg} kg`)
+                              .join(" · ")
                           : "Nenhum veículo ativo. Sem veículo compatível, a corrida não pode ser aceita."}
                       </small>
                     </div>
-                    <button className="mini-toggle" onClick={() => setActive("Veículos")}>Gerenciar</button>
+                    <button className="mini-toggle" onClick={() => setActive("Veículos")}>
+                      Gerenciar
+                    </button>
                   </article>
                 </div>
 
                 <div className="surface-card">
                   <span className="eyebrow">Resultado dos filtros</span>
                   <div className="operation-metrics">
-                    <article><strong>{visibleDeliveries.length}</strong><span>dentro do raio/regiões</span></article>
-                    <article><strong>{compatibleDeliveryCount}</strong><span>com peso compatível</span></article>
-                    <article><strong>{availableNow ? "Ativo" : "Pausado"}</strong><span>recebimento de corridas</span></article>
+                    <article>
+                      <strong>{visibleDeliveries.length}</strong>
+                      <span>dentro do raio/regiões</span>
+                    </article>
+                    <article>
+                      <strong>{compatibleDeliveryCount}</strong>
+                      <span>com peso compatível</span>
+                    </article>
+                    <article>
+                      <strong>{availableNow ? "Ativo" : "Pausado"}</strong>
+                      <span>recebimento de corridas</span>
+                    </article>
                   </div>
                 </div>
               </>

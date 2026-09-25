@@ -30,6 +30,7 @@ Cada mudança de estado deve registrar data/hora e, quando aplicável, ator e mo
 ### Carrinho
 
 Exibir:
+
 - itens;
 - quantidade;
 - peso estimado;
@@ -53,12 +54,14 @@ E veículo.capacidade_kg >= pedido.peso_total_kg
 ```
 
 Exemplo:
+
 - pedido 10 kg;
 - bicicleta 15 kg: compatível;
 - moto 25 kg: compatível;
 - carro 100 kg: compatível.
 
 Pedido 100 kg:
+
 - bicicleta 15 kg: incompatível;
 - moto 25 kg: incompatível;
 - carro 150 kg: compatível.
@@ -68,19 +71,23 @@ Pedido 100 kg:
 Separar o momento do pagamento da forma de pagamento.
 
 ### Pagar agora
+
 - Pix;
 - cartão de crédito;
 - cartão de débito.
 
 ### Pagar na entrega
+
 - dinheiro;
 - cartão na maquininha, quando disponível na operação.
 
 Para dinheiro:
+
 - perguntar se precisa de troco;
 - se sim, solicitar “Troco para quanto?”.
 
 Para cartões:
+
 - exibir bandeira;
 - nunca armazenar CVV;
 - na integração real, usar token do provedor em vez do número completo.
@@ -114,6 +121,7 @@ frete_cliente = max(0, frete_calculado - subsidio_feirante - subsidio_plataforma
 A remuneração do entregador é calculada separadamente do valor promocional mostrado ao cliente. “Frete grátis” não significa corrida sem remuneração.
 
 No checkout, apresentar quando houver subsídio:
+
 - Frete calculado;
 - Desconto/subsídio;
 - Você paga de entrega;
@@ -126,6 +134,7 @@ As tarifas comerciais definitivas ainda devem ser definidas antes da integraçã
 ### Disponibilidade
 
 O entregador controla:
+
 - disponível/indisponível;
 - agenda automática opcional;
 - horário de início/fim;
@@ -137,6 +146,7 @@ O entregador controla:
 A agenda pode atravessar a meia-noite.
 
 Uma corrida só pode aparecer/ser aceita se:
+
 - cadastro do entregador estiver aprovado;
 - entregador estiver disponível;
 - horário automático permitir;
@@ -148,6 +158,7 @@ Uma corrida só pode aparecer/ser aceita se:
 ### Oferta da corrida
 
 Antes de aceitar, mostrar:
+
 - pedido;
 - feira;
 - banca;
@@ -164,6 +175,7 @@ Antes de aceitar, mostrar:
 ### Veículos
 
 Permitir:
+
 - cadastrar;
 - editar;
 - excluir;
@@ -171,6 +183,7 @@ Permitir:
 - alterar capacidade.
 
 Veículos com placa exigem:
+
 - placa brasileira válida no padrão antigo ou Mercosul;
 - documento do veículo;
 - estado de validação do documento.
@@ -182,6 +195,7 @@ Bicicletas não exigem placa/documento de veículo.
 ### Produtos
 
 Estados distintos:
+
 - À venda;
 - Pausado pelo feirante;
 - Estoque esgotado.
@@ -189,6 +203,7 @@ Estados distintos:
 Estoque zero não deve ser descrito simplesmente como “Pausado”.
 
 Permitir:
+
 - cadastrar;
 - editar;
 - pausar/reativar;
@@ -200,6 +215,7 @@ Pedidos antigos preservam seus snapshots mesmo se um produto sair do catálogo.
 ### Promoções
 
 Tipos previstos:
+
 - percentual;
 - valor fixo;
 - compre X leve Y;
@@ -210,6 +226,7 @@ Tipos previstos:
 - combo.
 
 Campos:
+
 - nome;
 - regra;
 - valor/percentual quando aplicável;
@@ -220,6 +237,7 @@ Campos:
 - fim.
 
 Estados:
+
 - Agendada;
 - Ativa;
 - Encerrada.
@@ -239,6 +257,7 @@ Segunda 19:00 → 02:00
 significa abertura segunda às 19h e fechamento terça às 02h.
 
 Exibir estado operacional:
+
 - Aberta agora;
 - Fecha às HH:MM;
 - Fechada;
@@ -248,6 +267,7 @@ Exibir estado operacional:
 ## Cancelamentos
 
 Sempre registrar:
+
 - pedido/corrida;
 - ator;
 - motivo;
@@ -272,6 +292,7 @@ Estados apresentados ao cliente:
 8. Entregue
 
 Depois que houver entregador atribuído, exibir:
+
 - nome;
 - veículo;
 - placa parcialmente mascarada quando aplicável;
@@ -283,6 +304,7 @@ Depois que houver entregador atribuído, exibir:
 ## Favoritos e destaques
 
 Favoritos:
+
 - produtos;
 - bancas/lojas.
 
@@ -291,6 +313,7 @@ Destaques da feira devem permitir adicionar o produto ao carrinho diretamente.
 ## Persistência e backend
 
 No protótipo atual, parte dos fluxos usa persistência local para validação da experiência. Na implantação real:
+
 - banco/backend é a fonte de verdade;
 - transições de pedido são validadas no servidor;
 - pagamento e repasse vêm do provedor;
@@ -301,6 +324,7 @@ No protótipo atual, parte dos fluxos usa persistência local para validação d
 ## Critério de aceite de interface
 
 Todo botão, card clicável, seletor, toggle ou campo exibido deve:
+
 1. executar uma ação;
 2. persistir a alteração apropriada;
 3. refletir a mudança nas telas relacionadas;

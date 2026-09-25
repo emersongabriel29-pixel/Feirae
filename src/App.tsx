@@ -287,10 +287,7 @@ export default function App() {
               status: "Cancelado" as const,
               cancelReason: reason,
               cancelDetails: details,
-              events: [
-                ...(order.events ?? []),
-                { key: "cancelled", label: "Pedido cancelado", at },
-              ],
+              events: [...(order.events ?? []), { key: "cancelled", label: "Pedido cancelado", at }],
             }
           : order,
       ),

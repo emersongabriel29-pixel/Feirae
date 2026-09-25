@@ -64,7 +64,9 @@ export function HomePage({
         <div className="relative z-10 max-w-2xl">
           <span className="eyebrow light">Marketplace de feiras locais</span>
           <h1>A feira que você gosta, agora mais perto.</h1>
-          <p>Descubra produtos locais, apoie feirantes e escolha entre receber em casa ou retirar na feira.</p>
+          <p>
+            Descubra produtos locais, apoie feirantes e escolha entre receber em casa ou retirar na feira.
+          </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <button onClick={() => onTab("products")} className="primary-action amber">
               Explorar produtos <ChevronRight size={18} />
@@ -75,13 +77,21 @@ export function HomePage({
           </div>
         </div>
         <div className="hero-illustration" aria-hidden="true">
-          <span>🥕</span><span>🥖</span><span>🧀</span><strong>🧺</strong>
+          <span>🥕</span>
+          <span>🥖</span>
+          <span>🧀</span>
+          <strong>🧺</strong>
         </div>
       </section>
       <section>
         <SectionHeading eyebrow="Atalhos" title="O que você quer fazer?" />
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <QuickAction icon="🧺" title="Feiras próximas" text="Estado, cidade e feira" onClick={() => onFair(fairs[0].name)} />
+          <QuickAction
+            icon="🧺"
+            title="Feiras próximas"
+            text="Estado, cidade e feira"
+            onClick={() => onFair(fairs[0].name)}
+          />
           <QuickAction icon="🏪" title="Bancas" text="Escolher feirantes" onClick={onVendors} />
           <QuickAction icon="🛵" title="Meu pedido" text="Acompanhar a entrega" onClick={onTracking} />
           <QuickAction icon="✨" title="Promoções" text="Ofertas do dia" onClick={() => onTab("products")} />
@@ -95,17 +105,21 @@ export function HomePage({
           onAction={() => onTab("products")}
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {products.filter((product) => product.featured).map((product) => (
-            <article key={product.id} className="mini-product">
-              <span>{product.emoji}</span>
-              <small>{product.feirante}</small>
-              <b>{product.name}</b>
-              <strong>{money(product.price)} <em>/{product.unit}</em></strong>
-              <button className="mini-toggle active" onClick={() => onAdd(product.id)}>
-                <Plus size={15} /> Adicionar
-              </button>
-            </article>
-          ))}
+          {products
+            .filter((product) => product.featured)
+            .map((product) => (
+              <article key={product.id} className="mini-product">
+                <span>{product.emoji}</span>
+                <small>{product.feirante}</small>
+                <b>{product.name}</b>
+                <strong>
+                  {money(product.price)} <em>/{product.unit}</em>
+                </strong>
+                <button className="mini-toggle active" onClick={() => onAdd(product.id)}>
+                  <Plus size={15} /> Adicionar
+                </button>
+              </article>
+            ))}
         </div>
       </section>
     </div>
@@ -545,12 +559,18 @@ export function VendorsPage({
   const fairProducts = products.filter((product) => product.fair === fairName);
   const vendors = vendorSummaries(fairProducts, vendorMetrics);
   return (
-    <Panel title="Bancas e feirantes" subtitle={"Bancas cadastradas na " + fairName + ". A compra permanece dentro desta feira."} onBack={onBack}>
+    <Panel
+      title="Bancas e feirantes"
+      subtitle={"Bancas cadastradas na " + fairName + ". A compra permanece dentro desta feira."}
+      onBack={onBack}
+    >
       <div className="region-strip">
         <MapPin size={18} />
         <div>
           <b>Contexto da compra</b>
-          <p>Distrito Federal · {fair?.place ?? "Região a confirmar"} · {fairName}</p>
+          <p>
+            Distrito Federal · {fair?.place ?? "Região a confirmar"} · {fairName}
+          </p>
         </div>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -564,7 +584,9 @@ export function VendorsPage({
                 <h3>{vendor.name}</h3>
                 <p>{vendor.categories.join(" · ")}</p>
                 <div className="market-meta">
-                  <span><Star size={13} /> {ratingLabel(vendor.rating)} ({vendor.reviewCount})</span>
+                  <span>
+                    <Star size={13} /> {ratingLabel(vendor.rating)} ({vendor.reviewCount})
+                  </span>
                   <span>{minutesLabel(vendor.deliveryMinutes)}</span>
                   <span>{money(vendor.deliveryFee)}</span>
                 </div>
@@ -623,7 +645,10 @@ export function VendorStore({
             {minutesLabel(metrics.deliveryMinutes)} · entrega {money(metrics.deliveryFee)}
           </p>
         </div>
-        <button className={storeFavorite ? "secondary-action light active" : "secondary-action light"} onClick={onStoreFavorite}>
+        <button
+          className={storeFavorite ? "secondary-action light active" : "secondary-action light"}
+          onClick={onStoreFavorite}
+        >
           <Heart size={17} className={storeFavorite ? "fill-red-500 text-red-500" : ""} />
           {storeFavorite ? "Banca favorita" : "Favoritar banca"}
         </button>
@@ -660,7 +685,10 @@ export function DeliveryTracking({
   const [showReview, setShowReview] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
 
-  const statusConfig: Record<DemoOrder["status"], { title: string; description: string; activeStep: number }> = {
+  const statusConfig: Record<
+    DemoOrder["status"],
+    { title: string; description: string; activeStep: number }
+  > = {
     Recebido: {
       title: "Pedido recebido",
       description: "Aguardando a banca confirmar e iniciar a preparação.",
@@ -688,7 +716,9 @@ export function DeliveryTracking({
     },
     Cancelado: {
       title: "Pedido cancelado",
-      description: order.cancelReason ? "Motivo: " + order.cancelReason : "Este pedido não seguirá para entrega.",
+      description: order.cancelReason
+        ? "Motivo: " + order.cancelReason
+        : "Este pedido não seguirá para entrega.",
       activeStep: -1,
     },
   };
@@ -716,10 +746,15 @@ export function DeliveryTracking({
     >
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="tracking-map">
-          <span aria-hidden="true">{order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : "🛵"}</span>
+          <span aria-hidden="true">
+            {order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : "🛵"}
+          </span>
           <div className="route-line">
             {timeline.map((step, index) => (
-              <i key={step} className={config.activeStep >= index || order.status === "Entregue" ? "done" : undefined} />
+              <i
+                key={step}
+                className={config.activeStep >= index || order.status === "Entregue" ? "done" : undefined}
+              />
             ))}
           </div>
           <h2>{config.title}</h2>
@@ -735,8 +770,12 @@ export function DeliveryTracking({
                     {order.driver.plateMasked ? " · placa " + order.driver.plateMasked : ""}
                   </p>
                   <div className="market-meta">
-                    {typeof order.driver.distanceKm === "number" && <span>{order.driver.distanceKm.toLocaleString("pt-BR")} km</span>}
-                    {typeof order.driver.etaMinutes === "number" && <span>{order.driver.etaMinutes} min</span>}
+                    {typeof order.driver.distanceKm === "number" && (
+                      <span>{order.driver.distanceKm.toLocaleString("pt-BR")} km</span>
+                    )}
+                    {typeof order.driver.etaMinutes === "number" && (
+                      <span>{order.driver.etaMinutes} min</span>
+                    )}
                     <span>Suporte disponível</span>
                   </div>
                 </>
@@ -761,7 +800,7 @@ export function DeliveryTracking({
                     {order.status === "Cancelado"
                       ? "Interrompido"
                       : completed
-                        ? event?.at ?? "Concluído"
+                        ? (event?.at ?? "Concluído")
                         : current
                           ? "Etapa atual"
                           : "Aguardando"}
@@ -779,7 +818,13 @@ export function DeliveryTracking({
                   ? "Depois que a coleta começou, o cancelamento vira uma ocorrência de suporte."
                   : "Antes da coleta, escolha o motivo do cancelamento."}
               </p>
-              <select value={cancelReason} onChange={(event) => { setCancelReason(event.target.value); setRequestSent(false); }}>
+              <select
+                value={cancelReason}
+                onChange={(event) => {
+                  setCancelReason(event.target.value);
+                  setRequestSent(false);
+                }}
+              >
                 <option value="">Escolha um motivo</option>
                 {needsSupport ? (
                   <>
@@ -823,11 +868,14 @@ export function DeliveryTracking({
                   }
                 }}
               >
-                <XCircle size={17} /> {needsSupport ? "Abrir solicitação de suporte" : "Confirmar cancelamento"}
+                <XCircle size={17} />{" "}
+                {needsSupport ? "Abrir solicitação de suporte" : "Confirmar cancelamento"}
               </button>
               {requestSent && (
                 <p className="inline-success">
-                  {needsSupport ? "Solicitação registrada com motivo, data e hora." : "Cancelamento registrado no histórico do pedido."}
+                  {needsSupport
+                    ? "Solicitação registrada com motivo, data e hora."
+                    : "Cancelamento registrado no histórico do pedido."}
                 </p>
               )}
             </div>
@@ -924,13 +972,29 @@ export function Checkout({
     );
 
   return (
-    <Panel title="Finalizar pedido" subtitle={fairName + " · confira tudo antes de confirmar"} onBack={onBack}>
+    <Panel
+      title="Finalizar pedido"
+      subtitle={fairName + " · confira tudo antes de confirmar"}
+      onBack={onBack}
+    >
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <div className="space-y-5">
           <Step title="1. Como deseja receber?">
             <div className="grid grid-cols-2 gap-3">
-              <Choice active={fulfillment === "delivery"} onClick={() => setFulfillment("delivery")} icon={<Truck />} title="Entrega" text="Receba em casa" />
-              <Choice active={fulfillment === "pickup"} onClick={() => setFulfillment("pickup")} icon={<Store />} title="Retirada" text="Busque na feira" />
+              <Choice
+                active={fulfillment === "delivery"}
+                onClick={() => setFulfillment("delivery")}
+                icon={<Truck />}
+                title="Entrega"
+                text="Receba em casa"
+              />
+              <Choice
+                active={fulfillment === "pickup"}
+                onClick={() => setFulfillment("pickup")}
+                icon={<Store />}
+                title="Retirada"
+                text="Busque na feira"
+              />
             </div>
           </Step>
 
@@ -940,7 +1004,10 @@ export function Checkout({
                 <div className="address-preview">
                   <MapPin />
                   <div>
-                    <b>{defaultAddress.label}{defaultAddress.isDefault ? " · principal" : ""}</b>
+                    <b>
+                      {defaultAddress.label}
+                      {defaultAddress.isDefault ? " · principal" : ""}
+                    </b>
                     <p>{defaultAddress.details}</p>
                   </div>
                 </div>
@@ -958,7 +1025,8 @@ export function Checkout({
                 <div>
                   <b>Peso estimado da compra</b>
                   <p>
-                    {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg. O peso filtra apenas veículos que não suportam a carga; ele não escolhe o veículo para o cliente.
+                    {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg. O peso filtra
+                    apenas veículos que não suportam a carga; ele não escolhe o veículo para o cliente.
                   </p>
                 </div>
               </div>
@@ -968,15 +1036,39 @@ export function Checkout({
           <Step title={fulfillment === "delivery" ? "3. Pagamento" : "2. Pagamento"}>
             <p className="operation-footnote">Pagar agora</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              <Choice active={payment === "Pix"} onClick={() => setPayment("Pix")} icon={<Wallet />} title="Pix" text="QR Code e copia e cola" />
-              <Choice active={payment === "Cartão"} onClick={() => setPayment("Cartão")} icon={<CreditCard />} title="Cartão" text="Crédito ou débito salvo" />
+              <Choice
+                active={payment === "Pix"}
+                onClick={() => setPayment("Pix")}
+                icon={<Wallet />}
+                title="Pix"
+                text="QR Code e copia e cola"
+              />
+              <Choice
+                active={payment === "Cartão"}
+                onClick={() => setPayment("Cartão")}
+                icon={<CreditCard />}
+                title="Cartão"
+                text="Crédito ou débito salvo"
+              />
             </div>
             {fulfillment === "delivery" && (
               <>
                 <p className="operation-footnote">Pagar na entrega</p>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <Choice active={payment === "Dinheiro na entrega"} onClick={() => setPayment("Dinheiro na entrega")} icon={<Wallet />} title="Dinheiro" text="Pagamento ao receber" />
-                  <Choice active={payment === "Cartão na entrega"} onClick={() => setPayment("Cartão na entrega")} icon={<CreditCard />} title="Cartão na maquininha" text="Se disponível na operação" />
+                  <Choice
+                    active={payment === "Dinheiro na entrega"}
+                    onClick={() => setPayment("Dinheiro na entrega")}
+                    icon={<Wallet />}
+                    title="Dinheiro"
+                    text="Pagamento ao receber"
+                  />
+                  <Choice
+                    active={payment === "Cartão na entrega"}
+                    onClick={() => setPayment("Cartão na entrega")}
+                    icon={<CreditCard />}
+                    title="Cartão na maquininha"
+                    text="Se disponível na operação"
+                  />
                 </div>
               </>
             )}
@@ -1007,7 +1099,11 @@ export function Checkout({
                 {needsChange && (
                   <label>
                     Troco para quanto?
-                    <input value={changeFor} onChange={(event) => setChangeFor(event.target.value)} placeholder="Ex.: R$ 150,00" />
+                    <input
+                      value={changeFor}
+                      onChange={(event) => setChangeFor(event.target.value)}
+                      placeholder="Ex.: R$ 150,00"
+                    />
                   </label>
                 )}
               </div>
@@ -1029,10 +1125,15 @@ export function Checkout({
               <div className="checkout-item" key={product.id}>
                 <span>{product.emoji}</span>
                 <div>
-                  <b>{cart[product.id]}× {product.name}</b>
+                  <b>
+                    {cart[product.id]}× {product.name}
+                  </b>
                   <small>{product.feirante}</small>
                   <small>
-                    {productWeight(product, cart[product.id]).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg estimados
+                    {productWeight(product, cart[product.id]).toLocaleString("pt-BR", {
+                      maximumFractionDigits: 1,
+                    })}{" "}
+                    kg estimados
                   </small>
                 </div>
                 <strong>{money(product.price * cart[product.id])}</strong>
@@ -1045,18 +1146,44 @@ export function Checkout({
           <span className="eyebrow">Resumo</span>
           <h2>Seu pedido</h2>
           <div>
-            <p><span>Feira</span><b>{fairName}</b></p>
-            <p><span>Subtotal</span><b>{money(subtotal)}</b></p>
-            <p><span>Peso estimado</span><b>{totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</b></p>
+            <p>
+              <span>Feira</span>
+              <b>{fairName}</b>
+            </p>
+            <p>
+              <span>Subtotal</span>
+              <b>{money(subtotal)}</b>
+            </p>
+            <p>
+              <span>Peso estimado</span>
+              <b>{totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</b>
+            </p>
             {fulfillment === "delivery" && (
               <>
-                <p><span>Frete calculado</span><b>{money(calculatedDeliveryFee)}</b></p>
-                {deliverySubsidy > 0 && <p><span>Desconto da banca</span><b>−{money(deliverySubsidy)}</b></p>}
-                <p><span>Você paga de entrega</span><b>{customerDeliveryFee ? money(customerDeliveryFee) : "Grátis"}</b></p>
+                <p>
+                  <span>Frete calculado</span>
+                  <b>{money(calculatedDeliveryFee)}</b>
+                </p>
+                {deliverySubsidy > 0 && (
+                  <p>
+                    <span>Desconto da banca</span>
+                    <b>−{money(deliverySubsidy)}</b>
+                  </p>
+                )}
+                <p>
+                  <span>Você paga de entrega</span>
+                  <b>{customerDeliveryFee ? money(customerDeliveryFee) : "Grátis"}</b>
+                </p>
               </>
             )}
-            <p><span>Pagamento</span><b>{payment}</b></p>
-            <p className="total"><span>{hasVariableWeight ? "Total estimado" : "Total"}</span><b>{money(total)}</b></p>
+            <p>
+              <span>Pagamento</span>
+              <b>{payment}</b>
+            </p>
+            <p className="total">
+              <span>{hasVariableWeight ? "Total estimado" : "Total"}</span>
+              <b>{money(total)}</b>
+            </p>
           </div>
           <button
             disabled={!canConfirm || (cardPayment && !selectedCardId && cards.length > 0)}
@@ -1107,7 +1234,9 @@ export function FavoritesPage({
   const favoriteVendors = vendorFavorites
     .map((name) => {
       const vendorProducts = products.filter((product) => product.feirante === name);
-      return vendorProducts.length ? { name, fair: vendorProducts[0].fair, count: vendorProducts.length } : null;
+      return vendorProducts.length
+        ? { name, fair: vendorProducts[0].fair, count: vendorProducts.length }
+        : null;
     })
     .filter(Boolean) as { name: string; fair: string; count: number }[];
 
@@ -1139,7 +1268,9 @@ export function FavoritesPage({
                 <button className="mini-toggle active" onClick={() => onVendorFavorite(vendor.name)}>
                   <Heart size={15} /> Remover
                 </button>
-                <button onClick={() => onVendor(vendor.name)}>Ver banca <ChevronRight size={16} /></button>
+                <button onClick={() => onVendor(vendor.name)}>
+                  Ver banca <ChevronRight size={16} />
+                </button>
               </div>
             </article>
           ))}
@@ -1257,7 +1388,11 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
     setNumber(address.number ?? "");
     setComplement(address.complement ?? "");
     setReference(address.reference ?? "");
-    setGpsCoords(typeof address.lat === "number" && typeof address.lng === "number" ? { lat: address.lat, lng: address.lng } : null);
+    setGpsCoords(
+      typeof address.lat === "number" && typeof address.lng === "number"
+        ? { lat: address.lat, lng: address.lng }
+        : null,
+    );
     setLocationMessage(address.source === "gps" ? "Endereço obtido por GPS." : "");
   }
 
@@ -1288,13 +1423,21 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
           };
           const address = data.address ?? {};
           setCep(address.postcode ?? "");
-          setState((address.state_code ?? address.state ?? "DF").replace("BR-", "").slice(0, 2).toUpperCase());
-          setCity(address.city ?? address.town ?? address.municipality ?? address.village ?? address.county ?? "");
+          setState(
+            (address.state_code ?? address.state ?? "DF").replace("BR-", "").slice(0, 2).toUpperCase(),
+          );
+          setCity(
+            address.city ?? address.town ?? address.municipality ?? address.village ?? address.county ?? "",
+          );
           setNeighborhood(address.suburb ?? address.neighbourhood ?? address.city_district ?? "");
           setStreet(address.road ?? address.pedestrian ?? address.residential ?? "");
-          setLocationMessage("GPS localizado. Confira os campos e complete número, complemento e referência.");
+          setLocationMessage(
+            "GPS localizado. Confira os campos e complete número, complemento e referência.",
+          );
         } catch {
-          setLocationMessage("GPS localizado, mas o endereço automático não respondeu. Complete os campos restantes.");
+          setLocationMessage(
+            "GPS localizado, mas o endereço automático não respondeu. Complete os campos restantes.",
+          );
         } finally {
           setLocationLoading(false);
         }
@@ -1320,7 +1463,9 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       cep.trim(),
       complement.trim(),
       reference.trim(),
-    ].filter(Boolean).join(" · ");
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
     const nextAddress: Address = {
       id: editingId ?? Date.now(),
@@ -1354,7 +1499,11 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
   const minimumAddressFilled = Boolean(cep.trim() && city.trim() && street.trim() && number.trim());
 
   return (
-    <Panel title="Meus endereços" subtitle="Use o GPS para preencher automaticamente ou informe os dados manualmente." onBack={onBack}>
+    <Panel
+      title="Meus endereços"
+      subtitle="Use o GPS para preencher automaticamente ou informe os dados manualmente."
+      onBack={onBack}
+    >
       <div className="space-y-3">
         {addresses.map((address) => (
           <article className="address-card" key={address.id}>
@@ -1362,7 +1511,9 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
             <div>
               <b>{address.label}</b>
               <p>{address.details}</p>
-              <small>{address.source === "gps" ? "Salvo com localização GPS" : "Endereço informado manualmente"}</small>
+              <small>
+                {address.source === "gps" ? "Salvo com localização GPS" : "Endereço informado manualmente"}
+              </small>
             </div>
             {address.isDefault && <span>Principal</span>}
             <div className="item-actions">
@@ -1378,7 +1529,9 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
                   Tornar principal
                 </button>
               )}
-              <button className="mini-toggle" onClick={() => beginEdit(address)}><Edit3 size={15} /> Editar</button>
+              <button className="mini-toggle" onClick={() => beginEdit(address)}>
+                <Edit3 size={15} /> Editar
+              </button>
               <button
                 className="mini-toggle"
                 onClick={() => {
@@ -1399,47 +1552,143 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
 
       {adding ? (
         <form onSubmit={submit} className="form-card">
-          <button type="button" className="secondary-action" onClick={useCurrentLocation} disabled={locationLoading}>
+          <button
+            type="button"
+            className="secondary-action"
+            onClick={useCurrentLocation}
+            disabled={locationLoading}
+          >
             <MapPin size={17} /> {locationLoading ? "Localizando..." : "Usar minha localização atual"}
           </button>
           {locationMessage && <p className="operation-footnote">{locationMessage}</p>}
 
           <label>
             Apelido do endereço
-            <input value={label} onChange={(event) => setLabel(event.target.value)} placeholder="Casa, trabalho, outro" required />
+            <input
+              value={label}
+              onChange={(event) => setLabel(event.target.value)}
+              placeholder="Casa, trabalho, outro"
+              required
+            />
           </label>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <label>CEP<input value={cep} onChange={(event) => setCep(event.target.value)} placeholder="00000-000" inputMode="numeric" required /></label>
-            <label>Estado<input value={state} onChange={(event) => setState(event.target.value.toUpperCase())} maxLength={2} placeholder="DF" required /></label>
-            <label>Cidade/região<input value={city} onChange={(event) => setCity(event.target.value)} placeholder="Ex.: Planaltina" required /></label>
-            <label>Bairro/setor<input value={neighborhood} onChange={(event) => setNeighborhood(event.target.value)} placeholder="Bairro, setor ou condomínio" /></label>
+            <label>
+              CEP
+              <input
+                value={cep}
+                onChange={(event) => setCep(event.target.value)}
+                placeholder="00000-000"
+                inputMode="numeric"
+                required
+              />
+            </label>
+            <label>
+              Estado
+              <input
+                value={state}
+                onChange={(event) => setState(event.target.value.toUpperCase())}
+                maxLength={2}
+                placeholder="DF"
+                required
+              />
+            </label>
+            <label>
+              Cidade/região
+              <input
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+                placeholder="Ex.: Planaltina"
+                required
+              />
+            </label>
+            <label>
+              Bairro/setor
+              <input
+                value={neighborhood}
+                onChange={(event) => setNeighborhood(event.target.value)}
+                placeholder="Bairro, setor ou condomínio"
+              />
+            </label>
           </div>
 
-          <label>Rua/quadra<input value={street} onChange={(event) => setStreet(event.target.value)} placeholder="Rua, avenida, quadra ou conjunto" required /></label>
+          <label>
+            Rua/quadra
+            <input
+              value={street}
+              onChange={(event) => setStreet(event.target.value)}
+              placeholder="Rua, avenida, quadra ou conjunto"
+              required
+            />
+          </label>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <label>Número/lote<input value={number} onChange={(event) => setNumber(event.target.value)} placeholder="Número, lote ou casa" required /></label>
-            <label>Complemento<input value={complement} onChange={(event) => setComplement(event.target.value)} placeholder="Apto., bloco, fundos..." /></label>
+            <label>
+              Número/lote
+              <input
+                value={number}
+                onChange={(event) => setNumber(event.target.value)}
+                placeholder="Número, lote ou casa"
+                required
+              />
+            </label>
+            <label>
+              Complemento
+              <input
+                value={complement}
+                onChange={(event) => setComplement(event.target.value)}
+                placeholder="Apto., bloco, fundos..."
+              />
+            </label>
           </div>
 
-          <label>Ponto de referência<input value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Ex.: portão amarelo" /></label>
+          <label>
+            Ponto de referência
+            <input
+              value={reference}
+              onChange={(event) => setReference(event.target.value)}
+              placeholder="Ex.: portão amarelo"
+            />
+          </label>
 
           <div className="region-strip">
             <MapPin size={18} />
             <div>
               <b>{minimumAddressFilled ? "Endereço pronto para salvar" : "Complete o endereço"}</b>
-              <p>{minimumAddressFilled ? "No checkout, a rota e o frete usam este endereço." : "Informe CEP, cidade/região, rua/quadra e número."}</p>
+              <p>
+                {minimumAddressFilled
+                  ? "No checkout, a rota e o frete usam este endereço."
+                  : "Informe CEP, cidade/região, rua/quadra e número."}
+              </p>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <button type="submit" className="primary-action">{editingId ? "Salvar alterações" : "Salvar endereço"}</button>
-            <button type="button" onClick={() => { resetForm(); setAdding(false); }} className="secondary-action">Cancelar</button>
+            <button type="submit" className="primary-action">
+              {editingId ? "Salvar alterações" : "Salvar endereço"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setAdding(false);
+              }}
+              className="secondary-action"
+            >
+              Cancelar
+            </button>
           </div>
         </form>
       ) : (
-        <button onClick={() => { resetForm(); setAdding(true); }} className="dashed-action"><Plus /> Adicionar endereço</button>
+        <button
+          onClick={() => {
+            resetForm();
+            setAdding(true);
+          }}
+          className="dashed-action"
+        >
+          <Plus /> Adicionar endereço
+        </button>
       )}
     </Panel>
   );
@@ -1599,7 +1848,14 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
   const [cards, setCards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
   >("feirae:cards-v3", [
-    { id: "demo-card", holder: "Cliente Feiraê", last4: "4821", expiry: "12/29", type: "Crédito", brand: "Visa" },
+    {
+      id: "demo-card",
+      holder: "Cliente Feiraê",
+      last4: "4821",
+      expiry: "12/29",
+      type: "Crédito",
+      brand: "Visa",
+    },
   ]);
   const [mode, setMode] = useState<"card" | null>(null);
   const [holder, setHolder] = useState("");
@@ -1614,7 +1870,8 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
     if (/^(5[1-5]|2[2-7])/.test(digits)) return "Mastercard";
     if (/^3[47]/.test(digits)) return "American Express";
     if (/^(606282|3841)/.test(digits)) return "Hipercard";
-    if (/^(4011|4312|4389|4514|4576|5041|5066|5067|509|6277|6362|6363|650|6516|6550)/.test(digits)) return "Elo";
+    if (/^(4011|4312|4389|4514|4576|5041|5066|5067|509|6277|6362|6363|650|6516|6550)/.test(digits))
+      return "Elo";
     return "Bandeira";
   }
 
@@ -1641,7 +1898,11 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <Panel title="Pagamentos e carteira" subtitle="Escolha como pagar agora ou na entrega, conforme disponibilidade da banca." onBack={onBack}>
+    <Panel
+      title="Pagamentos e carteira"
+      subtitle="Escolha como pagar agora ou na entrega, conforme disponibilidade da banca."
+      onBack={onBack}
+    >
       <div className="grid gap-4 lg:grid-cols-[1fr_.8fr]">
         <div className="surface-card">
           <span className="eyebrow">Métodos</span>
@@ -1652,7 +1913,18 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
                 <b>Cartão de crédito/débito</b>
                 <small>
                   {cards.length
-                    ? cards.map((card) => (card.brand ?? "Cartão") + " · " + card.type + " final " + card.last4 + " · " + card.expiry).join(" · ")
+                    ? cards
+                        .map(
+                          (card) =>
+                            (card.brand ?? "Cartão") +
+                            " · " +
+                            card.type +
+                            " final " +
+                            card.last4 +
+                            " · " +
+                            card.expiry,
+                        )
+                        .join(" · ")
                     : "Nenhum cartão salvo"}
                 </small>
                 <small>Bandeiras: Visa · Mastercard · Elo · Hipercard · American Express</small>
@@ -1688,10 +1960,17 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
                 <article key={card.id}>
                   <CreditCard />
                   <div>
-                    <b>{card.brand ?? "Cartão"} · {card.type}</b>
-                    <small>Final {card.last4} · validade {card.expiry}</small>
+                    <b>
+                      {card.brand ?? "Cartão"} · {card.type}
+                    </b>
+                    <small>
+                      Final {card.last4} · validade {card.expiry}
+                    </small>
                   </div>
-                  <button className="mini-toggle" onClick={() => setCards((current) => current.filter((item) => item.id !== card.id))}>
+                  <button
+                    className="mini-toggle"
+                    onClick={() => setCards((current) => current.filter((item) => item.id !== card.id))}
+                  >
                     <Trash2 size={15} /> Excluir
                   </button>
                 </article>
@@ -1701,26 +1980,65 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
 
           {mode === "card" && (
             <form className="form-card compact" onSubmit={submit}>
-              <label>Nome no cartão<input value={holder} onChange={(event) => setHolder(event.target.value)} autoComplete="cc-name" required /></label>
+              <label>
+                Nome no cartão
+                <input
+                  value={holder}
+                  onChange={(event) => setHolder(event.target.value)}
+                  autoComplete="cc-name"
+                  required
+                />
+              </label>
               <label>
                 Número do cartão
-                <input value={number} onChange={(event) => setNumber(event.target.value)} placeholder="0000 0000 0000 0000" inputMode="numeric" autoComplete="cc-number" required />
+                <input
+                  value={number}
+                  onChange={(event) => setNumber(event.target.value)}
+                  placeholder="0000 0000 0000 0000"
+                  inputMode="numeric"
+                  autoComplete="cc-number"
+                  required
+                />
                 <small>{detectBrand(number)}</small>
               </label>
               <div className="grid gap-3 sm:grid-cols-3">
-                <label>Validade<input value={expiry} onChange={(event) => setExpiry(event.target.value)} placeholder="MM/AA" autoComplete="cc-exp" required /></label>
-                <label>CVV<input value={cvv} onChange={(event) => setCvv(event.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" autoComplete="cc-csc" placeholder="123" required /></label>
+                <label>
+                  Validade
+                  <input
+                    value={expiry}
+                    onChange={(event) => setExpiry(event.target.value)}
+                    placeholder="MM/AA"
+                    autoComplete="cc-exp"
+                    required
+                  />
+                </label>
+                <label>
+                  CVV
+                  <input
+                    value={cvv}
+                    onChange={(event) => setCvv(event.target.value.replace(/\D/g, "").slice(0, 4))}
+                    inputMode="numeric"
+                    autoComplete="cc-csc"
+                    placeholder="123"
+                    required
+                  />
+                </label>
                 <label>
                   Tipo
                   <select value={cardType} onChange={(event) => setCardType(event.target.value)}>
-                    <option>Crédito</option><option>Débito</option>
+                    <option>Crédito</option>
+                    <option>Débito</option>
                   </select>
                 </label>
               </div>
               <p className="operation-footnote">Por segurança, o CVV não é salvo.</p>
               <div className="module-action-row">
-                <button className="primary-action" type="submit">Salvar cartão</button>
-                <button className="secondary-action" type="button" onClick={() => setMode(null)}>Cancelar</button>
+                <button className="primary-action" type="submit">
+                  Salvar cartão
+                </button>
+                <button className="secondary-action" type="button" onClick={() => setMode(null)}>
+                  Cancelar
+                </button>
               </div>
             </form>
           )}
@@ -1731,8 +2049,14 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
           <h2>R$ 18,90</h2>
           <p>Crédito de reembolso disponível para a próxima compra.</p>
           <div className="finance-breakdown">
-            <p><span>Reembolso</span><strong>R$ 18,90</strong></p>
-            <p><span>Uso</span><strong>Próxima compra</strong></p>
+            <p>
+              <span>Reembolso</span>
+              <strong>R$ 18,90</strong>
+            </p>
+            <p>
+              <span>Uso</span>
+              <strong>Próxima compra</strong>
+            </p>
           </div>
         </div>
       </div>

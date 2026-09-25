@@ -32,9 +32,11 @@ export function requiresPlate(type: DeliveryVehicleType) {
   return !["Bicicleta", "Bicicleta cargueira/triciclo", "Outro"].includes(type);
 }
 
-
 export function normalizePlate(value: string) {
-  return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+  return value
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 7);
 }
 
 export function isValidBrazilianPlate(value: string) {

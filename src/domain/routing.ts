@@ -28,10 +28,7 @@ export async function geocodeAddress(address: string): Promise<GeoPoint | null> 
   }
 }
 
-export async function drivingRoute(
-  origin: GeoPoint,
-  destination: GeoPoint,
-): Promise<RouteMetrics | null> {
+export async function drivingRoute(origin: GeoPoint, destination: GeoPoint): Promise<RouteMetrics | null> {
   try {
     const coordinates = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
     const response = await fetch(

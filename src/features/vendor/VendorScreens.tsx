@@ -140,7 +140,10 @@ function vendorScheduleStatus(schedule: VendorScheduleDay[], now = new Date()) {
       return { open: false, label: `Fechada · abre hoje às ${candidate.open}` };
     }
     if (offset > 0) {
-      return { open: false, label: `Fechada · abre ${candidate.day.toLocaleLowerCase("pt-BR")} às ${candidate.open}` };
+      return {
+        open: false,
+        label: `Fechada · abre ${candidate.day.toLocaleLowerCase("pt-BR")} às ${candidate.open}`,
+      };
     }
   }
   return { open: false, label: "Fechada · sem próximo horário configurado" };
@@ -252,9 +255,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   useEffect(() => {
     setPromotions((current) =>
       current.filter(
-        (promotion) =>
-          !/também quero/i.test(promotion.name) &&
-          !/isso funciona\??/i.test(promotion.rule),
+        (promotion) => !/também quero/i.test(promotion.name) && !/isso funciona\??/i.test(promotion.rule),
       ),
     );
   }, [setPromotions]);
@@ -283,7 +284,13 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       sharedOrders.forEach((record) => {
         const items = record.items.filter((item) => item.vendor === bankProfile.name);
         const currentOrder = byId.get(record.id);
-        const alreadySeparated = ["ready_for_pickup", "driver_assigned", "collected", "out_for_delivery", "delivered"].includes(record.status);
+        const alreadySeparated = [
+          "ready_for_pickup",
+          "driver_assigned",
+          "collected",
+          "out_for_delivery",
+          "delivered",
+        ].includes(record.status);
         byId.set(record.id, {
           id: record.id,
           customer: record.customerName,
@@ -565,7 +572,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const inventory = (
     <div className="operation-list">
       {vendorItems.map((item) => {
-        const status = item.stock <= 0 ? "Estoque esgotado" : item.active ? "À venda" : "Pausado pelo feirante";
+        const status =
+          item.stock <= 0 ? "Estoque esgotado" : item.active ? "À venda" : "Pausado pelo feirante";
         return (
           <article key={item.id}>
             <span className={item.stock <= item.minStock ? "inventory-dot warning" : "inventory-dot"} />
@@ -1058,8 +1066,15 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           type="button"
                           className="secondary-action"
                           onClick={() => {
-                            if (!window.confirm("Excluir este produto do catálogo? Pedidos antigos continuarão preservados no histórico.")) return;
-                            setVendorItems((current) => current.filter((item) => item.id !== productDraft.id));
+                            if (
+                              !window.confirm(
+                                "Excluir este produto do catálogo? Pedidos antigos continuarão preservados no histórico.",
+                              )
+                            )
+                              return;
+                            setVendorItems((current) =>
+                              current.filter((item) => item.id !== productDraft.id),
+                            );
                             setProductEditorId(null);
                             showNotice("Produto excluído do catálogo.");
                           }}
@@ -1328,7 +1343,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   <small>{officialHours.verification}</small>
                   {useFairHours && bankProfile.fairName !== "Feira do Produtor Rural" && (
                     <p className="operation-footnote">
-                      Para esta feira, o texto oficial está cadastrado, mas a agenda estruturada ainda precisa ser confirmada para calcular “aberta agora” automaticamente.
+                      Para esta feira, o texto oficial está cadastrado, mas a agenda estruturada ainda precisa
+                      ser confirmada para calcular “aberta agora” automaticamente.
                     </p>
                   )}
                 </div>
@@ -1366,7 +1382,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                                   type="time"
                                   value={item.open}
                                   disabled={!item.enabled}
-                                  onChange={(event) => updateScheduleDay(item.day, { open: event.target.value })}
+                                  onChange={(event) =>
+                                    updateScheduleDay(item.day, { open: event.target.value })
+                                  }
                                 />
                               </label>
                               <label>
@@ -1375,7 +1393,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                                   type="time"
                                   value={item.close}
                                   disabled={!item.enabled}
-                                  onChange={(event) => updateScheduleDay(item.day, { close: event.target.value })}
+                                  onChange={(event) =>
+                                    updateScheduleDay(item.day, { close: event.target.value })
+                                  }
                                 />
                               </label>
                               <label>
@@ -1384,7 +1404,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                                   type="time"
                                   value={item.breakStart}
                                   disabled={!item.enabled}
-                                  onChange={(event) => updateScheduleDay(item.day, { breakStart: event.target.value })}
+                                  onChange={(event) =>
+                                    updateScheduleDay(item.day, { breakStart: event.target.value })
+                                  }
                                 />
                               </label>
                               <label>
@@ -1393,7 +1415,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                                   type="time"
                                   value={item.breakEnd}
                                   disabled={!item.enabled}
-                                  onChange={(event) => updateScheduleDay(item.day, { breakEnd: event.target.value })}
+                                  onChange={(event) =>
+                                    updateScheduleDay(item.day, { breakEnd: event.target.value })
+                                  }
                                 />
                               </label>
                             </div>
@@ -1413,7 +1437,8 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <div className="surface-card">
                   <b>Regra de virada do dia</b>
                   <p>
-                    Um horário como 19:00 → 02:00 significa abertura às 19h e fechamento às 02h do dia seguinte.
+                    Um horário como 19:00 → 02:00 significa abertura às 19h e fechamento às 02h do dia
+                    seguinte.
                   </p>
                 </div>
               </div>
@@ -1501,16 +1526,22 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                               <b>{promotion.name}</b>
                               <small>
                                 {promotion.rule} · {promotion.usedCount}/{promotion.usageLimit || "∞"} usos
-                                {promotion.minimumOrder ? ` · pedido mínimo ${money(promotion.minimumOrder)}` : ""}
+                                {promotion.minimumOrder
+                                  ? ` · pedido mínimo ${money(promotion.minimumOrder)}`
+                                  : ""}
                                 {promotion.target ? ` · alvo: ${promotion.target}` : ""}
                               </small>
                               <small>
                                 {status}
-                                {promotion.vendorPaysDelivery ? " · banca paga o frete; entregador recebe normalmente" : ""}
+                                {promotion.vendorPaysDelivery
+                                  ? " · banca paga o frete; entregador recebe normalmente"
+                                  : ""}
                               </small>
                             </div>
                             <div className="item-actions">
-                              <button className="mini-toggle" onClick={() => editPromotion(promotion)}>Editar</button>
+                              <button className="mini-toggle" onClick={() => editPromotion(promotion)}>
+                                Editar
+                              </button>
                               <button
                                 className={status === "Ativa" ? "mini-toggle active" : "mini-toggle"}
                                 onClick={() =>
@@ -1526,8 +1557,15 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                               <button
                                 className="mini-toggle"
                                 onClick={() => {
-                                  if (!window.confirm("Excluir esta promoção? O histórico de pedidos que já usaram a campanha não será alterado.")) return;
-                                  setPromotions((current) => current.filter((item) => item.id !== promotion.id));
+                                  if (
+                                    !window.confirm(
+                                      "Excluir esta promoção? O histórico de pedidos que já usaram a campanha não será alterado.",
+                                    )
+                                  )
+                                    return;
+                                  setPromotions((current) =>
+                                    current.filter((item) => item.id !== promotion.id),
+                                  );
                                   showNotice("Promoção excluída.");
                                 }}
                               >
@@ -1568,7 +1606,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       Nome da campanha
                       <input
                         value={promotionDraft.name}
-                        onChange={(event) => setPromotionDraft((current) => ({ ...current, name: event.target.value }))}
+                        onChange={(event) =>
+                          setPromotionDraft((current) => ({ ...current, name: event.target.value }))
+                        }
                         required
                       />
                     </label>
@@ -1577,7 +1617,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       <textarea
                         rows={3}
                         value={promotionDraft.rule}
-                        onChange={(event) => setPromotionDraft((current) => ({ ...current, rule: event.target.value }))}
+                        onChange={(event) =>
+                          setPromotionDraft((current) => ({ ...current, rule: event.target.value }))
+                        }
                         placeholder="Ex.: 10% em frutas; compre 2 leve 3; frete grátis acima de R$ 80"
                         required
                       />
@@ -1585,24 +1627,33 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     <div className="grid gap-3 sm:grid-cols-2">
                       {["percentual", "valorFixo", "produtoCategoria"].includes(promotionDraft.type) && (
                         <label>
-                          {promotionDraft.type === "percentual" ? "Percentual de desconto (%)" : "Valor do desconto (R$)"}
+                          {promotionDraft.type === "percentual"
+                            ? "Percentual de desconto (%)"
+                            : "Valor do desconto (R$)"}
                           <input
                             type="number"
                             min="0"
                             step={promotionDraft.type === "percentual" ? "1" : "0.01"}
                             value={promotionDraft.discountValue ?? 0}
                             onChange={(event) =>
-                              setPromotionDraft((current) => ({ ...current, discountValue: Number(event.target.value) }))
+                              setPromotionDraft((current) => ({
+                                ...current,
+                                discountValue: Number(event.target.value),
+                              }))
                             }
                           />
                         </label>
                       )}
-                      {["percentual", "valorFixo", "produtoCategoria", "compreLeve"].includes(promotionDraft.type) && (
+                      {["percentual", "valorFixo", "produtoCategoria", "compreLeve"].includes(
+                        promotionDraft.type,
+                      ) && (
                         <label>
                           Produto/categoria alvo
                           <input
                             value={promotionDraft.target ?? ""}
-                            onChange={(event) => setPromotionDraft((current) => ({ ...current, target: event.target.value }))}
+                            onChange={(event) =>
+                              setPromotionDraft((current) => ({ ...current, target: event.target.value }))
+                            }
                             placeholder="Ex.: Cesta de frutas ou Hortifruti"
                           />
                         </label>
@@ -1615,7 +1666,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           step="0.01"
                           value={promotionDraft.minimumOrder ?? 0}
                           onChange={(event) =>
-                            setPromotionDraft((current) => ({ ...current, minimumOrder: Number(event.target.value) }))
+                            setPromotionDraft((current) => ({
+                              ...current,
+                              minimumOrder: Number(event.target.value),
+                            }))
                           }
                         />
                       </label>
@@ -1626,7 +1680,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           min="0"
                           value={promotionDraft.usageLimit}
                           onChange={(event) =>
-                            setPromotionDraft((current) => ({ ...current, usageLimit: Number(event.target.value) }))
+                            setPromotionDraft((current) => ({
+                              ...current,
+                              usageLimit: Number(event.target.value),
+                            }))
                           }
                         />
                         <small>0 = sem limite.</small>
@@ -1636,7 +1693,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                         <input
                           type="datetime-local"
                           value={promotionDraft.startsAt}
-                          onChange={(event) => setPromotionDraft((current) => ({ ...current, startsAt: event.target.value }))}
+                          onChange={(event) =>
+                            setPromotionDraft((current) => ({ ...current, startsAt: event.target.value }))
+                          }
                         />
                       </label>
                       <label>
@@ -1644,17 +1703,22 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                         <input
                           type="datetime-local"
                           value={promotionDraft.endsAt}
-                          onChange={(event) => setPromotionDraft((current) => ({ ...current, endsAt: event.target.value }))}
+                          onChange={(event) =>
+                            setPromotionDraft((current) => ({ ...current, endsAt: event.target.value }))
+                          }
                         />
                       </label>
                     </div>
                     {promotionDraft.type === "freteGratis" && (
                       <p className="inline-success">
-                        Frete grátis é uma promoção: o cliente paga R$ 0, a banca absorve o custo e a remuneração do entregador não é reduzida.
+                        Frete grátis é uma promoção: o cliente paga R$ 0, a banca absorve o custo e a
+                        remuneração do entregador não é reduzida.
                       </p>
                     )}
                     <div className="module-action-row">
-                      <button type="submit" className="primary-action">Salvar campanha</button>
+                      <button type="submit" className="primary-action">
+                        Salvar campanha
+                      </button>
                       <button
                         type="button"
                         className="secondary-action"
@@ -1671,7 +1735,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           className="secondary-action"
                           onClick={() => {
                             if (!window.confirm("Excluir esta promoção?")) return;
-                            setPromotions((current) => current.filter((item) => item.id !== promotionEditingId));
+                            setPromotions((current) =>
+                              current.filter((item) => item.id !== promotionEditingId),
+                            );
                             setPromotionEditorOpen(false);
                             setPromotionEditingId(null);
                             showNotice("Promoção excluída.");
@@ -2059,7 +2125,6 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
           </div>
         </div>
       )}
-
     </Panel>
   );
 }
