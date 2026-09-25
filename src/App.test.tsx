@@ -452,7 +452,7 @@ describe("Feiraê role access", () => {
     ).toBeInTheDocument();
     expect(within(vehicleType).getByRole("option", { name: /carro · referência 80 kg/i })).toBeInTheDocument();
     expect(
-      within(vehicleType).getByRole("option", { name: /utilitário\/pickup · sugestão 250 kg/i }),
+      within(vehicleType).getByRole("option", { name: /utilitário\/pickup · referência 250 kg/i }),
     ).toBeInTheDocument();
     expect(within(vehicleType).getByRole("option", { name: /van · referência 500 kg/i })).toBeInTheDocument();
 
