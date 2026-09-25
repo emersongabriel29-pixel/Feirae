@@ -32,7 +32,11 @@ import { useDemoCart } from "./hooks/useDemoCart";
 import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
 import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
-import { marketplaceProducts, readStoreByIdentity } from "./domain/marketplaceBridge";
+import {
+  marketplaceProducts,
+  readStoreByIdentity,
+  registerPromotionUsage,
+} from "./domain/marketplaceBridge";
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import { consumeWallet } from "./domain/walletBridge";
@@ -246,6 +250,7 @@ export default function App() {
       customerDeliveryFee: number;
       promotionDiscount: number;
       walletUsed: number;
+      appliedPromotions: string[];
       changeFor?: number;
     },
   ) {
@@ -343,6 +348,7 @@ export default function App() {
     if (details.walletUsed > 0 && session?.email) {
       consumeWallet(session.email, id, details.walletUsed);
     }
+    registerPromotionUsage(details.appliedPromotions);
     setSelectedOrderId(id);
     setCart({});
     openCustomerTab("orders");
