@@ -121,7 +121,7 @@ describe("Feiraê customer flow", () => {
 
   it("opens the selected order details with its own id and status", () => {
     window.localStorage.setItem(
-      "feirae:orders",
+      "feirae:orders:cliente@feirae.test",
       JSON.stringify([
         { id: "FE-1029", date: "21/09/2026", status: "Recebido", value: 65.8 },
         { id: "FE-1024", date: "20/09/2026", status: "Em rota", value: 58.7 },
@@ -229,7 +229,7 @@ describe("Feiraê customer flow", () => {
 
   it("separates client cancellation reasons from delivery incident reasons", () => {
     window.localStorage.setItem(
-      "feirae:orders",
+      "feirae:orders:cliente@feirae.test",
       JSON.stringify([{ id: "FE-1030", date: "25/09/2026", status: "Recebido", value: 50 }]),
     );
     render(<App />);
@@ -252,14 +252,14 @@ describe("Feiraê customer flow", () => {
     loginAs("cliente");
     fireEvent.click(screen.getByRole("button", { name: /abrir notificações/i }));
 
-    expect(screen.getByText(/pedido fe-1024 saiu para entrega/i)).toBeInTheDocument();
-    expect(screen.getByText(/pedido fe-1019 foi entregue/i)).toBeInTheDocument();
+    expect(screen.getByText(/fe-1024 · a caminho do cliente/i)).toBeInTheDocument();
+    expect(screen.getByText(/fe-1019 · entregue/i)).toBeInTheDocument();
     expect(screen.queryByText(/novo desconto na feira/i)).not.toBeInTheDocument();
   });
 
   it("separates submitted reviews from delivered orders still waiting for a review", () => {
     window.localStorage.setItem(
-      "feirae:orders",
+      "feirae:orders:cliente@feirae.test",
       JSON.stringify([{ id: "FE-1031", date: "25/09/2026", status: "Entregue", value: 72 }]),
     );
     render(<App />);
@@ -351,7 +351,8 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /marcar pedido como pronto/i }));
 
     expect(screen.getByText(/aguardando entregador/i)).toBeInTheDocument();
-    expect(screen.getByText(/coleta, rota e entrega pertencem ao fluxo do entregador/i)).toBeInTheDocument();
+    expect(screen.getByText(/sua parte está pronta/i)).toBeInTheDocument();
+    expect(screen.getByText(/todas as bancas do pedido/i)).toBeInTheDocument();
   });
 
   it("opens real bank editing instead of inert cards", () => {
@@ -425,15 +426,25 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
   });
 
-  it("lets the delivery person accept and advance a delivery", () => {
+  it("lets the delivery person complete all delivery stages", () => {
     render(<App />);
     loginAs("entregador");
     fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /aceitar/i })[0]);
     expect(screen.getByText(/entrega em andamento/i)).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: /ir para a banca/i }));
     expect(screen.getByRole("button", { name: /confirmar coleta/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /confirmar coleta/i }));
+    expect(screen.getByRole("button", { name: /iniciar entrega/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /iniciar entrega/i }));
+    expect(screen.getByRole("button", { name: /confirmar entrega/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /confirmar entrega/i }));
+    expect(screen.getByText(/nenhuma entrega ativa/i)).toBeInTheDocument();
   });
 
   it("offers all delivery vehicle types with editable carrying capacity", () => {
