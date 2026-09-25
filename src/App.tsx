@@ -301,9 +301,7 @@ export default function App() {
           <AccountPage session={session} onBack={() => openCustomerTab("profile")} />
         )}
         {screen === "payments" && <PaymentsPage onBack={() => openCustomerTab("profile")} />}
-        {screen === "ratings" && (
-          <RatingsPage orders={orders} onBack={() => openCustomerTab("profile")} />
-        )}
+        {screen === "ratings" && <RatingsPage orders={orders} onBack={() => openCustomerTab("profile")} />}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "feiranteOps" && session && (
