@@ -59,9 +59,13 @@ export default function App() {
     scopedStorageKey("feirae:vendor-favorites", accountKey),
     [],
   );
+  const customerSeedOrders =
+    session?.role === "customer" && session.email.endsWith("@feirae.test") && !session.isNewAccount
+      ? initialOrders
+      : [];
   const [orders, setOrders] = usePersistentState<DemoOrder[]>(
     scopedStorageKey("feirae:orders", accountKey),
-    initialOrders,
+    customerSeedOrders,
   );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -509,6 +513,7 @@ export default function App() {
         {role !== "customer" && screen === "main" && (
           <RoleDashboard
             role={role}
+            newAccount={Boolean(session?.isNewAccount)}
             onOpen={() => openScreen(role === "feirante" ? "feiranteOps" : "deliveryOps")}
           />
         )}
