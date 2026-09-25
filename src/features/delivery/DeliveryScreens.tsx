@@ -17,6 +17,12 @@ import {
 } from "lucide-react";
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
 import { calculateDeliveryQuote, routeProgressSummary } from "../../domain/deliveryPricing";
+import {
+  defaultWeeklyAvailability,
+  driverAvailabilityStatus,
+  type AvailabilityMode,
+  type WeeklyAvailabilityDay,
+} from "../../domain/driverAvailability";
 import { deliveryModuleDetails } from "../../domain/operations";
 import {
   requiresPlate,
@@ -46,7 +52,6 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
     "Vantagens",
     "Avaliações",
   ];
-  const [online, setOnline] = useState(true);
   const [accepted, setAccepted] = useState<string | null>(null);
   const [stage, setStage] = useState(0);
   const [cancelReason, setCancelReason] = useState("");
@@ -84,6 +89,22 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
       city: "Planaltina",
       state: "DF",
     },
+  );
+  const [availabilityMode, setAvailabilityMode] = usePersistentState<AvailabilityMode>(
+    `feirae:delivery-availability-mode:${session.email}`,
+    "manual",
+  );
+  const [manualOnline, setManualOnline] = usePersistentState<boolean>(
+    `feirae:delivery-manual-online:${session.email}`,
+    true,
+  );
+  const [schedulePaused, setSchedulePaused] = usePersistentState<boolean>(
+    `feirae:delivery-schedule-paused:${session.email}`,
+    false,
+  );
+  const [availabilitySchedule, setAvailabilitySchedule] = usePersistentState<WeeklyAvailabilityDay[]>(
+    `feirae:delivery-availability-schedule:${session.email}`,
+    defaultWeeklyAvailability,
   );
   const [serviceAreas, setServiceAreas] = usePersistentState<string[]>(
     `feirae:delivery-areas:${session.email}`,
@@ -333,6 +354,29 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
           )
         ? "Em análise"
         : "Documentação pendente";
+  const availability = driverAvailabilityStatus({
+    approved: approvalStatus === "Aprovado",
+    mode: availabilityMode,
+    manualOnline,
+    schedulePaused,
+    schedule: availabilitySchedule,
+  });
+  const online = availability.online;
+
+  function toggleAvailabilityNow() {
+    if (approvalStatus !== "Aprovado") return;
+    if (availabilityMode === "manual") {
+      setManualOnline((value) => !value);
+      return;
+    }
+    setSchedulePaused((value) => !value);
+  }
+
+  function forceOffline() {
+    if (availabilityMode === "manual") setManualOnline(false);
+    else setSchedulePaused(true);
+  }
+
   const compatibleVehicleForWeight = (weight: number) =>
     [...activeVehicles]
       .filter((vehicle) => vehicle.capacityKg >= weight)
@@ -621,7 +665,7 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
             <div className="operation-metrics">
               <article>
                 <strong>
-                  {approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}
+                  {approvalStatus === "Aprovado" ? availability.label : approvalStatus}
                 </strong>
                 <span>disponibilidade atual</span>
               </article>
@@ -656,17 +700,23 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <span className="eyebrow">Disponibilidade</span>
-                    <h2>{online ? "Você está online" : "Você está offline"}</h2>
+                    <h2>{online ? "Você está online" : `Você está ${availability.label.toLowerCase()}`}</h2>
+                    <p>{availability.reason}</p>
                   </div>
                   <button
-                    onClick={() => {
-                      if (approvalStatus !== "Aprovado") return;
-                      setOnline((value) => !value);
-                    }}
+                    onClick={toggleAvailabilityNow}
                     disabled={approvalStatus !== "Aprovado"}
                     className={online ? "status-button active" : "status-button"}
                   >
-                    {approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}
+                    {approvalStatus !== "Aprovado"
+                      ? approvalStatus
+                      : availabilityMode === "manual"
+                        ? manualOnline
+                          ? "Ficar offline"
+                          : "Ficar online"
+                        : schedulePaused
+                          ? "Retomar agenda"
+                          : "Pausar agenda"}
                   </button>
                 </div>
                 <div className="operation-metrics">
@@ -966,6 +1016,123 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
                   description="Selecione onde deseja coletar pedidos e a distância máxima até a feira."
                 />
                 <div className="surface-card">
+                  <span className="eyebrow">Quando receber corridas</span>
+                  <h3>{availability.label}</h3>
+                  <p>{availability.reason}</p>
+                  <div className="module-action-row">
+                    <button
+                      type="button"
+                      className={availabilityMode === "manual" ? "status-button active" : "status-button"}
+                      onClick={() => {
+                        setAvailabilityMode("manual");
+                        setSchedulePaused(false);
+                      }}
+                    >
+                      Manual
+                    </button>
+                    <button
+                      type="button"
+                      className={availabilityMode === "schedule" ? "status-button active" : "status-button"}
+                      onClick={() => {
+                        setAvailabilityMode("schedule");
+                        setSchedulePaused(false);
+                      }}
+                    >
+                      Horário automático
+                    </button>
+                  </div>
+
+                  {availabilityMode === "manual" ? (
+                    <div className="module-action-row">
+                      <button
+                        type="button"
+                        className={manualOnline ? "primary-action" : "secondary-action"}
+                        onClick={() => setManualOnline((value) => !value)}
+                        disabled={approvalStatus !== "Aprovado"}
+                      >
+                        {manualOnline ? "Desligar corridas" : "Ligar corridas"}
+                      </button>
+                      <small>
+                        Quando estiver offline, nenhuma nova corrida poderá ser aceita.
+                      </small>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="module-action-row">
+                        <button
+                          type="button"
+                          className={schedulePaused ? "primary-action" : "secondary-action"}
+                          onClick={() => setSchedulePaused((value) => !value)}
+                          disabled={approvalStatus !== "Aprovado"}
+                        >
+                          {schedulePaused ? "Retomar agenda automática" : "Pausar agora"}
+                        </button>
+                        <small>
+                          A pausa manual interrompe as corridas mesmo dentro do horário programado.
+                        </small>
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        {availabilitySchedule.map((day) => (
+                          <div className="form-card compact" key={day.weekday}>
+                            <div className="grid gap-3 sm:grid-cols-[1fr_150px_150px]">
+                              <label className="choice-line">
+                                <input
+                                  type="checkbox"
+                                  checked={day.enabled}
+                                  onChange={(event) =>
+                                    setAvailabilitySchedule((current) =>
+                                      current.map((item) =>
+                                        item.weekday === day.weekday
+                                          ? { ...item, enabled: event.target.checked }
+                                          : item,
+                                      ),
+                                    )
+                                  }
+                                />
+                                <span>{day.label}</span>
+                              </label>
+                              <label>
+                                Início
+                                <input
+                                  type="time"
+                                  value={day.start}
+                                  disabled={!day.enabled}
+                                  onChange={(event) =>
+                                    setAvailabilitySchedule((current) =>
+                                      current.map((item) =>
+                                        item.weekday === day.weekday
+                                          ? { ...item, start: event.target.value }
+                                          : item,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </label>
+                              <label>
+                                Fim
+                                <input
+                                  type="time"
+                                  value={day.end}
+                                  disabled={!day.enabled}
+                                  onChange={(event) =>
+                                    setAvailabilitySchedule((current) =>
+                                      current.map((item) =>
+                                        item.weekday === day.weekday
+                                          ? { ...item, end: event.target.value }
+                                          : item,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="surface-card">
                   <span className="eyebrow">Áreas de coleta</span>
                   <p>
                     Uma corrida só aparece se a feira de origem estiver em uma área marcada. Ex.: entregador
@@ -1184,7 +1351,7 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
                           setIncidentMessage(
                             `Ocorrência ${item} registrada${accepted ? ` na corrida ${accepted}` : ""}.`,
                           );
-                          setOnline(false);
+                          forceOffline();
                         }}
                       >
                         Registrar
@@ -1549,7 +1716,7 @@ export function DeliveryOperations({ session, onBack }: { session: DemoSession; 
                                       : item,
                                   ),
                                 );
-                                if (requiredNow) setOnline(false);
+                                if (requiredNow) forceOffline();
                               }}
                             />
                           </label>
