@@ -31,7 +31,7 @@ import {
   patchVendorStatus,
   readUnifiedOrders,
 } from "../../domain/orderBridge";
-import { syncVendorMarketplace } from "../../domain/marketplaceBridge";
+import { readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
 import { vendorIdFor } from "../../domain/identity";
 import { consumeInventory, releaseInventory } from "../../domain/inventoryBridge";
 import {
@@ -286,6 +286,19 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       ),
     );
   }, [setPromotions]);
+
+  useEffect(() => {
+    const sharedStore = readStoreByIdentity(bankProfile.fairName, bankProfile.name);
+    if (!sharedStore) return;
+    setPromotions((current) =>
+      current.map((promotion) => {
+        const shared = sharedStore.promotions.find((item) => item.id === promotion.id);
+        return shared && shared.usedCount > promotion.usedCount
+          ? { ...promotion, usedCount: shared.usedCount }
+          : promotion;
+      }),
+    );
+  }, [bankProfile.fairName, bankProfile.name, setPromotions]);
 
   useEffect(() => {
     const accountVendorId = vendorIdFor(session.email);
