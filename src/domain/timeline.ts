@@ -81,3 +81,31 @@ export function dateLabelFromIso(value: string) {
   if (!Number.isFinite(timestamp)) return "";
   return new Intl.DateTimeFormat("pt-BR").format(new Date(timestamp));
 }
+
+
+function pad2(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+export function localPeriodKeys(date = new Date()) {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const previousMonthDate = new Date(year, date.getMonth() - 1, 1);
+  return {
+    day: `${year}-${pad2(month)}-${pad2(date.getDate())}`,
+    month: `${year}-${pad2(month)}`,
+    previousMonth: `${previousMonthDate.getFullYear()}-${pad2(previousMonthDate.getMonth() + 1)}`,
+    year: String(year),
+  };
+}
+
+export function localPeriodKey(value: string | undefined | null, precision: "day" | "month" | "year") {
+  const timestamp = timestampFromIso(value);
+  if (!Number.isFinite(timestamp)) return "";
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  if (precision === "year") return String(year);
+  const month = `${year}-${pad2(date.getMonth() + 1)}`;
+  if (precision === "month") return month;
+  return `${month}-${pad2(date.getDate())}`;
+}
