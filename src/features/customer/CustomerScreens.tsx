@@ -2487,18 +2487,42 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
 }
 export function ChatPage({ onBack }: { onBack: () => void }) {
   const [topic, setTopic] = useState("Pedido em andamento");
-  const [messages, setMessages] = useState(["Olá! Escolha o assunto e descreva o problema."]);
+  const [messages, setMessages] = usePersistentState<string[]>(
+    scopedStorageKey("feirae:support-messages"),
+    ["Olá! Escolha o assunto e descreva o problema."],
+  );
+  const [tickets, setTickets] = usePersistentState<
+    { id: string; topic: string; message: string; createdAt: string; status: "Aberto" | "Resolvido" }[]
+  >(scopedStorageKey("feirae:support-general"), []);
   const [message, setMessage] = useState("");
+
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!message.trim()) return;
+    const protocol = `FE-SUP-${String(tickets.length + 1).padStart(4, "0")}`;
+    const createdAt = new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date());
+    const userMessage = message.trim();
+    setTickets((current) => [
+      {
+        id: protocol,
+        topic,
+        message: userMessage,
+        createdAt,
+        status: "Aberto",
+      },
+      ...current,
+    ]);
     setMessages((current) => [
       ...current,
-      message.trim(),
-      `Protocolo FE-${Math.floor(2000 + Math.random() * 7000)} aberto em ${topic}. Nossa equipe acompanha por aqui.`,
+      userMessage,
+      `Protocolo ${protocol} aberto em ${topic}. Nossa equipe acompanha por aqui.`,
     ]);
     setMessage("");
   }
+
   return (
     <Panel
       title="Suporte Feiraê"
@@ -2535,6 +2559,23 @@ export function ChatPage({ onBack }: { onBack: () => void }) {
           </button>
         </form>
       </div>
+      {tickets.length > 0 && (
+        <div className="surface-card mt-4">
+          <span className="eyebrow">Protocolos</span>
+          <div className="operation-list detailed">
+            {tickets.slice(0, 6).map((ticket) => (
+              <article key={ticket.id}>
+                <MessageCircle />
+                <div>
+                  <b>{ticket.id} · {ticket.topic}</b>
+                  <small>{ticket.createdAt} · {ticket.status}</small>
+                  <p>{ticket.message}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </Panel>
   );
 }
