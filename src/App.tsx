@@ -308,11 +308,7 @@ export default function App() {
           <FeiranteOperations session={session} onBack={() => openRoleRoot("feirante")} />
         )}
         {screen === "deliveryOps" && session && (
-          <DeliveryOperations
-            session={session}
-            onBack={() => openRoleRoot("delivery")}
-            onMap={() => openMap(-15.621, -47.657)}
-          />
+          <DeliveryOperations session={session} onBack={() => openRoleRoot("delivery")} />
         )}
       </div>
 
