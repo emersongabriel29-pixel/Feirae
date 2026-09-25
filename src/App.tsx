@@ -32,14 +32,25 @@ import { useDemoCart } from "./hooks/useDemoCart";
 import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
 import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
+import { marketplaceProducts, readStoreByIdentity } from "./domain/marketplaceBridge";
+import { scopedStorageKey } from "./domain/storage";
+import { storeIdFor, vendorIdFor } from "./domain/identity";
 
 export default function App() {
   const { session, role, startSession, clearSession } = useDemoSession();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
-  const [favorites, setFavorites] = usePersistentState<number[]>("feirae:favorites", [2]);
-  const [vendorFavorites, setVendorFavorites] = usePersistentState<string[]>("feirae:vendor-favorites", []);
-  const [orders, setOrders] = usePersistentState<DemoOrder[]>("feirae:orders", initialOrders);
+  const accountKey = session?.email ?? "guest";
+  const catalog = marketplaceProducts(products);
+  const [favorites, setFavorites] = usePersistentState<number[]>(scopedStorageKey("feirae:favorites", accountKey), [2]);
+  const [vendorFavorites, setVendorFavorites] = usePersistentState<string[]>(
+    scopedStorageKey("feirae:vendor-favorites", accountKey),
+    [],
+  );
+  const [orders, setOrders] = usePersistentState<DemoOrder[]>(
+    scopedStorageKey("feirae:orders", accountKey),
+    initialOrders,
+  );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [notifications, setNotifications] = useState(2);
@@ -74,10 +85,10 @@ export default function App() {
   } = useAppNavigation(role, () => setCartOpen(false));
 
   const visibleProducts = useMemo(() => {
-    const matches = filterProducts(products, query, category);
+    const matches = filterProducts(catalog, query, category);
     if (query.trim()) return matches;
     return matches.filter((product) => product.fair === selectedFair);
-  }, [query, category, selectedFair]);
+  }, [catalog, query, category, selectedFair]);
   const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
   const trackedOrder =
     orders.find((order) => order.id === selectedOrderId) ??
@@ -86,7 +97,7 @@ export default function App() {
 
   useEffect(() => {
     if (role !== "customer") return;
-    const unified = readUnifiedOrders();
+    const unified = readUnifiedOrders(session?.email);
     if (!unified.length) return;
     const statusMap = {
       received: "Recebido",
@@ -129,10 +140,10 @@ export default function App() {
       });
       return Array.from(byId.values());
     });
-  }, [role, setOrders]);
+  }, [role, session?.email, setOrders]);
 
-  function login(nextRole: Role, email: string) {
-    startSession(nextRole, email);
+  function login(nextRole: Role, email: string, name: string, isNewAccount: boolean) {
+    startSession(nextRole, email, name, isNewAccount);
     resetForRole(nextRole);
   }
 
@@ -154,13 +165,19 @@ export default function App() {
   }
 
   function openFavoriteVendor(name: string) {
-    const product = products.find((item) => item.feirante === name);
+    const product = catalog.find((item) => item.feirante === name);
     if (product) setSelectedFair(product.fair);
     openVendor(name);
   }
   function addProductToCart(id: number) {
-    const product = products.find((item) => item.id === id);
-    if (product && !cartFairName) setSelectedFair(product.fair);
+    const product = catalog.find((item) => item.id === id);
+    if (!product) return;
+    const store = readStoreByIdentity(product.fair, product.feirante);
+    if (store && !store.isOpen) {
+      notify("Esta banca está fechada no momento.");
+      return;
+    }
+    if (!cartFairName) setSelectedFair(product.fair);
     addToCart(id);
   }
   function requestLocation() {
@@ -209,9 +226,11 @@ export default function App() {
       calculatedDeliveryFee: number;
       deliverySubsidy: number;
       customerDeliveryFee: number;
+      promotionDiscount: number;
+      changeFor?: number;
     },
   ) {
-    const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
+    const id = `FE-${String(Date.now()).slice(-8)}`;
     const now = new Date();
     const date = new Intl.DateTimeFormat("pt-BR", {
       dateStyle: "short",
@@ -242,8 +261,14 @@ export default function App() {
       customerLat: details.customerLat,
       customerLng: details.customerLng,
       fulfillment: details.fulfillment,
+      customerKey: session?.email,
       paymentMethod: details.paymentMethod,
+      paymentStatus: details.paymentMethod.toLocaleLowerCase("pt-BR").includes("entrega")
+        ? "due_on_delivery"
+        : "authorized",
+      changeFor: details.changeFor,
       subtotal,
+      promotionDiscount: details.promotionDiscount,
       calculatedDeliveryFee: details.calculatedDeliveryFee,
       deliverySubsidy: details.deliverySubsidy,
       customerDeliveryFee: details.customerDeliveryFee,
@@ -252,11 +277,34 @@ export default function App() {
         productId: product.id,
         name: product.name,
         vendor: product.feirante,
+        vendorId: product.vendorId ?? vendorIdFor(product.feirante),
+        storeId: product.storeId ?? storeIdFor(product.fair, product.feirante),
         quantity: cart[product.id] ?? 0,
         unit: product.unit,
         unitPrice: product.price,
         weightKg: product.weightKg * (cart[product.id] ?? 0),
+        estimatedWeightKg: product.weightKg * (cart[product.id] ?? 0),
       })),
+      vendors: Array.from(
+        new Map(
+          cartProducts.map((product) => {
+            const vendorId = product.vendorId ?? vendorIdFor(product.feirante);
+            const storeId = product.storeId ?? storeIdFor(product.fair, product.feirante);
+            return [
+              vendorId,
+              {
+                vendorId,
+                storeId,
+                vendorName: product.feirante,
+                status: "pending" as const,
+                productIds: cartProducts
+                  .filter((item) => (item.vendorId ?? vendorIdFor(item.feirante)) === vendorId)
+                  .map((item) => item.id),
+              },
+            ];
+          }),
+        ).values(),
+      ),
       status: "received",
       events: [
         {
@@ -313,11 +361,19 @@ export default function App() {
     openScreen("tracking");
   }
   function buyAgain(orderId?: string) {
-    restoreDemoBasket();
+    const history = readUnifiedOrders(session?.email);
+    const source =
+      (orderId && history.find((order) => order.id === orderId)) ??
+      history.find((order) => order.status === "delivered") ??
+      history[0];
+    if (!source) {
+      notify("Nenhum pedido anterior disponível para repetir.");
+      return;
+    }
+    restoreDemoBasket(source.items.map((item) => ({ productId: item.productId, quantity: item.quantity })));
+    setSelectedFair(source.fairName);
     setCartOpen(true);
-    notify(
-      orderId ? `Itens do pedido ${orderId} voltaram para a sacola.` : "Última compra voltou para a sacola.",
-    );
+    notify(`Itens disponíveis do pedido ${source.id} voltaram para a sacola.`);
   }
 
   if (!role) return <LoginPage onLogin={login} />;
