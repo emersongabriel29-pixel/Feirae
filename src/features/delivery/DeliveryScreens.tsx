@@ -16,6 +16,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
+import { calculateDeliveryQuote, routeProgressSummary } from "../../domain/deliveryPricing";
 import { deliveryModuleDetails } from "../../domain/operations";
 import {
   requiresPlate,
@@ -31,11 +32,9 @@ import { money } from "../../utils";
 export function DeliveryOperations({
   session,
   onBack,
-  onMap,
 }: {
   session: DemoSession;
   onBack: () => void;
-  onMap: () => void;
 }) {
   const modules = [
     "Painel",
@@ -47,7 +46,6 @@ export function DeliveryOperations({
     "Desempenho",
     "Notificações",
     "Ajuda",
-    "Guia inicial",
     "Alertas graves",
     "Conta",
     "Documentos",
@@ -61,6 +59,12 @@ export function DeliveryOperations({
   const [active, setActive] = useState("Central");
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
   const [helpProtocol, setHelpProtocol] = useState("");
+  const [incidentMessage, setIncidentMessage] = useState("");
+  const [joinedBonus, setJoinedBonus] = useState(false);
+  const [pendingReviewDeliveryId, setPendingReviewDeliveryId] = useState<string | null>(null);
+  const [bankRating, setBankRating] = useState("5");
+  const [customerRating, setCustomerRating] = useState("5");
+  const [reviewNote, setReviewNote] = useState("");
   const [accountSaved, setAccountSaved] = useState(false);
   const [vehicleFormOpen, setVehicleFormOpen] = useState(false);
   const [vehicleType, setVehicleType] = useState<DeliveryVehicleType>("Moto");
@@ -87,6 +91,29 @@ export function DeliveryOperations({
       state: "DF",
     },
   );
+  const [serviceAreas, setServiceAreas] = usePersistentState<string[]>(
+    `feirae:delivery-areas:${session.email}`,
+    ["Planaltina"],
+  );
+  const [maxPickupDistanceKm, setMaxPickupDistanceKm] = usePersistentState<number>(
+    `feirae:delivery-max-pickup-km:${session.email}`,
+    8,
+  );
+  const [completedDeliveryIds, setCompletedDeliveryIds] = usePersistentState<string[]>(
+    `feirae:delivery-completed:${session.email}`,
+    ["FE-1022", "FE-1023"],
+  );
+  const [driverEvaluations, setDriverEvaluations] = usePersistentState<
+    {
+      id: string;
+      deliveryId: string;
+      bankRating: number;
+      customerRating: number;
+      note: string;
+      createdAt: string;
+    }[]
+  >(`feirae:delivery-evaluations:${session.email}`, []);
+
   const [vehicles, setVehicles] = usePersistentState<DeliveryVehicle[]>(
     `feirae:delivery-vehicles:${session.email}`,
     [
@@ -108,21 +135,45 @@ export function DeliveryOperations({
       label: string;
       amount: number;
       status: "pending" | "available" | "withdrawal_requested" | "paid";
+      createdAt?: string;
+      distanceKm?: number;
     }[]
   >(`feirae:delivery-ledger:${session.email}`, [
     {
       id: "ledger-1022",
       deliveryId: "FE-1022",
-      label: "Feira Central",
+      label: "Feira do Produtor · Planaltina",
       amount: 18.9,
       status: "paid",
+      createdAt: "2026-09-25T09:20:00-03:00",
+      distanceKm: 7.1,
     },
     {
       id: "ledger-1023",
       deliveryId: "FE-1023",
-      label: "Torre",
+      label: "Feira do Produtor · Planaltina",
       amount: 24.2,
       status: "available",
+      createdAt: "2026-09-24T16:10:00-03:00",
+      distanceKm: 10.4,
+    },
+    {
+      id: "ledger-1015",
+      deliveryId: "FE-1015",
+      label: "Feira do Produtor · Planaltina",
+      amount: 16.4,
+      status: "paid",
+      createdAt: "2026-09-08T11:45:00-03:00",
+      distanceKm: 6.3,
+    },
+    {
+      id: "ledger-0988",
+      deliveryId: "FE-0988",
+      label: "Feira do Produtor · Planaltina",
+      amount: 21.8,
+      status: "paid",
+      createdAt: "2026-08-19T14:30:00-03:00",
+      distanceKm: 9.2,
     },
   ]);
   const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
@@ -197,29 +248,70 @@ export function DeliveryOperations({
     {
       id: "FE-1024",
       route: "Feira do Produtor → Planaltina",
-      distance: "4,2 km",
-      fee: "R$ 12,80",
-      feeAmount: 12.8,
+      originArea: "Planaltina",
+      destinationArea: "Planaltina",
+      bankName: "Sítio da Vó",
+      customerName: "Cliente FE-1024",
+      pickupQuery: "Feira do Produtor Rural, Planaltina, DF",
+      dropoffQuery: "Setor Tradicional, Planaltina, DF",
+      pickupDistanceKm: 2.1,
+      pickupEtaMinutes: 7,
+      deliveryDistanceKm: 4.2,
+      deliveryEtaMinutes: 14,
       weight: 8.4,
-      vehicle: "Moto",
+      vehicle: "Moto" as DeliveryVehicleType,
+      pickupCount: 2,
     },
     {
       id: "FE-1025",
       route: "Feira Central → Asa Norte",
-      distance: "6,8 km",
-      fee: "R$ 17,40",
-      feeAmount: 17.4,
+      originArea: "Plano Piloto",
+      destinationArea: "Asa Norte",
+      bankName: "Banca Central",
+      customerName: "Cliente FE-1025",
+      pickupQuery: "Feira da Torre de TV, Brasília, DF",
+      dropoffQuery: "Asa Norte, Brasília, DF",
+      pickupDistanceKm: 8.9,
+      pickupEtaMinutes: 22,
+      deliveryDistanceKm: 6.8,
+      deliveryEtaMinutes: 19,
       weight: 16.8,
-      vehicle: "Moto com baú",
+      vehicle: "Moto com baú" as DeliveryVehicleType,
+      pickupCount: 1,
     },
     {
       id: "FE-1026",
       route: "Feira da Torre → Sudoeste",
-      distance: "5,1 km",
-      fee: "R$ 24,20",
-      feeAmount: 24.2,
+      originArea: "Plano Piloto",
+      destinationArea: "Sudoeste",
+      bankName: "Mãos do DF",
+      customerName: "Cliente FE-1026",
+      pickupQuery: "Feira da Torre de TV, Brasília, DF",
+      dropoffQuery: "Sudoeste, Brasília, DF",
+      pickupDistanceKm: 9.4,
+      pickupEtaMinutes: 25,
+      deliveryDistanceKm: 5.1,
+      deliveryEtaMinutes: 17,
       weight: 31.5,
-      vehicle: "Carro",
+      vehicle: "Carro" as DeliveryVehicleType,
+      pickupCount: 1,
+    },
+    {
+      id: "FE-1027",
+      route: "Feira Modelo → Sobradinho",
+      originArea: "Sobradinho",
+      destinationArea: "Sobradinho",
+      bankName: "Banca Modelo",
+      customerName: "Cliente FE-1027",
+      pickupQuery: "Feira Modelo de Sobradinho, Sobradinho, DF",
+      dropoffQuery: "Sobradinho, DF",
+      pickupDistanceKm: 3.2,
+      pickupEtaMinutes: 10,
+      deliveryDistanceKm: 5.7,
+      deliveryEtaMinutes: 18,
+      weight: 7.2,
+      vehicle: "Moto" as DeliveryVehicleType,
+      pickupCount: 1,
     },
   ];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
@@ -251,7 +343,7 @@ export function DeliveryOperations({
     deliveryLedger
       .filter((entry) => entry.status === "pending")
       .reduce((sum, entry) => sum + entry.amount, 0) +
-    (accepted ? (deliveries.find((delivery) => delivery.id === accepted)?.feeAmount ?? 0) : 0);
+    (accepted ? (activeQuote?.driverPay ?? 0) : 0);
   const availableAmount = deliveryLedger
     .filter((entry) => entry.status === "available")
     .reduce((sum, entry) => sum + entry.amount, 0);
@@ -269,19 +361,89 @@ export function DeliveryOperations({
     [...activeVehicles]
       .filter((vehicle) => vehicle.capacityKg >= weight)
       .sort((a, b) => a.capacityKg - b.capacityKg)[0] ?? null;
-  const compatibleDeliveryCount = deliveries.filter((delivery) =>
-    compatibleVehicleForWeight(delivery.weight),
-  ).length;
-  const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
+  const deliveryIsInArea = (delivery: (typeof deliveries)[number]) =>
+    serviceAreas.includes(delivery.originArea) && delivery.pickupDistanceKm <= maxPickupDistanceKm;
+  const eligibleDeliveries = deliveries.filter(
+    (delivery) => deliveryIsInArea(delivery) && compatibleVehicleForWeight(delivery.weight),
+  );
+  const compatibleDeliveryCount = eligibleDeliveries.filter((delivery) => delivery.id !== accepted).length;
+  const deliveryStages = ["Cheguei à banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
-  const activeDeliverySection = activeDelivery ? (
+  const activeVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
+  const activeQuote =
+    activeDelivery && activeVehicle
+      ? calculateDeliveryQuote({
+          vehicleType: activeVehicle.type,
+          distanceKm: activeDelivery.pickupDistanceKm + activeDelivery.deliveryDistanceKm,
+          weightKg: activeDelivery.weight,
+          pickupCount: activeDelivery.pickupCount,
+        })
+      : null;
+  const activeRoute = activeDelivery
+    ? routeProgressSummary({
+        stage,
+        pickupDistanceKm: activeDelivery.pickupDistanceKm,
+        pickupEtaMinutes: activeDelivery.pickupEtaMinutes,
+        deliveryDistanceKm: activeDelivery.deliveryDistanceKm,
+        deliveryEtaMinutes: activeDelivery.deliveryEtaMinutes,
+      })
+    : null;
+
+  function openNavigation(provider: "google" | "waze") {
+    if (!activeDelivery || !activeRoute) return;
+    const destination =
+      activeRoute.destination === "pickup" ? activeDelivery.pickupQuery : activeDelivery.dropoffQuery;
+    const url =
+      provider === "google"
+        ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`
+        : `https://www.waze.com/ul?q=${encodeURIComponent(destination)}&navigate=yes`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  const todayKey = "2026-09-25";
+  const currentMonthKey = "2026-09";
+  const previousMonthKey = "2026-08";
+  const currentYearKey = "2026";
+  const ledgerForPrefix = (prefix: string) =>
+    deliveryLedger.filter((entry) => (entry.createdAt ?? "").startsWith(prefix));
+  const sumLedger = (entries: typeof deliveryLedger) =>
+    entries.reduce((sum, entry) => sum + entry.amount, 0);
+  const todayEntries = ledgerForPrefix(todayKey);
+  const monthEntries = ledgerForPrefix(currentMonthKey);
+  const previousMonthEntries = ledgerForPrefix(previousMonthKey);
+  const yearEntries = ledgerForPrefix(currentYearKey);
+  const monthKm = monthEntries.reduce((sum, entry) => sum + (entry.distanceKm ?? 0), 0);
+  const monthAverage = monthEntries.length ? sumLedger(monthEntries) / monthEntries.length : 0;
+  const monthPerKm = monthKm ? sumLedger(monthEntries) / monthKm : 0;
+  const monthComparison =
+    sumLedger(previousMonthEntries) > 0
+      ? ((sumLedger(monthEntries) - sumLedger(previousMonthEntries)) / sumLedger(previousMonthEntries)) * 100
+      : 0;
+  const activeDeliverySection = activeDelivery && activeRoute ? (
     <section className="active-delivery">
-      <span className="eyebrow">Entrega em andamento</span>
+      <span className="eyebrow">Em andamento · {activeRoute.label}</span>
       <h3>{activeDelivery.id}</h3>
       <p>{activeDelivery.route}</p>
       <small>
-        {activeDelivery.weight} kg · veículo indicado: {activeDelivery.vehicle}
+        {activeDelivery.weight} kg · {activeDelivery.pickupCount} banca(s) · veículo{" "}
+        {activeVehicle?.type ?? activeDelivery.vehicle}
       </small>
+
+      <div className="operation-metrics">
+        <article>
+          <strong>{activeRoute.distanceKm.toLocaleString("pt-BR")} km</strong>
+          <span>distância desta etapa</span>
+        </article>
+        <article>
+          <strong>{activeRoute.etaMinutes} min</strong>
+          <span>previsão desta etapa</span>
+        </article>
+        <article>
+          <strong>{money(activeQuote?.driverPay ?? 0)}</strong>
+          <span>ganho desta corrida</span>
+        </article>
+      </div>
+
       <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
         {deliveryStages.map((label, index) => (
           <span className={index <= stage ? "done" : ""} key={label}>
@@ -289,32 +451,55 @@ export function DeliveryOperations({
           </span>
         ))}
       </div>
-      <div className="flex flex-wrap gap-2">
-        <button onClick={onMap} className="secondary-action">
-          <MapPin size={17} /> Abrir rota
-        </button>
-        <button
-          className="primary-action"
-          onClick={() => {
-            if (stage === deliveryStages.length - 1) {
-              setDeliveryLedger((current) => [
-                {
-                  id: `ledger-${activeDelivery.id}-${Date.now()}`,
-                  deliveryId: activeDelivery.id,
-                  label: activeDelivery.route,
-                  amount: activeDelivery.feeAmount,
-                  status: "available",
-                },
-                ...current,
-              ]);
-              setAccepted(null);
-              setStage(0);
-            } else setStage((value) => value + 1);
-          }}
-        >
-          {deliveryStages[stage]} <ChevronRight size={17} />
-        </button>
+
+      <div className="surface-card">
+        <b>{activeRoute.label}</b>
+        <p>
+          Destino atual:{" "}
+          {activeRoute.destination === "pickup" ? activeDelivery.pickupQuery : activeDelivery.dropoffQuery}
+        </p>
+        <div className="module-action-row">
+          <button onClick={() => openNavigation("google")} className="secondary-action">
+            <MapPin size={17} /> Google Maps
+          </button>
+          <button onClick={() => openNavigation("waze")} className="secondary-action">
+            <MapPin size={17} /> Waze
+          </button>
+        </div>
       </div>
+
+      <button
+        className="primary-action"
+        onClick={() => {
+          if (stage === deliveryStages.length - 1) {
+            const quote = activeQuote;
+            setDeliveryLedger((current) => [
+              {
+                id: `ledger-${activeDelivery.id}-${Date.now()}`,
+                deliveryId: activeDelivery.id,
+                label: activeDelivery.route,
+                amount: quote?.driverPay ?? 0,
+                status: "available",
+                createdAt: new Date().toISOString(),
+                distanceKm: activeDelivery.pickupDistanceKm + activeDelivery.deliveryDistanceKm,
+              },
+              ...current,
+            ]);
+            setCompletedDeliveryIds((current) =>
+              current.includes(activeDelivery.id) ? current : [...current, activeDelivery.id],
+            );
+            setPendingReviewDeliveryId(activeDelivery.id);
+            setAccepted(null);
+            setStage(0);
+            setActive("Avaliações");
+          } else {
+            setStage((value) => value + 1);
+          }
+        }}
+      >
+        {deliveryStages[stage]} <ChevronRight size={17} />
+      </button>
+
       <div className="cancel-panel">
         <b>Cancelar entrega</b>
         <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
@@ -327,12 +512,16 @@ export function DeliveryOperations({
         </select>
         <button
           className="secondary-action"
+          disabled={!cancelReason}
           onClick={() => {
+            if (!cancelReason) return;
+            setIncidentMessage(`Corrida ${activeDelivery.id} cancelada: ${cancelReason}.`);
             setAccepted(null);
             setStage(0);
+            setCancelReason("");
           }}
         >
-          <XCircle size={17} /> Cancelar corrida
+          <XCircle size={17} /> Confirmar cancelamento
         </button>
       </div>
     </section>
@@ -341,12 +530,65 @@ export function DeliveryOperations({
   );
   const deliveryList = (
     <div className="mt-6 space-y-3">
-      <span className="eyebrow">Entregas disponíveis</span>
+      <span className="eyebrow">Entregas disponíveis na sua área</span>
       {deliveries
         .filter((delivery) => delivery.id !== accepted)
         .map((delivery) => {
           const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
+          const inArea = deliveryIsInArea(delivery);
+          const quote = compatibleVehicle
+            ? calculateDeliveryQuote({
+                vehicleType: compatibleVehicle.type,
+                distanceKm: delivery.pickupDistanceKm + delivery.deliveryDistanceKm,
+                weightKg: delivery.weight,
+                pickupCount: delivery.pickupCount,
+              })
+            : null;
           return (
+            <article className="delivery-row" key={delivery.id}>
+              <span>
+                <Bike />
+              </span>
+              <div>
+                <b>
+                  {delivery.id} · {delivery.route}
+                </b>
+                <small>
+                  coleta {delivery.pickupDistanceKm} km/{delivery.pickupEtaMinutes} min · entrega{" "}
+                  {delivery.deliveryDistanceKm} km/{delivery.deliveryEtaMinutes} min · {delivery.weight} kg ·{" "}
+                  {delivery.pickupCount} banca(s)
+                </small>
+                <small>
+                  {!inArea
+                    ? `Fora da área ativa (${delivery.originArea})`
+                    : compatibleVehicle
+                      ? `compatível com ${compatibleVehicle.type} · ganho estimado ${money(quote?.driverPay ?? 0)}`
+                      : "sem veículo ativo compatível"}
+                </small>
+              </div>
+              <button
+                disabled={
+                  !online ||
+                  approvalStatus !== "Aprovado" ||
+                  accepted !== null ||
+                  !compatibleVehicle ||
+                  !inArea
+                }
+                onClick={() => {
+                  if (!compatibleVehicle || !inArea) return;
+                  setAccepted(delivery.id);
+                  setStage(0);
+                  setActive("Em andamento");
+                }}
+              >
+                {!inArea ? "Fora da área" : compatibleVehicle ? "Aceitar" : "Veículo incompatível"}
+              </button>
+            </article>
+          );
+        })}
+    </div>
+  );
+  return (
             <article className="delivery-row" key={delivery.id}>
               <span>
                 <Bike />
