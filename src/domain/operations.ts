@@ -22,7 +22,7 @@ export const deliveryModuleDetails: Record<string, { text: string; badge: string
     text: "Cadastrar bicicleta, moto, carro, utilitário, van ou outro e definir capacidade.",
     badge: "Capacidade",
   },
-  "Forma de entrega": { text: "Configurar raio, preferências e tipo de entrega.", badge: "Preferências" },
+  "Forma de entrega": { text: "Configurar online/offline, horários, áreas e raio.", badge: "Disponibilidade" },
   Desempenho: { text: "Pontualidade, cancelamentos e nota média.", badge: "96%" },
   Notificações: { text: "Avisos de corridas, pagamentos e suporte.", badge: "Avisos" },
   Ajuda: { text: "Falar com suporte e tirar dúvidas operacionais.", badge: "Suporte" },
