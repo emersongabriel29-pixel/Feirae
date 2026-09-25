@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { products } from "./data";
+import { fairs, products } from "./data";
 import { cartSubtotal, distanceInKm, filterProducts, sortFairsByDistance } from "./utils";
 
 describe("marketplace helpers", () => {
@@ -46,5 +46,33 @@ describe("marketplace helpers", () => {
       { lat: -15.62, lng: -47.65 },
     );
     expect(sorted[0].name).toBe("Perto");
+  });
+
+  it("keeps the official DF fair catalog complete without inventing coordinates", () => {
+    const officialFairs = fairs.filter((fair) => fair.source === "official");
+    expect(officialFairs).toHaveLength(38);
+    expect(officialFairs.every((fair) => Boolean(fair.address))).toBe(true);
+
+    const sorted = sortFairsByDistance(
+      [
+        {
+          name: "Com coordenadas",
+          place: "A",
+          status: "Aberta",
+          lat: -15.62,
+          lng: -47.65,
+        },
+        {
+          name: "Sem coordenadas",
+          place: "B",
+          address: "Brasília - DF",
+          status: "Horário a confirmar",
+        },
+      ],
+      { lat: -15.62, lng: -47.65 },
+    );
+
+    expect(sorted[0].name).toBe("Com coordenadas");
+    expect(sorted[1].distance).toBeNull();
   });
 });
