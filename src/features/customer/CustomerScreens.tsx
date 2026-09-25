@@ -600,13 +600,7 @@ export function VendorStore({
     </Panel>
   );
 }
-export function DeliveryTracking({
-  order,
-  onBack,
-}: {
-  order: DemoOrder;
-  onBack: () => void;
-}) {
+export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: () => void }) {
   const [cancelReason, setCancelReason] = useState("");
   const [showReview, setShowReview] = useState(false);
 
@@ -651,12 +645,7 @@ export function DeliveryTracking({
   };
 
   const config = statusConfig[order.status];
-  const timeline = [
-    "Pedido confirmado",
-    "Produtos separados",
-    "Coleta concluída",
-    "Entregador em rota",
-  ];
+  const timeline = ["Pedido confirmado", "Produtos separados", "Coleta concluída", "Entregador em rota"];
 
   return (
     <Panel title="Acompanhar entrega" subtitle={`Pedido ${order.id} · ${order.status}`} onBack={onBack}>
