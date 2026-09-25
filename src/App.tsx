@@ -139,6 +139,7 @@ export default function App() {
     const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
     const date = new Intl.DateTimeFormat("pt-BR").format(new Date());
     setOrders((current) => [{ id, date, status: "Recebido", value: total }, ...current]);
+    setNotifications((current) => current + 1);
     setSelectedOrderId(id);
     setCart({});
     openCustomerTab("orders");
@@ -287,6 +288,7 @@ export default function App() {
         )}
         {screen === "notifications" && (
           <NotificationsPage
+            orders={orders}
             onBack={() => openCustomerTab("home")}
             onClear={() => {
               setNotifications(0);
@@ -299,7 +301,9 @@ export default function App() {
           <AccountPage session={session} onBack={() => openCustomerTab("profile")} />
         )}
         {screen === "payments" && <PaymentsPage onBack={() => openCustomerTab("profile")} />}
-        {screen === "ratings" && <RatingsPage onBack={() => openCustomerTab("profile")} />}
+        {screen === "ratings" && (
+          <RatingsPage orders={orders} onBack={() => openCustomerTab("profile")} />
+        )}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "feiranteOps" && session && (
