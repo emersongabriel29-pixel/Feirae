@@ -20,5 +20,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Show vendor Prettier diff
+        run: |
+          npx prettier --write src/App.test.tsx src/features/vendor/vendorModel.ts src/features/vendor/VendorScreens.tsx
+          git diff -- src/App.test.tsx src/features/vendor/vendorModel.ts src/features/vendor/VendorScreens.tsx
+          exit 1
       - run: npm run check
       - run: npm run format:check
