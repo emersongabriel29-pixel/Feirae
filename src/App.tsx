@@ -44,16 +44,8 @@ export default function App() {
   const [locationLabel, setLocationLabel] = useState("Planaltina, DF");
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast, notify } = useToast();
-  const {
-    cart,
-    setCart,
-    cartProducts,
-    subtotal,
-    itemCount,
-    addToCart,
-    removeFromCart,
-    restoreDemoBasket,
-  } = useDemoCart(notify);
+  const { cart, setCart, cartProducts, subtotal, itemCount, addToCart, removeFromCart, restoreDemoBasket } =
+    useDemoCart(notify);
   const {
     tab,
     screen,
@@ -176,9 +168,7 @@ export default function App() {
                 onTracking={() => openScreen("tracking")}
               />
             )}
-            {tab === "fairs" && (
-              <FairsPage fairItems={fairsWithDistance} onFair={openFair} onMap={openMap} />
-            )}
+            {tab === "fairs" && <FairsPage fairItems={fairsWithDistance} onFair={openFair} onMap={openMap} />}
             {tab === "products" && (
               <CatalogPage
                 items={visibleProducts}
@@ -220,9 +210,7 @@ export default function App() {
             onFavorite={toggleFavorite}
           />
         )}
-        {screen === "vendors" && (
-          <VendorsPage onBack={() => openCustomerTab("home")} onVendor={openVendor} />
-        )}
+        {screen === "vendors" && <VendorsPage onBack={() => openCustomerTab("home")} onVendor={openVendor} />}
         {screen === "tracking" && <DeliveryTracking onBack={() => openCustomerTab("orders")} />}
         {screen === "checkout" && (
           <Checkout
@@ -259,11 +247,12 @@ export default function App() {
         {screen === "ratings" && <RatingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
-        {screen === "feiranteOps" && (
-          <FeiranteOperations onBack={() => openRoleRoot("feirante")} />
-        )}
+        {screen === "feiranteOps" && <FeiranteOperations onBack={() => openRoleRoot("feirante")} />}
         {screen === "deliveryOps" && (
-          <DeliveryOperations onBack={() => openRoleRoot("delivery")} onMap={() => openMap(-15.621, -47.657)} />
+          <DeliveryOperations
+            onBack={() => openRoleRoot("delivery")}
+            onMap={() => openMap(-15.621, -47.657)}
+          />
         )}
       </div>
 
