@@ -13,7 +13,7 @@ describe("driver availability", () => {
       manualOnline: true,
       schedulePaused: false,
       schedule: defaultWeeklyAvailability,
-      now: new Date("2026-09-24T10:00:00-03:00"),
+      now: new Date(2026, 8, 24, 10, 0),
     });
     const offline = driverAvailabilityStatus({
       approved: true,
@@ -21,7 +21,7 @@ describe("driver availability", () => {
       manualOnline: false,
       schedulePaused: false,
       schedule: defaultWeeklyAvailability,
-      now: new Date("2026-09-24T10:00:00-03:00"),
+      now: new Date(2026, 8, 24, 10, 0),
     });
 
     expect(online.online).toBe(true);
@@ -35,7 +35,7 @@ describe("driver availability", () => {
       manualOnline: false,
       schedulePaused: false,
       schedule: defaultWeeklyAvailability,
-      now: new Date("2026-09-24T10:00:00-03:00"),
+      now: new Date(2026, 8, 24, 10, 0),
     });
     const outside = driverAvailabilityStatus({
       approved: true,
@@ -43,7 +43,7 @@ describe("driver availability", () => {
       manualOnline: false,
       schedulePaused: false,
       schedule: defaultWeeklyAvailability,
-      now: new Date("2026-09-24T22:00:00-03:00"),
+      now: new Date(2026, 8, 24, 22, 0),
     });
 
     expect(inside.online).toBe(true);
@@ -59,7 +59,7 @@ describe("driver availability", () => {
       manualOnline: true,
       schedulePaused: true,
       schedule: defaultWeeklyAvailability,
-      now: new Date("2026-09-24T10:00:00-03:00"),
+      now: new Date(2026, 8, 24, 10, 0),
     });
 
     expect(paused.online).toBe(false);
@@ -73,9 +73,9 @@ describe("driver availability", () => {
         : { ...day, enabled: false },
     );
 
-    expect(isWithinWeeklyAvailability(new Date("2026-09-24T23:30:00-03:00"), overnight)).toBe(true);
-    expect(isWithinWeeklyAvailability(new Date("2026-09-25T01:30:00-03:00"), overnight)).toBe(true);
-    expect(isWithinWeeklyAvailability(new Date("2026-09-25T03:00:00-03:00"), overnight)).toBe(false);
+    expect(isWithinWeeklyAvailability(new Date(2026, 8, 24, 23, 30), overnight)).toBe(true);
+    expect(isWithinWeeklyAvailability(new Date(2026, 8, 25, 1, 30), overnight)).toBe(true);
+    expect(isWithinWeeklyAvailability(new Date(2026, 8, 25, 3, 0), overnight)).toBe(false);
   });
 
   it("never releases races for an unapproved account", () => {
@@ -85,7 +85,7 @@ describe("driver availability", () => {
       manualOnline: true,
       schedulePaused: false,
       schedule: defaultWeeklyAvailability,
-      now: new Date("2026-09-24T10:00:00-03:00"),
+      now: new Date(2026, 8, 24, 10, 0),
     });
 
     expect(status.online).toBe(false);
