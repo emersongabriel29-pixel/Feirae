@@ -69,7 +69,11 @@ export function DeliveryOperations({
     "Vantagens",
     "Avaliações",
   ];
-  const [online, setOnline] = usePersistentState<boolean>(`feirae:delivery-online:${session.email}`, true);
+  const seedDemoData = session.email.endsWith("@feirae.test") && !session.isNewAccount;
+  const [online, setOnline] = usePersistentState<boolean>(
+    `feirae:delivery-online:${session.email}`,
+    seedDemoData,
+  );
   const [deliveryPreferences, setDeliveryPreferences] = usePersistentState(
     `feirae:delivery-preferences:${session.email}`,
     {
@@ -136,9 +140,8 @@ export function DeliveryOperations({
   );
   const [vehicles, setVehicles] = usePersistentState<DeliveryVehicle[]>(
     `feirae:delivery-vehicles:${session.email}`,
-    session.isNewAccount
-      ? []
-      : [
+    seedDemoData
+      ? [
           {
             id: "demo-moto",
             type: "Moto",
@@ -149,7 +152,8 @@ export function DeliveryOperations({
             documentFileName: "crlv-demo.pdf",
             documentStatus: "approved",
           },
-        ],
+        ]
+      : [],
   );
 
   const [deliveryLedger, setDeliveryLedger] = usePersistentState<
@@ -160,22 +164,27 @@ export function DeliveryOperations({
       amount: number;
       status: "pending" | "available" | "withdrawal_requested" | "paid";
     }[]
-  >(`feirae:delivery-ledger:${session.email}`, [
-    {
-      id: "ledger-1022",
+  >(
+    `feirae:delivery-ledger:${session.email}`,
+    seedDemoData
+      ? [
+          {
+            id: "ledger-1022",
       deliveryId: "FE-1022",
       label: "Feira Central",
       amount: 18.9,
       status: "paid",
     },
-    {
-      id: "ledger-1023",
-      deliveryId: "FE-1023",
-      label: "Torre",
-      amount: 24.2,
-      status: "available",
-    },
-  ]);
+          {
+            id: "ledger-1023",
+            deliveryId: "FE-1023",
+            label: "Torre",
+            amount: 24.2,
+            status: "available",
+          },
+        ]
+      : [],
+  );
   const defaultDeliveryDocuments = [
     {
       id: "identity",
@@ -218,9 +227,9 @@ export function DeliveryOperations({
       expiresAt: "",
     },
   ].map((document) =>
-    session.isNewAccount
-      ? { ...document, status: "pending" as const, fileName: "" }
-      : document,
+    seedDemoData
+      ? document
+      : { ...document, status: "pending" as const, fileName: "" },
   );
   const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
     {
