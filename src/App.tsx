@@ -45,8 +45,17 @@ export default function App() {
   const [locationLabel, setLocationLabel] = useState("Planaltina, DF");
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast, notify } = useToast();
-  const { cart, setCart, cartProducts, subtotal, itemCount, addToCart, removeFromCart, restoreDemoBasket } =
-    useDemoCart(notify);
+  const {
+    cart,
+    setCart,
+    cartProducts,
+    subtotal,
+    itemCount,
+    cartFairName,
+    addToCart,
+    removeFromCart,
+    restoreDemoBasket,
+  } = useDemoCart(notify);
   const {
     tab,
     screen,
@@ -62,7 +71,11 @@ export default function App() {
     openRoleRoot,
   } = useAppNavigation(role, () => setCartOpen(false));
 
-  const visibleProducts = useMemo(() => filterProducts(products, query, category), [query, category]);
+  const visibleProducts = useMemo(() => {
+    const matches = filterProducts(products, query, category);
+    if (query.trim()) return matches;
+    return matches.filter((product) => product.fair === selectedFair);
+  }, [query, category, selectedFair]);
   const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
   const trackedOrder =
     orders.find((order) => order.id === selectedOrderId) ??
@@ -83,6 +96,11 @@ export default function App() {
     setFavorites((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
+  }
+  function addProductToCart(id: number) {
+    const product = products.find((item) => item.id === id);
+    if (product && !cartFairName) setSelectedFair(product.fair);
+    addToCart(id);
   }
   function requestLocation() {
     if (!navigator.geolocation) {
@@ -170,7 +188,10 @@ export default function App() {
         onTab={openCustomerTab}
         onQuery={(value) => {
           setQuery(value);
-          if (value) openCustomerTab("products");
+          if (value) {
+            setCategory("Todos");
+            openCustomerTab("products");
+          }
         }}
         onFairChange={setSelectedFair}
         onOpenFair={() => openScreen("fair")}
@@ -195,9 +216,11 @@ export default function App() {
             {tab === "products" && (
               <CatalogPage
                 items={visibleProducts}
+                fairName={selectedFair}
+                query={query}
                 category={category}
                 onCategory={setCategory}
-                onAdd={addToCart}
+                onAdd={addProductToCart}
                 favorites={favorites}
                 onFavorite={toggleFavorite}
               />
@@ -221,19 +244,26 @@ export default function App() {
             fairName={selectedFair}
             onBack={() => openCustomerTab("fairs")}
             onMap={openMap}
-            onAdd={addToCart}
+            onAdd={addProductToCart}
           />
         )}
         {screen === "feirante" && (
           <VendorStore
             vendorName={selectedVendor}
-            onBack={() => openCustomerTab("home")}
-            onAdd={addToCart}
+            fairName={selectedFair}
+            onBack={() => openScreen("vendors")}
+            onAdd={addProductToCart}
             favorites={favorites}
             onFavorite={toggleFavorite}
           />
         )}
-        {screen === "vendors" && <VendorsPage onBack={() => openCustomerTab("home")} onVendor={openVendor} />}
+        {screen === "vendors" && (
+          <VendorsPage
+            fairName={selectedFair}
+            onBack={() => openCustomerTab("fairs")}
+            onVendor={openVendor}
+          />
+        )}
         {screen === "tracking" && trackedOrder && (
           <DeliveryTracking order={trackedOrder} onBack={() => openCustomerTab("orders")} />
         )}
@@ -249,7 +279,7 @@ export default function App() {
         {screen === "favorites" && (
           <FavoritesPage
             ids={favorites}
-            onAdd={addToCart}
+            onAdd={addProductToCart}
             onFavorite={toggleFavorite}
             onBack={() => openCustomerTab("profile")}
             onExplore={() => openCustomerTab("products")}
@@ -290,7 +320,7 @@ export default function App() {
           items={cartProducts}
           cart={cart}
           subtotal={subtotal}
-          onAdd={addToCart}
+          onAdd={addProductToCart}
           onRemove={removeFromCart}
           onClose={() => setCartOpen(false)}
           onBuyAgain={() => buyAgain()}
