@@ -24,9 +24,7 @@ function numericId(value: string) {
   return match ? Number(match[1]) : 0;
 }
 
-export function sortOrdersNewestFirst<T extends Pick<DemoOrder, "id" | "createdAt" | "date">>(
-  orders: T[],
-) {
+export function sortOrdersNewestFirst<T extends Pick<DemoOrder, "id" | "createdAt" | "date">>(orders: T[]) {
   return [...orders].sort((a, b) => {
     const timeA = orderTimestamp(a);
     const timeB = orderTimestamp(b);
@@ -81,7 +79,6 @@ export function dateLabelFromIso(value: string) {
   if (!Number.isFinite(timestamp)) return "";
   return new Intl.DateTimeFormat("pt-BR").format(new Date(timestamp));
 }
-
 
 function pad2(value: number) {
   return String(value).padStart(2, "0");
