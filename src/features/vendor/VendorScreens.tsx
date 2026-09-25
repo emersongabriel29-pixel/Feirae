@@ -2025,8 +2025,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   onSubmit={(orderId) => {
                     const order = vendorUnifiedOrders.find((item) => item.id === orderId);
                     if (!order) return;
+                    const reviewSequence = (order.reviews?.length ?? 0) + 1;
                     appendReview(order.id, {
-                      id: `vendor-customer-${order.id}-${Date.now()}`,
+                      id: `vendor-customer-${order.id}-${reviewSequence}`,
                       authorRole: "vendor",
                       targetRole: "customer",
                       targetId: order.customerKey,
@@ -2036,7 +2037,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     });
                     if (order.driver?.driverKey) {
                       appendReview(order.id, {
-                        id: `vendor-delivery-${order.id}-${Date.now()}`,
+                        id: `vendor-delivery-${order.id}-${reviewSequence}`,
                         authorRole: "vendor",
                         targetRole: "delivery",
                         targetId: order.driver.driverKey,
