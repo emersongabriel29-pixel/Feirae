@@ -243,8 +243,7 @@ export function DeliveryOperations({
         )
       ? "Correção necessária"
       : deliveryDocuments.some(
-            (document) =>
-              requiredDocumentIds.includes(document.id) && document.status === "under_review",
+            (document) => requiredDocumentIds.includes(document.id) && document.status === "under_review",
           )
         ? "Em análise"
         : "Documentação pendente";
@@ -252,7 +251,7 @@ export function DeliveryOperations({
     deliveryLedger
       .filter((entry) => entry.status === "pending")
       .reduce((sum, entry) => sum + entry.amount, 0) +
-    (accepted ? deliveries.find((delivery) => delivery.id === accepted)?.feeAmount ?? 0 : 0);
+    (accepted ? (deliveries.find((delivery) => delivery.id === accepted)?.feeAmount ?? 0) : 0);
   const availableAmount = deliveryLedger
     .filter((entry) => entry.status === "available")
     .reduce((sum, entry) => sum + entry.amount, 0);
@@ -392,7 +391,9 @@ export function DeliveryOperations({
             </div>
             <div className="operation-metrics">
               <article>
-                <strong>{approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}</strong>
+                <strong>
+                  {approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}
+                </strong>
                 <span>disponibilidade atual</span>
               </article>
               <article>
@@ -561,8 +562,8 @@ export function DeliveryOperations({
                   </button>
                 ) : null}
                 <p className="operation-footnote">
-                  A solicitação é apenas simulada localmente. O envio real do dinheiro dependerá do provedor de
-                  pagamentos e do split do marketplace.
+                  A solicitação é apenas simulada localmente. O envio real do dinheiro dependerá do provedor
+                  de pagamentos e do split do marketplace.
                 </p>
               </>
             ) : active === "Veículos" ? (
