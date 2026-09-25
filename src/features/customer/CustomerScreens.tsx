@@ -127,53 +127,82 @@ export function FairsPage({
 }: {
   fairItems: ReturnType<typeof sortFairsByDistance>;
   onFair: (name: string) => void;
-  onMap: (lat: number, lng: number) => void;
+  onMap: (destination: number | string, lng?: number) => void;
 }) {
+  const officialItems = fairItems.filter((fair) => fair.source !== "demo");
+  const regions = Array.from(new Set(officialItems.map((fair) => fair.place))).sort((a, b) =>
+    a.localeCompare(b, "pt-BR"),
+  );
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const filteredItems = selectedRegion
+    ? officialItems.filter((fair) => fair.place === selectedRegion)
+    : officialItems;
+  const featuredItems = filteredItems.slice(0, 3);
+  const otherItems = filteredItems.slice(3);
+
   return (
     <section>
       <PageHeading
         title="Escolha sua feira"
-        subtitle="Comece por estado, cidade e feira. No momento a operação demonstrativa está carregada no DF."
+        subtitle="Escolha a região para ver somente as feiras disponíveis naquele local."
       />
       <div className="region-selector">
         <label>
           Estado
-          <select defaultValue="Distrito Federal">
+          <select value="Distrito Federal" aria-label="Estado" disabled>
             <option>Distrito Federal</option>
-            <option>Goiás</option>
-            <option>São Paulo</option>
-            <option>Minas Gerais</option>
           </select>
         </label>
         <label>
           Cidade/região
-          <select defaultValue="Planaltina">
-            <option>Planaltina</option>
-            <option>Plano Piloto</option>
-            <option>Guará</option>
-            <option>Ceilândia</option>
+          <select
+            value={selectedRegion}
+            onChange={(event) => setSelectedRegion(event.target.value)}
+            aria-label="Cidade/região"
+          >
+            <option value="">Todas as regiões</option>
+            {regions.map((region) => (
+              <option key={region} value={region}>
+                {region}
+              </option>
+            ))}
           </select>
         </label>
       </div>
+
       <div className="mt-7">
-        <SectionHeading eyebrow="Perto de você" title="Feiras em destaque" />
-        <div className="grid gap-4 md:grid-cols-3">
-          {fairItems.slice(0, 3).map((fair, index) => (
-            <FairCard key={fair.name} fair={fair} index={index} onFair={onFair} onMap={onMap} />
-          ))}
-        </div>
+        <SectionHeading
+          eyebrow={selectedRegion ? "Região selecionada" : "Distrito Federal"}
+          title={selectedRegion ? `Feiras em ${selectedRegion}` : "Feiras em destaque"}
+        />
+        {featuredItems.length ? (
+          <div className="grid gap-4 md:grid-cols-3">
+            {featuredItems.map((fair, index) => (
+              <FairCard key={fair.name} fair={fair} index={index} onFair={onFair} onMap={onMap} />
+            ))}
+          </div>
+        ) : (
+          <Empty title="Nenhuma feira encontrada" text="Não há feira cadastrada para esta região." />
+        )}
       </div>
-      <section className="mt-12">
-        <SectionHeading eyebrow="Explore por região" title="Outras feiras" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {fairItems.slice(3).map((fair, index) => (
-            <FairCard key={fair.name} fair={fair} index={index + 3} onFair={onFair} onMap={onMap} />
-          ))}
-        </div>
-      </section>
+
+      {otherItems.length > 0 && (
+        <section className="mt-12">
+          <SectionHeading
+            eyebrow="Explore por região"
+            title={selectedRegion ? `Mais feiras em ${selectedRegion}` : "Outras feiras"}
+          />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {otherItems.map((fair, index) => (
+              <FairCard key={fair.name} fair={fair} index={index + 3} onFair={onFair} onMap={onMap} />
+            ))}
+          </div>
+        </section>
+      )}
     </section>
   );
 }
+
 export function FairCard({
   fair,
   index,
@@ -183,7 +212,7 @@ export function FairCard({
   fair: ReturnType<typeof sortFairsByDistance>[number];
   index: number;
   onFair: (name: string) => void;
-  onMap: (lat: number, lng: number) => void;
+  onMap: (destination: number | string, lng?: number) => void;
 }) {
   return (
     <article className="fair-card">
@@ -196,23 +225,32 @@ export function FairCard({
         <p>
           <MapPin size={14} /> {fair.place}
         </p>
+        {fair.address && <p>{fair.address}</p>}
         <p>
-          <Store size={14} /> {fair.feirantes} feirantes{" "}
-          {fair.distance !== null && `· ${fair.distance.toFixed(1)} km`}
+          <Store size={14} />{" "}
+          {typeof fair.feirantes === "number" ? `${fair.feirantes} feirantes` : "Feirantes a cadastrar"}
+          {fair.distance !== null && ` · ${fair.distance.toFixed(1)} km`}
         </p>
         <div className="market-meta">
           <span>
-            <Star size={13} /> {ratingLabel(fair.rating)} ({fair.reviewCount})
+            <Star size={13} />{" "}
+            {typeof fair.rating === "number" && typeof fair.reviewCount === "number"
+              ? `${ratingLabel(fair.rating)} (${fair.reviewCount})`
+              : "Sem avaliações"}
           </span>
-          <span>{minutesLabel(fair.deliveryMinutes)}</span>
-          <span>{money(fair.deliveryFee)}</span>
+          <span>{fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Entrega a configurar"}</span>
+          <span>{typeof fair.deliveryFee === "number" ? money(fair.deliveryFee) : "Taxa a configurar"}</span>
         </div>
         <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
           <button onClick={() => onFair(fair.name)} className="primary-action">
             Ver feira
           </button>
           <button
-            onClick={() => onMap(fair.lat, fair.lng)}
+            onClick={() =>
+              typeof fair.lat === "number" && typeof fair.lng === "number"
+                ? onMap(fair.lat, fair.lng)
+                : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
+            }
             className="icon-button large"
             aria-label={`Abrir rota para ${fair.name}`}
           >
@@ -422,20 +460,33 @@ export function FairDetail({
 }: {
   fairName: string;
   onBack: () => void;
-  onMap: (lat: number, lng: number) => void;
+  onMap: (destination: number | string, lng?: number) => void;
   onAdd: (id: number) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
   const fairProducts = products.filter((product) => product.fair === fair.name);
+
   return (
     <Panel title={fair.name} subtitle={`${fair.place} · ${fair.status}`} onBack={onBack}>
       <div className="detail-banner">
         <div>
           <span className="eyebrow light">Feira selecionada</span>
           <h2>Compre de quem faz a cidade acontecer.</h2>
-          <p>{fair.feirantes} feirantes cadastrados nesta feira.</p>
+          <p>
+            {typeof fair.feirantes === "number"
+              ? `${fair.feirantes} feirantes cadastrados nesta feira.`
+              : "Cadastro de feirantes em atualização."}
+          </p>
+          {fair.address && <p>{fair.address}</p>}
         </div>
-        <button onClick={() => onMap(fair.lat, fair.lng)} className="secondary-action light">
+        <button
+          onClick={() =>
+            typeof fair.lat === "number" && typeof fair.lng === "number"
+              ? onMap(fair.lat, fair.lng)
+              : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
+          }
+          className="secondary-action light"
+        >
           <MapPin size={17} /> Abrir rota
         </button>
       </div>
