@@ -24,6 +24,7 @@ import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
 import {
+  appendReview,
   eventNow,
   patchUnifiedOrder,
   patchUnifiedOrderItem,
@@ -170,7 +171,10 @@ function promotionStatus(promotion: VendorPromotion) {
 
 export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
   const [active, setActive] = useState("Central");
-  const [storeOpen, setStoreOpen] = usePersistentState<boolean>("feirae:vendor-store-open", true);
+  const [storeOpen, setStoreOpen] = usePersistentState<boolean>(
+    `feirae:vendor-store-open:${session.email}`,
+    true,
+  );
   const [vendorItems, setVendorItems] = usePersistentState<VendorProduct[]>(
     `feirae:vendor-products:${session.email}`,
     initialVendorProducts,
@@ -264,6 +268,12 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
   const [reviewReply, setReviewReply] = useState("");
   const [accountSaved, setAccountSaved] = useState(false);
+  const [vendorReviewOrderId, setVendorReviewOrderId] = useState<string | null>(null);
+  const [vendorReviewScore, setVendorReviewScore] = useState(5);
+  const [vendorReviewComment, setVendorReviewComment] = useState("");
+  const [settlementStatus, setSettlementStatus] = usePersistentState<
+    Record<string, "requested" | "paid">
+  >(`feirae:vendor-settlements:${session.email}`, {});
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -358,6 +368,17 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   }, [bankProfile.fairName, bankProfile.name, session.email, setOrders]);
 
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
+  const accountVendorId = vendorIdFor(session.email);
+  const vendorUnifiedOrders = readUnifiedOrders().filter((order) =>
+    order.vendors?.some(
+      (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+    ),
+  );
+  const pendingVendorReviewOrders = vendorUnifiedOrders.filter(
+    (order) =>
+      order.status === "delivered" &&
+      !order.reviews?.some((review) => review.authorRole === "vendor"),
+  );
   const pendingOrders = orders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
   );
@@ -376,6 +397,15 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     .reduce((sum, order) => sum + order.value, 0);
   const availableGross = orders
     .filter((order) => order.status === "delivered")
+    .reduce((sum, order) => sum + order.value, 0);
+  const vendorAvailableForPayout = orders
+    .filter((order) => order.status === "delivered" && !settlementStatus[order.id])
+    .reduce((sum, order) => sum + order.value, 0);
+  const vendorRequestedPayout = orders
+    .filter((order) => settlementStatus[order.id] === "requested")
+    .reduce((sum, order) => sum + order.value, 0);
+  const vendorPaidPayout = orders
+    .filter((order) => settlementStatus[order.id] === "paid")
     .reduce((sum, order) => sum + order.value, 0);
   const approvalStatus = documents
     .filter((document) => document.required)
@@ -1936,10 +1966,45 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     </article>
                   ))}
                 </div>
-                {!vendorAccount.pixKey && (
+                {!vendorAccount.pixKey && !vendorAccount.accountNumber ? (
                   <button className="primary-action" onClick={() => setActive("Conta")}>
                     Cadastrar destino de recebimento
                   </button>
+                ) : vendorAvailableForPayout > 0 ? (
+                  <button
+                    className="primary-action"
+                    onClick={() =>
+                      setSettlementStatus((current) => {
+                        const next = { ...current };
+                        for (const order of orders) {
+                          if (order.status === "delivered" && !next[order.id]) next[order.id] = "requested";
+                        }
+                        return next;
+                      })
+                    }
+                  >
+                    Solicitar repasse de {money(vendorAvailableForPayout)}
+                  </button>
+                ) : null}
+                {vendorRequestedPayout > 0 && (
+                  <button
+                    className="secondary-action"
+                    onClick={() =>
+                      setSettlementStatus((current) =>
+                        Object.fromEntries(
+                          Object.entries(current).map(([id, status]) => [
+                            id,
+                            status === "requested" ? "paid" : status,
+                          ]),
+                        ) as Record<string, "requested" | "paid">,
+                      )
+                    }
+                  >
+                    Registrar recebimento de {money(vendorRequestedPayout)}
+                  </button>
+                )}
+                {vendorPaidPayout > 0 && (
+                  <p className="inline-success">{money(vendorPaidPayout)} registrado como recebido.</p>
                 )}
               </>
             ) : active === "Avaliações" ? (
@@ -1948,6 +2013,43 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   badge={`${averageRating.toFixed(1)} ★`}
                   title="Avaliações recebidas"
                   description="Média no topo e avaliações individuais com pedido, data, comentário e resposta da banca."
+                />
+                <SectionHistoryReview
+                  orders={pendingVendorReviewOrders}
+                  selectedOrderId={vendorReviewOrderId}
+                  score={vendorReviewScore}
+                  comment={vendorReviewComment}
+                  onSelect={setVendorReviewOrderId}
+                  onScore={setVendorReviewScore}
+                  onComment={setVendorReviewComment}
+                  onSubmit={(orderId) => {
+                    const order = vendorUnifiedOrders.find((item) => item.id === orderId);
+                    if (!order) return;
+                    appendReview(order.id, {
+                      id: `vendor-customer-${order.id}-${Date.now()}`,
+                      authorRole: "vendor",
+                      targetRole: "customer",
+                      targetId: order.customerKey,
+                      rating: vendorReviewScore,
+                      comment: vendorReviewComment.trim(),
+                      createdAt: new Date().toISOString(),
+                    });
+                    if (order.driver?.driverKey) {
+                      appendReview(order.id, {
+                        id: `vendor-delivery-${order.id}-${Date.now()}`,
+                        authorRole: "vendor",
+                        targetRole: "delivery",
+                        targetId: order.driver.driverKey,
+                        rating: vendorReviewScore,
+                        comment: vendorReviewComment.trim(),
+                        createdAt: new Date().toISOString(),
+                      });
+                    }
+                    setVendorReviewOrderId(null);
+                    setVendorReviewScore(5);
+                    setVendorReviewComment("");
+                    showNotice("Avaliação enviada.");
+                  }}
                 />
                 <div className="operation-metrics">
                   <article>
