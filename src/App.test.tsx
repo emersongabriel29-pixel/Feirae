@@ -147,7 +147,7 @@ describe("Feiraê customer flow", () => {
     fireEvent.change(screen.getByLabelText(/^feira$/i), {
       target: { value: "Feira do Produtor Rural" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /^bancas$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /bancas/i }));
 
     expect(screen.getByRole("heading", { name: /bancas e feirantes/i })).toBeInTheDocument();
     expect(screen.getByText("Sítio da Vó")).toBeInTheDocument();
