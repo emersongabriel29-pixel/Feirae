@@ -25,7 +25,7 @@ import { categories, fairs, products, vendorMetrics } from "../../data";
 import { calculateDeliveryQuote } from "../../domain/deliveryPricing";
 import { isFairActive, visibleCustomerFairs } from "../../domain/fairAvailability";
 import { fairHoursForName } from "../../domain/fairHours";
-import { formatDateTime, sortOrdersNewestFirst } from "../../domain/timeline";
+import { formatDateTime, sortByCreatedAtNewestFirst, sortOrdersNewestFirst } from "../../domain/timeline";
 import type { DeliveryVehicleType } from "../../domain/vehicles";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
@@ -1586,6 +1586,7 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
       type: "Produto",
       target: "Cesta de frutas",
       orderId: "FE-1019",
+      createdAt: "2026-09-19T16:20:00-03:00",
       rating: 5,
       text: "Frutas bonitas e bem embaladas.",
     },
@@ -1594,6 +1595,7 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
       type: "Banca",
       target: "Sítio da Vó",
       orderId: "FE-1019",
+      createdAt: "2026-09-19T16:18:00-03:00",
       rating: 4.9,
       text: "Atendimento rápido na separação.",
     },
@@ -1602,11 +1604,13 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
       type: "Entrega",
       target: "Entregador do pedido",
       orderId: "FE-1019",
+      createdAt: "2026-09-19T16:16:00-03:00",
       rating: 4.8,
       text: "Entrega cuidadosa.",
     },
   ]);
-  const reviewedOrderIds = new Set(reviews.map((review) => review.orderId));
+  const orderedReviews = sortByCreatedAtNewestFirst(reviews);
+  const reviewedOrderIds = new Set(orderedReviews.map((review) => review.orderId));
   const pending = sortOrdersNewestFirst(orders).filter(
     (order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id),
   );
@@ -1637,14 +1641,16 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
 
       <SectionHeading eyebrow="Histórico" title="Avaliações já enviadas" />
       <div className="review-grid">
-        {reviews.map((review) => (
+        {orderedReviews.map((review) => (
           <article className="review-card" key={review.id}>
             <strong>{review.rating.toLocaleString("pt-BR")} ★</strong>
             <div>
               <b>
                 {review.type} · {review.target}
               </b>
-              <small>{review.orderId}</small>
+              <small>
+                {review.orderId} · {formatDateTime(review.createdAt)}
+              </small>
               <p>{review.text}</p>
             </div>
           </article>
