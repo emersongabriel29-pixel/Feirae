@@ -452,6 +452,8 @@ export function CartDrawer({
 }) {
   const totalWeight = cartWeight(items, cart);
   const vehicle = vehicleForWeight(totalWeight);
+  const fairName = items[0]?.fair ?? "";
+  const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   return (
     <div
       className="drawer-backdrop"
@@ -465,6 +467,7 @@ export function CartDrawer({
           <div>
             <small>SUA COMPRA</small>
             <h2 id="cart-title">Minha Feira</h2>
+            {fairName && <small>{fairName}</small>}
           </div>
           <button onClick={onClose} aria-label="Fechar sacola">
             <X />
@@ -525,6 +528,11 @@ export function CartDrawer({
               <span>Peso estimado</span>
               <b>{totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</b>
             </p>
+            {hasVariableWeight && (
+              <small>
+                Há item vendido por peso. Peso e valor finais podem variar na separação; o checkout mostra valor estimado.
+              </small>
+            )}
             <p>
               <span>Entrega indicada</span>
               <b>{vehicle.name}</b>
