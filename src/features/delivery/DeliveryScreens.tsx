@@ -349,6 +349,22 @@ export function DeliveryOperations({
     (delivery) => deliveryIsInArea(delivery) && compatibleVehicleForWeight(delivery.weight),
   );
   const compatibleDeliveryCount = eligibleDeliveries.filter((delivery) => delivery.id !== accepted).length;
+  const availableDriverPay = eligibleDeliveries
+    .filter((delivery) => delivery.id !== accepted)
+    .reduce((sum, delivery) => {
+      const vehicle = compatibleVehicleForWeight(delivery.weight);
+      if (!vehicle) return sum;
+      return (
+        sum +
+        calculateDeliveryQuote({
+          vehicleType: vehicle.type,
+          distanceKm: delivery.pickupDistanceKm + delivery.deliveryDistanceKm,
+          weightKg: delivery.weight,
+          pickupCount: delivery.pickupCount,
+        }).driverPay
+      );
+    }, 0);
+  const deliveryAreas = ["Planaltina", "Plano Piloto", "Sobradinho", "Ceilândia", "Gama"];
   const deliveryStages = ["Cheguei à banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
   const activeVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
@@ -419,6 +435,19 @@ export function DeliveryOperations({
     sumLedger(previousMonthEntries) > 0
       ? ((sumLedger(monthEntries) - sumLedger(previousMonthEntries)) / sumLedger(previousMonthEntries)) * 100
       : 0;
+  const pendingEvaluationDeliveries = completedDeliveryIds.filter(
+    (deliveryId) => !driverEvaluations.some((evaluation) => evaluation.deliveryId === deliveryId),
+  );
+  const selectedEvaluationDeliveryId =
+    pendingReviewDeliveryId && pendingEvaluationDeliveries.includes(pendingReviewDeliveryId)
+      ? pendingReviewDeliveryId
+      : (pendingEvaluationDeliveries[0] ?? null);
+  const performanceDeliveryCount = deliveryLedger.filter((entry) => entry.status !== "pending").length;
+  const performanceKm = deliveryLedger.reduce((sum, entry) => sum + (entry.distanceKm ?? 0), 0);
+  const performanceCancelCount = incidentMessage.includes("cancelada") ? 1 : 0;
+  const performanceOnTime = performanceDeliveryCount
+    ? Math.max(0, 100 - performanceCancelCount * 5)
+    : 100;
   const activeDeliverySection = activeDelivery && activeRoute ? (
     <section className="active-delivery">
       <span className="eyebrow">Em andamento · {activeRoute.label}</span>
@@ -611,11 +640,7 @@ export function DeliveryOperations({
               </article>
               <article>
                 <strong>
-                  {money(
-                    deliveries
-                      .filter((delivery) => compatibleVehicleForWeight(delivery.weight))
-                      .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
-                  )}
+                  {money(availableDriverPay)}
                 </strong>
                 <span>ganhos das corridas compatíveis</span>
               </article>
@@ -662,11 +687,7 @@ export function DeliveryOperations({
                   </article>
                   <article>
                     <strong>
-                      {money(
-                        deliveries
-                          .filter((delivery) => compatibleVehicleForWeight(delivery.weight))
-                          .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
-                      )}
+                      {money(availableDriverPay)}
                     </strong>
                     <span>ganhos disponíveis para aceitar</span>
                   </article>
