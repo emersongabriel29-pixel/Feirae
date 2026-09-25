@@ -23,6 +23,9 @@ import {
 } from "lucide-react";
 import { categories, fairs, products, vendorMetrics } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
+import { calculateCheckoutPromotions, marketplaceProducts, readStoreByIdentity } from "../../domain/marketplaceBridge";
+import { scopedStorageKey } from "../../domain/storage";
+import { appendReview, appendSupportTicket, readUnifiedOrders } from "../../domain/orderBridge";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
@@ -105,7 +108,7 @@ export function HomePage({
           onAction={() => onTab("products")}
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {products
+          {liveProducts
             .filter((product) => product.featured)
             .map((product) => (
               <article key={product.id} className="mini-product">
@@ -309,7 +312,7 @@ export function CatalogPage({
             <ProductCard
               key={product.id}
               product={product}
-              onAdd={onAdd}
+              onAdd={sharedStore?.isOpen === false ? () => undefined : onAdd}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
             />
@@ -489,7 +492,8 @@ export function FairDetail({
   onAdd: (id: number) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
-  const fairProducts = products.filter((product) => product.fair === fair.name);
+  const liveProducts = marketplaceProducts(products);
+  const fairProducts = liveProducts.filter((product) => product.fair === fair.name);
 
   return (
     <Panel
@@ -556,7 +560,8 @@ export function VendorsPage({
   onVendorFavorite: (name: string) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName);
-  const fairProducts = products.filter((product) => product.fair === fairName);
+  const liveProducts = marketplaceProducts(products);
+  const fairProducts = liveProducts.filter((product) => product.fair === fairName);
   const vendors = vendorSummaries(fairProducts, vendorMetrics);
   return (
     <Panel
@@ -630,12 +635,22 @@ export function VendorStore({
   storeFavorite: boolean;
   onStoreFavorite: () => void;
 }) {
-  const vendorProducts = products.filter(
+  const liveProducts = marketplaceProducts(products);
+  const vendorProducts = liveProducts.filter(
     (product) => product.feirante === vendorName && product.fair === fairName,
   );
+  const sharedStore = readStoreByIdentity(fairName, vendorName);
   const metrics = metricForVendor(vendorName, vendorMetrics);
   return (
-    <Panel title={vendorName} subtitle={fairName + " · loja do feirante"} onBack={onBack}>
+    <Panel
+      title={vendorName}
+      subtitle={
+        fairName +
+        " · " +
+        (sharedStore ? (sharedStore.isOpen ? "Aberta agora" : "Fechada") : "loja do feirante")
+      }
+      onBack={onBack}
+    >
       <div className="detail-banner">
         <div>
           <Store size={30} />
@@ -948,10 +963,10 @@ export function Checkout({
   const [needsChange, setNeedsChange] = useState(false);
   const [changeFor, setChangeFor] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
-  const [addresses] = usePersistentState<Address[]>("feirae:addresses", []);
+  const [addresses] = usePersistentState<Address[]>(scopedStorageKey("feirae:addresses"), []);
   const [cards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
-  >("feirae:cards-v3", []);
+  >(scopedStorageKey("feirae:cards-v3"), []);
   const defaultAddress = addresses.find((address) => address.isDefault) ?? addresses[0];
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
@@ -1230,10 +1245,11 @@ export function FavoritesPage({
   onBack: () => void;
   onExplore: () => void;
 }) {
-  const favoriteProducts = products.filter((product) => ids.includes(product.id));
+  const liveProducts = marketplaceProducts(products);
+  const favoriteProducts = liveProducts.filter((product) => ids.includes(product.id));
   const favoriteVendors = vendorFavorites
     .map((name) => {
-      const vendorProducts = products.filter((product) => product.feirante === name);
+      const vendorProducts = liveProducts.filter((product) => product.feirante === name);
       return vendorProducts.length
         ? { name, fair: vendorProducts[0].fair, count: vendorProducts.length }
         : null;
@@ -1334,7 +1350,7 @@ export function NotificationsPage({
 }
 
 export function AddressesPage({ onBack }: { onBack: () => void }) {
-  const [addresses, setAddresses] = usePersistentState<Address[]>("feirae:addresses", [
+  const [addresses, setAddresses] = usePersistentState<Address[]>(scopedStorageKey("feirae:addresses"), [
     {
       id: 1,
       label: "Casa",
@@ -1847,7 +1863,7 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
 export function PaymentsPage({ onBack }: { onBack: () => void }) {
   const [cards, setCards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
-  >("feirae:cards-v3", [
+  >(scopedStorageKey("feirae:cards-v3"), [
     {
       id: "demo-card",
       holder: "Cliente Feiraê",
@@ -2064,7 +2080,7 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
   );
 }
 export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: () => void }) {
-  const [reviews] = usePersistentState("feirae:customer-reviews", [
+  const [reviews] = usePersistentState(scopedStorageKey("feirae:customer-reviews"), [
     {
       id: "review-product-1",
       type: "Produto",
@@ -2190,11 +2206,11 @@ export function ChatPage({ onBack }: { onBack: () => void }) {
   );
 }
 export function SettingsPage({ onBack }: { onBack: () => void }) {
-  const [offers, setOffers] = usePersistentState("feirae:offers", true);
-  const [orderUpdates, setOrderUpdates] = usePersistentState("feirae:order-updates", true);
-  const [whatsapp, setWhatsapp] = usePersistentState("feirae:whatsapp", false);
-  const [useGps, setUseGps] = usePersistentState("feirae:gps", true);
-  const [compactCards, setCompactCards] = usePersistentState("feirae:compact-cards", false);
+  const [offers, setOffers] = usePersistentState(scopedStorageKey("feirae:offers"), true);
+  const [orderUpdates, setOrderUpdates] = usePersistentState(scopedStorageKey("feirae:order-updates"), true);
+  const [whatsapp, setWhatsapp] = usePersistentState(scopedStorageKey("feirae:whatsapp"), false);
+  const [useGps, setUseGps] = usePersistentState(scopedStorageKey("feirae:gps"), true);
+  const [compactCards, setCompactCards] = usePersistentState(scopedStorageKey("feirae:compact-cards"), false);
   return (
     <Panel title="Configurações" subtitle="Preferências salvas neste dispositivo." onBack={onBack}>
       <div className="surface-card max-w-2xl">
