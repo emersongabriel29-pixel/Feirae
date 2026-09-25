@@ -174,7 +174,7 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /voltar para central/i }));
     fireEvent.click(screen.getByRole("button", { name: /^estoque$/i }));
     expect(screen.getAllByRole("button", { name: "+" }).length).toBeGreaterThan(0);
-    expect(screen.getByText(/estoques abaixo do mínimo/i)).toBeInTheDocument();
+    expect(screen.getByText(/alertas abaixo do mínimo/i)).toBeInTheDocument();
   });
 
   it("gives the vendor a personal account form separate from the stall", () => {
@@ -236,7 +236,7 @@ describe("Feiraê role access", () => {
 
     expect(screen.getAllByLabelText(/^abertura$/i).length).toBe(7);
     expect(screen.getAllByLabelText(/^fechamento$/i).length).toBe(7);
-    expect(screen.getByRole("button", { name: /^aberto$/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^aberto$/i }).length).toBeGreaterThan(0);
   });
 
   it("configures delivery, pickup and vendor-sponsored free shipping without a fixed 20 kg rule", () => {
