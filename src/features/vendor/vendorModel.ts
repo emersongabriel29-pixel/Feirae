@@ -114,7 +114,6 @@ export type VendorSaleRecord = {
   items: Array<{ name: string; quantity: number }>;
 };
 
-
 export const productCategories = [
   "Frutas",
   "Verduras e legumes",
