@@ -29,13 +29,7 @@ import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
 
-export function DeliveryOperations({
-  session,
-  onBack,
-}: {
-  session: DemoSession;
-  onBack: () => void;
-}) {
+export function DeliveryOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
   const modules = [
     "Painel",
     "Entregas",
@@ -389,8 +383,7 @@ export function DeliveryOperations({
   const pendingAmount =
     deliveryLedger
       .filter((entry) => entry.status === "pending")
-      .reduce((sum, entry) => sum + entry.amount, 0) +
-    (accepted ? (activeQuote?.driverPay ?? 0) : 0);
+      .reduce((sum, entry) => sum + entry.amount, 0) + (accepted ? (activeQuote?.driverPay ?? 0) : 0);
   const availableAmount = deliveryLedger
     .filter((entry) => entry.status === "available")
     .reduce((sum, entry) => sum + entry.amount, 0);
@@ -422,8 +415,7 @@ export function DeliveryOperations({
   const currentYearKey = "2026";
   const ledgerForPrefix = (prefix: string) =>
     deliveryLedger.filter((entry) => (entry.createdAt ?? "").startsWith(prefix));
-  const sumLedger = (entries: typeof deliveryLedger) =>
-    entries.reduce((sum, entry) => sum + entry.amount, 0);
+  const sumLedger = (entries: typeof deliveryLedger) => entries.reduce((sum, entry) => sum + entry.amount, 0);
   const todayEntries = ledgerForPrefix(todayKey);
   const monthEntries = ledgerForPrefix(currentMonthKey);
   const previousMonthEntries = ledgerForPrefix(previousMonthKey);
@@ -445,118 +437,117 @@ export function DeliveryOperations({
   const performanceDeliveryCount = deliveryLedger.filter((entry) => entry.status !== "pending").length;
   const performanceKm = deliveryLedger.reduce((sum, entry) => sum + (entry.distanceKm ?? 0), 0);
   const performanceCancelCount = incidentMessage.includes("cancelada") ? 1 : 0;
-  const performanceOnTime = performanceDeliveryCount
-    ? Math.max(0, 100 - performanceCancelCount * 5)
-    : 100;
-  const activeDeliverySection = activeDelivery && activeRoute ? (
-    <section className="active-delivery">
-      <span className="eyebrow">Em andamento · {activeRoute.label}</span>
-      <h3>{activeDelivery.id}</h3>
-      <p>{activeDelivery.route}</p>
-      <small>
-        {activeDelivery.weight} kg · {activeDelivery.pickupCount} banca(s) · veículo{" "}
-        {activeVehicle?.type ?? activeDelivery.vehicle}
-      </small>
+  const performanceOnTime = performanceDeliveryCount ? Math.max(0, 100 - performanceCancelCount * 5) : 100;
+  const activeDeliverySection =
+    activeDelivery && activeRoute ? (
+      <section className="active-delivery">
+        <span className="eyebrow">Em andamento · {activeRoute.label}</span>
+        <h3>{activeDelivery.id}</h3>
+        <p>{activeDelivery.route}</p>
+        <small>
+          {activeDelivery.weight} kg · {activeDelivery.pickupCount} banca(s) · veículo{" "}
+          {activeVehicle?.type ?? activeDelivery.vehicle}
+        </small>
 
-      <div className="operation-metrics">
-        <article>
-          <strong>{activeRoute.distanceKm.toLocaleString("pt-BR")} km</strong>
-          <span>distância desta etapa</span>
-        </article>
-        <article>
-          <strong>{activeRoute.etaMinutes} min</strong>
-          <span>previsão desta etapa</span>
-        </article>
-        <article>
-          <strong>{money(activeQuote?.driverPay ?? 0)}</strong>
-          <span>ganho desta corrida</span>
-        </article>
-      </div>
-
-      <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
-        {deliveryStages.map((label, index) => (
-          <span className={index <= stage ? "done" : ""} key={label}>
-            {index + 1}
-          </span>
-        ))}
-      </div>
-
-      <div className="surface-card">
-        <b>{activeRoute.label}</b>
-        <p>
-          Destino atual:{" "}
-          {activeRoute.destination === "pickup" ? activeDelivery.pickupQuery : activeDelivery.dropoffQuery}
-        </p>
-        <div className="module-action-row">
-          <button onClick={() => openNavigation("google")} className="secondary-action">
-            <MapPin size={17} /> Google Maps
-          </button>
-          <button onClick={() => openNavigation("waze")} className="secondary-action">
-            <MapPin size={17} /> Waze
-          </button>
+        <div className="operation-metrics">
+          <article>
+            <strong>{activeRoute.distanceKm.toLocaleString("pt-BR")} km</strong>
+            <span>distância desta etapa</span>
+          </article>
+          <article>
+            <strong>{activeRoute.etaMinutes} min</strong>
+            <span>previsão desta etapa</span>
+          </article>
+          <article>
+            <strong>{money(activeQuote?.driverPay ?? 0)}</strong>
+            <span>ganho desta corrida</span>
+          </article>
         </div>
-      </div>
 
-      <button
-        className="primary-action"
-        onClick={() => {
-          if (stage === deliveryStages.length - 1) {
-            const quote = activeQuote;
-            setDeliveryLedger((current) => [
-              {
-                id: `ledger-${activeDelivery.id}-${Date.now()}`,
-                deliveryId: activeDelivery.id,
-                label: activeDelivery.route,
-                amount: quote?.driverPay ?? 0,
-                status: "available",
-                createdAt: new Date().toISOString(),
-                distanceKm: activeDelivery.pickupDistanceKm + activeDelivery.deliveryDistanceKm,
-              },
-              ...current,
-            ]);
-            setCompletedDeliveryIds((current) =>
-              current.includes(activeDelivery.id) ? current : [...current, activeDelivery.id],
-            );
-            setPendingReviewDeliveryId(activeDelivery.id);
-            setAccepted(null);
-            setStage(0);
-            setActive("Avaliações");
-          } else {
-            setStage((value) => value + 1);
-          }
-        }}
-      >
-        {deliveryStages[stage]} <ChevronRight size={17} />
-      </button>
+        <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
+          {deliveryStages.map((label, index) => (
+            <span className={index <= stage ? "done" : ""} key={label}>
+              {index + 1}
+            </span>
+          ))}
+        </div>
 
-      <div className="cancel-panel">
-        <b>Cancelar entrega</b>
-        <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
-          <option value="">Motivo do cancelamento</option>
-          <option>Veículo com problema</option>
-          <option>Peso/volume incompatível</option>
-          <option>Banca atrasou a retirada</option>
-          <option>Endereço inseguro ou incorreto</option>
-          <option>Cliente não responde</option>
-        </select>
+        <div className="surface-card">
+          <b>{activeRoute.label}</b>
+          <p>
+            Destino atual:{" "}
+            {activeRoute.destination === "pickup" ? activeDelivery.pickupQuery : activeDelivery.dropoffQuery}
+          </p>
+          <div className="module-action-row">
+            <button onClick={() => openNavigation("google")} className="secondary-action">
+              <MapPin size={17} /> Google Maps
+            </button>
+            <button onClick={() => openNavigation("waze")} className="secondary-action">
+              <MapPin size={17} /> Waze
+            </button>
+          </div>
+        </div>
+
         <button
-          className="secondary-action"
-          disabled={!cancelReason}
+          className="primary-action"
           onClick={() => {
-            if (!cancelReason) return;
-            setIncidentMessage(`Corrida ${activeDelivery.id} cancelada: ${cancelReason}.`);
-            setAccepted(null);
-            setStage(0);
-            setCancelReason("");
+            if (stage === deliveryStages.length - 1) {
+              const quote = activeQuote;
+              setDeliveryLedger((current) => [
+                {
+                  id: `ledger-${activeDelivery.id}-${Date.now()}`,
+                  deliveryId: activeDelivery.id,
+                  label: activeDelivery.route,
+                  amount: quote?.driverPay ?? 0,
+                  status: "available",
+                  createdAt: new Date().toISOString(),
+                  distanceKm: activeDelivery.pickupDistanceKm + activeDelivery.deliveryDistanceKm,
+                },
+                ...current,
+              ]);
+              setCompletedDeliveryIds((current) =>
+                current.includes(activeDelivery.id) ? current : [...current, activeDelivery.id],
+              );
+              setPendingReviewDeliveryId(activeDelivery.id);
+              setAccepted(null);
+              setStage(0);
+              setActive("Avaliações");
+            } else {
+              setStage((value) => value + 1);
+            }
           }}
         >
-          <XCircle size={17} /> Confirmar cancelamento
+          {deliveryStages[stage]} <ChevronRight size={17} />
         </button>
-      </div>
-    </section>
-  ) : (
-    <Empty title="Nenhuma entrega ativa" text="Aceite uma entrega disponível para acompanhar as etapas." />
-  );
+
+        <div className="cancel-panel">
+          <b>Cancelar entrega</b>
+          <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
+            <option value="">Motivo do cancelamento</option>
+            <option>Veículo com problema</option>
+            <option>Peso/volume incompatível</option>
+            <option>Banca atrasou a retirada</option>
+            <option>Endereço inseguro ou incorreto</option>
+            <option>Cliente não responde</option>
+          </select>
+          <button
+            className="secondary-action"
+            disabled={!cancelReason}
+            onClick={() => {
+              if (!cancelReason) return;
+              setIncidentMessage(`Corrida ${activeDelivery.id} cancelada: ${cancelReason}.`);
+              setAccepted(null);
+              setStage(0);
+              setCancelReason("");
+            }}
+          >
+            <XCircle size={17} /> Confirmar cancelamento
+          </button>
+        </div>
+      </section>
+    ) : (
+      <Empty title="Nenhuma entrega ativa" text="Aceite uma entrega disponível para acompanhar as etapas." />
+    );
   const deliveryList = (
     <div className="mt-6 space-y-3">
       <span className="eyebrow">Entregas disponíveis na sua área</span>
@@ -639,9 +630,7 @@ export function DeliveryOperations({
                 <span>corridas compatíveis</span>
               </article>
               <article>
-                <strong>
-                  {money(availableDriverPay)}
-                </strong>
+                <strong>{money(availableDriverPay)}</strong>
                 <span>ganhos das corridas compatíveis</span>
               </article>
             </div>
@@ -686,9 +675,7 @@ export function DeliveryOperations({
                     <span>corridas compatíveis</span>
                   </article>
                   <article>
-                    <strong>
-                      {money(availableDriverPay)}
-                    </strong>
+                    <strong>{money(availableDriverPay)}</strong>
                     <span>ganhos disponíveis para aceitar</span>
                   </article>
                   <article>
@@ -1021,8 +1008,8 @@ export function DeliveryOperations({
                     <div>
                       <b>Uma rota ativa por vez no MVP</b>
                       <small>
-                        Evita atraso e desvio. Rota combinada ficará para fase futura e só poderá juntar pedidos
-                        da mesma feira/direção, respeitando peso, SLA e desvio máximo.
+                        Evita atraso e desvio. Rota combinada ficará para fase futura e só poderá juntar
+                        pedidos da mesma feira/direção, respeitando peso, SLA e desvio máximo.
                       </small>
                     </div>
                   </article>
