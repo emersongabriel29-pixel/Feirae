@@ -52,6 +52,7 @@ export type VendorMetrics = {
 export type Fair = {
   name: string;
   place: string;
+  active?: boolean;
   address?: string;
   status: string;
   source?: "official" | "demo";
@@ -67,6 +68,8 @@ export type Fair = {
 export type DemoOrder = {
   id: string;
   date: string;
+  createdAt?: string;
+  updatedAt?: string;
   status: "Recebido" | "Preparando" | "Coleta" | "Em rota" | "Entregue" | "Cancelado";
   value: number;
 };

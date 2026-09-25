@@ -14,11 +14,18 @@ import {
   Wallet,
   XCircle,
 } from "lucide-react";
-import { ModuleHeader, OperationsMenu, Panel, Toggle } from "../../components/AppComponents";
+import { ModuleHeader, OperationsMenu, Panel, SectionHeading, Toggle } from "../../components/AppComponents";
 import { fairs } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
 import { vehicleRules } from "../../domain/marketplace";
 import { vendorModuleDetails } from "../../domain/operations";
+import {
+  formatDateTime,
+  localPeriodKey,
+  localPeriodKeys,
+  sortByCreatedAtNewestFirst,
+  sortByIsoDateNewestFirst,
+} from "../../domain/timeline";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
@@ -29,6 +36,7 @@ import {
   initialVendorProducts,
   initialVendorPromotions,
   initialVendorReviews,
+  initialVendorSalesHistory,
   initialVendorSchedule,
   productCategories,
   productSaleUnits,
@@ -41,6 +49,7 @@ import {
   type VendorPromotion,
   type VendorPromotionType,
   type VendorReview,
+  type VendorSaleRecord,
   type VendorScheduleDay,
 } from "./vendorModel";
 
@@ -127,6 +136,20 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     `feirae:vendor-reviews:${session.email}`,
     initialVendorReviews,
   );
+  const [salesHistory] = usePersistentState<VendorSaleRecord[]>(
+    `feirae:vendor-sales-history:${session.email}`,
+    initialVendorSalesHistory,
+  );
+  const [vendorEvaluationsGiven, setVendorEvaluationsGiven] = usePersistentState<
+    {
+      id: string;
+      orderId: string;
+      driverRating: number;
+      customerRating: number;
+      note: string;
+      createdAt: string;
+    }[]
+  >(`feirae:vendor-evaluations-given:${session.email}`, []);
   const [documents, setDocuments] = usePersistentState<VendorDocument[]>(
     `feirae:vendor-documents:${session.email}`,
     initialVendorDocuments,
@@ -173,11 +196,20 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [stockReason, setStockReason] = useState("Ajuste manual");
   const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
   const [reviewReply, setReviewReply] = useState("");
+  const [vendorRatingOrderId, setVendorRatingOrderId] = useState<string | null>(null);
+  const [driverRating, setDriverRating] = useState("5");
+  const [customerRating, setCustomerRating] = useState("5");
+  const [vendorRatingNote, setVendorRatingNote] = useState("");
   const [accountSaved, setAccountSaved] = useState(false);
   const [notice, setNotice] = useState("");
 
-  const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
-  const pendingOrders = orders.filter((order) =>
+  const orderedOrders = sortByCreatedAtNewestFirst(orders);
+  const orderedSalesHistory = sortByIsoDateNewestFirst(salesHistory, (sale) => sale.date);
+  const orderedReviews = sortByCreatedAtNewestFirst(reviews);
+  const orderedVendorEvaluations = sortByCreatedAtNewestFirst(vendorEvaluationsGiven);
+  const orderedStockHistory = sortByCreatedAtNewestFirst(stockHistory);
+  const selectedOrder = orderedOrders.find((order) => order.id === selectedOrderId) ?? null;
+  const pendingOrders = orderedOrders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
   );
   const lowStockCount = vendorItems.filter((item) => item.active && item.stock <= item.minStock).length;
@@ -210,6 +242,46 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
   );
+  const periods = localPeriodKeys();
+  const totalSales = (entries: VendorSaleRecord[]) => entries.reduce((sum, sale) => sum + sale.total, 0);
+  const todaySales = salesHistory.filter((sale) => localPeriodKey(sale.date, "day") === periods.day);
+  const monthSales = salesHistory.filter((sale) => localPeriodKey(sale.date, "month") === periods.month);
+  const previousMonthSales = salesHistory.filter(
+    (sale) => localPeriodKey(sale.date, "month") === periods.previousMonth,
+  );
+  const yearSales = salesHistory.filter((sale) => localPeriodKey(sale.date, "year") === periods.year);
+  const monthGross = totalSales(monthSales);
+  const previousMonthGross = totalSales(previousMonthSales);
+  const yearGross = totalSales(yearSales);
+  const monthTicket = monthSales.length ? monthGross / monthSales.length : 0;
+  const monthDiscounts = monthSales.reduce((sum, sale) => sum + sale.discount, 0);
+  const monthDeliverySubsidy = monthSales.reduce((sum, sale) => sum + sale.deliverySubsidy, 0);
+  const monthRefunds = monthSales.reduce((sum, sale) => sum + sale.refund, 0);
+  const monthComparison =
+    previousMonthGross > 0 ? ((monthGross - previousMonthGross) / previousMonthGross) * 100 : 0;
+  const productRanking = Array.from(
+    salesHistory
+      .flatMap((sale) => sale.items)
+      .reduce(
+        (map, item) => map.set(item.name, (map.get(item.name) ?? 0) + item.quantity),
+        new Map<string, number>(),
+      ),
+  )
+    .map(([name, quantity]) => ({ name, quantity }))
+    .sort((a, b) => b.quantity - a.quantity);
+  const receivingConfigured =
+    vendorAccount.receivingMethod === "Pix"
+      ? Boolean(vendorAccount.pixKey)
+      : Boolean(vendorAccount.bankName && vendorAccount.agency && vendorAccount.accountNumber);
+  const pendingVendorEvaluations = orders.filter(
+    (order) =>
+      order.status === "delivered" &&
+      !vendorEvaluationsGiven.some((evaluation) => evaluation.orderId === order.id),
+  );
+  const selectedVendorEvaluationOrder =
+    pendingVendorEvaluations.find((order) => order.id === vendorRatingOrderId) ??
+    pendingVendorEvaluations[0] ??
+    null;
 
   const dynamicModuleDetails = {
     ...vendorModuleDetails,
@@ -334,10 +406,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         product: item.name,
         delta: nextStock - item.stock,
         reason: stockReason,
-        createdAt: new Intl.DateTimeFormat("pt-BR", {
-          dateStyle: "short",
-          timeStyle: "short",
-        }).format(new Date()),
+        createdAt: new Date().toISOString(),
       },
       ...current,
     ]);
@@ -707,7 +776,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     description="Abra um pedido para aceitar, preparar e marcar como pronto. As etapas de entrega ficam com o entregador."
                   />
                   <div className="operation-list detailed">
-                    {orders.map((order) => (
+                    {orderedOrders.map((order) => (
                       <article key={order.id}>
                         <Package />
                         <div>
@@ -716,7 +785,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           </b>
                           <small>
                             {vendorOrderStatusLabel(order.status)} · {order.items.length} itens ·{" "}
-                            {money(order.value)} · {order.createdAt}
+                            {money(order.value)} · {formatDateTime(order.createdAt)}
                           </small>
                         </div>
                         <button className="mini-toggle" onClick={() => setSelectedOrderId(order.id)}>
@@ -944,7 +1013,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </select>
                 </label>
                 {inventory}
-                <SectionHistory history={stockHistory} />
+                <SectionHistory history={orderedStockHistory} />
               </>
             ) : active === "Minha banca" ? (
               <>
@@ -1445,8 +1514,51 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <ModuleHeader
                   badge="Receitas e repasses"
                   title="Financeiro da banca"
-                  description="Valores separados por estado. Taxas comerciais reais só serão aplicadas quando o provedor for integrado."
+                  description="Acompanhe vendas por período, ticket médio, produtos mais pedidos e valores a receber."
                 />
+                <div className="operation-metrics">
+                  <article>
+                    <strong>{money(totalSales(todaySales))}</strong>
+                    <span>vendas hoje</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthGross)}</strong>
+                    <span>mês atual</span>
+                  </article>
+                  <article>
+                    <strong>{money(yearGross)}</strong>
+                    <span>total no ano</span>
+                  </article>
+                </div>
+                <div className="module-kpi-strip">
+                  <article>
+                    <strong>{monthSales.length}</strong>
+                    <span>pedidos no mês</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthTicket)}</strong>
+                    <span>ticket médio</span>
+                  </article>
+                  <article>
+                    <strong>
+                      {monthComparison >= 0 ? "+" : ""}
+                      {monthComparison.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
+                    </strong>
+                    <span>vs. mês anterior</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthDiscounts)}</strong>
+                    <span>descontos no mês</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthDeliverySubsidy)}</strong>
+                    <span>frete patrocinado</span>
+                  </article>
+                  <article>
+                    <strong>{money(monthRefunds)}</strong>
+                    <span>estornos/reembolsos</span>
+                  </article>
+                </div>
                 <div className="operation-metrics">
                   <article>
                     <strong>{money(pendingGross)}</strong>
@@ -1457,22 +1569,36 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     <span>bruto elegível após entrega</span>
                   </article>
                   <article>
-                    <strong>{vendorAccount.pixKey ? "Cadastrado" : "Pendente"}</strong>
+                    <strong>{receivingConfigured ? "Cadastrado" : "Pendente"}</strong>
                     <span>destino de recebimento</span>
                   </article>
                 </div>
+                <div className="surface-card">
+                  <span className="eyebrow">Mais pedidos</span>
+                  <h3>Produtos mais vendidos</h3>
+                  <div className="finance-breakdown">
+                    {productRanking.slice(0, 5).map((product, index) => (
+                      <p key={product.name}>
+                        <span>
+                          {index + 1}. {product.name}
+                        </span>
+                        <strong>{product.quantity} unidade(s)</strong>
+                      </p>
+                    ))}
+                  </div>
+                </div>
                 <div className="finance-breakdown">
                   <p>
-                    <span>Total demonstrativo dos pedidos</span>
-                    <strong>{money(grossOrders)}</strong>
-                  </p>
-                  <p>
                     <span>Taxa Feiraê</span>
-                    <strong>A definir</strong>
+                    <strong>A definir no provedor</strong>
                   </p>
                   <p>
                     <span>Taxa do provedor</span>
                     <strong>A definir</strong>
+                  </p>
+                  <p>
+                    <span>Como o repasse funciona</span>
+                    <strong>Pendente → disponível → solicitado/processado → pago</strong>
                   </p>
                   <p>
                     <span>Próximo repasse</span>
@@ -1481,26 +1607,27 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 </div>
                 {activeFreeShipping || deliverySettings.absorbDeliveryFee ? (
                   <p className="inline-success">
-                    Frete grátis patrocinado está ativo: o custo da entrega será abatido do recebível do
-                    feirante, sem reduzir a remuneração do entregador.
+                    Frete grátis patrocinado está ativo: o custo da entrega é abatido do recebível da banca,
+                    sem reduzir a remuneração do entregador.
                   </p>
                 ) : null}
                 <div className="operation-list detailed">
-                  {orders.map((order) => (
-                    <article key={order.id}>
+                  {orderedSalesHistory.map((sale) => (
+                    <article key={sale.id}>
                       <Wallet />
                       <div>
                         <b>
-                          {order.id} · {money(order.value)}
+                          {formatDateTime(sale.date)} · {money(sale.total)}
                         </b>
                         <small>
-                          {vendorOrderStatusLabel(order.status)} · valor bruto antes de taxas/repasses reais
+                          desconto {money(sale.discount)} · frete patrocinado {money(sale.deliverySubsidy)} ·
+                          estorno {money(sale.refund)}
                         </small>
                       </div>
                     </article>
                   ))}
                 </div>
-                {!vendorAccount.pixKey && (
+                {!receivingConfigured && (
                   <button className="primary-action" onClick={() => setActive("Conta")}>
                     Cadastrar destino de recebimento
                   </button>
@@ -1510,25 +1637,117 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
               <>
                 <ModuleHeader
                   badge={`${averageRating.toFixed(1)} ★`}
-                  title="Avaliações recebidas"
-                  description="Média no topo e avaliações individuais com pedido, data, comentário e resposta da banca."
+                  title="Avaliações da banca"
+                  description="Receba avaliações e, após concluir o pedido, avalie entregador e cliente."
                 />
                 <div className="operation-metrics">
                   <article>
                     <strong>{averageRating.toFixed(1)} ★</strong>
-                    <span>média geral</span>
+                    <span>média recebida</span>
                   </article>
                   <article>
                     <strong>{reviews.length}</strong>
-                    <span>avaliações demonstrativas</span>
+                    <span>avaliações recebidas</span>
                   </article>
                   <article>
-                    <strong>{reviews.filter((review) => review.response).length}</strong>
-                    <span>respondidas</span>
+                    <strong>{pendingVendorEvaluations.length}</strong>
+                    <span>pedidos para avaliar</span>
                   </article>
                 </div>
+
+                {selectedVendorEvaluationOrder ? (
+                  <form
+                    className="form-card"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setVendorEvaluationsGiven((current) => [
+                        {
+                          id: String(Date.now()),
+                          orderId: selectedVendorEvaluationOrder.id,
+                          driverRating: Number(driverRating),
+                          customerRating: Number(customerRating),
+                          note: vendorRatingNote.trim(),
+                          createdAt: new Date().toISOString(),
+                        },
+                        ...current,
+                      ]);
+                      setVendorRatingOrderId(null);
+                      setDriverRating("5");
+                      setCustomerRating("5");
+                      setVendorRatingNote("");
+                    }}
+                  >
+                    <b>Avaliar pedido {selectedVendorEvaluationOrder.id}</b>
+                    <small>
+                      Cliente {selectedVendorEvaluationOrder.customer} · entregador{" "}
+                      {selectedVendorEvaluationOrder.driverName || "não informado"}
+                    </small>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Nota do entregador
+                        <select
+                          value={driverRating}
+                          onChange={(event) => setDriverRating(event.target.value)}
+                        >
+                          {[5, 4, 3, 2, 1].map((value) => (
+                            <option value={value} key={value}>
+                              {value} estrela(s)
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Nota do cliente
+                        <select
+                          value={customerRating}
+                          onChange={(event) => setCustomerRating(event.target.value)}
+                        >
+                          {[5, 4, 3, 2, 1].map((value) => (
+                            <option value={value} key={value}>
+                              {value} estrela(s)
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <label>
+                      Observação operacional
+                      <textarea
+                        rows={3}
+                        value={vendorRatingNote}
+                        onChange={(event) => setVendorRatingNote(event.target.value)}
+                        placeholder="Pontualidade, cuidado na coleta, comunicação, retirada..."
+                      />
+                    </label>
+                    <button className="primary-action" type="submit">
+                      Enviar avaliações
+                    </button>
+                  </form>
+                ) : (
+                  <p className="operation-footnote">Nenhum pedido entregue aguardando avaliação da banca.</p>
+                )}
+
+                {vendorEvaluationsGiven.length > 0 && (
+                  <div className="operation-list detailed">
+                    {orderedVendorEvaluations.map((evaluation) => (
+                      <article key={evaluation.id}>
+                        <Star />
+                        <div>
+                          <b>{evaluation.orderId}</b>
+                          <small>{formatDateTime(evaluation.createdAt)}</small>
+                          <small>
+                            Entregador {evaluation.driverRating} ★ · Cliente {evaluation.customerRating} ★
+                            {evaluation.note ? ` · ${evaluation.note}` : ""}
+                          </small>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                <SectionHeading eyebrow="Recebidas" title="O que clientes e entregadores avaliaram" />
                 <div className="review-grid compact">
-                  {reviews.map((review) => (
+                  {orderedReviews.map((review) => (
                     <article className="review-card" key={review.id}>
                       <strong>{review.rating.toFixed(1)} ★</strong>
                       <div>
@@ -1536,7 +1755,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           {review.type} · {review.author}
                         </b>
                         <small>
-                          {review.orderId} · {review.date}
+                          {review.orderId} · {formatDateTime(review.createdAt, review.date)}
                         </small>
                         <p>{review.comment}</p>
                         {review.response && <small>Resposta da banca: {review.response}</small>}
@@ -1580,6 +1799,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     </article>
                   ))}
                 </div>
+                <p className="operation-footnote">
+                  Avaliações cruzadas devem ficar ocultas até ambas as partes enviarem ou a janela terminar,
+                  reduzindo retaliação.
+                </p>
               </>
             ) : active === "Conta" ? (
               <>
@@ -1844,7 +2067,7 @@ function SectionHistory({
                   {entry.delta}
                 </b>
                 <small>
-                  {entry.reason} · {entry.createdAt}
+                  {entry.reason} · {formatDateTime(entry.createdAt)}
                 </small>
               </div>
             </article>

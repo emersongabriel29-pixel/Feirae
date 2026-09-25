@@ -22,7 +22,11 @@ import {
   XCircle,
 } from "lucide-react";
 import { categories, fairs, products, vendorMetrics } from "../../data";
+import { calculateDeliveryQuote } from "../../domain/deliveryPricing";
+import { isFairActive, visibleCustomerFairs } from "../../domain/fairAvailability";
 import { fairHoursForName } from "../../domain/fairHours";
+import { formatDateTime, sortByCreatedAtNewestFirst, sortOrdersNewestFirst } from "../../domain/timeline";
+import type { DeliveryVehicleType } from "../../domain/vehicles";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
@@ -131,7 +135,7 @@ export function FairsPage({
   onFair: (name: string) => void;
   onMap: (destination: number | string, lng?: number) => void;
 }) {
-  const officialItems = fairItems.filter((fair) => fair.source !== "demo");
+  const officialItems = fairItems.filter((fair) => isFairActive(fair) && fair.source !== "demo");
   const regions = Array.from(new Set(officialItems.map((fair) => fair.place))).sort((a, b) =>
     a.localeCompare(b, "pt-BR"),
   );
@@ -392,14 +396,19 @@ export function OrdersPage({
   onTracking: (orderId: string) => void;
   onBuyAgain: (orderId: string) => void;
 }) {
+  const ordered = sortOrdersNewestFirst(orders);
+
   return (
     <section className="mx-auto max-w-3xl">
-      <PageHeading title="Meus pedidos" subtitle="Acompanhe suas compras, retiradas e entregas." />
+      <PageHeading
+        title="Meus pedidos"
+        subtitle="Ordenados pela data e hora reais em que cada pedido foi criado."
+      />
       <div className="mt-6 space-y-3">
-        {orders.map((order) => (
+        {ordered.map((order) => (
           <article key={order.id} className="order-card">
             <div>
-              <small>{order.date}</small>
+              <small>{formatDateTime(order.createdAt, order.date)}</small>
               <h3>{order.id}</h3>
               <p>Compra em múltiplas bancas</p>
             </div>
@@ -478,7 +487,10 @@ export function FairDetail({
   onMap: (destination: number | string, lng?: number) => void;
   onAdd: (id: number) => void;
 }) {
-  const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
+  const fair =
+    visibleCustomerFairs(fairs).find((item) => item.name === fairName) ??
+    visibleCustomerFairs(fairs)[0] ??
+    fairs[0];
   const fairProducts = products.filter((product) => product.fair === fair.name);
 
   return (
@@ -541,7 +553,7 @@ export function VendorsPage({
   onBack: () => void;
   onVendor: (name: string) => void;
 }) {
-  const fair = fairs.find((item) => item.name === fairName);
+  const fair = visibleCustomerFairs(fairs).find((item) => item.name === fairName);
   const fairProducts = products.filter((product) => product.fair === fairName);
   const vendors = vendorSummaries(fairProducts, vendorMetrics);
   return (
@@ -806,7 +818,16 @@ export function Checkout({
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const vehicle = vehicleForWeight(totalWeight);
-  const deliveryFee = fulfillment === "delivery" && subtotal < 80 ? 8.9 : 0;
+  const pickupCount = new Set(items.map((product) => product.feirante)).size;
+  const fairName = items[0]?.fair ?? "Feira";
+  const demoRouteDistanceKm = 4.2;
+  const deliveryQuote = calculateDeliveryQuote({
+    vehicleType: vehicle.name as DeliveryVehicleType,
+    distanceKm: demoRouteDistanceKm,
+    weightKg: totalWeight,
+    pickupCount,
+  });
+  const deliveryFee = fulfillment === "delivery" ? deliveryQuote.customerFee : 0;
   const total = subtotal + deliveryFee;
   if (!items.length)
     return (
@@ -850,8 +871,12 @@ export function Checkout({
                 <div>
                   <b>{vehicle.name} indicado para esta compra</b>
                   <p>
-                    Peso estimado: {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg ·
-                    limite sugerido: {vehicle.maxKg} kg · {vehicle.note}.
+                    {fairName} · {pickupCount} banca(s) na mesma feira · peso estimado{" "}
+                    {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg.
+                  </p>
+                  <p>
+                    Frete estimado: {money(deliveryQuote.customerFee)} · entregador{" "}
+                    {money(deliveryQuote.driverPay)} · taxa logística {money(deliveryQuote.platformFee)}.
                   </p>
                 </div>
               </div>
@@ -923,8 +948,14 @@ export function Checkout({
             </p>
             <p>
               <span>{fulfillment === "delivery" ? "Entrega" : "Retirada"}</span>
-              <b>{deliveryFee ? money(deliveryFee) : "Grátis"}</b>
+              <b>{fulfillment === "delivery" ? money(deliveryFee) : "Retirada"}</b>
             </p>
+            {fulfillment === "delivery" && pickupCount > 1 && (
+              <small>
+                Compra consolidada em {pickupCount} bancas da mesma feira. Cada banca extra entra no cálculo
+                da coleta.
+              </small>
+            )}
             <p className="total">
               <span>{hasVariableWeight ? "Total estimado" : "Total"}</span>
               <b>{money(total)}</b>
@@ -982,7 +1013,7 @@ export function NotificationsPage({
   onBack: () => void;
   onClear: () => void;
 }) {
-  const messages = orders.map((order) => {
+  const messages = sortOrdersNewestFirst(orders).map((order) => {
     const textByStatus: Record<DemoOrder["status"], string> = {
       Recebido: `Pedido ${order.id} recebido e aguardando confirmação da banca.`,
       Preparando: `Pedido ${order.id} está sendo preparado.`,
@@ -991,7 +1022,12 @@ export function NotificationsPage({
       Entregue: `Pedido ${order.id} foi entregue. Você já pode avaliar.`,
       Cancelado: `Pedido ${order.id} foi cancelado.`,
     };
-    return textByStatus[order.status];
+    return {
+      id: order.id,
+      text: textByStatus[order.status],
+      timestamp: order.updatedAt ?? order.createdAt,
+      fallbackDate: order.date,
+    };
   });
 
   return (
@@ -1002,14 +1038,14 @@ export function NotificationsPage({
         </button>
       </div>
       {messages.length ? (
-        messages.map((text, index) => (
-          <article key={text} className={index < 2 ? "notification unread" : "notification"}>
+        messages.map((message, index) => (
+          <article key={message.id} className={index < 2 ? "notification unread" : "notification"}>
             <span>
               <Bell size={18} />
             </span>
             <div>
-              <b>{text}</b>
-              <small>Gerado pelo estado atual do pedido</small>
+              <b>{message.text}</b>
+              <small>{formatDateTime(message.timestamp, message.fallbackDate)}</small>
             </div>
           </article>
         ))
@@ -1550,6 +1586,7 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
       type: "Produto",
       target: "Cesta de frutas",
       orderId: "FE-1019",
+      createdAt: "2026-09-19T16:20:00-03:00",
       rating: 5,
       text: "Frutas bonitas e bem embaladas.",
     },
@@ -1558,6 +1595,7 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
       type: "Banca",
       target: "Sítio da Vó",
       orderId: "FE-1019",
+      createdAt: "2026-09-19T16:18:00-03:00",
       rating: 4.9,
       text: "Atendimento rápido na separação.",
     },
@@ -1566,12 +1604,16 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
       type: "Entrega",
       target: "Entregador do pedido",
       orderId: "FE-1019",
+      createdAt: "2026-09-19T16:16:00-03:00",
       rating: 4.8,
       text: "Entrega cuidadosa.",
     },
   ]);
-  const reviewedOrderIds = new Set(reviews.map((review) => review.orderId));
-  const pending = orders.filter((order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id));
+  const orderedReviews = sortByCreatedAtNewestFirst(reviews);
+  const reviewedOrderIds = new Set(orderedReviews.map((review) => review.orderId));
+  const pending = sortOrdersNewestFirst(orders).filter(
+    (order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id),
+  );
 
   return (
     <Panel
@@ -1599,14 +1641,16 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
 
       <SectionHeading eyebrow="Histórico" title="Avaliações já enviadas" />
       <div className="review-grid">
-        {reviews.map((review) => (
+        {orderedReviews.map((review) => (
           <article className="review-card" key={review.id}>
             <strong>{review.rating.toLocaleString("pt-BR")} ★</strong>
             <div>
               <b>
                 {review.type} · {review.target}
               </b>
-              <small>{review.orderId}</small>
+              <small>
+                {review.orderId} · {formatDateTime(review.createdAt)}
+              </small>
               <p>{review.text}</p>
             </div>
           </article>

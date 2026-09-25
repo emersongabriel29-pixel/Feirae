@@ -246,6 +246,40 @@
   color: var(--fe-muted);
   font-size: 0.72rem;
 }
+.signup-guide ol {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+.signup-guide li {
+  display: grid;
+  grid-template-columns: 1.65rem 1fr;
+  align-items: start;
+  gap: 0.55rem;
+}
+.signup-guide li > span {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--fe-green);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+.signup-guide li small {
+  padding-top: 0.16rem;
+  color: var(--fe-text);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+.signup-guide p {
+  margin-top: 0.8rem;
+  color: var(--fe-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
 .role-badge {
   border-radius: 999px;
   background: var(--fe-green-soft);

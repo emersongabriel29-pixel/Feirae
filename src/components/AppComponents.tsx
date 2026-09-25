@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { fairs } from "../data";
+import { visibleCustomerFairs } from "../domain/fairAvailability";
 import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
 import { cartWeight, productWeight, vehicleForWeight } from "../domain/marketplace";
@@ -58,6 +59,26 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
       icon: <Bike />,
     },
   ];
+  const signupGuide =
+    selectedRole === "feirante"
+      ? [
+          "Preencha seus dados pessoais ou da empresa.",
+          "Informe feira, banca/box e ponto de referência.",
+          "Cadastre horários e conta de recebimento.",
+          "Envie documentos e aguarde aprovação.",
+          "Cadastre produtos e fotos.",
+          "Depois da aprovação, libere a banca para vender.",
+        ]
+      : selectedRole === "delivery"
+        ? [
+            "Preencha seus dados pessoais e área de atuação.",
+            "Cadastre veículo e capacidade de carga.",
+            "Cadastre Pix ou conta bancária para receber.",
+            "Envie CNH, CRLV-e e motofrete quando aplicável.",
+            "Aguarde a análise e aprovação dos documentos.",
+            "Depois da aprovação, fique online e aceite corridas da sua área.",
+          ]
+        : [];
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -171,16 +192,21 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
                 </button>
               </span>
             </label>
-            {mode === "signup" && selectedRole === "feirante" && (
-              <div className="signup-requirements">
-                <b>Cadastro de feirante</b>
-                <span>Banca, feira, box, documentos, horários e validação antes de vender.</span>
-              </div>
-            )}
-            {mode === "signup" && selectedRole === "delivery" && (
-              <div className="signup-requirements">
-                <b>Cadastro de entregador</b>
-                <span>Veículo, capacidade, CNH/documentos, foto e validação antes de aceitar corridas.</span>
+            {mode === "signup" && signupGuide.length > 0 && (
+              <div className="signup-requirements signup-guide">
+                <b>Guia inicial · {selectedRole === "feirante" ? "Feirante" : "Entregador"}</b>
+                <ol>
+                  {signupGuide.map((step, index) => (
+                    <li key={step}>
+                      <span>{index + 1}</span>
+                      <small>{step}</small>
+                    </li>
+                  ))}
+                </ol>
+                <p>
+                  Criar a conta não libera a operação. Feirantes e entregadores só operam depois da aprovação
+                  dos documentos obrigatórios.
+                </p>
               </div>
             )}
             <button type="submit" className="primary-action w-full">
@@ -315,7 +341,7 @@ export function Header(props: HeaderProps) {
                   value={props.selectedFair}
                   onChange={(event) => props.onFairChange(event.target.value)}
                 >
-                  {fairs.map((fair) => (
+                  {visibleCustomerFairs(fairs).map((fair) => (
                     <option key={fair.name}>{fair.name}</option>
                   ))}
                 </select>

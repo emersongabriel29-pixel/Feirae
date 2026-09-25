@@ -86,6 +86,7 @@ export type VendorReview = {
   author: string;
   orderId: string;
   date: string;
+  createdAt: string;
   rating: number;
   comment: string;
   response: string;
@@ -102,6 +103,16 @@ export type VendorDocument = {
   fileName: string;
   expiresAt: string;
   correctionReason: string;
+};
+
+export type VendorSaleRecord = {
+  id: string;
+  date: string;
+  total: number;
+  discount: number;
+  deliverySubsidy: number;
+  refund: number;
+  items: Array<{ name: string; quantity: number }>;
 };
 
 export const productCategories = [
@@ -205,7 +216,7 @@ export const initialVendorOrders: VendorOrder[] = [
   {
     id: "FE-1027",
     customer: "Dona Marta",
-    createdAt: "Hoje · 00:03",
+    createdAt: "2026-09-25T00:03:00-03:00",
     status: "new",
     value: 86.8,
     deliveryFee: 12.8,
@@ -249,7 +260,7 @@ export const initialVendorOrders: VendorOrder[] = [
   {
     id: "FE-1026",
     customer: "Carlos",
-    createdAt: "Ontem · 18:42",
+    createdAt: "2026-09-24T18:42:00-03:00",
     status: "preparing",
     value: 54.2,
     deliveryFee: 9.9,
@@ -283,7 +294,7 @@ export const initialVendorOrders: VendorOrder[] = [
   {
     id: "FE-1025",
     customer: "Renata",
-    createdAt: "Ontem · 16:15",
+    createdAt: "2026-09-24T16:15:00-03:00",
     status: "ready_for_pickup",
     value: 132.5,
     deliveryFee: 14.5,
@@ -307,7 +318,7 @@ export const initialVendorOrders: VendorOrder[] = [
   {
     id: "FE-1024",
     customer: "Joana",
-    createdAt: "20/09 · 12:18",
+    createdAt: "2026-09-20T12:18:00-03:00",
     status: "delivered",
     value: 96.3,
     deliveryFee: 11.9,
@@ -376,6 +387,7 @@ export const initialVendorReviews: VendorReview[] = [
     author: "Joana",
     orderId: "FE-1024",
     date: "20/09/2026",
+    createdAt: "2026-09-20T18:52:00-03:00",
     rating: 5,
     comment: "Produtos frescos e pedido bem embalado.",
     response: "",
@@ -386,6 +398,7 @@ export const initialVendorReviews: VendorReview[] = [
     author: "Marina",
     orderId: "FE-1019",
     date: "18/09/2026",
+    createdAt: "2026-09-18T14:22:00-03:00",
     rating: 4.8,
     comment: "Cesta bem montada e peso correto.",
     response: "",
@@ -396,6 +409,7 @@ export const initialVendorReviews: VendorReview[] = [
     author: "Rafael",
     orderId: "FE-1024",
     date: "20/09/2026",
+    createdAt: "2026-09-20T19:05:00-03:00",
     rating: 5,
     comment: "Pedido estava pronto no horário combinado.",
     response: "",
@@ -442,6 +456,94 @@ export const initialVendorDocuments: VendorDocument[] = [
     fileName: "",
     expiresAt: "",
     correctionReason: "",
+  },
+];
+
+export const initialVendorSalesHistory: VendorSaleRecord[] = [
+  {
+    id: "sale-1024",
+    date: "2026-09-25T09:30:00-03:00",
+    total: 96.3,
+    discount: 0,
+    deliverySubsidy: 0,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 2 },
+      { name: "Tomate orgânico", quantity: 2 },
+    ],
+  },
+  {
+    id: "sale-1023",
+    date: "2026-09-24T16:10:00-03:00",
+    total: 86.8,
+    discount: 5,
+    deliverySubsidy: 0,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 1 },
+      { name: "Tomate orgânico", quantity: 3 },
+      { name: "Cheiro-verde", quantity: 2 },
+    ],
+  },
+  {
+    id: "sale-1018",
+    date: "2026-09-18T11:20:00-03:00",
+    total: 132.5,
+    discount: 0,
+    deliverySubsidy: 12.4,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 3 },
+      { name: "Tomate orgânico", quantity: 4 },
+    ],
+  },
+  {
+    id: "sale-1009",
+    date: "2026-09-08T14:05:00-03:00",
+    total: 74.9,
+    discount: 0,
+    deliverySubsidy: 0,
+    refund: 0,
+    items: [
+      { name: "Tomate orgânico", quantity: 5 },
+      { name: "Cheiro-verde", quantity: 3 },
+    ],
+  },
+  {
+    id: "sale-0991",
+    date: "2026-08-21T10:40:00-03:00",
+    total: 118.4,
+    discount: 8,
+    deliverySubsidy: 9.8,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 2 },
+      { name: "Tomate orgânico", quantity: 4 },
+    ],
+  },
+  {
+    id: "sale-0982",
+    date: "2026-08-11T17:15:00-03:00",
+    total: 92.6,
+    discount: 0,
+    deliverySubsidy: 0,
+    refund: 18.9,
+    items: [
+      { name: "Cesta de frutas", quantity: 1 },
+      { name: "Cheiro-verde", quantity: 5 },
+    ],
+  },
+  {
+    id: "sale-0944",
+    date: "2026-07-19T12:00:00-03:00",
+    total: 156.2,
+    discount: 10,
+    deliverySubsidy: 0,
+    refund: 0,
+    items: [
+      { name: "Cesta de frutas", quantity: 4 },
+      { name: "Tomate orgânico", quantity: 2 },
+    ],
   },
 ];
 

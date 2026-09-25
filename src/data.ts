@@ -285,6 +285,7 @@ export const fairs: Fair[] = [
   {
     name: "Feira Central de Brasília",
     place: "Plano Piloto",
+    active: false,
     status: "Cadastro demonstrativo",
     source: "demo",
     feirantes: 60,
@@ -298,6 +299,7 @@ export const fairs: Fair[] = [
   {
     name: "Feira Permanente de Planaltina",
     place: "Planaltina",
+    active: false,
     status: "Cadastro demonstrativo",
     source: "demo",
     feirantes: 42,
@@ -600,6 +602,20 @@ export const products: Product[] = [
 ];
 
 export const initialOrders: DemoOrder[] = [
-  { id: "FE-1024", date: "20/09/2026", status: "Em rota", value: 58.7 },
-  { id: "FE-1019", date: "19/09/2026", status: "Entregue", value: 42.9 },
+  {
+    id: "FE-1024",
+    date: "20/09/2026",
+    createdAt: "2026-09-20T18:42:00-03:00",
+    updatedAt: "2026-09-20T19:18:00-03:00",
+    status: "Em rota",
+    value: 58.7,
+  },
+  {
+    id: "FE-1019",
+    date: "19/09/2026",
+    createdAt: "2026-09-19T15:27:00-03:00",
+    updatedAt: "2026-09-19T16:12:00-03:00",
+    status: "Entregue",
+    value: 42.9,
+  },
 ];

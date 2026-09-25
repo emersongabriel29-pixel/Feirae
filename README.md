@@ -78,6 +78,7 @@ O `App.tsx` funciona como shell/orquestrador. As telas foram separadas por domí
 - [Produtos, unidades e métricas](docs/PRODUCT_MEASUREMENT_MATRIX.md)
 - [Cadastro, documentos e aprovação](docs/ONBOARDING_AND_APPROVAL.md)
 - [Horários das feiras](docs/FAIR_HOURS.md)
+- [Entrega, rota, preço e capacidade](docs/DELIVERY_PRICING_AND_ROUTING.md)
 
 ## Desenvolvimento
 
