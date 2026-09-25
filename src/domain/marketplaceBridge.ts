@@ -168,12 +168,18 @@ export function readStoreByIdentity(fairName: string, vendorName: string) {
 export function marketplaceProducts(baseProducts: Product[]): Product[] {
   const current = readMarketplace();
   if (!current.products.length) {
-    return baseProducts.map((product) => ({
-      ...product,
-      vendorId: product.vendorId ?? vendorIdFor(product.feirante),
-      storeId: product.storeId ?? storeIdFor(product.fair, product.feirante),
-      active: product.active ?? true,
-    }));
+    return baseProducts
+      .map((product) => {
+        const stock = Math.max(0, product.stock + staticAdjustment(product.id));
+        return {
+          ...product,
+          stock,
+          vendorId: product.vendorId ?? vendorIdFor(product.feirante),
+          storeId: product.storeId ?? storeIdFor(product.fair, product.feirante),
+          active: (product.active ?? true) && stock > 0,
+        };
+      })
+      .filter((product) => (product.active ?? true) && product.stock > 0);
   }
 
   const dynamicStoreNames = new Set(
