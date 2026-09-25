@@ -217,6 +217,38 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
   );
 
+  const dynamicModuleDetails = {
+    ...vendorModuleDetails,
+    Pedidos: {
+      ...vendorModuleDetails.Pedidos,
+      badge: `${orders.filter((order) => order.status === "new").length} novos`,
+    },
+    "Minha banca": {
+      ...vendorModuleDetails["Minha banca"],
+      badge: bankProfile.box ? `Banca ${bankProfile.box}` : "Configurar",
+    },
+    Produtos: {
+      ...vendorModuleDetails.Produtos,
+      badge: `${vendorItems.length} produtos`,
+    },
+    Estoque: {
+      ...vendorModuleDetails.Estoque,
+      badge: `${lowStockCount} alertas`,
+    },
+    Financeiro: {
+      ...vendorModuleDetails.Financeiro,
+      badge: vendorAccount.pixKey || vendorAccount.accountNumber ? "Recebimento ok" : "Configurar",
+    },
+    Avaliações: {
+      ...vendorModuleDetails.Avaliações,
+      badge: `${averageRating.toFixed(1)} ★`,
+    },
+    Documentos: {
+      ...vendorModuleDetails.Documentos,
+      badge: approvalStatus,
+    },
+  };
+
   function showNotice(message: string) {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 2600);
@@ -465,7 +497,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
               </article>
             </div>
           </div>
-          <OperationsMenu modules={modules} details={vendorModuleDetails} onOpen={setActive} />
+          <OperationsMenu modules={modules} details={dynamicModuleDetails} onOpen={setActive} />
         </div>
       ) : (
         <div className="module-screen">
