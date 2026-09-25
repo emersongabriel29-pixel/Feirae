@@ -140,6 +140,36 @@ describe("Feiraê customer flow", () => {
     expect(screen.queryByText(/seu pedido está a caminho/i)).not.toBeInTheDocument();
   });
 
+  it("orders customer orders by creation date and time, not array position", () => {
+    window.localStorage.setItem(
+      "feirae:orders",
+      JSON.stringify([
+        {
+          id: "FE-1031",
+          date: "25/09/2026",
+          createdAt: "2026-09-25T08:15:00-03:00",
+          status: "Recebido",
+          value: 80,
+        },
+        {
+          id: "FE-1030",
+          date: "25/09/2026",
+          createdAt: "2026-09-25T10:45:00-03:00",
+          status: "Recebido",
+          value: 60,
+        },
+      ]),
+    );
+
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getAllByRole("button", { name: /^pedidos$/i })[0]);
+
+    const cards = screen.getAllByText(/FE-103[01]/i);
+    expect(cards[0]).toHaveTextContent("FE-1030");
+    expect(screen.getByText(/25\/09\/2026.*10:45/i)).toBeInTheDocument();
+  });
+
   it("shows only vendors from the selected fair", () => {
     render(<App />);
     loginAs("cliente");
