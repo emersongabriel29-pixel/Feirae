@@ -32,7 +32,6 @@ import {
   minutesLabel,
   productWeight,
   ratingLabel,
-  vehicleForWeight,
   vendorSummaries,
 } from "../../domain/marketplace";
 import {
@@ -51,11 +50,13 @@ export function HomePage({
   onFair,
   onVendors,
   onTracking,
+  onAdd,
 }: {
   onTab: (tab: CustomerTab) => void;
   onFair: (name: string) => void;
   onVendors: () => void;
   onTracking: () => void;
+  onAdd: (id: number) => void;
 }) {
   return (
     <div className="space-y-12">
@@ -114,6 +115,9 @@ export function HomePage({
                 <strong>
                   {money(product.price)} <em>/{product.unit}</em>
                 </strong>
+                <button className="mini-toggle active" onClick={() => onAdd(product.id)}>
+                  <Plus size={15} /> Adicionar
+                </button>
               </article>
             ))}
         </div>
@@ -121,7 +125,6 @@ export function HomePage({
     </div>
   );
 }
-
 export function FairsPage({
   fairItems,
   onFair,
@@ -392,16 +395,23 @@ export function OrdersPage({
   onTracking: (orderId: string) => void;
   onBuyAgain: (orderId: string) => void;
 }) {
+  const ordered = [...orders].sort((a, b) => {
+    const aTime = a.createdAt ? Date.parse(a.createdAt) : 0;
+    const bTime = b.createdAt ? Date.parse(b.createdAt) : 0;
+    if (aTime !== bTime) return bTime - aTime;
+    return b.id.localeCompare(a.id, "pt-BR", { numeric: true });
+  });
   return (
     <section className="mx-auto max-w-3xl">
-      <PageHeading title="Meus pedidos" subtitle="Acompanhe suas compras, retiradas e entregas." />
+      <PageHeading title="Meus pedidos" subtitle="Ordenados por data e hora mais recentes." />
       <div className="mt-6 space-y-3">
-        {orders.map((order) => (
+        {ordered.map((order) => (
           <article key={order.id} className="order-card">
             <div>
               <small>{order.date}</small>
               <h3>{order.id}</h3>
-              <p>Compra em múltiplas bancas</p>
+              <p>{order.fairName ?? "Compra em múltiplas bancas"}</p>
+              {order.paymentMethod && <small>{order.paymentMethod}</small>}
             </div>
             <div className="text-right">
               <span>{order.status}</span>
@@ -433,7 +443,7 @@ export function ProfilePage({
     ["Favoritos", "Produtos salvos", <Heart />, "favorites"],
     ["Minhas avaliações", "Produtos, bancas, entregas e app", <Star />, "ratings"],
     ["Notificações", "Pedidos e novidades", <Bell />, "notifications"],
-    ["Falar com o suporte", "Atendimento demonstrativo", <MessageCircle />, "chat"],
+    ["Falar com o suporte", "Ajuda com pedidos e conta", <MessageCircle />, "chat"],
     ["Configurações", "Preferências do aplicativo", <Settings />, "settings"],
   ];
   return (
@@ -443,7 +453,7 @@ export function ProfilePage({
           <User />
         </div>
         <div>
-          <small>CONTA DEMONSTRATIVA · CLIENTE</small>
+          <small>CONTA · CLIENTE</small>
           <h1>Olá, {session.name}</h1>
           <p>{session.email} · dados locais até a conexão com o Supabase.</p>
         </div>
@@ -536,10 +546,14 @@ export function VendorsPage({
   fairName,
   onBack,
   onVendor,
+  vendorFavorites,
+  onVendorFavorite,
 }: {
   fairName: string;
   onBack: () => void;
   onVendor: (name: string) => void;
+  vendorFavorites: string[];
+  onVendorFavorite: (name: string) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName);
   const fairProducts = products.filter((product) => product.fair === fairName);
@@ -547,7 +561,7 @@ export function VendorsPage({
   return (
     <Panel
       title="Bancas e feirantes"
-      subtitle={`Bancas cadastradas na ${fairName}. A compra permanece dentro desta feira.`}
+      subtitle={"Bancas cadastradas na " + fairName + ". A compra permanece dentro desta feira."}
       onBack={onBack}
     >
       <div className="region-strip">
@@ -560,32 +574,43 @@ export function VendorsPage({
         </div>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {vendors.map((vendor) => (
-          <article key={vendor.name} className="vendor-card">
-            <span aria-hidden="true">{vendor.name.includes("Pescados") ? "🐟" : "🏪"}</span>
-            <div>
-              <small>{vendor.fair}</small>
-              <h3>{vendor.name}</h3>
-              <p>{vendor.categories.join(" · ")}</p>
-              <div className="market-meta">
-                <span>
-                  <Star size={13} /> {ratingLabel(vendor.rating)} ({vendor.reviewCount})
-                </span>
-                <span>{minutesLabel(vendor.deliveryMinutes)}</span>
-                <span>{money(vendor.deliveryFee)}</span>
+        {vendors.map((vendor) => {
+          const favorite = vendorFavorites.includes(vendor.name);
+          return (
+            <article key={vendor.name} className="vendor-card">
+              <span aria-hidden="true">{vendor.name.includes("Pescados") ? "🐟" : "🏪"}</span>
+              <div>
+                <small>{vendor.fair}</small>
+                <h3>{vendor.name}</h3>
+                <p>{vendor.categories.join(" · ")}</p>
+                <div className="market-meta">
+                  <span>
+                    <Star size={13} /> {ratingLabel(vendor.rating)} ({vendor.reviewCount})
+                  </span>
+                  <span>{minutesLabel(vendor.deliveryMinutes)}</span>
+                  <span>{money(vendor.deliveryFee)}</span>
+                </div>
+                <b>{vendor.products} produtos</b>
               </div>
-              <b>{vendor.products} produtos</b>
-            </div>
-            <button onClick={() => onVendor(vendor.name)}>
-              Ver banca <ChevronRight size={16} />
-            </button>
-          </article>
-        ))}
+              <div className="item-actions">
+                <button
+                  className={favorite ? "mini-toggle active" : "mini-toggle"}
+                  onClick={() => onVendorFavorite(vendor.name)}
+                  aria-label={(favorite ? "Remover " : "Favoritar ") + vendor.name}
+                >
+                  <Heart size={15} /> {favorite ? "Favorita" : "Favoritar"}
+                </button>
+                <button onClick={() => onVendor(vendor.name)}>
+                  Ver banca <ChevronRight size={16} />
+                </button>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </Panel>
   );
 }
-
 export function VendorStore({
   vendorName,
   fairName,
@@ -593,6 +618,8 @@ export function VendorStore({
   onAdd,
   favorites,
   onFavorite,
+  storeFavorite,
+  onStoreFavorite,
 }: {
   vendorName: string;
   fairName: string;
@@ -600,13 +627,15 @@ export function VendorStore({
   onAdd: (id: number) => void;
   favorites: number[];
   onFavorite: (id: number) => void;
+  storeFavorite: boolean;
+  onStoreFavorite: () => void;
 }) {
   const vendorProducts = products.filter(
     (product) => product.feirante === vendorName && product.fair === fairName,
   );
   const metrics = metricForVendor(vendorName, vendorMetrics);
   return (
-    <Panel title={vendorName} subtitle={`${fairName} · loja do feirante`} onBack={onBack}>
+    <Panel title={vendorName} subtitle={fairName + " · loja do feirante"} onBack={onBack}>
       <div className="detail-banner">
         <div>
           <Store size={30} />
@@ -616,6 +645,13 @@ export function VendorStore({
             {minutesLabel(metrics.deliveryMinutes)} · entrega {money(metrics.deliveryFee)}
           </p>
         </div>
+        <button
+          className={storeFavorite ? "secondary-action light active" : "secondary-action light"}
+          onClick={onStoreFavorite}
+        >
+          <Heart size={17} className={storeFavorite ? "fill-red-500 text-red-500" : ""} />
+          {storeFavorite ? "Banca favorita" : "Favoritar banca"}
+        </button>
       </div>
       {vendorProducts.length ? (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -635,17 +671,23 @@ export function VendorStore({
     </Panel>
   );
 }
-export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: () => void }) {
+export function DeliveryTracking({
+  order,
+  onBack,
+  onCancel,
+}: {
+  order: DemoOrder;
+  onBack: () => void;
+  onCancel: (orderId: string, reason: string, details: string) => void;
+}) {
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelDetails, setCancelDetails] = useState("");
   const [showReview, setShowReview] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
 
   const statusConfig: Record<
     DemoOrder["status"],
-    {
-      title: string;
-      description: string;
-      activeStep: number;
-    }
+    { title: string; description: string; activeStep: number }
   > = {
     Recebido: {
       title: "Pedido recebido",
@@ -654,36 +696,54 @@ export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: 
     },
     Preparando: {
       title: "Seu pedido está sendo preparado",
-      description: "As bancas estão separando os produtos do seu pedido.",
-      activeStep: 1,
+      description: "A banca confirmou e está separando os produtos.",
+      activeStep: 2,
     },
     Coleta: {
       title: "Pedido pronto para coleta",
-      description: "O pedido está aguardando retirada pelo entregador.",
-      activeStep: 2,
+      description: "A corrida pode ser aceita por um entregador compatível.",
+      activeStep: 3,
     },
     "Em rota": {
       title: "Seu pedido está a caminho",
-      description: "Previsão estimada: 20–35 minutos.",
-      activeStep: 3,
+      description: "O pedido já foi coletado e segue para o endereço de entrega.",
+      activeStep: 6,
     },
     Entregue: {
       title: "Pedido entregue",
       description: "A entrega foi concluída.",
-      activeStep: 4,
+      activeStep: 7,
     },
     Cancelado: {
       title: "Pedido cancelado",
-      description: "Este pedido não seguirá para entrega.",
+      description: order.cancelReason
+        ? "Motivo: " + order.cancelReason
+        : "Este pedido não seguirá para entrega.",
       activeStep: -1,
     },
   };
 
+  const timeline = [
+    "Pedido recebido",
+    "Confirmado pela banca",
+    "Em separação",
+    "Pronto para coleta",
+    "Entregador a caminho da banca",
+    "Pedido coletado",
+    "A caminho do cliente",
+    "Entregue",
+  ];
   const config = statusConfig[order.status];
-  const timeline = ["Pedido confirmado", "Produtos separados", "Coleta concluída", "Entregador em rota"];
+  const needsSupport = ["Coleta", "Em rota"].includes(order.status);
+  const otherSelected = cancelReason === "Outro";
+  const canSubmit = Boolean(cancelReason && (!otherSelected || cancelDetails.trim()));
 
   return (
-    <Panel title="Acompanhar entrega" subtitle={`Pedido ${order.id} · ${order.status}`} onBack={onBack}>
+    <Panel
+      title="Acompanhar entrega"
+      subtitle={"Pedido " + order.id + " · " + (order.fairName ?? "Feiraê") + " · " + order.status}
+      onBack={onBack}
+    >
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="tracking-map">
           <span aria-hidden="true">
@@ -699,12 +759,38 @@ export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: 
           </div>
           <h2>{config.title}</h2>
           <p>{config.description}</p>
+          {["Coleta", "Em rota", "Entregue"].includes(order.status) && (
+            <div className="surface-card">
+              <span className="eyebrow">Entrega</span>
+              {order.driver ? (
+                <>
+                  <h3>{order.driver.name}</h3>
+                  <p>
+                    {order.driver.vehicle}
+                    {order.driver.plateMasked ? " · placa " + order.driver.plateMasked : ""}
+                  </p>
+                  <div className="market-meta">
+                    {typeof order.driver.distanceKm === "number" && (
+                      <span>{order.driver.distanceKm.toLocaleString("pt-BR")} km</span>
+                    )}
+                    {typeof order.driver.etaMinutes === "number" && (
+                      <span>{order.driver.etaMinutes} min</span>
+                    )}
+                    <span>Suporte disponível</span>
+                  </div>
+                </>
+              ) : (
+                <p>Os dados do entregador aparecem aqui assim que a corrida for aceita.</p>
+              )}
+            </div>
+          )}
         </div>
         <div className="surface-card">
           <h2>Linha do pedido</h2>
           {timeline.map((text, index) => {
             const completed = order.status === "Entregue" || config.activeStep > index;
             const current = config.activeStep === index;
+            const event = order.events?.find((item) => item.label === text);
             return (
               <div className="timeline-item" key={text}>
                 <span>{completed ? <Check size={15} /> : current ? <Bike size={15} /> : index + 1}</span>
@@ -714,7 +800,7 @@ export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: 
                     {order.status === "Cancelado"
                       ? "Interrompido"
                       : completed
-                        ? "Concluído"
+                        ? (event?.at ?? "Concluído")
                         : current
                           ? "Etapa atual"
                           : "Aguardando"}
@@ -723,45 +809,88 @@ export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: 
               </div>
             );
           })}
+
           {order.status !== "Entregue" && order.status !== "Cancelado" && (
             <div className="cancel-panel">
-              <b>
-                {["Coleta", "Em rota"].includes(order.status)
-                  ? "Pedir ajuda com este pedido"
-                  : "Cancelar pedido"}
-              </b>
+              <b>{needsSupport ? "Pedir ajuda com este pedido" : "Cancelar pedido"}</b>
               <p>
-                {["Coleta", "Em rota"].includes(order.status)
-                  ? "Depois que a coleta começou, o cliente não cancela sozinho. O caso segue para suporte."
-                  : "Antes da coleta, escolha o motivo para solicitar o cancelamento."}
+                {needsSupport
+                  ? "Depois que a coleta começou, o cancelamento vira uma ocorrência de suporte."
+                  : "Antes da coleta, escolha o motivo do cancelamento."}
               </p>
-              <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
+              <select
+                value={cancelReason}
+                onChange={(event) => {
+                  setCancelReason(event.target.value);
+                  setRequestSent(false);
+                }}
+              >
                 <option value="">Escolha um motivo</option>
-                {["Coleta", "Em rota"].includes(order.status) ? (
+                {needsSupport ? (
                   <>
                     <option>Endereço incorreto</option>
                     <option>Pedido chegou com problema</option>
                     <option>Não consigo receber agora</option>
-                    <option>Outro problema com a entrega</option>
+                    <option>Outro</option>
                   </>
                 ) : (
                   <>
-                    <option>Desisti da compra</option>
+                    <option>Pedi por engano</option>
                     <option>Endereço incorreto</option>
-                    <option>Pedido duplicado</option>
-                    <option>Problema com os itens</option>
+                    <option>Demora no atendimento</option>
+                    <option>Quero alterar o pedido</option>
+                    <option>Problema com pagamento</option>
+                    <option>Não preciso mais</option>
                     <option>Outro</option>
                   </>
                 )}
               </select>
-              <button className="secondary-action" disabled={!cancelReason}>
+              {otherSelected && (
+                <label>
+                  Descreva o motivo
+                  <textarea
+                    rows={3}
+                    value={cancelDetails}
+                    onChange={(event) => setCancelDetails(event.target.value)}
+                    placeholder="Conte o que aconteceu"
+                    required
+                  />
+                </label>
+              )}
+              <button
+                className="secondary-action"
+                disabled={!canSubmit}
+                onClick={() => {
+                  if (needsSupport) setRequestSent(true);
+                  else {
+                    onCancel(order.id, cancelReason, cancelDetails.trim());
+                    setRequestSent(true);
+                  }
+                }}
+              >
                 <XCircle size={17} />{" "}
-                {["Coleta", "Em rota"].includes(order.status)
-                  ? "Abrir solicitação de suporte"
-                  : "Solicitar cancelamento"}
+                {needsSupport ? "Abrir solicitação de suporte" : "Confirmar cancelamento"}
               </button>
+              {requestSent && (
+                <p className="inline-success">
+                  {needsSupport
+                    ? "Solicitação registrada com motivo, data e hora."
+                    : "Cancelamento registrado no histórico do pedido."}
+                </p>
+              )}
             </div>
           )}
+
+          {order.status === "Cancelado" && order.cancelReason && (
+            <div className="region-strip">
+              <XCircle size={18} />
+              <div>
+                <b>{order.cancelReason}</b>
+                {order.cancelDetails && <p>{order.cancelDetails}</p>}
+              </div>
+            </div>
+          )}
+
           {order.status === "Entregue" && (
             <>
               <button className="primary-action w-full" onClick={() => setShowReview((value) => !value)}>
@@ -787,7 +916,6 @@ export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: 
     </Panel>
   );
 }
-
 export function Checkout({
   items,
   cart,
@@ -799,23 +927,56 @@ export function Checkout({
   cart: Record<number, number>;
   subtotal: number;
   onBack: () => void;
-  onConfirm: (total: number) => void;
+  onConfirm: (
+    total: number,
+    details: {
+      fulfillment: "delivery" | "pickup";
+      paymentMethod: string;
+      fairName: string;
+      customerCity?: string;
+      customerAddress?: string;
+      customerLat?: number;
+      customerLng?: number;
+      calculatedDeliveryFee: number;
+      deliverySubsidy: number;
+      customerDeliveryFee: number;
+    },
+  ) => void;
 }) {
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
   const [payment, setPayment] = useState("Pix");
+  const [needsChange, setNeedsChange] = useState(false);
+  const [changeFor, setChangeFor] = useState("");
+  const [selectedCardId, setSelectedCardId] = useState("");
+  const [addresses] = usePersistentState<Address[]>("feirae:addresses", []);
+  const [cards] = usePersistentState<
+    { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
+  >("feirae:cards-v3", []);
+  const defaultAddress = addresses.find((address) => address.isDefault) ?? addresses[0];
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
-  const vehicle = vehicleForWeight(totalWeight);
-  const deliveryFee = fulfillment === "delivery" && subtotal < 80 ? 8.9 : 0;
-  const total = subtotal + deliveryFee;
+  const fairName = items[0]?.fair ?? "Feiraê";
+  const calculatedDeliveryFee = fulfillment === "delivery" ? 8.9 : 0;
+  const deliverySubsidy = fulfillment === "delivery" && subtotal >= 80 ? calculatedDeliveryFee : 0;
+  const customerDeliveryFee = Math.max(0, calculatedDeliveryFee - deliverySubsidy);
+  const total = subtotal + customerDeliveryFee;
+  const cardPayment = payment === "Cartão";
+  const cashPayment = payment === "Dinheiro na entrega";
+  const canConfirm = fulfillment === "pickup" || Boolean(defaultAddress);
+
   if (!items.length)
     return (
       <Panel title="Sua sacola está vazia" subtitle="Adicione produtos antes de finalizar." onBack={onBack}>
         <Empty title="Nenhum item" text="Volte ao catálogo para começar sua feira." />
       </Panel>
     );
+
   return (
-    <Panel title="Finalizar pedido" subtitle="Confira tudo antes de confirmar" onBack={onBack}>
+    <Panel
+      title="Finalizar pedido"
+      subtitle={fairName + " · confira tudo antes de confirmar"}
+      onBack={onBack}
+    >
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <div className="space-y-5">
           <Step title="1. Como deseja receber?">
@@ -836,54 +997,129 @@ export function Checkout({
               />
             </div>
           </Step>
+
           {fulfillment === "delivery" && (
             <Step title="2. Endereço">
-              <div className="address-preview">
-                <MapPin />
-                <div>
-                  <b>Casa</b>
-                  <p>Planaltina, DF · endereço demonstrativo</p>
+              {defaultAddress ? (
+                <div className="address-preview">
+                  <MapPin />
+                  <div>
+                    <b>
+                      {defaultAddress.label}
+                      {defaultAddress.isDefault ? " · principal" : ""}
+                    </b>
+                    <p>{defaultAddress.details}</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="region-strip">
+                  <MapPin size={18} />
+                  <div>
+                    <b>Cadastre um endereço antes de confirmar</b>
+                    <p>Use Meus endereços para informar o local manualmente ou pelo GPS.</p>
+                  </div>
+                </div>
+              )}
               <div className="logistics-box">
-                <Truck size={18} />
+                <Package size={18} />
                 <div>
-                  <b>{vehicle.name} indicado para esta compra</b>
+                  <b>Peso estimado da compra</b>
                   <p>
-                    Peso estimado: {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg ·
-                    limite sugerido: {vehicle.maxKg} kg · {vehicle.note}.
+                    {totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg. O peso filtra
+                    apenas veículos que não suportam a carga; ele não escolhe o veículo para o cliente.
                   </p>
                 </div>
               </div>
             </Step>
           )}
+
           <Step title={fulfillment === "delivery" ? "3. Pagamento" : "2. Pagamento"}>
+            <p className="operation-footnote">Pagar agora</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {["Pix", "Cartão"].map((method) => (
-                <Choice
-                  key={method}
-                  active={payment === method}
-                  onClick={() => setPayment(method)}
-                  icon={<CreditCard />}
-                  title={method}
-                  text="Modo demonstração"
-                />
-              ))}
+              <Choice
+                active={payment === "Pix"}
+                onClick={() => setPayment("Pix")}
+                icon={<Wallet />}
+                title="Pix"
+                text="QR Code e copia e cola"
+              />
+              <Choice
+                active={payment === "Cartão"}
+                onClick={() => setPayment("Cartão")}
+                icon={<CreditCard />}
+                title="Cartão"
+                text="Crédito ou débito salvo"
+              />
             </div>
+            {fulfillment === "delivery" && (
+              <>
+                <p className="operation-footnote">Pagar na entrega</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Choice
+                    active={payment === "Dinheiro na entrega"}
+                    onClick={() => setPayment("Dinheiro na entrega")}
+                    icon={<Wallet />}
+                    title="Dinheiro"
+                    text="Pagamento ao receber"
+                  />
+                  <Choice
+                    active={payment === "Cartão na entrega"}
+                    onClick={() => setPayment("Cartão na entrega")}
+                    icon={<CreditCard />}
+                    title="Cartão na maquininha"
+                    text="Se disponível na operação"
+                  />
+                </div>
+              </>
+            )}
+
+            {cardPayment && (
+              <label>
+                Cartão salvo
+                <select value={selectedCardId} onChange={(event) => setSelectedCardId(event.target.value)}>
+                  <option value="">Escolha um cartão</option>
+                  {cards.map((card) => (
+                    <option value={card.id} key={card.id}>
+                      {(card.brand ?? "Cartão") + " · " + card.type + " · final " + card.last4}
+                    </option>
+                  ))}
+                </select>
+                {!cards.length && <small>Cadastre um cartão em Pagamentos e carteira.</small>}
+              </label>
+            )}
+
+            {cashPayment && (
+              <div className="form-card compact">
+                <Toggle
+                  label="Precisa de troco?"
+                  description="Informe apenas se for pagar em dinheiro na entrega."
+                  checked={needsChange}
+                  onChange={setNeedsChange}
+                />
+                {needsChange && (
+                  <label>
+                    Troco para quanto?
+                    <input
+                      value={changeFor}
+                      onChange={(event) => setChangeFor(event.target.value)}
+                      placeholder="Ex.: R$ 150,00"
+                    />
+                  </label>
+                )}
+              </div>
+            )}
           </Step>
+
           {hasVariableWeight && (
             <div className="region-strip">
               <Package size={18} />
               <div>
                 <b>Há produtos vendidos por peso</b>
-                <p>
-                  Peso e valor são estimados até a separação. No MVP, a cobrança real só poderá ser ajustada
-                  quando o provedor suportar autorização de diferença; caso contrário serão usadas porções
-                  fechadas.
-                </p>
+                <p>Peso e valor são estimados até a separação e ficam registrados no mesmo pedido.</p>
               </div>
             </div>
           )}
+
           <Step title="Itens do pedido">
             {items.map((product) => (
               <div className="checkout-item" key={product.id}>
@@ -905,10 +1141,15 @@ export function Checkout({
             ))}
           </Step>
         </div>
+
         <aside className="summary-card">
           <span className="eyebrow">Resumo</span>
           <h2>Seu pedido</h2>
           <div>
+            <p>
+              <span>Feira</span>
+              <b>{fairName}</b>
+            </p>
             <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>
@@ -917,45 +1158,91 @@ export function Checkout({
               <span>Peso estimado</span>
               <b>{totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</b>
             </p>
+            {fulfillment === "delivery" && (
+              <>
+                <p>
+                  <span>Frete calculado</span>
+                  <b>{money(calculatedDeliveryFee)}</b>
+                </p>
+                {deliverySubsidy > 0 && (
+                  <p>
+                    <span>Desconto da banca</span>
+                    <b>−{money(deliverySubsidy)}</b>
+                  </p>
+                )}
+                <p>
+                  <span>Você paga de entrega</span>
+                  <b>{customerDeliveryFee ? money(customerDeliveryFee) : "Grátis"}</b>
+                </p>
+              </>
+            )}
             <p>
-              <span>Veículo indicado</span>
-              <b>{vehicle.name}</b>
-            </p>
-            <p>
-              <span>{fulfillment === "delivery" ? "Entrega" : "Retirada"}</span>
-              <b>{deliveryFee ? money(deliveryFee) : "Grátis"}</b>
+              <span>Pagamento</span>
+              <b>{payment}</b>
             </p>
             <p className="total">
               <span>{hasVariableWeight ? "Total estimado" : "Total"}</span>
               <b>{money(total)}</b>
             </p>
           </div>
-          <button onClick={() => onConfirm(total)} className="primary-action w-full">
+          <button
+            disabled={!canConfirm || (cardPayment && !selectedCardId && cards.length > 0)}
+            onClick={() =>
+              onConfirm(total, {
+                fulfillment,
+                paymentMethod: payment,
+                fairName,
+                customerCity: defaultAddress?.city,
+                customerAddress: defaultAddress?.details,
+                customerLat: defaultAddress?.lat,
+                customerLng: defaultAddress?.lng,
+                calculatedDeliveryFee,
+                deliverySubsidy,
+                customerDeliveryFee,
+              })
+            }
+            className="primary-action w-full"
+          >
             Confirmar pedido
           </button>
-          <small>Pedido local demonstrativo. Nenhuma cobrança será realizada.</small>
+          {!canConfirm && <small>Cadastre um endereço para entrega antes de confirmar.</small>}
         </aside>
       </div>
     </Panel>
   );
 }
-
 export function FavoritesPage({
   ids,
+  vendorFavorites,
   onAdd,
   onFavorite,
+  onVendorFavorite,
+  onVendor,
   onBack,
   onExplore,
 }: {
   ids: number[];
+  vendorFavorites: string[];
   onAdd: (id: number) => void;
   onFavorite: (id: number) => void;
+  onVendorFavorite: (name: string) => void;
+  onVendor: (name: string) => void;
   onBack: () => void;
   onExplore: () => void;
 }) {
   const favoriteProducts = products.filter((product) => ids.includes(product.id));
+  const favoriteVendors = vendorFavorites
+    .map((name) => {
+      const vendorProducts = products.filter((product) => product.feirante === name);
+      return vendorProducts.length
+        ? { name, fair: vendorProducts[0].fair, count: vendorProducts.length }
+        : null;
+    })
+    .filter(Boolean) as { name: string; fair: string; count: number }[];
+
   return (
-    <Panel title="Favoritos" subtitle="Produtos que você quer encontrar de novo." onBack={onBack}>
+    <Panel title="Favoritos" subtitle="Produtos e bancas que você quer encontrar de novo." onBack={onBack}>
+      <SectionHeading eyebrow="Produtos" title="Produtos favoritos" />
       {favoriteProducts.length ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {favoriteProducts.map((product) => (
@@ -963,9 +1250,35 @@ export function FavoritesPage({
           ))}
         </div>
       ) : (
+        <p className="operation-footnote">Nenhum produto favorito ainda.</p>
+      )}
+
+      <SectionHeading eyebrow="Lojas" title="Bancas favoritas" />
+      {favoriteVendors.length ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {favoriteVendors.map((vendor) => (
+            <article className="vendor-card" key={vendor.name}>
+              <Store />
+              <div>
+                <small>{vendor.fair}</small>
+                <h3>{vendor.name}</h3>
+                <p>{vendor.count} produto(s) no catálogo.</p>
+              </div>
+              <div className="item-actions">
+                <button className="mini-toggle active" onClick={() => onVendorFavorite(vendor.name)}>
+                  <Heart size={15} /> Remover
+                </button>
+                <button onClick={() => onVendor(vendor.name)}>
+                  Ver banca <ChevronRight size={16} />
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
         <Empty
-          title="Nenhum favorito"
-          text="Toque no coração de um produto para salvá-lo aqui."
+          title="Nenhuma banca favorita"
+          text="Abra uma banca e toque no coração para salvá-la aqui."
           action="Explorar produtos"
           onAction={onExplore}
         />
@@ -995,7 +1308,7 @@ export function NotificationsPage({
   });
 
   return (
-    <Panel title="Notificações" subtitle="Eventos reais da demonstração de pedidos." onBack={onBack}>
+    <Panel title="Notificações" subtitle="Atualizações dos seus pedidos e avisos da conta." onBack={onBack}>
       <div className="mb-4 flex justify-end">
         <button onClick={onClear} className="text-button">
           Marcar todas como lidas
@@ -1030,9 +1343,11 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       city: "Planaltina",
       state: "DF",
       reference: "Próximo à Feira Permanente",
+      source: "manual",
     },
   ]);
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [label, setLabel] = useState("");
   const [cep, setCep] = useState("");
   const [state, setState] = useState("DF");
@@ -1042,6 +1357,98 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
   const [number, setNumber] = useState("");
   const [complement, setComplement] = useState("");
   const [reference, setReference] = useState("");
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationMessage, setLocationMessage] = useState("");
+
+  function resetForm() {
+    setLabel("");
+    setCep("");
+    setState("DF");
+    setCity("");
+    setNeighborhood("");
+    setStreet("");
+    setNumber("");
+    setComplement("");
+    setReference("");
+    setGpsCoords(null);
+    setEditingId(null);
+    setLocationMessage("");
+  }
+
+  function beginEdit(address: Address) {
+    setEditingId(address.id);
+    setAdding(true);
+    setLabel(address.label);
+    setCep(address.cep ?? "");
+    setState(address.state ?? "DF");
+    setCity(address.city ?? "");
+    setNeighborhood(address.neighborhood ?? "");
+    setStreet(address.street ?? "");
+    setNumber(address.number ?? "");
+    setComplement(address.complement ?? "");
+    setReference(address.reference ?? "");
+    setGpsCoords(
+      typeof address.lat === "number" && typeof address.lng === "number"
+        ? { lat: address.lat, lng: address.lng }
+        : null,
+    );
+    setLocationMessage(address.source === "gps" ? "Endereço obtido por GPS." : "");
+  }
+
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationMessage("Seu navegador não oferece localização por GPS.");
+      return;
+    }
+    setLocationLoading(true);
+    setLocationMessage("Buscando sua localização...");
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        const nextCoords = { lat: coords.latitude, lng: coords.longitude };
+        setGpsCoords(nextCoords);
+        if (!label.trim()) setLabel("Localização atual");
+        try {
+          const response = await fetch(
+            "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=" +
+              encodeURIComponent(String(coords.latitude)) +
+              "&lon=" +
+              encodeURIComponent(String(coords.longitude)),
+            { headers: { "Accept-Language": "pt-BR,pt" } },
+          );
+          if (!response.ok) throw new Error("reverse-geocode");
+          const data = (await response.json()) as {
+            address?: Record<string, string>;
+            display_name?: string;
+          };
+          const address = data.address ?? {};
+          setCep(address.postcode ?? "");
+          setState(
+            (address.state_code ?? address.state ?? "DF").replace("BR-", "").slice(0, 2).toUpperCase(),
+          );
+          setCity(
+            address.city ?? address.town ?? address.municipality ?? address.village ?? address.county ?? "",
+          );
+          setNeighborhood(address.suburb ?? address.neighbourhood ?? address.city_district ?? "");
+          setStreet(address.road ?? address.pedestrian ?? address.residential ?? "");
+          setLocationMessage(
+            "GPS localizado. Confira os campos e complete número, complemento e referência.",
+          );
+        } catch {
+          setLocationMessage(
+            "GPS localizado, mas o endereço automático não respondeu. Complete os campos restantes.",
+          );
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      () => {
+        setLocationLoading(false);
+        setLocationMessage("Não foi possível acessar o GPS. Você pode preencher o endereço manualmente.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
+    );
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -1060,33 +1467,32 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       .filter(Boolean)
       .join(" · ");
 
-    setAddresses((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        label: label.trim(),
-        details,
-        isDefault: false,
-        cep: cep.trim(),
-        state: state.trim(),
-        city: city.trim(),
-        neighborhood: neighborhood.trim(),
-        street: street.trim(),
-        number: number.trim(),
-        complement: complement.trim(),
-        reference: reference.trim(),
-      },
-    ]);
+    const nextAddress: Address = {
+      id: editingId ?? Date.now(),
+      label: label.trim(),
+      details,
+      isDefault: editingId
+        ? Boolean(addresses.find((address) => address.id === editingId)?.isDefault)
+        : addresses.length === 0,
+      cep: cep.trim(),
+      state: state.trim(),
+      city: city.trim(),
+      neighborhood: neighborhood.trim(),
+      street: street.trim(),
+      number: number.trim(),
+      complement: complement.trim(),
+      reference: reference.trim(),
+      lat: gpsCoords?.lat,
+      lng: gpsCoords?.lng,
+      source: gpsCoords ? "gps" : "manual",
+    };
 
-    setLabel("");
-    setCep("");
-    setState("DF");
-    setCity("");
-    setNeighborhood("");
-    setStreet("");
-    setNumber("");
-    setComplement("");
-    setReference("");
+    setAddresses((current) =>
+      editingId
+        ? current.map((address) => (address.id === editingId ? nextAddress : address))
+        : [...current, nextAddress],
+    );
+    resetForm();
     setAdding(false);
   }
 
@@ -1095,7 +1501,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
   return (
     <Panel
       title="Meus endereços"
-      subtitle="Usamos seu endereço para ordenar feiras próximas, calcular entrega e validar área atendida."
+      subtitle="Use o GPS para preencher automaticamente ou informe os dados manualmente."
       onBack={onBack}
     >
       <div className="space-y-3">
@@ -1105,26 +1511,63 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
             <div>
               <b>{address.label}</b>
               <p>{address.details}</p>
+              <small>
+                {address.source === "gps" ? "Salvo com localização GPS" : "Endereço informado manualmente"}
+              </small>
             </div>
             {address.isDefault && <span>Principal</span>}
-            <button
-              onClick={() => setAddresses((current) => current.filter((item) => item.id !== address.id))}
-              aria-label={`Excluir endereço ${address.label}`}
-            >
-              <Trash2 size={17} />
-            </button>
+            <div className="item-actions">
+              {!address.isDefault && (
+                <button
+                  className="mini-toggle"
+                  onClick={() =>
+                    setAddresses((current) =>
+                      current.map((item) => ({ ...item, isDefault: item.id === address.id })),
+                    )
+                  }
+                >
+                  Tornar principal
+                </button>
+              )}
+              <button className="mini-toggle" onClick={() => beginEdit(address)}>
+                <Edit3 size={15} /> Editar
+              </button>
+              <button
+                className="mini-toggle"
+                onClick={() => {
+                  setAddresses((current) => {
+                    const next = current.filter((item) => item.id !== address.id);
+                    if (address.isDefault && next.length) next[0] = { ...next[0], isDefault: true };
+                    return next;
+                  });
+                }}
+                aria-label={"Excluir endereço " + address.label}
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
           </article>
         ))}
       </div>
 
       {adding ? (
         <form onSubmit={submit} className="form-card">
+          <button
+            type="button"
+            className="secondary-action"
+            onClick={useCurrentLocation}
+            disabled={locationLoading}
+          >
+            <MapPin size={17} /> {locationLoading ? "Localizando..." : "Usar minha localização atual"}
+          </button>
+          {locationMessage && <p className="operation-footnote">{locationMessage}</p>}
+
           <label>
             Apelido do endereço
             <input
               value={label}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder="Casa, trabalho, mãe"
+              placeholder="Casa, trabalho, outro"
               required
             />
           </label>
@@ -1204,40 +1647,52 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
             <input
               value={reference}
               onChange={(event) => setReference(event.target.value)}
-              placeholder="Ex.: perto da Feira Permanente"
+              placeholder="Ex.: portão amarelo"
             />
           </label>
 
           <div className="region-strip">
             <MapPin size={18} />
             <div>
-              <b>{minimumAddressFilled ? "Endereço pronto para validação" : "Complete o endereço"}</b>
+              <b>{minimumAddressFilled ? "Endereço pronto para salvar" : "Complete o endereço"}</b>
               <p>
                 {minimumAddressFilled
-                  ? "A disponibilidade, a taxa e o prazo serão calculados no checkout com rota, peso e veículo compatível."
-                  : "Informe CEP, cidade/região, rua/quadra e número para validar a entrega."}
+                  ? "No checkout, a rota e o frete usam este endereço."
+                  : "Informe CEP, cidade/região, rua/quadra e número."}
               </p>
             </div>
           </div>
 
           <div className="flex gap-2">
             <button type="submit" className="primary-action">
-              Salvar endereço
+              {editingId ? "Salvar alterações" : "Salvar endereço"}
             </button>
-            <button type="button" onClick={() => setAdding(false)} className="secondary-action">
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setAdding(false);
+              }}
+              className="secondary-action"
+            >
               Cancelar
             </button>
           </div>
         </form>
       ) : (
-        <button onClick={() => setAdding(true)} className="dashed-action">
+        <button
+          onClick={() => {
+            resetForm();
+            setAdding(true);
+          }}
+          className="dashed-action"
+        >
           <Plus /> Adicionar endereço
         </button>
       )}
     </Panel>
   );
 }
-
 export function AccountPage({ session, onBack }: { session: DemoSession; onBack: () => void }) {
   const [profile, setProfile] = usePersistentState(`feirae:account:${session.email}`, {
     name: session.name,
@@ -1391,9 +1846,16 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
 
 export function PaymentsPage({ onBack }: { onBack: () => void }) {
   const [cards, setCards] = usePersistentState<
-    { id: string; holder: string; last4: string; expiry: string; type: string }[]
-  >("feirae:cards-v2", [
-    { id: "demo-card", holder: "Cliente Feiraê", last4: "4821", expiry: "12/29", type: "Crédito" },
+    { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
+  >("feirae:cards-v3", [
+    {
+      id: "demo-card",
+      holder: "Cliente Feiraê",
+      last4: "4821",
+      expiry: "12/29",
+      type: "Crédito",
+      brand: "Visa",
+    },
   ]);
   const [mode, setMode] = useState<"card" | null>(null);
   const [holder, setHolder] = useState("");
@@ -1401,6 +1863,17 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
   const [cardType, setCardType] = useState("Crédito");
+
+  function detectBrand(value: string) {
+    const digits = value.replace(/\D/g, "");
+    if (/^4/.test(digits)) return "Visa";
+    if (/^(5[1-5]|2[2-7])/.test(digits)) return "Mastercard";
+    if (/^3[47]/.test(digits)) return "American Express";
+    if (/^(606282|3841)/.test(digits)) return "Hipercard";
+    if (/^(4011|4312|4389|4514|4576|5041|5066|5067|509|6277|6362|6363|650|6516|6550)/.test(digits))
+      return "Elo";
+    return "Bandeira";
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -1413,6 +1886,7 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
         last4: digits.slice(-4),
         expiry: expiry.trim(),
         type: cardType,
+        brand: detectBrand(digits),
       },
       ...current,
     ]);
@@ -1426,7 +1900,7 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
   return (
     <Panel
       title="Pagamentos e carteira"
-      subtitle="Cartões são representados por token na arquitetura real; número completo e CVV não ficam salvos no Feiraê."
+      subtitle="Escolha como pagar agora ou na entrega, conforme disponibilidade da banca."
       onBack={onBack}
     >
       <div className="grid gap-4 lg:grid-cols-[1fr_.8fr]">
@@ -1439,9 +1913,21 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
                 <b>Cartão de crédito/débito</b>
                 <small>
                   {cards.length
-                    ? cards.map((card) => `${card.type} final ${card.last4} · ${card.expiry}`).join(" · ")
-                    : "Nenhum cartão tokenizado"}
+                    ? cards
+                        .map(
+                          (card) =>
+                            (card.brand ?? "Cartão") +
+                            " · " +
+                            card.type +
+                            " final " +
+                            card.last4 +
+                            " · " +
+                            card.expiry,
+                        )
+                        .join(" · ")
+                    : "Nenhum cartão salvo"}
                 </small>
+                <small>Bandeiras: Visa · Mastercard · Elo · Hipercard · American Express</small>
               </div>
               <button onClick={() => setMode("card")}>Adicionar</button>
             </article>
@@ -1449,13 +1935,49 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
               <Wallet />
               <div>
                 <b>Pix</b>
-                <small>
-                  O QR Code/copia e cola é gerado no checkout. Não é necessário cadastrar uma chave Pix do
-                  cliente.
-                </small>
+                <small>QR Code e copia e cola são gerados no checkout.</small>
+              </div>
+            </article>
+            <article>
+              <Wallet />
+              <div>
+                <b>Dinheiro</b>
+                <small>Disponível como pagamento na entrega. O checkout pergunta se precisa de troco.</small>
+              </div>
+            </article>
+            <article>
+              <CreditCard />
+              <div>
+                <b>Pagamento na entrega</b>
+                <small>Dinheiro ou cartão na maquininha quando a operação da banca permitir.</small>
               </div>
             </article>
           </div>
+
+          {cards.length > 0 && (
+            <div className="operation-list detailed">
+              {cards.map((card) => (
+                <article key={card.id}>
+                  <CreditCard />
+                  <div>
+                    <b>
+                      {card.brand ?? "Cartão"} · {card.type}
+                    </b>
+                    <small>
+                      Final {card.last4} · validade {card.expiry}
+                    </small>
+                  </div>
+                  <button
+                    className="mini-toggle"
+                    onClick={() => setCards((current) => current.filter((item) => item.id !== card.id))}
+                  >
+                    <Trash2 size={15} /> Excluir
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+
           {mode === "card" && (
             <form className="form-card compact" onSubmit={submit}>
               <label>
@@ -1477,6 +1999,7 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
                   autoComplete="cc-number"
                   required
                 />
+                <small>{detectBrand(number)}</small>
               </label>
               <div className="grid gap-3 sm:grid-cols-3">
                 <label>
@@ -1508,13 +2031,10 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
                   </select>
                 </label>
               </div>
-              <p className="operation-footnote">
-                Na integração real, esses dados serão enviados diretamente ao provedor para tokenização. O CVV
-                nunca será armazenado.
-              </p>
+              <p className="operation-footnote">Por segurança, o CVV não é salvo.</p>
               <div className="module-action-row">
                 <button className="primary-action" type="submit">
-                  Tokenizar e salvar cartão
+                  Salvar cartão
                 </button>
                 <button className="secondary-action" type="button" onClick={() => setMode(null)}>
                   Cancelar
@@ -1523,18 +2043,19 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
             </form>
           )}
         </div>
+
         <div className="surface-card wallet-card">
           <span className="eyebrow">Carteira</span>
           <h2>R$ 18,90</h2>
-          <p>Crédito demonstrativo de reembolso disponível para a próxima compra.</p>
+          <p>Crédito de reembolso disponível para a próxima compra.</p>
           <div className="finance-breakdown">
             <p>
               <span>Reembolso</span>
               <strong>R$ 18,90</strong>
             </p>
             <p>
-              <span>Origem</span>
-              <strong>Pedido demonstrativo</strong>
+              <span>Uso</span>
+              <strong>Próxima compra</strong>
             </p>
           </div>
         </div>
@@ -1542,7 +2063,6 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
     </Panel>
   );
 }
-
 export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: () => void }) {
   const [reviews] = usePersistentState("feirae:customer-reviews", [
     {

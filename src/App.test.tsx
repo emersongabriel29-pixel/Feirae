@@ -30,6 +30,7 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 itens/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     expect(screen.getByRole("heading", { name: /finalizar pedido/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
     expect(screen.getByRole("heading", { name: /meus pedidos/i })).toBeInTheDocument();
     expect(screen.getByText(/recebido/i)).toBeInTheDocument();
@@ -79,8 +80,8 @@ describe("Feiraê customer flow", () => {
     fireEvent.change(screen.getByLabelText(/rua\/quadra/i), { target: { value: "Quadra 1" } });
     fireEvent.change(screen.getByLabelText(/número\/lote/i), { target: { value: "10" } });
 
-    expect(screen.getByText(/endereço pronto para validação/i)).toBeInTheDocument();
-    expect(screen.getByText(/calculados no checkout/i)).toBeInTheDocument();
+    expect(screen.getByText(/endereço pronto para salvar/i)).toBeInTheDocument();
+    expect(screen.getByText(/rota e o frete usam este endereço/i)).toBeInTheDocument();
   });
 
   it("allows showing and hiding the password", () => {
@@ -135,7 +136,7 @@ describe("Feiraê customer flow", () => {
     expect(orderCard).not.toBeNull();
     fireEvent.click(within(orderCard as HTMLElement).getByRole("button", { name: /ver detalhes/i }));
 
-    expect(screen.getByText(/pedido fe-1029 · recebido/i)).toBeInTheDocument();
+    expect(screen.getByText(/pedido fe-1029.*recebido/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^pedido recebido$/i })).toBeInTheDocument();
     expect(screen.queryByText(/seu pedido está a caminho/i)).not.toBeInTheDocument();
   });
@@ -193,7 +194,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/ter–dom 7h–18h/i)).toBeInTheDocument();
   });
 
-  it("removes cash from checkout and labels weighted products as estimates", () => {
+  it("offers pay-now and pay-on-delivery methods while keeping weight as an estimate", () => {
     render(<App />);
     loginAs("cliente");
     const search = screen.getByPlaceholderText(/busque produtos/i);
@@ -203,10 +204,12 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
 
     expect(screen.getByRole("button", { name: /pix/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /cartão/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /dinheiro/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /cartão/i }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /^dinheiro/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cartão na maquininha/i })).toBeInTheDocument();
     expect(screen.getByText(/há produtos vendidos por peso/i)).toBeInTheDocument();
     expect(screen.getByText(/total estimado/i)).toBeInTheDocument();
+    expect(screen.queryByText(/veículo indicado/i)).not.toBeInTheDocument();
   });
 
   it("asks for complete card data but does not describe storing CVV", () => {
@@ -221,7 +224,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByLabelText(/validade/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/cvv/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^tipo$/i)).toBeInTheDocument();
-    expect(screen.getByText(/cvv nunca será armazenado/i)).toBeInTheDocument();
+    expect(screen.getByText(/cvv não é salvo/i)).toBeInTheDocument();
   });
 
   it("separates client cancellation reasons from delivery incident reasons", () => {
@@ -234,7 +237,12 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^pedidos$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /ver detalhes/i }));
 
-    expect(screen.getByRole("option", { name: /desisti da compra/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /não preciso mais/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /^outro$/i })).toBeInTheDocument();
+    const reason = screen.getByRole("option", { name: /^outro$/i }).closest("select");
+    expect(reason).not.toBeNull();
+    fireEvent.change(reason as HTMLSelectElement, { target: { value: "Outro" } });
+    expect(screen.getByLabelText(/descreva o motivo/i)).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: /cliente ausente/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("option", { name: /emergência na entrega/i })).not.toBeInTheDocument();
   });
@@ -437,19 +445,21 @@ describe("Feiraê role access", () => {
 
     const vehicleType = screen.getByLabelText(/tipo de veículo/i);
     expect(
-      within(vehicleType).getByRole("option", { name: /bicicleta · sugestão 10 kg/i }),
+      within(vehicleType).getByRole("option", { name: /bicicleta · referência 10 kg/i }),
     ).toBeInTheDocument();
     expect(
-      within(vehicleType).getByRole("option", { name: /moto com baú · sugestão 20 kg/i }),
+      within(vehicleType).getByRole("option", { name: /moto com baú · referência 20 kg/i }),
     ).toBeInTheDocument();
-    expect(within(vehicleType).getByRole("option", { name: /carro · sugestão 80 kg/i })).toBeInTheDocument();
     expect(
-      within(vehicleType).getByRole("option", { name: /utilitário\/pickup · sugestão 250 kg/i }),
+      within(vehicleType).getByRole("option", { name: /carro · referência 80 kg/i }),
     ).toBeInTheDocument();
-    expect(within(vehicleType).getByRole("option", { name: /van · sugestão 500 kg/i })).toBeInTheDocument();
+    expect(
+      within(vehicleType).getByRole("option", { name: /utilitário\/pickup · referência 250 kg/i }),
+    ).toBeInTheDocument();
+    expect(within(vehicleType).getByRole("option", { name: /van · referência 500 kg/i })).toBeInTheDocument();
 
     fireEvent.change(vehicleType, { target: { value: "Carro" } });
-    expect(screen.getByLabelText(/capacidade máxima usada no feiraê/i)).toHaveValue(80);
+    expect(screen.getByLabelText(/capacidade máxima deste veículo/i)).toHaveValue(80);
   });
 
   it("gives the delivery person a personal account with CPF and CNH fields", () => {

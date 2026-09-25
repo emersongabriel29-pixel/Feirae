@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarClock,
@@ -10,6 +10,7 @@ import {
   Plus,
   Star,
   Truck,
+  Trash2,
   Upload,
   Wallet,
   XCircle,
@@ -22,6 +23,7 @@ import { vendorModuleDetails } from "../../domain/operations";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
+import { eventNow, patchUnifiedOrder, readUnifiedOrders } from "../../domain/orderBridge";
 import {
   initialBankProfile,
   initialVendorDocuments,
@@ -85,6 +87,77 @@ function imageFileToDataUrl(file: File, onReady: (value: string) => void) {
 
 function orderWeight(order: VendorOrder) {
   return order.items.reduce((sum, item) => sum + (item.actualWeightKg || item.estimatedWeightKg), 0);
+}
+
+const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+function minutesFromTime(value: string) {
+  const [hour, minute] = value.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function vendorScheduleStatus(schedule: VendorScheduleDay[], now = new Date()) {
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const todayIndex = now.getDay();
+  const today = schedule.find((item) => item.day === dayNames[todayIndex]);
+  const previous = schedule.find((item) => item.day === dayNames[(todayIndex + 6) % 7]);
+
+  if (previous?.enabled && previous.open && previous.close) {
+    const previousOpen = minutesFromTime(previous.open);
+    const previousClose = minutesFromTime(previous.close);
+    if (previousClose < previousOpen && currentMinutes < previousClose) {
+      return { open: true, label: `Aberta agora · fecha às ${previous.close}` };
+    }
+  }
+
+  if (today?.enabled && today.open && today.close) {
+    const open = minutesFromTime(today.open);
+    const close = minutesFromTime(today.close);
+    const overnight = close < open;
+    const isOpen = overnight ? currentMinutes >= open : currentMinutes >= open && currentMinutes < close;
+    if (isOpen) {
+      if (today.breakStart && today.breakEnd) {
+        const breakStart = minutesFromTime(today.breakStart);
+        const breakEnd = minutesFromTime(today.breakEnd);
+        if (currentMinutes >= breakStart && currentMinutes < breakEnd) {
+          return { open: false, label: `Em pausa · volta às ${today.breakEnd}` };
+        }
+      }
+      return {
+        open: true,
+        label: overnight
+          ? `Aberta agora · fecha às ${today.close} do dia seguinte`
+          : `Aberta agora · fecha às ${today.close}`,
+      };
+    }
+  }
+
+  for (let offset = 0; offset < 7; offset += 1) {
+    const index = (todayIndex + offset) % 7;
+    const candidate = schedule.find((item) => item.day === dayNames[index] && item.enabled);
+    if (!candidate?.open) continue;
+    if (offset === 0 && currentMinutes < minutesFromTime(candidate.open)) {
+      return { open: false, label: `Fechada · abre hoje às ${candidate.open}` };
+    }
+    if (offset > 0) {
+      return {
+        open: false,
+        label: `Fechada · abre ${candidate.day.toLocaleLowerCase("pt-BR")} às ${candidate.open}`,
+      };
+    }
+  }
+  return { open: false, label: "Fechada · sem próximo horário configurado" };
+}
+
+function promotionStatus(promotion: VendorPromotion) {
+  if (!promotion.active) return "Encerrada";
+  const now = Date.now();
+  const start = promotion.startsAt ? Date.parse(promotion.startsAt) : Number.NEGATIVE_INFINITY;
+  const end = promotion.endsAt ? Date.parse(promotion.endsAt) : Number.POSITIVE_INFINITY;
+  if (now < start) return "Agendada";
+  if (now > end) return "Encerrada";
+  if (promotion.usageLimit > 0 && promotion.usedCount >= promotion.usageLimit) return "Encerrada";
+  return "Ativa";
 }
 
 export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
@@ -160,7 +233,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [promotionEditingId, setPromotionEditingId] = useState<string | null>(null);
   const [promotionDraft, setPromotionDraft] = useState<VendorPromotion>({
     id: "",
-    type: "combo",
+    type: "percentual",
     name: "",
     rule: "",
     startsAt: "",
@@ -169,6 +242,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     vendorPaysDelivery: false,
     usageLimit: 0,
     usedCount: 0,
+    minimumOrder: 0,
+    discountValue: 0,
+    target: "",
   });
   const [stockReason, setStockReason] = useState("Ajuste manual");
   const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
@@ -176,12 +252,85 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [accountSaved, setAccountSaved] = useState(false);
   const [notice, setNotice] = useState("");
 
+  useEffect(() => {
+    setPromotions((current) =>
+      current.filter(
+        (promotion) => !/também quero/i.test(promotion.name) && !/isso funciona\??/i.test(promotion.rule),
+      ),
+    );
+  }, [setPromotions]);
+
+  useEffect(() => {
+    const sharedOrders = readUnifiedOrders().filter(
+      (order) =>
+        order.fairName === bankProfile.fairName &&
+        order.items.some((item) => item.vendor === bankProfile.name),
+    );
+    if (!sharedOrders.length) return;
+
+    const statusMap = {
+      received: "new",
+      preparing: "preparing",
+      ready_for_pickup: "ready_for_pickup",
+      driver_assigned: "ready_for_pickup",
+      collected: "collected",
+      out_for_delivery: "collected",
+      delivered: "delivered",
+      cancelled: "rejected",
+    } as const;
+
+    setOrders((current) => {
+      const byId = new Map(current.map((order) => [order.id, order]));
+      sharedOrders.forEach((record) => {
+        const items = record.items.filter((item) => item.vendor === bankProfile.name);
+        const currentOrder = byId.get(record.id);
+        const alreadySeparated = [
+          "ready_for_pickup",
+          "driver_assigned",
+          "collected",
+          "out_for_delivery",
+          "delivered",
+        ].includes(record.status);
+        byId.set(record.id, {
+          id: record.id,
+          customer: record.customerName,
+          createdAt: new Intl.DateTimeFormat("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          }).format(new Date(record.createdAt)),
+          status: statusMap[record.status],
+          value: items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+          deliveryFee: record.calculatedDeliveryFee,
+          city: record.customerCity ?? "Entrega",
+          estimatedPickupMinutes: currentOrder?.estimatedPickupMinutes ?? 20,
+          rejectReason: record.cancelReason ?? currentOrder?.rejectReason ?? "",
+          driverName: record.driver?.name ?? currentOrder?.driverName ?? "",
+          items: items.map((item) => {
+            const oldItem = currentOrder?.items.find((old) => old.id === `${record.id}-${item.productId}`);
+            return {
+              id: `${record.id}-${item.productId}`,
+              name: item.name,
+              quantityLabel: `${item.quantity} ${item.unit}`,
+              estimatedWeightKg: item.weightKg,
+              actualWeightKg: oldItem?.actualWeightKg ?? item.weightKg,
+              separated: oldItem?.separated ?? alreadySeparated,
+              unavailable: oldItem?.unavailable ?? false,
+              note: oldItem?.note ?? "",
+            };
+          }),
+        });
+      });
+      return Array.from(byId.values());
+    });
+  }, [bankProfile.fairName, bankProfile.name, setOrders]);
+
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
   const pendingOrders = orders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
   );
   const lowStockCount = vendorItems.filter((item) => item.active && item.stock <= item.minStock).length;
-  const pausedCount = vendorItems.filter((item) => !item.active).length;
+  const pausedCount = vendorItems.filter((item) => !item.active && item.stock > 0).length;
+  const outOfStockCount = vendorItems.filter((item) => item.stock <= 0).length;
   const totalStock = vendorItems.reduce((sum, item) => sum + item.stock, 0);
   const averageRating = reviews.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
@@ -206,6 +355,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         : "Documentação pendente";
 
   const officialHours = fairHoursForName(bankProfile.fairName);
+  const scheduleForStatus =
+    useFairHours && bankProfile.fairName === "Feira do Produtor Rural" ? initialVendorSchedule : schedule;
+  const currentScheduleStatus = vendorScheduleStatus(scheduleForStatus);
+  const effectiveStoreOpen = storeOpen && currentScheduleStatus.open;
 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
@@ -267,11 +420,16 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
 
   function acceptOrder(order: VendorOrder) {
     updateOrder(order.id, { status: "preparing", rejectReason: "" });
-    showNotice(`Pedido ${order.id} aceito. Cliente notificado na demonstração.`);
+    showNotice(`Pedido ${order.id} aceito. Cliente notificado na aplicativo.`);
   }
 
   function rejectOrder(order: VendorOrder) {
     updateOrder(order.id, { status: "rejected", rejectReason });
+    patchUnifiedOrder(
+      order.id,
+      { status: "cancelled", cancelReason: rejectReason },
+      eventNow("vendor-rejected", "Pedido cancelado", "vendor", { reason: rejectReason }),
+    );
     showNotice(`Pedido ${order.id} recusado. Motivo registrado.`);
   }
 
@@ -282,6 +440,11 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       return;
     }
     updateOrder(order.id, { status: "ready_for_pickup" });
+    patchUnifiedOrder(
+      order.id,
+      { status: "ready_for_pickup" },
+      eventNow("ready", "Pronto para coleta", "vendor"),
+    );
     showNotice(`Pedido ${order.id} pronto. Agora aguarda um entregador compatível.`);
   }
 
@@ -304,7 +467,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     const nextProduct = {
       ...productDraft,
       id: productEditorId === "new" ? Date.now() : productDraft.id,
-      active: productDraft.photoDataUrl ? productDraft.active : false,
+      active: productDraft.stock > 0 ? productDraft.active : false,
     };
     setVendorItems((current) =>
       productEditorId === "new"
@@ -312,11 +475,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         : current.map((item) => (item.id === nextProduct.id ? nextProduct : item)),
     );
     setProductEditorId(null);
-    showNotice(
-      nextProduct.photoDataUrl
-        ? "Produto salvo."
-        : "Produto salvo como pausado. Adicione uma foto antes de colocá-lo à venda.",
-    );
+    showNotice(nextProduct.stock > 0 ? "Produto salvo." : "Produto salvo como esgotado.");
   }
 
   function adjustStock(item: VendorProduct, delta: number) {
@@ -347,7 +506,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     setSchedule((current) => current.map((item) => (item.day === day ? { ...item, ...update } : item)));
   }
 
-  function startPromotion(type: VendorPromotionType = "combo") {
+  function startPromotion(type: VendorPromotionType = "percentual") {
     setPromotionEditingId(null);
     setPromotionDraft({
       id: "",
@@ -360,6 +519,9 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       vendorPaysDelivery: type === "freteGratis",
       usageLimit: 0,
       usedCount: 0,
+      minimumOrder: 0,
+      discountValue: 0,
+      target: "",
     });
     setPromotionEditorOpen(true);
   }
@@ -409,55 +571,58 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
 
   const inventory = (
     <div className="operation-list">
-      {vendorItems.map((item) => (
-        <article key={item.id}>
-          <span className={item.stock <= item.minStock ? "inventory-dot warning" : "inventory-dot"} />
-          <div>
-            <b>{item.name}</b>
-            <small>
-              {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} · peso logístico{" "}
-              {item.weightKg} kg · mínimo {item.minStock}
-            </small>
-          </div>
-          {active === "Estoque" ? (
-            <div className="stock-controls">
-              <button onClick={() => adjustStock(item, -1)}>−</button>
-              <strong>{item.stock}</strong>
-              <button onClick={() => adjustStock(item, 1)}>+</button>
+      {vendorItems.map((item) => {
+        const status =
+          item.stock <= 0 ? "Estoque esgotado" : item.active ? "À venda" : "Pausado pelo feirante";
+        return (
+          <article key={item.id}>
+            <span className={item.stock <= item.minStock ? "inventory-dot warning" : "inventory-dot"} />
+            <div>
+              <b>{item.name}</b>
+              <small>
+                {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} · peso logístico{" "}
+                {item.weightKg} kg · mínimo {item.minStock}
+              </small>
+              <small>Status: {status}</small>
             </div>
-          ) : (
-            <div className="item-actions">
-              <button className="mini-toggle" onClick={() => openProductEditor(item)}>
-                Editar produto
-              </button>
-              <button
-                className={item.active ? "mini-toggle active" : "mini-toggle"}
-                onClick={() =>
-                  setVendorItems((current) =>
-                    current.map((product) =>
-                      product.id === item.id
-                        ? {
-                            ...product,
-                            active: product.photoDataUrl && product.stock > 0 ? !product.active : false,
-                          }
-                        : product,
-                    ),
-                  )
-                }
-              >
-                {item.active ? "À venda" : "Pausado"}
-              </button>
-            </div>
-          )}
-        </article>
-      ))}
+            {active === "Estoque" ? (
+              <div className="stock-controls">
+                <button onClick={() => adjustStock(item, -1)}>−</button>
+                <strong>{item.stock}</strong>
+                <button onClick={() => adjustStock(item, 1)}>+</button>
+              </div>
+            ) : (
+              <div className="item-actions">
+                <button className="mini-toggle" onClick={() => openProductEditor(item)}>
+                  Editar produto
+                </button>
+                <button
+                  className={item.active && item.stock > 0 ? "mini-toggle active" : "mini-toggle"}
+                  disabled={item.stock <= 0}
+                  onClick={() =>
+                    setVendorItems((current) =>
+                      current.map((product) =>
+                        product.id === item.id
+                          ? { ...product, active: product.stock > 0 ? !product.active : false }
+                          : product,
+                      ),
+                    )
+                  }
+                >
+                  {status}
+                </button>
+              </div>
+            )}
+          </article>
+        );
+      })}
     </div>
   );
 
   return (
     <Panel
       title="Operação do feirante"
-      subtitle="Fluxos funcionais locais; integração real entra na etapa de backend"
+      subtitle="Gerencie pedidos, banca, produtos, horários, promoções e financeiro."
       onBack={onBack}
     >
       {notice && <p className="inline-success">{notice}</p>}
@@ -472,7 +637,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             </div>
             <div className="operation-metrics">
               <article>
-                <strong>{storeOpen ? "Aberta" : "Fechada"}</strong>
+                <strong>{effectiveStoreOpen ? "Aberta agora" : "Fechada"}</strong>
                 <span>
                   {bankProfile.name} · Banca {bankProfile.box || "sem número"}
                 </span>
@@ -516,7 +681,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <div className="operation-metrics">
                   <article>
                     <strong>{money(grossOrders)}</strong>
-                    <span>pedidos demonstrativos</span>
+                    <span>pedidos</span>
                   </article>
                   <article>
                     <strong>{pendingOrders.length}</strong>
@@ -758,7 +923,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       <img className="product-editor-preview" src={productDraft.photoDataUrl} alt="" />
                     ) : (
                       <p className="operation-footnote">
-                        <Image size={15} /> Produto sem foto. Ele ficará pausado até receber uma imagem.
+                        <Image size={15} /> Produto sem foto. Adicione uma imagem para melhorar a vitrine.
                       </p>
                     )}
                     <label>
@@ -881,7 +1046,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     </div>
                     <Toggle
                       label="Disponível para venda"
-                      description="Para publicar, o produto precisa ter foto e estoque."
+                      description="Com estoque maior que zero, você decide se o produto fica à venda ou pausado."
                       checked={productDraft.active}
                       onChange={(checked) => setProductDraft((current) => ({ ...current, active: checked }))}
                     />
@@ -896,6 +1061,27 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       >
                         Cancelar
                       </button>
+                      {productEditorId !== "new" && productEditorId !== null && (
+                        <button
+                          type="button"
+                          className="secondary-action"
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                "Excluir este produto do catálogo? Pedidos antigos continuarão preservados no histórico.",
+                              )
+                            )
+                              return;
+                            setVendorItems((current) =>
+                              current.filter((item) => item.id !== productDraft.id),
+                            );
+                            setProductEditorId(null);
+                            showNotice("Produto excluído do catálogo.");
+                          }}
+                        >
+                          <Trash2 size={17} /> Excluir produto
+                        </button>
+                      )}
                     </div>
                   </form>
                 </>
@@ -930,7 +1116,11 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </article>
                   <article>
                     <strong>{pausedCount}</strong>
-                    <span>produtos pausados</span>
+                    <span>pausados pelo feirante</span>
+                  </article>
+                  <article>
+                    <strong>{outOfStockCount}</strong>
+                    <span>estoques esgotados</span>
                   </article>
                 </div>
                 <label>
@@ -1110,7 +1300,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                         onClick={() => setStoreOpen((value) => !value)}
                         disabled={approvalStatus !== "Aprovado"}
                       >
-                        {storeOpen ? "Aberta" : "Fechada"}
+                        {effectiveStoreOpen ? "Aberta agora" : "Fechada"}
                       </button>
                     </div>
                     <div className="module-action-row">
@@ -1142,91 +1332,115 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             ) : active === "Horários" ? (
               <div className="space-y-3">
                 <ModuleHeader
-                  badge="Agenda da banca"
+                  badge={effectiveStoreOpen ? "Aberta agora" : "Fechada"}
                   title="Horários de venda"
-                  description="O horário padrão vem da feira realmente vinculada à banca."
+                  description="O status da banca respeita o horário da feira ou a agenda própria escolhida por você."
                 />
                 <div className="surface-card">
+                  <span className="eyebrow">{currentScheduleStatus.label}</span>
                   <b>{bankProfile.fairName}</b>
                   <p>{officialHours.label}</p>
                   <small>{officialHours.verification}</small>
+                  {useFairHours && bankProfile.fairName !== "Feira do Produtor Rural" && (
+                    <p className="operation-footnote">
+                      Para esta feira, o texto oficial está cadastrado, mas a agenda estruturada ainda precisa
+                      ser confirmada para calcular “aberta agora” automaticamente.
+                    </p>
+                  )}
                 </div>
                 <Toggle
                   label="Usar horário padrão da feira"
-                  description="Mantém a banca alinhada ao horário oficial cadastrado para essa feira."
+                  description="Ativa exclusivamente a agenda oficial cadastrada para a feira."
                   checked={useFairHours}
-                  onChange={setUseFairHours}
+                  onChange={(checked) => setUseFairHours(checked)}
                 />
                 <Toggle
                   label="Definir meu próprio horário"
-                  description="Escolha dias, abertura, fechamento e intervalos. Deve respeitar as regras da feira."
+                  description="Ao ativar, o horário padrão é desativado. Fechamentos após meia-noite pertencem ao dia seguinte."
                   checked={!useFairHours}
                   onChange={(checked) => setUseFairHours(!checked)}
                 />
+
                 {!useFairHours && (
                   <div className="operation-list detailed">
-                    {schedule.map((item) => (
-                      <article key={item.day}>
-                        <CalendarClock />
-                        <div>
-                          <b>{item.day}</b>
-                          <div className="grid gap-2 sm:grid-cols-2">
-                            <label>
-                              Abertura
-                              <input
-                                type="time"
-                                value={item.open}
-                                disabled={!item.enabled}
-                                onChange={(event) =>
-                                  updateScheduleDay(item.day, { open: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label>
-                              Fechamento
-                              <input
-                                type="time"
-                                value={item.close}
-                                disabled={!item.enabled}
-                                onChange={(event) =>
-                                  updateScheduleDay(item.day, { close: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label>
-                              Início da pausa
-                              <input
-                                type="time"
-                                value={item.breakStart}
-                                disabled={!item.enabled}
-                                onChange={(event) =>
-                                  updateScheduleDay(item.day, { breakStart: event.target.value })
-                                }
-                              />
-                            </label>
-                            <label>
-                              Fim da pausa
-                              <input
-                                type="time"
-                                value={item.breakEnd}
-                                disabled={!item.enabled}
-                                onChange={(event) =>
-                                  updateScheduleDay(item.day, { breakEnd: event.target.value })
-                                }
-                              />
-                            </label>
+                    {schedule.map((item) => {
+                      const overnight =
+                        item.enabled &&
+                        item.open &&
+                        item.close &&
+                        minutesFromTime(item.close) < minutesFromTime(item.open);
+                      return (
+                        <article key={item.day}>
+                          <CalendarClock />
+                          <div>
+                            <b>{item.day}</b>
+                            {overnight && <small>Fecha no dia seguinte.</small>}
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <label>
+                                Abertura
+                                <input
+                                  type="time"
+                                  value={item.open}
+                                  disabled={!item.enabled}
+                                  onChange={(event) =>
+                                    updateScheduleDay(item.day, { open: event.target.value })
+                                  }
+                                />
+                              </label>
+                              <label>
+                                Fechamento
+                                <input
+                                  type="time"
+                                  value={item.close}
+                                  disabled={!item.enabled}
+                                  onChange={(event) =>
+                                    updateScheduleDay(item.day, { close: event.target.value })
+                                  }
+                                />
+                              </label>
+                              <label>
+                                Início da pausa
+                                <input
+                                  type="time"
+                                  value={item.breakStart}
+                                  disabled={!item.enabled}
+                                  onChange={(event) =>
+                                    updateScheduleDay(item.day, { breakStart: event.target.value })
+                                  }
+                                />
+                              </label>
+                              <label>
+                                Fim da pausa
+                                <input
+                                  type="time"
+                                  value={item.breakEnd}
+                                  disabled={!item.enabled}
+                                  onChange={(event) =>
+                                    updateScheduleDay(item.day, { breakEnd: event.target.value })
+                                  }
+                                />
+                              </label>
+                            </div>
                           </div>
-                        </div>
-                        <button
-                          className={item.enabled ? "mini-toggle active" : "mini-toggle"}
-                          onClick={() => updateScheduleDay(item.day, { enabled: !item.enabled })}
-                        >
-                          {item.enabled ? "Aberto" : "Fechado"}
-                        </button>
-                      </article>
-                    ))}
+                          <button
+                            className={item.enabled ? "mini-toggle active" : "mini-toggle"}
+                            onClick={() => updateScheduleDay(item.day, { enabled: !item.enabled })}
+                          >
+                            {item.enabled ? "Aberto" : "Fechado"}
+                          </button>
+                        </article>
+                      );
+                    })}
                   </div>
                 )}
+
+                <div className="surface-card">
+                  <b>Regra de virada do dia</b>
+                  <p>
+                    Um horário como 19:00 → 02:00 significa abertura às 19h e fechamento às 02h do dia
+                    seguinte.
+                  </p>
+                </div>
               </div>
             ) : active === "Entrega/retirada" ? (
               <>
@@ -1291,56 +1505,82 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             ) : active === "Promoções" ? (
               <>
                 <ModuleHeader
-                  badge={`${promotions.filter((promotion) => promotion.active).length} ativas`}
+                  badge={`${promotions.filter((promotion) => promotionStatus(promotion) === "Ativa").length} ativas`}
                   title="Promoções da banca"
-                  description="Crie, edite, encerre e acompanhe campanhas. Frete grátis deixa explícito quem paga a entrega."
+                  description="Crie campanhas com regra, período, limite de uso, pedido mínimo e público-alvo."
                 />
                 {!promotionEditorOpen ? (
                   <>
                     <div className="module-action-row">
-                      <button className="primary-action" onClick={() => startPromotion("combo")}>
+                      <button className="primary-action" onClick={() => startPromotion("percentual")}>
                         <Plus size={17} /> Nova promoção
-                      </button>
-                      <button className="secondary-action" onClick={() => startPromotion("freteGratis")}>
-                        Frete grátis
                       </button>
                     </div>
                     <div className="operation-list detailed">
-                      {promotions.map((promotion) => (
-                        <article key={promotion.id}>
-                          <Star />
-                          <div>
-                            <b>{promotion.name}</b>
-                            <small>
-                              {promotion.rule} · {promotion.usedCount}/{promotion.usageLimit || "∞"} usos ·{" "}
-                              {promotion.vendorPaysDelivery ? "banca paga o frete" : "sem subsídio de frete"}
-                            </small>
-                          </div>
-                          <div className="item-actions">
-                            <button className="mini-toggle" onClick={() => editPromotion(promotion)}>
-                              Editar
-                            </button>
-                            <button
-                              className={promotion.active ? "mini-toggle active" : "mini-toggle"}
-                              onClick={() =>
-                                setPromotions((current) =>
-                                  current.map((item) =>
-                                    item.id === promotion.id ? { ...item, active: !item.active } : item,
-                                  ),
-                                )
-                              }
-                            >
-                              {promotion.active ? "Ativa" : "Encerrada"}
-                            </button>
-                          </div>
-                        </article>
-                      ))}
+                      {promotions.map((promotion) => {
+                        const status = promotionStatus(promotion);
+                        return (
+                          <article key={promotion.id}>
+                            <Star />
+                            <div>
+                              <b>{promotion.name}</b>
+                              <small>
+                                {promotion.rule} · {promotion.usedCount}/{promotion.usageLimit || "∞"} usos
+                                {promotion.minimumOrder
+                                  ? ` · pedido mínimo ${money(promotion.minimumOrder)}`
+                                  : ""}
+                                {promotion.target ? ` · alvo: ${promotion.target}` : ""}
+                              </small>
+                              <small>
+                                {status}
+                                {promotion.vendorPaysDelivery
+                                  ? " · banca paga o frete; entregador recebe normalmente"
+                                  : ""}
+                              </small>
+                            </div>
+                            <div className="item-actions">
+                              <button className="mini-toggle" onClick={() => editPromotion(promotion)}>
+                                Editar
+                              </button>
+                              <button
+                                className={status === "Ativa" ? "mini-toggle active" : "mini-toggle"}
+                                onClick={() =>
+                                  setPromotions((current) =>
+                                    current.map((item) =>
+                                      item.id === promotion.id ? { ...item, active: !item.active } : item,
+                                    ),
+                                  )
+                                }
+                              >
+                                {promotion.active ? "Encerrar" : "Reativar"}
+                              </button>
+                              <button
+                                className="mini-toggle"
+                                onClick={() => {
+                                  if (
+                                    !window.confirm(
+                                      "Excluir esta promoção? O histórico de pedidos que já usaram a campanha não será alterado.",
+                                    )
+                                  )
+                                    return;
+                                  setPromotions((current) =>
+                                    current.filter((item) => item.id !== promotion.id),
+                                  );
+                                  showNotice("Promoção excluída.");
+                                }}
+                              >
+                                <Trash2 size={15} /> Excluir
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
                   </>
                 ) : (
                   <form className="form-card" onSubmit={savePromotion}>
                     <label>
-                      Tipo
+                      Tipo de promoção
                       <select
                         value={promotionDraft.type}
                         onChange={(event) => {
@@ -1352,10 +1592,14 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           }));
                         }}
                       >
-                        <option value="combo">Combo</option>
+                        <option value="percentual">Desconto percentual</option>
+                        <option value="valorFixo">Desconto em valor fixo</option>
+                        <option value="compreLeve">Compre X, leve Y</option>
+                        <option value="produtoCategoria">Desconto por produto/categoria</option>
+                        <option value="freteGratis">Frete grátis pago pela banca</option>
                         <option value="horario">Oferta por horário</option>
                         <option value="cupom">Cupom</option>
-                        <option value="freteGratis">Frete grátis pago pela banca</option>
+                        <option value="combo">Combo</option>
                       </select>
                     </label>
                     <label>
@@ -1369,38 +1613,63 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       />
                     </label>
                     <label>
-                      Regra
+                      Regra exibida ao cliente
                       <textarea
                         rows={3}
                         value={promotionDraft.rule}
                         onChange={(event) =>
                           setPromotionDraft((current) => ({ ...current, rule: event.target.value }))
                         }
-                        placeholder="Ex.: frete grátis acima de R$ 80, limitado a 30 pedidos"
+                        placeholder="Ex.: 10% em frutas; compre 2 leve 3; frete grátis acima de R$ 80"
                         required
                       />
                     </label>
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {["percentual", "valorFixo", "produtoCategoria"].includes(promotionDraft.type) && (
+                        <label>
+                          {promotionDraft.type === "percentual"
+                            ? "Percentual de desconto (%)"
+                            : "Valor do desconto (R$)"}
+                          <input
+                            type="number"
+                            min="0"
+                            step={promotionDraft.type === "percentual" ? "1" : "0.01"}
+                            value={promotionDraft.discountValue ?? 0}
+                            onChange={(event) =>
+                              setPromotionDraft((current) => ({
+                                ...current,
+                                discountValue: Number(event.target.value),
+                              }))
+                            }
+                          />
+                        </label>
+                      )}
+                      {["percentual", "valorFixo", "produtoCategoria", "compreLeve"].includes(
+                        promotionDraft.type,
+                      ) && (
+                        <label>
+                          Produto/categoria alvo
+                          <input
+                            value={promotionDraft.target ?? ""}
+                            onChange={(event) =>
+                              setPromotionDraft((current) => ({ ...current, target: event.target.value }))
+                            }
+                            placeholder="Ex.: Cesta de frutas ou Hortifruti"
+                          />
+                        </label>
+                      )}
                       <label>
-                        Início
+                        Pedido mínimo (R$)
                         <input
-                          type="datetime-local"
-                          value={promotionDraft.startsAt}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={promotionDraft.minimumOrder ?? 0}
                           onChange={(event) =>
                             setPromotionDraft((current) => ({
                               ...current,
-                              startsAt: event.target.value,
+                              minimumOrder: Number(event.target.value),
                             }))
-                          }
-                        />
-                      </label>
-                      <label>
-                        Fim
-                        <input
-                          type="datetime-local"
-                          value={promotionDraft.endsAt}
-                          onChange={(event) =>
-                            setPromotionDraft((current) => ({ ...current, endsAt: event.target.value }))
                           }
                         />
                       </label>
@@ -1417,12 +1686,33 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                             }))
                           }
                         />
+                        <small>0 = sem limite.</small>
+                      </label>
+                      <label>
+                        Início
+                        <input
+                          type="datetime-local"
+                          value={promotionDraft.startsAt}
+                          onChange={(event) =>
+                            setPromotionDraft((current) => ({ ...current, startsAt: event.target.value }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Fim
+                        <input
+                          type="datetime-local"
+                          value={promotionDraft.endsAt}
+                          onChange={(event) =>
+                            setPromotionDraft((current) => ({ ...current, endsAt: event.target.value }))
+                          }
+                        />
                       </label>
                     </div>
                     {promotionDraft.type === "freteGratis" && (
                       <p className="inline-success">
-                        O entregador continua recebendo a remuneração da corrida; o custo é descontado do
-                        recebível da banca.
+                        Frete grátis é uma promoção: o cliente paga R$ 0, a banca absorve o custo e a
+                        remuneração do entregador não é reduzida.
                       </p>
                     )}
                     <div className="module-action-row">
@@ -1432,10 +1722,30 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       <button
                         type="button"
                         className="secondary-action"
-                        onClick={() => setPromotionEditorOpen(false)}
+                        onClick={() => {
+                          setPromotionEditorOpen(false);
+                          setPromotionEditingId(null);
+                        }}
                       >
                         Cancelar
                       </button>
+                      {promotionEditingId && (
+                        <button
+                          type="button"
+                          className="secondary-action"
+                          onClick={() => {
+                            if (!window.confirm("Excluir esta promoção?")) return;
+                            setPromotions((current) =>
+                              current.filter((item) => item.id !== promotionEditingId),
+                            );
+                            setPromotionEditorOpen(false);
+                            setPromotionEditingId(null);
+                            showNotice("Promoção excluída.");
+                          }}
+                        >
+                          <Trash2 size={17} /> Excluir promoção
+                        </button>
+                      )}
                     </div>
                   </form>
                 )}
@@ -1463,7 +1773,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 </div>
                 <div className="finance-breakdown">
                   <p>
-                    <span>Total demonstrativo dos pedidos</span>
+                    <span>Total atual dos pedidos</span>
                     <strong>{money(grossOrders)}</strong>
                   </p>
                   <p>
@@ -1520,7 +1830,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </article>
                   <article>
                     <strong>{reviews.length}</strong>
-                    <span>avaliações demonstrativas</span>
+                    <span>avaliações registradas</span>
                   </article>
                   <article>
                     <strong>{reviews.filter((review) => review.response).length}</strong>
@@ -1815,11 +2125,6 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
           </div>
         </div>
       )}
-
-      <p className="operation-footnote">
-        Este fluxo já funciona localmente para validação de produto. Aprovação, notificações, pagamentos,
-        repasses e sincronização definitiva dependem do backend/provedor.
-      </p>
     </Panel>
   );
 }
@@ -1851,7 +2156,7 @@ function SectionHistory({
           ))}
         </div>
       ) : (
-        <p>Nenhum ajuste registrado nesta demonstração.</p>
+        <p>Nenhum ajuste registrado nesta aplicativo.</p>
       )}
     </div>
   );

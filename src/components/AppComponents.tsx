@@ -24,7 +24,7 @@ import {
 import { fairs } from "../data";
 import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
-import { cartWeight, productWeight, vehicleForWeight } from "../domain/marketplace";
+import { cartWeight, productWeight } from "../domain/marketplace";
 
 const roleLabels: Record<Role, string> = {
   customer: "Cliente",
@@ -188,10 +188,6 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
               <ChevronRight size={18} />
             </button>
           </form>
-          <p className="demo-notice">
-            Modo demonstração: as credenciais ainda não são validadas. O login real será ativado com o
-            Supabase.
-          </p>
         </div>
       </section>
     </main>
@@ -363,7 +359,6 @@ export function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void
       <div className="role-heading">
         <span>{config.icon}</span>
         <div>
-          <small>MODO DEMONSTRAÇÃO</small>
           <h1>{config.title}</h1>
           <p>{config.subtitle}</p>
         </div>
@@ -451,7 +446,6 @@ export function CartDrawer({
   onCheckout: () => void;
 }) {
   const totalWeight = cartWeight(items, cart);
-  const vehicle = vehicleForWeight(totalWeight);
   const fairName = items[0]?.fair ?? "";
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   return (
@@ -534,10 +528,6 @@ export function CartDrawer({
                 valor estimado.
               </small>
             )}
-            <p>
-              <span>Entrega indicada</span>
-              <b>{vehicle.name}</b>
-            </p>
             <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>

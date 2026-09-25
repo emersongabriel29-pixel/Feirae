@@ -65,7 +65,15 @@ export type VendorScheduleDay = {
   breakEnd: string;
 };
 
-export type VendorPromotionType = "combo" | "horario" | "cupom" | "freteGratis";
+export type VendorPromotionType =
+  | "percentual"
+  | "valorFixo"
+  | "compreLeve"
+  | "produtoCategoria"
+  | "freteGratis"
+  | "combo"
+  | "horario"
+  | "cupom";
 
 export type VendorPromotion = {
   id: string;
@@ -78,6 +86,9 @@ export type VendorPromotion = {
   vendorPaysDelivery: boolean;
   usageLimit: number;
   usedCount: number;
+  minimumOrder?: number;
+  discountValue?: number;
+  target?: string;
 };
 
 export type VendorReview = {
@@ -357,15 +368,18 @@ export const initialVendorSchedule: VendorScheduleDay[] = [
 export const initialVendorPromotions: VendorPromotion[] = [
   {
     id: "promo-frutas",
-    type: "cupom",
+    type: "percentual",
     name: "10% na cesta de frutas",
-    rule: "10% na cesta de frutas até domingo",
-    startsAt: "",
-    endsAt: "",
-    active: false,
+    rule: "10% de desconto na cesta de frutas",
+    startsAt: "2026-09-25T08:00",
+    endsAt: "2026-09-27T23:59",
+    active: true,
     vendorPaysDelivery: false,
     usageLimit: 30,
     usedCount: 4,
+    minimumOrder: 0,
+    discountValue: 10,
+    target: "Cesta de frutas",
   },
 ];
 

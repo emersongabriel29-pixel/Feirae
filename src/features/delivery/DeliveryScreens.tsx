@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Bell,
@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Info,
   MapPin,
+  Package,
   Plus,
   Star,
   Trash2,
@@ -17,7 +18,11 @@ import {
 } from "lucide-react";
 import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
 import { deliveryModuleDetails } from "../../domain/operations";
+import { fairs } from "../../data";
+import { drivingRoute, geocodeAddress } from "../../domain/routing";
 import {
+  isValidBrazilianPlate,
+  normalizePlate,
   requiresPlate,
   suggestedCapacityForVehicle,
   vehicleTypeOptions,
@@ -27,6 +32,7 @@ import {
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
 import { money } from "../../utils";
+import { eventNow, patchUnifiedOrder, readUnifiedOrders } from "../../domain/orderBridge";
 
 export function DeliveryOperations({
   session,
@@ -35,7 +41,7 @@ export function DeliveryOperations({
 }: {
   session: DemoSession;
   onBack: () => void;
-  onMap: () => void;
+  onMap: (destination?: string) => void;
 }) {
   const modules = [
     "Painel",
@@ -54,15 +60,37 @@ export function DeliveryOperations({
     "Vantagens",
     "Avaliações",
   ];
-  const [online, setOnline] = useState(true);
+  const [online, setOnline] = usePersistentState<boolean>(`feirae:delivery-online:${session.email}`, true);
+  const [deliveryPreferences, setDeliveryPreferences] = usePersistentState(
+    `feirae:delivery-preferences:${session.email}`,
+    {
+      radiusKm: 12,
+      preferredDistanceKm: 8,
+      regions: ["Planaltina"],
+      autoSchedule: false,
+      scheduleStart: "08:00",
+      scheduleEnd: "18:00",
+      baseLat: null as number | null,
+      baseLng: null as number | null,
+      baseLabel: "Localização não definida",
+    },
+  );
   const [accepted, setAccepted] = useState<string | null>(null);
+  const [, setRouteRevision] = useState(0);
   const [stage, setStage] = useState(0);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelDetails, setCancelDetails] = useState("");
+  const [deliveryCancellationLog, setDeliveryCancellationLog] = usePersistentState<
+    { id: string; deliveryId: string; reason: string; details: string; createdAt: string }[]
+  >(`feirae:delivery-cancellations:${session.email}`, []);
   const [active, setActive] = useState("Central");
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
   const [helpProtocol, setHelpProtocol] = useState("");
   const [accountSaved, setAccountSaved] = useState(false);
   const [vehicleFormOpen, setVehicleFormOpen] = useState(false);
+  const [vehicleEditingId, setVehicleEditingId] = useState<string | null>(null);
+  const [vehicleError, setVehicleError] = useState("");
+  const [vehicleDocumentName, setVehicleDocumentName] = useState("");
   const [vehicleType, setVehicleType] = useState<DeliveryVehicleType>("Moto");
   const [vehicleCapacity, setVehicleCapacity] = useState<number>(suggestedCapacityForVehicle("Moto"));
   const [vehicleBrandModel, setVehicleBrandModel] = useState("");
@@ -95,8 +123,10 @@ export function DeliveryOperations({
         type: "Moto",
         capacityKg: suggestedCapacityForVehicle("Moto"),
         brandModel: "",
-        plate: "",
+        plate: "ABC1D23",
         active: true,
+        documentFileName: "crlv-demo.pdf",
+        documentStatus: "approved",
       },
     ],
   );
@@ -177,50 +207,232 @@ export function DeliveryOperations({
     },
   ]);
 
-  function addVehicle() {
-    setVehicles((current) => [
-      ...current,
-      {
-        id: String(Date.now()),
-        type: vehicleType,
-        capacityKg: Math.max(1, vehicleCapacity),
-        brandModel: vehicleBrandModel.trim(),
-        plate: vehiclePlate.trim().toUpperCase(),
-        active: true,
-      },
-    ]);
+  useEffect(() => {
+    const baseLat = deliveryPreferences.baseLat;
+    const baseLng = deliveryPreferences.baseLng;
+    if (baseLat === null || baseLng === null) return;
+    const basePoint = { lat: baseLat, lng: baseLng };
+    let cancelled = false;
+
+    async function calculatePendingRoutes() {
+      const pending = readUnifiedOrders().filter(
+        (order) =>
+          order.fulfillment === "delivery" &&
+          ["ready_for_pickup", "driver_assigned"].includes(order.status) &&
+          !order.route,
+      );
+      if (!pending.length) return;
+
+      for (const order of pending) {
+        if (cancelled) return;
+        const fair = fairs.find((item) => item.name === order.fairName);
+        const fairPoint =
+          typeof fair?.lat === "number" && typeof fair.lng === "number"
+            ? { lat: fair.lat, lng: fair.lng }
+            : fair?.address
+              ? await geocodeAddress(fair.address)
+              : null;
+        const customerPoint =
+          typeof order.customerLat === "number" && typeof order.customerLng === "number"
+            ? { lat: order.customerLat, lng: order.customerLng }
+            : order.customerAddress
+              ? await geocodeAddress(order.customerAddress)
+              : null;
+
+        if (!fairPoint || !customerPoint) continue;
+
+        const toVendor = await drivingRoute(basePoint, fairPoint);
+        const toCustomer = await drivingRoute(fairPoint, customerPoint);
+        if (!toVendor || !toCustomer || cancelled) continue;
+
+        patchUnifiedOrder(order.id, {
+          route: {
+            toVendorKm: toVendor.distanceKm,
+            vendorToCustomerKm: toCustomer.distanceKm,
+            totalKm: Math.round((toVendor.distanceKm + toCustomer.distanceKm) * 10) / 10,
+            etaMinutes: toVendor.durationMinutes + toCustomer.durationMinutes,
+            source: "osrm",
+          },
+        });
+      }
+      if (!cancelled) setRouteRevision((value) => value + 1);
+    }
+
+    void calculatePendingRoutes();
+    return () => {
+      cancelled = true;
+    };
+  }, [deliveryPreferences.baseLat, deliveryPreferences.baseLng]);
+
+  function resetVehicleForm() {
+    setVehicleEditingId(null);
+    setVehicleType("Moto");
+    setVehicleCapacity(suggestedCapacityForVehicle("Moto"));
     setVehicleBrandModel("");
     setVehiclePlate("");
+    setVehicleDocumentName("");
+    setVehicleError("");
+  }
+
+  function editVehicle(vehicle: DeliveryVehicle) {
+    setVehicleEditingId(vehicle.id);
+    setVehicleType(vehicle.type);
+    setVehicleCapacity(vehicle.capacityKg);
+    setVehicleBrandModel(vehicle.brandModel);
+    setVehiclePlate(vehicle.plate);
+    setVehicleDocumentName(vehicle.documentFileName ?? "");
+    setVehicleError("");
+    setVehicleFormOpen(true);
+  }
+
+  function saveVehicle() {
+    const plate = normalizePlate(vehiclePlate);
+    if (vehicleCapacity <= 0) {
+      setVehicleError("Informe uma capacidade maior que zero.");
+      return;
+    }
+    if (requiresPlate(vehicleType) && !isValidBrazilianPlate(plate)) {
+      setVehicleError("Informe uma placa brasileira válida no padrão ABC1234 ou Mercosul ABC1D23.");
+      return;
+    }
+    if (requiresPlate(vehicleType) && !vehicleDocumentName) {
+      setVehicleError("Envie o documento do veículo antes de salvar.");
+      return;
+    }
+
+    const nextVehicle: DeliveryVehicle = {
+      id: vehicleEditingId ?? String(Date.now()),
+      type: vehicleType,
+      capacityKg: Math.max(1, vehicleCapacity),
+      brandModel: vehicleBrandModel.trim(),
+      plate: requiresPlate(vehicleType) ? plate : "",
+      active: vehicleEditingId
+        ? (vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.active ?? true)
+        : true,
+      documentFileName: requiresPlate(vehicleType) ? vehicleDocumentName : "",
+      documentStatus: requiresPlate(vehicleType)
+        ? vehicleEditingId
+          ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFileName ===
+            vehicleDocumentName
+            ? (vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentStatus ?? "under_review")
+            : "under_review"
+          : "under_review"
+        : "approved",
+    };
+
+    setVehicles((current) =>
+      vehicleEditingId
+        ? current.map((vehicle) => (vehicle.id === vehicleEditingId ? nextVehicle : vehicle))
+        : [...current, nextVehicle],
+    );
+    resetVehicleForm();
     setVehicleFormOpen(false);
   }
-  const deliveries = [
+  const deliveryFixtures = [
     {
       id: "FE-1024",
-      route: "Feira do Produtor → Planaltina",
-      distance: "4,2 km",
+      fair: "Feira do Produtor Rural",
+      bank: "Sítio da Vó",
+      region: "Planaltina",
+      customerAddress: "Planaltina, DF",
+      route: "Feira do Produtor Rural → Planaltina",
+      toBankKm: 1.4,
+      bankToCustomerKm: 4.2,
+      totalDistanceKm: 5.6,
+      etaMinutes: 24,
       fee: "R$ 12,80",
       feeAmount: 12.8,
       weight: 8.4,
-      vehicle: "Moto",
+      items: ["1× cesta de frutas", "2× tomate orgânico", "2× cheiro-verde"],
     },
     {
       id: "FE-1025",
+      fair: "Feira Central",
+      bank: "Banca do Cerrado",
+      region: "Asa Norte",
+      customerAddress: "Asa Norte, Brasília - DF",
       route: "Feira Central → Asa Norte",
-      distance: "6,8 km",
+      toBankKm: 2.1,
+      bankToCustomerKm: 6.8,
+      totalDistanceKm: 8.9,
+      etaMinutes: 36,
       fee: "R$ 17,40",
       feeAmount: 17.4,
       weight: 16.8,
-      vehicle: "Moto com baú",
+      items: ["2× caixas de hortifruti", "1× queijo artesanal"],
     },
     {
       id: "FE-1026",
-      route: "Feira da Torre → Sudoeste",
-      distance: "5,1 km",
+      fair: "Feira da Torre de TV",
+      bank: "Mãos do DF",
+      region: "Sudoeste",
+      customerAddress: "Sudoeste, Brasília - DF",
+      route: "Feira da Torre de TV → Sudoeste",
+      toBankKm: 3.4,
+      bankToCustomerKm: 5.1,
+      totalDistanceKm: 8.5,
+      etaMinutes: 33,
       fee: "R$ 24,20",
       feeAmount: 24.2,
       weight: 31.5,
-      vehicle: "Carro",
+      items: ["4× bolsas artesanais", "2× caixas"],
     },
+    {
+      id: "FE-1027",
+      fair: "Feira do Produtor Rural",
+      bank: "Atacado da Feira",
+      region: "Planaltina",
+      customerAddress: "Planaltina, DF",
+      route: "Feira do Produtor Rural → Planaltina",
+      toBankKm: 5.2,
+      bankToCustomerKm: 10.8,
+      totalDistanceKm: 16,
+      etaMinutes: 48,
+      fee: "R$ 31,50",
+      feeAmount: 31.5,
+      weight: 105,
+      items: ["10× caixas de frutas", "5× sacos de hortaliças"],
+    },
+  ];
+  const sharedOrders = readUnifiedOrders();
+  const sharedRoutePendingCount = sharedOrders.filter(
+    (order) =>
+      order.fulfillment === "delivery" &&
+      ["ready_for_pickup", "driver_assigned"].includes(order.status) &&
+      !order.route,
+  ).length;
+  const sharedDeliveries = sharedOrders
+    .filter(
+      (order) =>
+        order.fulfillment === "delivery" &&
+        ["ready_for_pickup", "driver_assigned", "collected", "out_for_delivery"].includes(order.status) &&
+        Boolean(order.route),
+    )
+    .map((order) => {
+      const route = order.route!;
+      const vendorNames = Array.from(new Set(order.items.map((item) => item.vendor)));
+      const weight = order.items.reduce((sum, item) => sum + item.weightKg, 0);
+      return {
+        id: order.id,
+        fair: order.fairName,
+        bank: vendorNames.join(" + "),
+        region: order.customerCity ?? "Destino",
+        customerAddress: order.customerAddress ?? order.customerCity ?? "Destino do cliente",
+        route: `${order.fairName} → ${order.customerCity ?? "cliente"}`,
+        toBankKm: route.toVendorKm,
+        bankToCustomerKm: route.vendorToCustomerKm,
+        totalDistanceKm: route.totalKm,
+        etaMinutes: route.etaMinutes,
+        fee: money(order.calculatedDeliveryFee),
+        feeAmount: order.calculatedDeliveryFee,
+        weight,
+        items: order.items.map((item) => `${item.quantity}× ${item.name}`),
+      };
+    });
+  const sharedIds = new Set(sharedDeliveries.map((delivery) => delivery.id));
+  const deliveries = [
+    ...sharedDeliveries,
+    ...deliveryFixtures.filter((delivery) => !sharedIds.has(delivery.id)),
   ];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
   const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
@@ -265,23 +477,91 @@ export function DeliveryOperations({
     deliveryAccount.receivingMethod === "Pix"
       ? Boolean(deliveryAccount.pixKey)
       : Boolean(deliveryAccount.bankName && deliveryAccount.agency && deliveryAccount.accountNumber);
+  const scheduleAllowsNow = (() => {
+    if (!deliveryPreferences.autoSchedule) return true;
+    const now = new Date();
+    const current = now.getHours() * 60 + now.getMinutes();
+    const [startHour, startMinute] = deliveryPreferences.scheduleStart.split(":").map(Number);
+    const [endHour, endMinute] = deliveryPreferences.scheduleEnd.split(":").map(Number);
+    const start = startHour * 60 + startMinute;
+    const end = endHour * 60 + endMinute;
+    return end >= start ? current >= start && current <= end : current >= start || current <= end;
+  })();
+  const availableNow = online && scheduleAllowsNow && approvalStatus === "Aprovado";
+  const vehicleReady = (vehicle: DeliveryVehicle) =>
+    !requiresPlate(vehicle.type) ||
+    (vehicle.documentStatus === "approved" && isValidBrazilianPlate(vehicle.plate));
   const compatibleVehicleForWeight = (weight: number) =>
     [...activeVehicles]
-      .filter((vehicle) => vehicle.capacityKg >= weight)
+      .filter((vehicle) => vehicle.capacityKg >= weight && vehicleReady(vehicle))
       .sort((a, b) => a.capacityKg - b.capacityKg)[0] ?? null;
-  const compatibleDeliveryCount = deliveries.filter((delivery) =>
+  const visibleDeliveries = deliveries
+    .filter((delivery) => delivery.totalDistanceKm <= deliveryPreferences.radiusKm)
+    .filter(
+      (delivery) =>
+        deliveryPreferences.regions.length === 0 || deliveryPreferences.regions.includes(delivery.region),
+    )
+    .sort((a, b) => {
+      const aPreferred = a.totalDistanceKm <= deliveryPreferences.preferredDistanceKm ? 0 : 1;
+      const bPreferred = b.totalDistanceKm <= deliveryPreferences.preferredDistanceKm ? 0 : 1;
+      return aPreferred - bPreferred || a.totalDistanceKm - b.totalDistanceKm;
+    });
+  const compatibleDeliveryCount = visibleDeliveries.filter((delivery) =>
     compatibleVehicleForWeight(delivery.weight),
   ).length;
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
+  const activeDeliveryVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
   const activeDeliverySection = activeDelivery ? (
     <section className="active-delivery">
       <span className="eyebrow">Entrega em andamento</span>
       <h3>{activeDelivery.id}</h3>
       <p>{activeDelivery.route}</p>
-      <small>
-        {activeDelivery.weight} kg · veículo indicado: {activeDelivery.vehicle}
-      </small>
+      <div className="finance-breakdown">
+        <p>
+          <span>Feira</span>
+          <strong>{activeDelivery.fair}</strong>
+        </p>
+        <p>
+          <span>Banca</span>
+          <strong>{activeDelivery.bank}</strong>
+        </p>
+        <p>
+          <span>Peso</span>
+          <strong>{activeDelivery.weight.toLocaleString("pt-BR")} kg</strong>
+        </p>
+        <p>
+          <span>Veículo compatível em uso</span>
+          <strong>
+            {activeDeliveryVehicle
+              ? `${activeDeliveryVehicle.type} · ${activeDeliveryVehicle.capacityKg} kg`
+              : "Nenhum"}
+          </strong>
+        </p>
+        <p>
+          <span>Distância total</span>
+          <strong>{activeDelivery.totalDistanceKm.toLocaleString("pt-BR")} km</strong>
+        </p>
+        <p>
+          <span>Previsão</span>
+          <strong>{activeDelivery.etaMinutes} min</strong>
+        </p>
+        <p>
+          <span>Ganho</span>
+          <strong>{activeDelivery.fee}</strong>
+        </p>
+      </div>
+      <div className="operation-list detailed">
+        {activeDelivery.items.map((item) => (
+          <article key={item}>
+            <Package />
+            <div>
+              <b>{item}</b>
+              <small>Item da corrida</small>
+            </div>
+          </article>
+        ))}
+      </div>
       <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
         {deliveryStages.map((label, index) => (
           <span className={index <= stage ? "done" : ""} key={label}>
@@ -290,13 +570,39 @@ export function DeliveryOperations({
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <button onClick={onMap} className="secondary-action">
-          <MapPin size={17} /> Abrir rota
+        <button
+          onClick={() =>
+            onMap(
+              stage <= 1
+                ? `${activeDelivery.bank}, ${activeDelivery.fair}, DF`
+                : activeDelivery.customerAddress,
+            )
+          }
+          className="secondary-action"
+        >
+          <MapPin size={17} /> {stage <= 1 ? "Rota até a banca" : "Rota até o cliente"}
         </button>
         <button
           className="primary-action"
           onClick={() => {
-            if (stage === deliveryStages.length - 1) {
+            if (stage === 1) {
+              patchUnifiedOrder(
+                activeDelivery.id,
+                { status: "collected" },
+                eventNow("collected", "Pedido coletado", "delivery"),
+              );
+            } else if (stage === 2) {
+              patchUnifiedOrder(
+                activeDelivery.id,
+                { status: "out_for_delivery" },
+                eventNow("out-for-delivery", "A caminho do cliente", "delivery"),
+              );
+            } else if (stage === deliveryStages.length - 1) {
+              patchUnifiedOrder(
+                activeDelivery.id,
+                { status: "delivered" },
+                eventNow("delivered", "Entregue", "delivery"),
+              );
               setDeliveryLedger((current) => [
                 {
                   id: `ledger-${activeDelivery.id}-${Date.now()}`,
@@ -309,6 +615,8 @@ export function DeliveryOperations({
               ]);
               setAccepted(null);
               setStage(0);
+              setCancelReason("");
+              setCancelDetails("");
             } else setStage((value) => value + 1);
           }}
         >
@@ -317,19 +625,62 @@ export function DeliveryOperations({
       </div>
       <div className="cancel-panel">
         <b>Cancelar entrega</b>
-        <select value={cancelReason} onChange={(event) => setCancelReason(event.target.value)}>
+        <select
+          value={cancelReason}
+          onChange={(event) => {
+            setCancelReason(event.target.value);
+            setCancelDetails("");
+          }}
+        >
           <option value="">Motivo do cancelamento</option>
           <option>Veículo com problema</option>
           <option>Peso/volume incompatível</option>
           <option>Banca atrasou a retirada</option>
           <option>Endereço inseguro ou incorreto</option>
           <option>Cliente não responde</option>
+          <option>Outro</option>
         </select>
+        {cancelReason === "Outro" && (
+          <label>
+            Descreva o motivo
+            <textarea
+              rows={3}
+              value={cancelDetails}
+              onChange={(event) => setCancelDetails(event.target.value)}
+              placeholder="Explique por que não pode concluir a corrida."
+            />
+          </label>
+        )}
         <button
           className="secondary-action"
+          disabled={!cancelReason || (cancelReason === "Outro" && !cancelDetails.trim())}
           onClick={() => {
+            const createdAt = new Intl.DateTimeFormat("pt-BR", {
+              dateStyle: "short",
+              timeStyle: "short",
+            }).format(new Date());
+            setDeliveryCancellationLog((current) => [
+              {
+                id: String(Date.now()),
+                deliveryId: activeDelivery.id,
+                reason: cancelReason,
+                details: cancelDetails.trim(),
+                createdAt,
+              },
+              ...current,
+            ]);
+            patchUnifiedOrder(
+              activeDelivery.id,
+              { status: "ready_for_pickup", driver: undefined },
+              eventNow("driver-cancelled", "Corrida devolvida à fila", "delivery", {
+                reason: cancelReason,
+                details: cancelDetails.trim(),
+              }),
+            );
             setAccepted(null);
             setStage(0);
+            setCancelReason("");
+            setCancelDetails("");
           }}
         >
           <XCircle size={17} /> Cancelar corrida
@@ -339,48 +690,109 @@ export function DeliveryOperations({
   ) : (
     <Empty title="Nenhuma entrega ativa" text="Aceite uma entrega disponível para acompanhar as etapas." />
   );
+
   const deliveryList = (
     <div className="mt-6 space-y-3">
       <span className="eyebrow">Entregas disponíveis</span>
-      {deliveries
-        .filter((delivery) => delivery.id !== accepted)
-        .map((delivery) => {
-          const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
-          return (
-            <article className="delivery-row" key={delivery.id}>
-              <span>
-                <Bike />
-              </span>
-              <div>
-                <b>
-                  {delivery.id} · {delivery.route}
-                </b>
-                <small>
-                  {delivery.distance} · {delivery.weight} kg ·{" "}
-                  {compatibleVehicle
-                    ? `compatível com ${compatibleVehicle.type} (${compatibleVehicle.capacityKg} kg)`
-                    : "sem veículo ativo compatível"}{" "}
-                  · ganho {delivery.fee}
-                </small>
-              </div>
-              <button
-                disabled={!online || approvalStatus !== "Aprovado" || accepted !== null || !compatibleVehicle}
-                onClick={() => {
-                  if (!compatibleVehicle) return;
-                  setAccepted(delivery.id);
-                  setStage(0);
-                  setActive("Em andamento");
-                }}
-              >
-                {compatibleVehicle ? "Aceitar" : "Veículo incompatível"}
-              </button>
-            </article>
-          );
-        })}
+      {sharedRoutePendingCount > 0 && (
+        <div className="region-strip">
+          <MapPin size={18} />
+          <div>
+            <b>{sharedRoutePendingCount} pedido(s) aguardando cálculo de rota</b>
+            <p>Uma corrida só entra na oferta quando distância e previsão estiverem disponíveis.</p>
+          </div>
+        </div>
+      )}
+      {!availableNow && (
+        <div className="region-strip">
+          <Info size={18} />
+          <div>
+            <b>Você não está disponível para novas corridas</b>
+            <p>
+              {approvalStatus !== "Aprovado"
+                ? `Cadastro: ${approvalStatus}.`
+                : online && !scheduleAllowsNow
+                  ? "Sua agenda automática está fora do horário configurado."
+                  : "Ative sua disponibilidade para receber corridas."}
+            </p>
+          </div>
+        </div>
+      )}
+      {visibleDeliveries.filter((delivery) => delivery.id !== accepted).length === 0 ? (
+        <Empty
+          title="Nenhuma corrida dentro dos seus filtros"
+          text="Aumente o raio, altere as regiões ou aguarde uma nova corrida."
+        />
+      ) : (
+        visibleDeliveries
+          .filter((delivery) => delivery.id !== accepted)
+          .map((delivery) => {
+            const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
+            return (
+              <article className="delivery-row" key={delivery.id}>
+                <span>
+                  <Bike />
+                </span>
+                <div>
+                  <b>
+                    {delivery.id} · {delivery.fair} · {delivery.bank}
+                  </b>
+                  <small>
+                    Destino: {delivery.region} · {delivery.weight.toLocaleString("pt-BR")} kg ·{" "}
+                    {delivery.items.length} item(ns)
+                  </small>
+                  <small>
+                    Até a banca {delivery.toBankKm.toLocaleString("pt-BR")} km · banca → cliente{" "}
+                    {delivery.bankToCustomerKm.toLocaleString("pt-BR")} km · total{" "}
+                    {delivery.totalDistanceKm.toLocaleString("pt-BR")} km · {delivery.etaMinutes} min
+                  </small>
+                  <small>{delivery.items.join(" · ")}</small>
+                  <small>
+                    {compatibleVehicle
+                      ? `Veículo compatível: ${compatibleVehicle.type} (${compatibleVehicle.capacityKg} kg)`
+                      : "Nenhum veículo ativo/documentado suporta o peso"}
+                    {" · "}ganho {delivery.fee}
+                  </small>
+                </div>
+                <button
+                  disabled={!availableNow || accepted !== null || !compatibleVehicle}
+                  onClick={() => {
+                    if (!compatibleVehicle || !availableNow) return;
+                    setAccepted(delivery.id);
+                    setStage(0);
+                    patchUnifiedOrder(
+                      delivery.id,
+                      {
+                        status: "driver_assigned",
+                        driver: {
+                          name: deliveryAccount.name || session.name,
+                          vehicle: compatibleVehicle.type,
+                          plateMasked: compatibleVehicle.plate
+                            ? `***${compatibleVehicle.plate.slice(-4)}`
+                            : undefined,
+                          etaMinutes: delivery.etaMinutes,
+                          distanceKm: delivery.totalDistanceKm,
+                        },
+                      },
+                      eventNow("driver-assigned", "Entregador a caminho da banca", "delivery"),
+                    );
+                    setActive("Em andamento");
+                  }}
+                >
+                  {compatibleVehicle ? "Aceitar" : "Veículo incompatível"}
+                </button>
+              </article>
+            );
+          })
+      )}
     </div>
   );
   return (
-    <Panel title="Central do entregador" subtitle="Entregas locais demonstrativas" onBack={onBack}>
+    <Panel
+      title="Central do entregador"
+      subtitle="Gerencie disponibilidade, veículos, filtros, corridas e ganhos."
+      onBack={onBack}
+    >
       {active === "Central" ? (
         <div className="ops-home">
           <div className="ops-summary">
@@ -392,7 +804,11 @@ export function DeliveryOperations({
             <div className="operation-metrics">
               <article>
                 <strong>
-                  {approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}
+                  {approvalStatus === "Aprovado"
+                    ? availableNow
+                      ? "Disponível"
+                      : "Indisponível"
+                    : approvalStatus}
                 </strong>
                 <span>disponibilidade atual</span>
               </article>
@@ -403,7 +819,7 @@ export function DeliveryOperations({
               <article>
                 <strong>
                   {money(
-                    deliveries
+                    visibleDeliveries
                       .filter((delivery) => compatibleVehicleForWeight(delivery.weight))
                       .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
                   )}
@@ -433,7 +849,7 @@ export function DeliveryOperations({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <span className="eyebrow">Disponibilidade</span>
-                    <h2>{online ? "Você está online" : "Você está offline"}</h2>
+                    <h2>{availableNow ? "Você está disponível" : "Você está indisponível"}</h2>
                   </div>
                   <button
                     onClick={() => {
@@ -441,9 +857,13 @@ export function DeliveryOperations({
                       setOnline((value) => !value);
                     }}
                     disabled={approvalStatus !== "Aprovado"}
-                    className={online ? "status-button active" : "status-button"}
+                    className={availableNow ? "status-button active" : "status-button"}
                   >
-                    {approvalStatus === "Aprovado" ? (online ? "Online" : "Offline") : approvalStatus}
+                    {approvalStatus === "Aprovado"
+                      ? online
+                        ? "Desligar"
+                        : "Ficar disponível"
+                      : approvalStatus}
                   </button>
                 </div>
                 <div className="operation-metrics">
@@ -474,7 +894,7 @@ export function DeliveryOperations({
                 <ModuleHeader
                   badge="Corridas liberadas"
                   title="Entregas compatíveis"
-                  description="Cada corrida mostra rota, peso, veículo indicado e ganho antes do aceite."
+                  description="Cada corrida mostra peso, itens, distâncias, previsão, ganho e um veículo compatível antes do aceite."
                 />
                 {deliveryList}
               </>
@@ -498,7 +918,7 @@ export function DeliveryOperations({
                   </article>
                   <article>
                     <strong>{money(paidAmount)}</strong>
-                    <span>já pago na demonstração</span>
+                    <span>já liquidado</span>
                   </article>
                 </div>
                 <div className="finance-breakdown">
@@ -569,16 +989,23 @@ export function DeliveryOperations({
             ) : active === "Veículos" ? (
               <>
                 <ModuleHeader
-                  badge="Capacidade"
+                  badge="Capacidade e documentação"
                   title="Meus veículos"
-                  description="Cadastre os veículos que realmente usa. A capacidade em kg pode ser ajustada conforme o seu veículo."
+                  description="Cadastre, edite, ative ou pause veículos. O peso da corrida apenas elimina veículos que não suportam a carga."
                 />
-                <button className="primary-action" onClick={() => setVehicleFormOpen((value) => !value)}>
+                <button
+                  className="primary-action"
+                  onClick={() => {
+                    if (!vehicleFormOpen) resetVehicleForm();
+                    setVehicleFormOpen((value) => !value);
+                  }}
+                >
                   <Plus size={17} /> Cadastrar veículo
                 </button>
 
                 {vehicleFormOpen && (
                   <div className="form-card">
+                    <h3>{vehicleEditingId ? "Editar veículo" : "Novo veículo"}</h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label>
                         Tipo de veículo
@@ -587,18 +1014,23 @@ export function DeliveryOperations({
                           onChange={(event) => {
                             const nextType = event.target.value as DeliveryVehicleType;
                             setVehicleType(nextType);
-                            setVehicleCapacity(suggestedCapacityForVehicle(nextType));
+                            if (!vehicleEditingId) setVehicleCapacity(suggestedCapacityForVehicle(nextType));
+                            if (!requiresPlate(nextType)) {
+                              setVehiclePlate("");
+                              setVehicleDocumentName("");
+                            }
+                            setVehicleError("");
                           }}
                         >
                           {vehicleTypeOptions.map((type) => (
                             <option value={type} key={type}>
-                              {type} · sugestão {suggestedCapacityForVehicle(type)} kg
+                              {type} · referência {suggestedCapacityForVehicle(type)} kg
                             </option>
                           ))}
                         </select>
                       </label>
                       <label>
-                        Capacidade máxima usada no Feiraê
+                        Capacidade máxima deste veículo
                         <input
                           type="number"
                           min="1"
@@ -606,35 +1038,67 @@ export function DeliveryOperations({
                           value={vehicleCapacity}
                           onChange={(event) => setVehicleCapacity(Number(event.target.value))}
                         />
-                        <small>Valor editável para filtrar corridas compatíveis.</small>
+                        <small>
+                          Ex.: um pedido de 10 kg pode ir em qualquer veículo ativo que suporte 10 kg ou mais.
+                        </small>
                       </label>
                       <label>
                         Marca/modelo
                         <input
                           value={vehicleBrandModel}
                           onChange={(event) => setVehicleBrandModel(event.target.value)}
-                          placeholder="Ex.: Honda CG 160"
+                          placeholder="Opcional · Ex.: Honda CG 160"
                         />
                       </label>
                       {requiresPlate(vehicleType) && (
-                        <label>
-                          Placa
-                          <input
-                            value={vehiclePlate}
-                            onChange={(event) => setVehiclePlate(event.target.value)}
-                            placeholder="ABC1D23"
-                          />
-                        </label>
+                        <>
+                          <label>
+                            Placa
+                            <input
+                              value={vehiclePlate}
+                              onChange={(event) => {
+                                setVehiclePlate(normalizePlate(event.target.value));
+                                setVehicleError("");
+                              }}
+                              placeholder="ABC1234 ou ABC1D23"
+                              maxLength={7}
+                              autoCapitalize="characters"
+                            />
+                            <small>Padrão brasileiro antigo ou Mercosul.</small>
+                          </label>
+                          <label>
+                            Documento do veículo
+                            <span className="mini-toggle">
+                              <Upload size={15} /> {vehicleDocumentName || "Selecionar CRLV/documento"}
+                              <input
+                                type="file"
+                                accept=".pdf,image/*"
+                                hidden
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  if (!file) return;
+                                  setVehicleDocumentName(file.name);
+                                  setVehicleError("");
+                                }}
+                              />
+                            </span>
+                            <small>O documento entra em análise quando for novo ou substituído.</small>
+                          </label>
+                        </>
                       )}
                     </div>
+                    {vehicleError && <p className="operation-footnote">{vehicleError}</p>}
                     <div className="module-action-row">
-                      <button type="button" className="primary-action" onClick={addVehicle}>
-                        Salvar veículo
+                      <button type="button" className="primary-action" onClick={saveVehicle}>
+                        {vehicleEditingId ? "Salvar alterações" : "Salvar veículo"}
                       </button>
                       <button
                         type="button"
                         className="secondary-action"
-                        onClick={() => setVehicleFormOpen(false)}
+                        onClick={() => {
+                          resetVehicleForm();
+                          setVehicleFormOpen(false);
+                        }}
                       >
                         Cancelar
                       </button>
@@ -649,12 +1113,27 @@ export function DeliveryOperations({
                       <div>
                         <b>{vehicle.type}</b>
                         <small>
-                          Até {vehicle.capacityKg} kg
+                          Capacidade {vehicle.capacityKg} kg
                           {vehicle.brandModel ? ` · ${vehicle.brandModel}` : ""}
                           {vehicle.plate ? ` · ${vehicle.plate}` : ""}
                         </small>
+                        {requiresPlate(vehicle.type) && (
+                          <small>
+                            Documento: {vehicle.documentFileName || "não enviado"} ·{" "}
+                            {vehicle.documentStatus === "approved"
+                              ? "aprovado"
+                              : vehicle.documentStatus === "under_review"
+                                ? "em análise"
+                                : vehicle.documentStatus === "correction_required"
+                                  ? "correção necessária"
+                                  : "pendente"}
+                          </small>
+                        )}
                       </div>
                       <div className="item-actions">
+                        <button className="mini-toggle" onClick={() => editVehicle(vehicle)}>
+                          Editar
+                        </button>
                         <button
                           className={vehicle.active ? "mini-toggle active" : "mini-toggle"}
                           onClick={() =>
@@ -665,7 +1144,7 @@ export function DeliveryOperations({
                             )
                           }
                         >
-                          {vehicle.active ? "Ativo" : "Pausado"}
+                          {vehicle.active ? "Ativo" : "Inativo"}
                         </button>
                         <button
                           className="mini-toggle"
@@ -680,46 +1159,225 @@ export function DeliveryOperations({
                     </article>
                   ))}
                 </div>
-
-                <div className="surface-card">
-                  <span className="eyebrow">Referência inicial do Feiraê</span>
-                  <p>
-                    Estes valores são sugestões de operação e podem ser alterados no cadastro de cada veículo.
-                  </p>
-                  <div className="finance-breakdown">
-                    {vehicleTypeOptions
-                      .filter((type) => type !== "Outro")
-                      .map((type) => (
-                        <p key={type}>
-                          <span>{type}</span>
-                          <strong>{suggestedCapacityForVehicle(type)} kg</strong>
-                        </p>
-                      ))}
-                  </div>
-                </div>
+                {!vehicles.length && (
+                  <Empty
+                    title="Nenhum veículo cadastrado"
+                    text="Cadastre um veículo e defina a capacidade para receber corridas compatíveis."
+                  />
+                )}
               </>
             ) : active === "Forma de entrega" ? (
               <>
                 <ModuleHeader
                   badge="Preferências"
                   title="Forma de entrega"
-                  description="O app usa peso, capacidade dos veículos ativos, raio e preferências para oferecer corridas compatíveis."
+                  description="Disponibilidade, raio, regiões, distância preferida, agenda e veículos ativos determinam quais corridas chegam até você."
                 />
+
+                <div className="form-card">
+                  <div className="region-strip">
+                    <MapPin size={18} />
+                    <div>
+                      <b>Localização usada para calcular distância até a banca</b>
+                      <p>{deliveryPreferences.baseLabel}</p>
+                    </div>
+                    <button
+                      className="mini-toggle"
+                      onClick={() => {
+                        if (!navigator.geolocation) return;
+                        navigator.geolocation.getCurrentPosition(
+                          ({ coords }) =>
+                            setDeliveryPreferences((current) => ({
+                              ...current,
+                              baseLat: coords.latitude,
+                              baseLng: coords.longitude,
+                              baseLabel: "Localização atual atualizada",
+                            })),
+                          () =>
+                            setDeliveryPreferences((current) => ({
+                              ...current,
+                              baseLabel: "Não foi possível acessar sua localização",
+                            })),
+                          { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
+                        );
+                      }}
+                    >
+                      Usar GPS
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <b>Estou disponível agora</b>
+                      <p>
+                        {availableNow
+                          ? "Novas corridas compatíveis podem aparecer."
+                          : "Você não receberá novas corridas agora."}
+                      </p>
+                    </div>
+                    <button
+                      className={availableNow ? "status-button active" : "status-button"}
+                      disabled={approvalStatus !== "Aprovado"}
+                      onClick={() => setOnline((value) => !value)}
+                    >
+                      {online ? "Desligar" : "Ligar"}
+                    </button>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      Raio máximo de atuação
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        step="1"
+                        value={deliveryPreferences.radiusKm}
+                        onChange={(event) =>
+                          setDeliveryPreferences((current) => ({
+                            ...current,
+                            radiusKm: Math.max(1, Number(event.target.value) || 1),
+                          }))
+                        }
+                      />
+                      <small>Até {deliveryPreferences.radiusKm} km de distância total da corrida.</small>
+                    </label>
+                    <label>
+                      Distância preferida
+                      <input
+                        type="number"
+                        min="1"
+                        max={deliveryPreferences.radiusKm}
+                        step="1"
+                        value={deliveryPreferences.preferredDistanceKm}
+                        onChange={(event) =>
+                          setDeliveryPreferences((current) => ({
+                            ...current,
+                            preferredDistanceKm: Math.max(1, Number(event.target.value) || 1),
+                          }))
+                        }
+                      />
+                      <small>Corridas até essa distância aparecem primeiro; não é um bloqueio.</small>
+                    </label>
+                  </div>
+
+                  <label>
+                    Regiões em que deseja trabalhar
+                    <input
+                      value={deliveryPreferences.regions.join(", ")}
+                      onChange={(event) =>
+                        setDeliveryPreferences((current) => ({
+                          ...current,
+                          regions: event.target.value
+                            .split(",")
+                            .map((item) => item.trim())
+                            .filter(Boolean),
+                        }))
+                      }
+                      placeholder="Planaltina, Sobradinho"
+                    />
+                    <small>Separe regiões por vírgula. Deixe vazio para não filtrar por região.</small>
+                  </label>
+
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={deliveryPreferences.autoSchedule}
+                      onChange={(event) =>
+                        setDeliveryPreferences((current) => ({
+                          ...current,
+                          autoSchedule: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>
+                      <b>Usar horário automático</b>
+                      <small className="block">
+                        Fora do horário configurado o app fica indisponível para novas corridas.
+                      </small>
+                    </span>
+                  </label>
+
+                  {deliveryPreferences.autoSchedule && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Início
+                        <input
+                          type="time"
+                          value={deliveryPreferences.scheduleStart}
+                          onChange={(event) =>
+                            setDeliveryPreferences((current) => ({
+                              ...current,
+                              scheduleStart: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Fim
+                        <input
+                          type="time"
+                          value={deliveryPreferences.scheduleEnd}
+                          onChange={(event) =>
+                            setDeliveryPreferences((current) => ({
+                              ...current,
+                              scheduleEnd: event.target.value,
+                            }))
+                          }
+                        />
+                        <small>Horários que atravessam a meia-noite também são aceitos.</small>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 <div className="operation-list detailed">
                   <article>
                     <MapPin />
                     <div>
-                      <b>Raio de atuação</b>
-                      <small>Defina posteriormente a distância máxima que deseja percorrer.</small>
+                      <b>Raio de atuação · {deliveryPreferences.radiusKm} km</b>
+                      <small>
+                        Regiões:{" "}
+                        {deliveryPreferences.regions.length
+                          ? deliveryPreferences.regions.join(", ")
+                          : "todas"}{" "}
+                        · preferência até {deliveryPreferences.preferredDistanceKm} km.
+                      </small>
                     </div>
                   </article>
                   <article>
                     <Truck />
                     <div>
-                      <b>Capacidade por veículo</b>
-                      <small>Somente veículos ativos entram no filtro de peso das corridas.</small>
+                      <b>Veículos ativos · {activeVehicles.length}</b>
+                      <small>
+                        {activeVehicles.length
+                          ? activeVehicles
+                              .map((vehicle) => `${vehicle.type} ${vehicle.capacityKg} kg`)
+                              .join(" · ")
+                          : "Nenhum veículo ativo. Sem veículo compatível, a corrida não pode ser aceita."}
+                      </small>
                     </div>
+                    <button className="mini-toggle" onClick={() => setActive("Veículos")}>
+                      Gerenciar
+                    </button>
                   </article>
+                </div>
+
+                <div className="surface-card">
+                  <span className="eyebrow">Resultado dos filtros</span>
+                  <div className="operation-metrics">
+                    <article>
+                      <strong>{visibleDeliveries.length}</strong>
+                      <span>dentro do raio/regiões</span>
+                    </article>
+                    <article>
+                      <strong>{compatibleDeliveryCount}</strong>
+                      <span>com peso compatível</span>
+                    </article>
+                    <article>
+                      <strong>{availableNow ? "Ativo" : "Pausado"}</strong>
+                      <span>recebimento de corridas</span>
+                    </article>
+                  </div>
                 </div>
               </>
             ) : active === "Desempenho" ? (
@@ -739,8 +1397,8 @@ export function DeliveryOperations({
                     <span>avaliação média</span>
                   </article>
                   <article>
-                    <strong>1</strong>
-                    <span>cancelamento na semana</span>
+                    <strong>{deliveryCancellationLog.length}</strong>
+                    <span>cancelamentos registrados</span>
                   </article>
                 </div>
                 <div className="operation-list detailed">
@@ -753,7 +1411,7 @@ export function DeliveryOperations({
                       <Check />
                       <div>
                         <b>{item}</b>
-                        <small>Baseado nas últimas entregas demonstrativas.</small>
+                        <small>Baseado nas últimas entregas registradas.</small>
                       </div>
                     </article>
                   ))}
@@ -926,7 +1584,7 @@ export function DeliveryOperations({
                       <span>{index + 1}</span>
                       <div>
                         <b>{step}</b>
-                        <small>Etapa demonstrativa para orientar o entregador.</small>
+                        <small>Etapa operacional para orientar o entregador.</small>
                       </div>
                     </article>
                   ))}
@@ -1211,7 +1869,7 @@ export function DeliveryOperations({
                   <span>🎁</span>
                   <div>
                     <b>Bônus por horário de feira</b>
-                    <small>Complete 5 entregas entre 7h e 11h para liberar bônus demonstrativo.</small>
+                    <small>Complete 5 entregas entre 7h e 11h para liberar bônus da campanha.</small>
                   </div>
                   <span className="document-status">Novo</span>
                 </div>

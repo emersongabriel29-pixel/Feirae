@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
@@ -31,12 +31,14 @@ import { useAppNavigation } from "./hooks/useAppNavigation";
 import { useDemoCart } from "./hooks/useDemoCart";
 import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
+import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
 export default function App() {
   const { session, role, startSession, clearSession } = useDemoSession();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const [favorites, setFavorites] = usePersistentState<number[]>("feirae:favorites", [2]);
+  const [vendorFavorites, setVendorFavorites] = usePersistentState<string[]>("feirae:vendor-favorites", []);
   const [orders, setOrders] = usePersistentState<DemoOrder[]>("feirae:orders", initialOrders);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -82,6 +84,53 @@ export default function App() {
     orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
     orders[0];
 
+  useEffect(() => {
+    if (role !== "customer") return;
+    const unified = readUnifiedOrders();
+    if (!unified.length) return;
+    const statusMap = {
+      received: "Recebido",
+      preparing: "Preparando",
+      ready_for_pickup: "Coleta",
+      driver_assigned: "Coleta",
+      collected: "Em rota",
+      out_for_delivery: "Em rota",
+      delivered: "Entregue",
+      cancelled: "Cancelado",
+    } as const;
+    setOrders((current) => {
+      const byId = new Map(current.map((order) => [order.id, order]));
+      unified.forEach((record) => {
+        const existing = byId.get(record.id);
+        const eventList = record.events.map((event) => ({
+          key: event.key,
+          label: event.label,
+          at: event.at,
+        }));
+        byId.set(record.id, {
+          id: record.id,
+          date:
+            existing?.date ??
+            new Intl.DateTimeFormat("pt-BR", {
+              dateStyle: "short",
+              timeStyle: "short",
+            }).format(new Date(record.createdAt)),
+          createdAt: record.createdAt,
+          status: statusMap[record.status],
+          value: record.total,
+          fairName: record.fairName,
+          fulfillment: record.fulfillment,
+          paymentMethod: record.paymentMethod,
+          cancelReason: record.cancelReason,
+          cancelDetails: record.cancelDetails,
+          driver: record.driver ?? existing?.driver,
+          events: eventList.length ? eventList : existing?.events,
+        });
+      });
+      return Array.from(byId.values());
+    });
+  }, [role, setOrders]);
+
   function login(nextRole: Role, email: string) {
     startSession(nextRole, email);
     resetForRole(nextRole);
@@ -96,6 +145,18 @@ export default function App() {
     setFavorites((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
+  }
+
+  function toggleVendorFavorite(name: string) {
+    setVendorFavorites((current) =>
+      current.includes(name) ? current.filter((item) => item !== name) : [...current, name],
+    );
+  }
+
+  function openFavoriteVendor(name: string) {
+    const product = products.find((item) => item.feirante === name);
+    if (product) setSelectedFair(product.fair);
+    openVendor(name);
   }
   function addProductToCart(id: number) {
     const product = products.find((item) => item.id === id);
@@ -135,15 +196,108 @@ export default function App() {
       "noopener,noreferrer",
     );
   }
-  function confirmOrder(total: number) {
+  function confirmOrder(
+    total: number,
+    details: {
+      fulfillment: "delivery" | "pickup";
+      paymentMethod: string;
+      fairName: string;
+      customerCity?: string;
+      customerAddress?: string;
+      customerLat?: number;
+      customerLng?: number;
+      calculatedDeliveryFee: number;
+      deliverySubsidy: number;
+      customerDeliveryFee: number;
+    },
+  ) {
     const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
-    const date = new Intl.DateTimeFormat("pt-BR").format(new Date());
-    setOrders((current) => [{ id, date, status: "Recebido", value: total }, ...current]);
+    const now = new Date();
+    const date = new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(now);
+    setOrders((current) => [
+      {
+        id,
+        date,
+        createdAt: now.toISOString(),
+        status: "Recebido",
+        value: total,
+        fairName: details.fairName,
+        fulfillment: details.fulfillment,
+        paymentMethod: details.paymentMethod,
+        events: [{ key: "received", label: "Pedido recebido", at: date }],
+      },
+      ...current,
+    ]);
+    upsertUnifiedOrder({
+      id,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      fairName: details.fairName,
+      customerName: session?.name ?? "Cliente",
+      customerCity: details.customerCity,
+      customerAddress: details.customerAddress,
+      customerLat: details.customerLat,
+      customerLng: details.customerLng,
+      fulfillment: details.fulfillment,
+      paymentMethod: details.paymentMethod,
+      subtotal,
+      calculatedDeliveryFee: details.calculatedDeliveryFee,
+      deliverySubsidy: details.deliverySubsidy,
+      customerDeliveryFee: details.customerDeliveryFee,
+      total,
+      items: cartProducts.map((product) => ({
+        productId: product.id,
+        name: product.name,
+        vendor: product.feirante,
+        quantity: cart[product.id] ?? 0,
+        unit: product.unit,
+        unitPrice: product.price,
+        weightKg: product.weightKg * (cart[product.id] ?? 0),
+      })),
+      status: "received",
+      events: [
+        {
+          key: "received",
+          label: "Pedido recebido",
+          at: date,
+          actor: "customer",
+        },
+      ],
+    });
     setNotifications((current) => current + 1);
     setSelectedOrderId(id);
     setCart({});
     openCustomerTab("orders");
-    notify(`Pedido ${id} criado no modo demonstração.`);
+    notify(`Pedido ${id} criado e vinculado à ${details.fairName}.`);
+  }
+
+  function cancelOrder(orderId: string, reason: string, details: string) {
+    const at = new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date());
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === orderId
+          ? {
+              ...order,
+              status: "Cancelado" as const,
+              cancelReason: reason,
+              cancelDetails: details,
+              events: [...(order.events ?? []), { key: "cancelled", label: "Pedido cancelado", at }],
+            }
+          : order,
+      ),
+    );
+    patchUnifiedOrder(
+      orderId,
+      { status: "cancelled", cancelReason: reason, cancelDetails: details },
+      eventNow("cancelled", "Pedido cancelado", "customer", { reason, details }),
+    );
+    notify(`Cancelamento do pedido ${orderId} registrado.`);
   }
 
   function openOrderTracking(orderId?: string) {
@@ -211,6 +365,7 @@ export default function App() {
                 onFair={openFair}
                 onVendors={() => openScreen("vendors")}
                 onTracking={() => openOrderTracking()}
+                onAdd={addProductToCart}
               />
             )}
             {tab === "fairs" && <FairsPage fairItems={fairsWithDistance} onFair={openFair} onMap={openMap} />}
@@ -256,6 +411,8 @@ export default function App() {
             onAdd={addProductToCart}
             favorites={favorites}
             onFavorite={toggleFavorite}
+            storeFavorite={vendorFavorites.includes(selectedVendor)}
+            onStoreFavorite={() => toggleVendorFavorite(selectedVendor)}
           />
         )}
         {screen === "vendors" && (
@@ -263,10 +420,16 @@ export default function App() {
             fairName={selectedFair}
             onBack={() => openCustomerTab("fairs")}
             onVendor={openVendor}
+            vendorFavorites={vendorFavorites}
+            onVendorFavorite={toggleVendorFavorite}
           />
         )}
         {screen === "tracking" && trackedOrder && (
-          <DeliveryTracking order={trackedOrder} onBack={() => openCustomerTab("orders")} />
+          <DeliveryTracking
+            order={trackedOrder}
+            onBack={() => openCustomerTab("orders")}
+            onCancel={cancelOrder}
+          />
         )}
         {screen === "checkout" && (
           <Checkout
@@ -280,8 +443,11 @@ export default function App() {
         {screen === "favorites" && (
           <FavoritesPage
             ids={favorites}
+            vendorFavorites={vendorFavorites}
             onAdd={addProductToCart}
             onFavorite={toggleFavorite}
+            onVendorFavorite={toggleVendorFavorite}
+            onVendor={openFavoriteVendor}
             onBack={() => openCustomerTab("profile")}
             onExplore={() => openCustomerTab("products")}
           />
@@ -311,7 +477,7 @@ export default function App() {
           <DeliveryOperations
             session={session}
             onBack={() => openRoleRoot("delivery")}
-            onMap={() => openMap(-15.621, -47.657)}
+            onMap={(destination) => openMap(destination ?? "-15.621,-47.657")}
           />
         )}
       </div>

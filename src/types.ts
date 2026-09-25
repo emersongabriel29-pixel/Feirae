@@ -69,6 +69,24 @@ export type DemoOrder = {
   date: string;
   status: "Recebido" | "Preparando" | "Coleta" | "Em rota" | "Entregue" | "Cancelado";
   value: number;
+  fairName?: string;
+  createdAt?: string;
+  fulfillment?: "delivery" | "pickup";
+  paymentMethod?: string;
+  cancelReason?: string;
+  cancelDetails?: string;
+  driver?: {
+    name: string;
+    vehicle: string;
+    plateMasked?: string;
+    etaMinutes?: number;
+    distanceKm?: number;
+  };
+  events?: Array<{
+    key: string;
+    label: string;
+    at: string;
+  }>;
 };
 
 export type Address = {
@@ -84,4 +102,7 @@ export type Address = {
   number?: string;
   complement?: string;
   reference?: string;
+  lat?: number;
+  lng?: number;
+  source?: "manual" | "gps";
 };

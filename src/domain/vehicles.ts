@@ -18,6 +18,8 @@ export type DeliveryVehicle = {
   brandModel: string;
   plate: string;
   active: boolean;
+  documentFileName?: string;
+  documentStatus?: "pending" | "under_review" | "approved" | "correction_required";
 };
 
 export const vehicleTypeOptions = Object.keys(vehicleCapacityDefaults) as DeliveryVehicleType[];
@@ -28,4 +30,16 @@ export function suggestedCapacityForVehicle(type: DeliveryVehicleType) {
 
 export function requiresPlate(type: DeliveryVehicleType) {
   return !["Bicicleta", "Bicicleta cargueira/triciclo", "Outro"].includes(type);
+}
+
+export function normalizePlate(value: string) {
+  return value
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 7);
+}
+
+export function isValidBrazilianPlate(value: string) {
+  const plate = normalizePlate(value);
+  return /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(plate);
 }
