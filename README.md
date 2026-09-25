@@ -2,11 +2,11 @@
 
 **A feira do seu jeito.**
 
-Marketplace das feiras do Distrito Federal, com alimentos, artesanato, moda, plantas, utilidades e outros produtos.
+Marketplace de feiras, com operação inicial no Distrito Federal e arquitetura preparada para expansão por estado/região, reunindo alimentos, artesanato, moda, plantas, utilidades e outros produtos.
 
 ## Estado atual
 
-O frontend funciona como uma demonstração navegável e responsiva. A entrada oferece três acessos — cliente, feirante e entregador — e abre uma experiência específica para o perfil escolhido. A troca de perfil só acontece depois de sair. Carrinho, favoritos, endereços, preferências, sessão demonstrativa e pedidos são salvos no navegador com `localStorage`. As telas possuem URLs compartilháveis com hash e respeitam a navegação voltar/avançar do navegador.
+O frontend funciona como uma demonstração navegável e responsiva. A entrada oferece três acessos — cliente, feirante e entregador — e abre uma experiência específica para o perfil escolhido. A troca de perfil só acontece depois de sair. Carrinho, favoritos, endereços, preferências, sessão demonstrativa e pedidos são salvos no navegador com localStorage. As telas possuem URLs compartilháveis com hash e respeitam a navegação voltar/avançar do navegador.
 
 O Supabase ficou deliberadamente para a próxima fase. Portanto, autenticação, permissões, estoque, pedidos, pagamentos e dados administrativos ainda não devem ser tratados como operações reais.
 
@@ -24,7 +24,7 @@ O Supabase ficou deliberadamente para a próxima fase. Portanto, autenticação,
 
 ## Produto
 
-- múltiplas feiras do DF;
+- múltiplas feiras e expansão geográfica por estado/região;
 - múltiplos feirantes por feira;
 - loja digital de cada feirante;
 - alimentos e produtos não alimentícios;
@@ -66,24 +66,36 @@ profiles, vendor_profiles, delivery_profiles, fairs, fair_vendor_memberships, ve
 
 ## Organização do código
 
-O componente raiz coordena a demonstração e a composição das telas, enquanto as regras puras do marketplace ficam em `src/domain/marketplace.ts` e a validação de sessão fica em `src/domain/session.ts`. Os tokens e estilos base vivem em `src/styles/tokens.css`; a folha principal mantém os estilos específicos das telas durante a migração gradual para módulos por domínio. Essa separação permite testar regras sem renderizar a aplicação e prepara a troca de `src/data.ts` por adapters de backend.
+O componente raiz coordena a demonstração e a composição das telas, enquanto as regras puras do marketplace ficam em src/domain/marketplace.ts e a validação de sessão fica em src/domain/session.ts. Os tokens e estilos base vivem em src/styles/tokens.css; a folha principal mantém os estilos específicos das telas durante a migração gradual para módulos por domínio. Essa separação permite testar regras sem renderizar a aplicação e prepara a troca de src/data.ts por adapters de backend.
 
-Para a revisão formal, os riscos conhecidos e os comentários de PR estão em [docs/TECHNICAL_REVIEW.md](docs/TECHNICAL_REVIEW.md). O plano de transformação do protótipo em MVP está em [docs/MVP_CHECKLIST.md](docs/MVP_CHECKLIST.md).
+## Documentação
+
+A documentação do Feiraê está dividida por responsabilidade:
+
+- [Arquitetura](docs/ARCHITECTURE.md) — estado atual, arquitetura alvo e separação de responsabilidades.
+- [Regras de negócio](docs/BUSINESS_RULES.md) — regras dos perfis, feira/loja, carrinho, pedidos, avaliações e localização.
+- [Fluxos de usuário](docs/USER_FLOWS.md) — jornadas completas de Cliente, Feirante e Entregador.
+- [Modelo de dados](docs/DATABASE.md) — entidades planejadas, relacionamentos, auditoria e RLS.
+- [Pagamentos e taxas](docs/PAYMENTS_AND_FEES.md) — princípios financeiros, taxa de entrega, repasses e decisões pendentes.
+- [Entregas](docs/DELIVERY.md) — estados, veículos, capacidade, rota, cancelamento e avaliações.
+- [Diretrizes de design](docs/DESIGN_SYSTEM.md) — navegação, cards, responsividade, formulários e acessibilidade.
+- [Decisões de produto](docs/DECISIONS.md) — decisões que não devem ser revertidas por refatorações ou agentes de IA.
+- [Revisão técnica](docs/TECHNICAL_REVIEW.md) — riscos e prioridades técnicas.
+- [Checklist do MVP](docs/MVP_CHECKLIST.md) — critérios para sair de demonstração e chegar a um MVP real.
+- [Roadmap](docs/ROADMAP.md) — ordem das próximas fases.
 
 ## Desenvolvimento
 
-```bash
+~~~bash
 npm ci
 npm run dev
-```
+~~~
 
 Validação completa:
 
-```bash
+~~~bash
 npm run check
 npm run format:check
-```
-
-Consulte [docs/ROADMAP.md](docs/ROADMAP.md) para a ordem das próximas fases.
+~~~
 
 O Feiraê permanece separado das regras de negócio do Velvet-VIP.
