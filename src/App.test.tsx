@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "./App";
 
@@ -76,6 +76,28 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("heading", { name: /^feiras em ceilândia$/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /feira da guariroba/i })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /feira do produtor rural/i })).not.toBeInTheDocument();
+  });
+
+  it("opens the selected order details with its own id and status", () => {
+    window.localStorage.setItem(
+      "feirae:orders",
+      JSON.stringify([
+        { id: "FE-1029", date: "21/09/2026", status: "Recebido", value: 65.8 },
+        { id: "FE-1024", date: "20/09/2026", status: "Em rota", value: 58.7 },
+      ]),
+    );
+
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
+
+    const orderCard = screen.getByText("FE-1029").closest("article");
+    expect(orderCard).not.toBeNull();
+    fireEvent.click(within(orderCard as HTMLElement).getByRole("button", { name: /ver detalhes/i }));
+
+    expect(screen.getByText(/pedido fe-1029 · recebido/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^pedido recebido$/i })).toBeInTheDocument();
+    expect(screen.queryByText(/seu pedido está a caminho/i)).not.toBeInTheDocument();
   });
 });
 
