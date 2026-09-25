@@ -61,6 +61,7 @@ export function HomePage({
   onTracking: () => void;
   onAdd: (id: number) => void;
 }) {
+  const liveProducts = marketplaceProducts(products);
   return (
     <div className="space-y-12">
       <section className="hero">
@@ -674,7 +675,7 @@ export function VendorStore({
             <ProductCard
               key={product.id}
               product={product}
-              onAdd={onAdd}
+              onAdd={sharedStore?.isOpen === false ? () => undefined : onAdd}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
             />
