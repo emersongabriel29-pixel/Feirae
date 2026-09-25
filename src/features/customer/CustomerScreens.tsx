@@ -725,7 +725,11 @@ export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: 
           })}
           {order.status !== "Entregue" && order.status !== "Cancelado" && (
             <div className="cancel-panel">
-              <b>{["Coleta", "Em rota"].includes(order.status) ? "Pedir ajuda com este pedido" : "Cancelar pedido"}</b>
+              <b>
+                {["Coleta", "Em rota"].includes(order.status)
+                  ? "Pedir ajuda com este pedido"
+                  : "Cancelar pedido"}
+              </b>
               <p>
                 {["Coleta", "Em rota"].includes(order.status)
                   ? "Depois que a coleta começou, o cliente não cancela sozinho. O caso segue para suporte."
@@ -752,7 +756,9 @@ export function DeliveryTracking({ order, onBack }: { order: DemoOrder; onBack: 
               </select>
               <button className="secondary-action" disabled={!cancelReason}>
                 <XCircle size={17} />{" "}
-                {["Coleta", "Em rota"].includes(order.status) ? "Abrir solicitação de suporte" : "Solicitar cancelamento"}
+                {["Coleta", "Em rota"].includes(order.status)
+                  ? "Abrir solicitação de suporte"
+                  : "Solicitar cancelamento"}
               </button>
             </div>
           )}
@@ -872,7 +878,8 @@ export function Checkout({
                 <b>Há produtos vendidos por peso</b>
                 <p>
                   Peso e valor são estimados até a separação. No MVP, a cobrança real só poderá ser ajustada
-                  quando o provedor suportar autorização de diferença; caso contrário serão usadas porções fechadas.
+                  quando o provedor suportar autorização de diferença; caso contrário serão usadas porções
+                  fechadas.
                 </p>
               </div>
             </div>
@@ -1385,7 +1392,9 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
 export function PaymentsPage({ onBack }: { onBack: () => void }) {
   const [cards, setCards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string }[]
-  >("feirae:cards-v2", [{ id: "demo-card", holder: "Cliente Feiraê", last4: "4821", expiry: "12/29", type: "Crédito" }]);
+  >("feirae:cards-v2", [
+    { id: "demo-card", holder: "Cliente Feiraê", last4: "4821", expiry: "12/29", type: "Crédito" },
+  ]);
   const [mode, setMode] = useState<"card" | null>(null);
   const [holder, setHolder] = useState("");
   const [number, setNumber] = useState("");
@@ -1440,7 +1449,10 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
               <Wallet />
               <div>
                 <b>Pix</b>
-                <small>O QR Code/copia e cola é gerado no checkout. Não é necessário cadastrar uma chave Pix do cliente.</small>
+                <small>
+                  O QR Code/copia e cola é gerado no checkout. Não é necessário cadastrar uma chave Pix do
+                  cliente.
+                </small>
               </div>
             </article>
           </div>
@@ -1448,7 +1460,12 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
             <form className="form-card compact" onSubmit={submit}>
               <label>
                 Nome no cartão
-                <input value={holder} onChange={(event) => setHolder(event.target.value)} autoComplete="cc-name" required />
+                <input
+                  value={holder}
+                  onChange={(event) => setHolder(event.target.value)}
+                  autoComplete="cc-name"
+                  required
+                />
               </label>
               <label>
                 Número do cartão
@@ -1492,7 +1509,8 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
                 </label>
               </div>
               <p className="operation-footnote">
-                Na integração real, esses dados serão enviados diretamente ao provedor para tokenização. O CVV nunca será armazenado.
+                Na integração real, esses dados serão enviados diretamente ao provedor para tokenização. O CVV
+                nunca será armazenado.
               </p>
               <div className="module-action-row">
                 <button className="primary-action" type="submit">
@@ -1526,39 +1544,34 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
 }
 
 export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: () => void }) {
-  const [reviews] = usePersistentState(
-    "feirae:customer-reviews",
-    [
-      {
-        id: "review-product-1",
-        type: "Produto",
-        target: "Cesta de frutas",
-        orderId: "FE-1019",
-        rating: 5,
-        text: "Frutas bonitas e bem embaladas.",
-      },
-      {
-        id: "review-vendor-1",
-        type: "Banca",
-        target: "Sítio da Vó",
-        orderId: "FE-1019",
-        rating: 4.9,
-        text: "Atendimento rápido na separação.",
-      },
-      {
-        id: "review-delivery-1",
-        type: "Entrega",
-        target: "Entregador do pedido",
-        orderId: "FE-1019",
-        rating: 4.8,
-        text: "Entrega cuidadosa.",
-      },
-    ],
-  );
+  const [reviews] = usePersistentState("feirae:customer-reviews", [
+    {
+      id: "review-product-1",
+      type: "Produto",
+      target: "Cesta de frutas",
+      orderId: "FE-1019",
+      rating: 5,
+      text: "Frutas bonitas e bem embaladas.",
+    },
+    {
+      id: "review-vendor-1",
+      type: "Banca",
+      target: "Sítio da Vó",
+      orderId: "FE-1019",
+      rating: 4.9,
+      text: "Atendimento rápido na separação.",
+    },
+    {
+      id: "review-delivery-1",
+      type: "Entrega",
+      target: "Entregador do pedido",
+      orderId: "FE-1019",
+      rating: 4.8,
+      text: "Entrega cuidadosa.",
+    },
+  ]);
   const reviewedOrderIds = new Set(reviews.map((review) => review.orderId));
-  const pending = orders.filter(
-    (order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id),
-  );
+  const pending = orders.filter((order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id));
 
   return (
     <Panel
