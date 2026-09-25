@@ -123,7 +123,7 @@ export function DeliveryOperations({
         type: "Moto",
         capacityKg: suggestedCapacityForVehicle("Moto"),
         brandModel: "",
-        plate: "",
+        plate: "ABC1D23",
         active: true,
         documentFileName: "crlv-demo.pdf",
         documentStatus: "approved",
@@ -208,7 +208,9 @@ export function DeliveryOperations({
   ]);
 
   useEffect(() => {
-    if (deliveryPreferences.baseLat === null || deliveryPreferences.baseLng === null) return;
+    const baseLat = deliveryPreferences.baseLat;
+    const baseLng = deliveryPreferences.baseLng;
+    if (baseLat === null || baseLng === null) return;
     let cancelled = false;
 
     async function calculatePendingRoutes() {
@@ -239,7 +241,7 @@ export function DeliveryOperations({
         if (!fairPoint || !customerPoint) continue;
 
         const toVendor = await drivingRoute(
-          { lat: deliveryPreferences.baseLat, lng: deliveryPreferences.baseLng },
+          { lat: baseLat, lng: baseLng },
           fairPoint,
         );
         const toCustomer = await drivingRoute(fairPoint, customerPoint);
@@ -488,7 +490,8 @@ export function DeliveryOperations({
   })();
   const availableNow = online && scheduleAllowsNow && approvalStatus === "Aprovado";
   const vehicleReady = (vehicle: DeliveryVehicle) =>
-    !requiresPlate(vehicle.type) || vehicle.documentStatus === "approved";
+    !requiresPlate(vehicle.type) ||
+    (vehicle.documentStatus === "approved" && isValidBrazilianPlate(vehicle.plate));
   const compatibleVehicleForWeight = (weight: number) =>
     [...activeVehicles]
       .filter((vehicle) => vehicle.capacityKg >= weight && vehicleReady(vehicle))
