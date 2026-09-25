@@ -60,7 +60,7 @@ export function DeliveryOperations({
   const [accountSaved, setAccountSaved] = useState(false);
   const [vehicleFormOpen, setVehicleFormOpen] = useState(false);
   const [vehicleType, setVehicleType] = useState<DeliveryVehicleType>("Moto");
-  const [vehicleCapacity, setVehicleCapacity] = useState(suggestedCapacityForVehicle("Moto"));
+  const [vehicleCapacity, setVehicleCapacity] = useState<number>(suggestedCapacityForVehicle("Moto"));
   const [vehicleBrandModel, setVehicleBrandModel] = useState("");
   const [vehiclePlate, setVehiclePlate] = useState("");
   const [deliveryAccount, setDeliveryAccount] = usePersistentState(
