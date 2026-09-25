@@ -1685,7 +1685,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </article>
                   <article>
                     <strong>{reviews.length}</strong>
-                    <span>avaliações demonstrativas</span>
+                    <span>avaliações registradas</span>
                   </article>
                   <article>
                     <strong>{reviews.filter((review) => review.response).length}</strong>
