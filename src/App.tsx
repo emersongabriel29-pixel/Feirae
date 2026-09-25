@@ -53,7 +53,14 @@ export default function App() {
   );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [notifications, setNotifications] = useState(2);
+  const [readNotificationKeys, setReadNotificationKeys] = usePersistentState<string[]>(
+    scopedStorageKey("feirae:notification-read", accountKey),
+    [],
+  );
+  const notificationKeys = orders.flatMap((order) =>
+    (order.events ?? []).map((event) => `${order.id}:${event.key}:${event.at}`),
+  );
+  const notifications = notificationKeys.filter((key) => !readNotificationKeys.includes(key)).length;
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLabel, setLocationLabel] = useState("Planaltina, DF");
   const [locationLoading, setLocationLoading] = useState(false);
@@ -315,7 +322,6 @@ export default function App() {
         },
       ],
     });
-    setNotifications((current) => current + 1);
     setSelectedOrderId(id);
     setCart({});
     openCustomerTab("orders");
@@ -513,7 +519,7 @@ export default function App() {
             orders={orders}
             onBack={() => openCustomerTab("home")}
             onClear={() => {
-              setNotifications(0);
+              setReadNotificationKeys(notificationKeys);
               notify("Notificações marcadas como lidas.");
             }}
           />
