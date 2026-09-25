@@ -24,6 +24,7 @@ export type SharedStore = {
   name: string;
   fairName: string;
   isOpen: boolean;
+  approved: boolean;
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   absorbDeliveryFee: boolean;
@@ -82,6 +83,7 @@ export function syncVendorMarketplace(input: {
   name: string;
   fairName: string;
   isOpen: boolean;
+  approved: boolean;
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   absorbDeliveryFee: boolean;
@@ -108,6 +110,7 @@ export function syncVendorMarketplace(input: {
     name: input.name,
     fairName: input.fairName,
     isOpen: input.isOpen,
+    approved: input.approved,
     deliveryEnabled: input.deliveryEnabled,
     pickupEnabled: input.pickupEnabled,
     absorbDeliveryFee: input.absorbDeliveryFee,
@@ -131,7 +134,7 @@ export function syncVendorMarketplace(input: {
     volume: product.weightKg >= 15 ? "pesado" : product.weightKg >= 4 ? "medio" : "leve",
     vendorId,
     storeId,
-    active: product.active && product.stock > 0,
+    active: input.approved && product.active && product.stock > 0,
   }));
 
   writeMarketplace({
