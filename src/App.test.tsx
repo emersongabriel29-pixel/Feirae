@@ -239,8 +239,9 @@ describe("Feiraê customer flow", () => {
 
     expect(screen.getByRole("option", { name: /não preciso mais/i })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /^outro$/i })).toBeInTheDocument();
-    const reason = screen.getByRole("combobox");
-    fireEvent.change(reason, { target: { value: "Outro" } });
+    const reason = screen.getByRole("option", { name: /^outro$/i }).closest("select");
+    expect(reason).not.toBeNull();
+    fireEvent.change(reason as HTMLSelectElement, { target: { value: "Outro" } });
     expect(screen.getByLabelText(/descreva o motivo/i)).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: /cliente ausente/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("option", { name: /emergência na entrega/i })).not.toBeInTheDocument();
