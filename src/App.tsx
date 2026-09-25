@@ -38,6 +38,7 @@ export default function App() {
   const [category, setCategory] = useState("Todos");
   const [favorites, setFavorites] = usePersistentState<number[]>("feirae:favorites", [2]);
   const [orders, setOrders] = usePersistentState<DemoOrder[]>("feirae:orders", initialOrders);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [notifications, setNotifications] = useState(2);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -63,6 +64,10 @@ export default function App() {
 
   const visibleProducts = useMemo(() => filterProducts(products, query, category), [query, category]);
   const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
+  const trackedOrder =
+    orders.find((order) => order.id === selectedOrderId) ??
+    orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
+    orders[0];
 
   function login(nextRole: Role, email: string) {
     startSession(nextRole, email);
@@ -116,9 +121,23 @@ export default function App() {
     const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
     const date = new Intl.DateTimeFormat("pt-BR").format(new Date());
     setOrders((current) => [{ id, date, status: "Recebido", value: total }, ...current]);
+    setSelectedOrderId(id);
     setCart({});
     openCustomerTab("orders");
     notify(`Pedido ${id} criado no modo demonstração.`);
+  }
+
+  function openOrderTracking(orderId?: string) {
+    const target =
+      (orderId && orders.find((order) => order.id === orderId)) ??
+      orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
+      orders[0];
+    if (!target) {
+      notify("Nenhum pedido disponível para acompanhar.");
+      return;
+    }
+    setSelectedOrderId(target.id);
+    openScreen("tracking");
   }
   function buyAgain(orderId?: string) {
     restoreDemoBasket();
@@ -169,7 +188,7 @@ export default function App() {
                 onTab={openCustomerTab}
                 onFair={openFair}
                 onVendors={() => openScreen("vendors")}
-                onTracking={() => openScreen("tracking")}
+                onTracking={() => openOrderTracking()}
               />
             )}
             {tab === "fairs" && <FairsPage fairItems={fairsWithDistance} onFair={openFair} onMap={openMap} />}
@@ -184,7 +203,7 @@ export default function App() {
               />
             )}
             {tab === "orders" && (
-              <OrdersPage orders={orders} onTracking={() => openScreen("tracking")} onBuyAgain={buyAgain} />
+              <OrdersPage orders={orders} onTracking={openOrderTracking} onBuyAgain={buyAgain} />
             )}
             {tab === "profile" && session && (
               <ProfilePage session={session} onScreen={openScreen} onLogout={logout} />
@@ -215,7 +234,9 @@ export default function App() {
           />
         )}
         {screen === "vendors" && <VendorsPage onBack={() => openCustomerTab("home")} onVendor={openVendor} />}
-        {screen === "tracking" && <DeliveryTracking onBack={() => openCustomerTab("orders")} />}
+        {screen === "tracking" && trackedOrder && (
+          <DeliveryTracking order={trackedOrder} onBack={() => openCustomerTab("orders")} />
+        )}
         {screen === "checkout" && (
           <Checkout
             items={cartProducts}
