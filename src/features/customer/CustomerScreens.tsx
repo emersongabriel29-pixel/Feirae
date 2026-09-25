@@ -518,19 +518,31 @@ export function FairDetail({
   );
 }
 
-export function VendorsPage({ onBack, onVendor }: { onBack: () => void; onVendor: (name: string) => void }) {
-  const vendors = vendorSummaries(products, vendorMetrics);
+export function VendorsPage({
+  fairName,
+  onBack,
+  onVendor,
+}: {
+  fairName: string;
+  onBack: () => void;
+  onVendor: (name: string) => void;
+}) {
+  const fair = fairs.find((item) => item.name === fairName);
+  const fairProducts = products.filter((product) => product.fair === fairName);
+  const vendors = vendorSummaries(fairProducts, vendorMetrics);
   return (
     <Panel
       title="Bancas e feirantes"
-      subtitle="Escolha uma banca antes de ver os produtos. Lojas não abrem mais uma banca fixa."
+      subtitle={`Bancas cadastradas na ${fairName}. A compra permanece dentro desta feira.`}
       onBack={onBack}
     >
       <div className="region-strip">
         <MapPin size={18} />
         <div>
-          <b>Região de compra</b>
-          <p>Estado: Distrito Federal · Cidade: Planaltina · altere nas configurações quando expandir.</p>
+          <b>Contexto da compra</b>
+          <p>
+            Distrito Federal · {fair?.place ?? "Região a confirmar"} · {fairName}
+          </p>
         </div>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -562,21 +574,25 @@ export function VendorsPage({ onBack, onVendor }: { onBack: () => void; onVendor
 
 export function VendorStore({
   vendorName,
+  fairName,
   onBack,
   onAdd,
   favorites,
   onFavorite,
 }: {
   vendorName: string;
+  fairName: string;
   onBack: () => void;
   onAdd: (id: number) => void;
   favorites: number[];
   onFavorite: (id: number) => void;
 }) {
-  const vendorProducts = products.filter((product) => product.feirante === vendorName);
+  const vendorProducts = products.filter(
+    (product) => product.feirante === vendorName && product.fair === fairName,
+  );
   const metrics = metricForVendor(vendorName, vendorMetrics);
   return (
-    <Panel title={vendorName} subtitle="Loja do feirante" onBack={onBack}>
+    <Panel title={vendorName} subtitle={`${fairName} · loja do feirante`} onBack={onBack}>
       <div className="detail-banner">
         <div>
           <Store size={30} />
