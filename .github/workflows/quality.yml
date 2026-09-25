@@ -20,10 +20,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Show feature Prettier diff
-        run: |
-          npx prettier --write docs/DELIVERY_PRICING_AND_ROUTING.md src/components/AppComponents.tsx src/features/customer/CustomerScreens.tsx src/features/delivery/DeliveryScreens.tsx src/features/vendor/vendorModel.ts src/features/vendor/VendorScreens.tsx
-          git diff -- docs/DELIVERY_PRICING_AND_ROUTING.md src/components/AppComponents.tsx src/features/customer/CustomerScreens.tsx src/features/delivery/DeliveryScreens.tsx src/features/vendor/vendorModel.ts src/features/vendor/VendorScreens.tsx
-          exit 1
       - run: npm run check
       - run: npm run format:check
