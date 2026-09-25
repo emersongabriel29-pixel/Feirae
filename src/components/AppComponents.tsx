@@ -21,7 +21,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { fairs, products } from "../data";
+import { fairs } from "../data";
 import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
 import { cartWeight, productWeight, vehicleForWeight } from "../domain/marketplace";
@@ -383,7 +383,7 @@ export function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void
   );
 }
 
-const vendorModuleDetails: Record<string, { text: string; badge: string }> = {
+export const vendorModuleDetails: Record<string, { text: string; badge: string }> = {
   Painel: { text: "Resumo da banca, pendências e indicadores do dia.", badge: "Resumo" },
   Pedidos: { text: "Acompanhar pedidos, preparar, cancelar e marcar coleta.", badge: "3 novos" },
   "Minha banca": { text: "Editar banca, box, feira e status aberto/fechado.", badge: "Banca 18" },
@@ -397,7 +397,7 @@ const vendorModuleDetails: Record<string, { text: string; badge: string }> = {
   Documentos: { text: "Enviar e acompanhar validação da banca.", badge: "Obrigatório" },
 };
 
-const deliveryModuleDetails: Record<string, { text: string; badge: string }> = {
+export const deliveryModuleDetails: Record<string, { text: string; badge: string }> = {
   Painel: { text: "Resumo de disponibilidade, ganhos e rotas do dia.", badge: "Resumo" },
   Entregas: { text: "Ver corridas disponíveis com peso, veículo e ganho.", badge: "3 disponíveis" },
   "Em andamento": { text: "Acompanhar etapas, rota e cancelamento da corrida ativa.", badge: "Rota" },
