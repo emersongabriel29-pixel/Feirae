@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { fairs, initialOrders, products } from "./data";
+import { dateLabelFromIso, sortOrdersNewestFirst } from "./domain/timeline";
 import type { DemoOrder, Role } from "./types";
 import { filterProducts, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
@@ -77,10 +78,11 @@ export default function App() {
     return matches.filter((product) => product.fair === selectedFair);
   }, [query, category, selectedFair]);
   const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
+  const sortedOrders = useMemo(() => sortOrdersNewestFirst(orders), [orders]);
   const trackedOrder =
-    orders.find((order) => order.id === selectedOrderId) ??
-    orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
-    orders[0];
+    sortedOrders.find((order) => order.id === selectedOrderId) ??
+    sortedOrders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
+    sortedOrders[0];
 
   function login(nextRole: Role, email: string) {
     startSession(nextRole, email);
@@ -137,8 +139,12 @@ export default function App() {
   }
   function confirmOrder(total: number) {
     const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
-    const date = new Intl.DateTimeFormat("pt-BR").format(new Date());
-    setOrders((current) => [{ id, date, status: "Recebido", value: total }, ...current]);
+    const createdAt = new Date().toISOString();
+    const date = dateLabelFromIso(createdAt);
+    setOrders((current) => [
+      { id, date, createdAt, updatedAt: createdAt, status: "Recebido", value: total },
+      ...current,
+    ]);
     setNotifications((current) => current + 1);
     setSelectedOrderId(id);
     setCart({});
@@ -148,9 +154,9 @@ export default function App() {
 
   function openOrderTracking(orderId?: string) {
     const target =
-      (orderId && orders.find((order) => order.id === orderId)) ??
-      orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
-      orders[0];
+      (orderId && sortedOrders.find((order) => order.id === orderId)) ??
+      sortedOrders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
+      sortedOrders[0];
     if (!target) {
       notify("Nenhum pedido disponível para acompanhar.");
       return;
@@ -227,7 +233,7 @@ export default function App() {
               />
             )}
             {tab === "orders" && (
-              <OrdersPage orders={orders} onTracking={openOrderTracking} onBuyAgain={buyAgain} />
+              <OrdersPage orders={sortedOrders} onTracking={openOrderTracking} onBuyAgain={buyAgain} />
             )}
             {tab === "profile" && session && (
               <ProfilePage session={session} onScreen={openScreen} onLogout={logout} />
@@ -288,7 +294,7 @@ export default function App() {
         )}
         {screen === "notifications" && (
           <NotificationsPage
-            orders={orders}
+            orders={sortedOrders}
             onBack={() => openCustomerTab("home")}
             onClear={() => {
               setNotifications(0);
