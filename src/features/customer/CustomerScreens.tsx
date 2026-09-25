@@ -486,11 +486,15 @@ export function FairDetail({
   onBack,
   onMap,
   onAdd,
+  favorites,
+  onFavorite,
 }: {
   fairName: string;
   onBack: () => void;
   onMap: (destination: number | string, lng?: number) => void;
   onAdd: (id: number) => void;
+  favorites: number[];
+  onFavorite: (id: number) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
   const liveProducts = marketplaceProducts(products);
@@ -532,8 +536,8 @@ export function FairDetail({
               key={product.id}
               product={product}
               onAdd={onAdd}
-              favorite={false}
-              onFavorite={() => undefined}
+              favorite={favorites.includes(product.id)}
+              onFavorite={onFavorite}
             />
           ))}
         </div>
