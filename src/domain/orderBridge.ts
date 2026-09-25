@@ -106,6 +106,7 @@ export type UnifiedOrderRecord = {
   cancelDetails?: string;
   pickupConfirmedAt?: string;
   driver?: {
+    driverKey?: string;
     name: string;
     vehicle: string;
     plateMasked?: string;
