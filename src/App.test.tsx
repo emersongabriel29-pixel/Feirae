@@ -114,6 +114,36 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("heading", { name: /como você vai usar o aplicativo/i })).toBeInTheDocument();
   });
 
+  it("clears stale authentication errors when switching flow, role or editing the email", () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "naoexiste@feirae.app" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/conta não encontrada/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /^criar conta$/i }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^entrar$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: /feirante/i }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /entrar como feirante/i }));
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "outro@feirae.app" },
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("applies customer name email and password only when the account form is saved", () => {
     render(<App />);
     loginAs("cliente");
@@ -599,6 +629,9 @@ describe("Feiraê role access", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /criar conta como feirante/i }));
 
+    expect(screen.getByRole("heading", { name: /complete seu cadastro para vender/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /completar minha banca/i })).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: /sair/i }));
     window.localStorage.removeItem(`feirae:vendor-documents:${email}`);
 
@@ -617,6 +650,8 @@ describe("Feiraê role access", () => {
     render(<App />);
     loginAs("entregador");
     expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^disponibilidade$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^painel$/i })).not.toBeInTheDocument();
   });
 
   it("shows compatible delivery offers on the main panel without opening another module", () => {
@@ -645,6 +680,9 @@ describe("Feiraê role access", () => {
       target: { value: "123456" },
     });
     fireEvent.click(screen.getByRole("button", { name: /criar conta como entregador/i }));
+
+    expect(screen.getByRole("heading", { name: /complete seu cadastro para entregar/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /completar minha conta/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
     expect(screen.queryByText("FE-1024")).not.toBeInTheDocument();

@@ -31,7 +31,7 @@ npm run build
 
 | Arquivo                                | Testes |
 | -------------------------------------- | -----: |
-| `src/App.test.tsx`                     |     49 |
+| `src/App.test.tsx`                     |     50 |
 | `src/domain/orderBridge.test.ts`       |      5 |
 | `src/domain/marketplaceBridge.test.ts` |      4 |
 | `src/domain/inventoryBridge.test.ts`   |      3 |
@@ -39,11 +39,11 @@ npm run build
 | `src/domain/marketplace.test.ts`       |      4 |
 | `src/domain/session.test.ts`           |      3 |
 | `src/utils.test.ts`                    |      4 |
-| **Total**                              | **76** |
+| **Total**                              | **77** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 49 testes cobrem explicitamente:
+Os 50 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -57,6 +57,7 @@ Os 49 testes cobrem explicitamente:
 - endereço estruturado;
 - mostrar/ocultar senha;
 - senha incorreta;
+- limpar erro antigo ao trocar Entrar/Criar conta, perfil de acesso ou editar o e-mail;
 - alterar nome/e-mail/senha;
 - cards compactos;
 - feiras em área correta;
@@ -78,6 +79,8 @@ Os 49 testes cobrem explicitamente:
 ### Feirante
 
 - abrir experiência;
+- remover o atalho redundante “Painel” da Central;
+- priorizar “Complete seu cadastro” quando a aprovação está pendente;
 - mostrar pedidos novos/em andamento diretamente no painel principal;
 - exibir card de notificações Feiraê;
 - produto/estoque;
@@ -94,6 +97,8 @@ Os 49 testes cobrem explicitamente:
 ### Entregador
 
 - abrir experiência;
+- renomear o antigo “Painel” para “Disponibilidade”;
+- priorizar “Complete seu cadastro” quando a aprovação está pendente;
 - mostrar corridas compatíveis diretamente no painel principal;
 - exibir card de notificações Feiraê;
 - completar etapas de entrega;
@@ -137,7 +142,7 @@ Os 49 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 76 testes NÃO comprovam diretamente
+## 5. O que os 77 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 

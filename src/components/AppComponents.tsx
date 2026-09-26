@@ -71,6 +71,20 @@ export function LoginPage({
     },
   ];
 
+  function clearFormError() {
+    if (formError) setFormError("");
+  }
+
+  function changeMode(nextMode: "login" | "signup") {
+    setMode(nextMode);
+    setFormError("");
+  }
+
+  function changeRole(nextRole: Role) {
+    setSelectedRole(nextRole);
+    setFormError("");
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
     const error = onLogin(selectedRole, email.trim(), name.trim(), password, mode === "signup");
@@ -78,7 +92,7 @@ export function LoginPage({
   }
 
   return (
-    <main className="login-page">
+    <main className={`login-page auth-mode-${mode}`}>
       <section className="login-showcase">
         <div className="login-brand">
           <span className="brand-mark">ê</span>
@@ -108,14 +122,14 @@ export function LoginPage({
             <button
               className={mode === "login" ? "active" : ""}
               type="button"
-              onClick={() => setMode("login")}
+              onClick={() => changeMode("login")}
             >
               Entrar
             </button>
             <button
               className={mode === "signup" ? "active" : ""}
               type="button"
-              onClick={() => setMode("signup")}
+              onClick={() => changeMode("signup")}
             >
               Criar conta
             </button>
@@ -133,7 +147,7 @@ export function LoginPage({
                 role="radio"
                 aria-checked={selectedRole === option.role}
                 key={option.role}
-                onClick={() => setSelectedRole(option.role)}
+                onClick={() => changeRole(option.role)}
                 className={selectedRole === option.role ? "selected" : ""}
               >
                 <span>{option.icon}</span>
@@ -151,7 +165,10 @@ export function LoginPage({
                 Nome completo
                 <input
                   value={name}
-                  onChange={(event) => setName(event.target.value)}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    clearFormError();
+                  }}
                   placeholder="Seu nome"
                   autoComplete="name"
                   required
@@ -163,7 +180,10 @@ export function LoginPage({
               <input
                 type="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  clearFormError();
+                }}
                 placeholder="seuemail@exemplo.com"
                 autoComplete="email"
                 required
@@ -175,7 +195,10 @@ export function LoginPage({
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    clearFormError();
+                  }}
                   placeholder="Digite sua senha"
                   autoComplete="current-password"
                   minLength={6}
@@ -500,6 +523,47 @@ export function FeiraeNotificationCard({
   );
 }
 
+export function OperationalOnboardingCard({
+  title,
+  status,
+  text,
+  steps,
+  action,
+  onAction,
+}: {
+  title: string;
+  status: string;
+  text: string;
+  steps: string[];
+  action: string;
+  onAction: () => void;
+}) {
+  return (
+    <section className="operational-onboarding-card" aria-label={title}>
+      <div>
+        <span className="eyebrow">Complete seu cadastro</span>
+        <h2>{title}</h2>
+        <p>{text}</p>
+        <div className="onboarding-steps" aria-label="Etapas para liberar a operação">
+          {steps.map((step, index) => (
+            <span key={step}>
+              <i>{index + 1}</i>
+              {step}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="onboarding-action">
+        <small>Status atual</small>
+        <strong>{status}</strong>
+        <button type="button" onClick={onAction}>
+          {action} <ChevronRight size={16} />
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function OperationsMenu({
   modules,
   details,
@@ -510,7 +574,7 @@ export function OperationsMenu({
   onOpen: (module: string) => void;
 }) {
   const groupFor = (module: string) => {
-    if (["Painel", "Pedidos", "Entregas", "Em andamento"].includes(module)) return "Agora";
+    if (["Pedidos", "Entregas", "Em andamento", "Disponibilidade"].includes(module)) return "Agora";
     if (
       [
         "Minha banca",

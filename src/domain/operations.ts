@@ -1,5 +1,4 @@
 export const vendorModuleDetails: Record<string, { text: string; badge: string }> = {
-  Painel: { text: "Resumo da banca, pendências e indicadores do dia.", badge: "Resumo" },
   Pedidos: { text: "Acompanhar pedidos, preparar, cancelar e marcar coleta.", badge: "3 novos" },
   "Minha banca": { text: "Editar banca, box, feira e status aberto/fechado.", badge: "Banca 18" },
   Produtos: { text: "Cadastrar produtos, valores, unidade, peso e disponibilidade.", badge: "Editar" },
@@ -14,7 +13,7 @@ export const vendorModuleDetails: Record<string, { text: string; badge: string }
 };
 
 export const deliveryModuleDetails: Record<string, { text: string; badge: string }> = {
-  Painel: { text: "Resumo de disponibilidade, ganhos e rotas do dia.", badge: "Resumo" },
+  Disponibilidade: { text: "Ligar ou pausar novas corridas e ver o estado operacional.", badge: "Online" },
   Entregas: { text: "Ver corridas disponíveis com peso, veículo e ganho.", badge: "3 disponíveis" },
   "Em andamento": { text: "Acompanhar etapas, rota e cancelamento da corrida ativa.", badge: "Rota" },
   Financeiro: { text: "Ganhos, taxas e histórico de repasses.", badge: "R$" },

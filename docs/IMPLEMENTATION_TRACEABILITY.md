@@ -203,7 +203,7 @@ Não faz:
 
 Contagem real:
 
-- `App.test.tsx`: 49;
+- `App.test.tsx`: 50;
 - `orderBridge.test.ts`: 5;
 - `marketplaceBridge.test.ts`: 4;
 - `inventoryBridge.test.ts`: 3;
@@ -212,7 +212,7 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **76**.
+Total: **77**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
@@ -234,3 +234,14 @@ Total: **76**.
 - `App.test.tsx`: cobre pedidos do feirante e corridas do entregador no painel principal.
 
 Limite: o repositório ainda não possui backend que persista `PushSubscription` e envie Web Push remoto. Logo, receber notificação com o app totalmente fechado ainda não é comprovado ponta a ponta.
+
+## Polimento de autenticação e onboarding — 26/09/2026
+
+- `AppComponents.tsx::LoginPage`: limpa erro ao mudar modo, papel ou editar campos e marca `auth-mode-signup` para layout mobile compacto;
+- `localAuth.ts`: conflito de e-mail informa o papel já vinculado;
+- `OperationalOnboardingCard`: componente compartilhado para pendências prioritárias;
+- `VendorScreens.tsx`: mostra “Complete seu cadastro para vender” e remove o card redundante “Painel”;
+- `DeliveryScreens.tsx`: mostra “Complete seu cadastro para entregar” e renomeia “Painel” para “Disponibilidade”;
+- `responsive.css`: cadastro mobile reduz a área promocional;
+- `App.test.tsx`: cobre limpeza de erro, onboarding prioritário e ausência/renomeação do card;
+- `localAuth.test.ts`: cobre mensagem de acesso vinculado ao papel correto.

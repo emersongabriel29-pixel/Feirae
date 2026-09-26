@@ -48,6 +48,20 @@ describe("local auth", () => {
       }).ok,
     ).toBe(false);
 
+    const wrongRole = authenticateLocalAccount({
+      role: "feirante",
+      email: "nova@feirae.app",
+      name: "",
+      password: "segredo1",
+      signup: false,
+    });
+    expect(wrongRole.ok).toBe(false);
+    if (!wrongRole.ok) {
+      expect(wrongRole.message).toMatch(
+        /e-mail já está vinculado ao acesso Cliente\. Entre como Cliente ou utilize outro e-mail/i,
+      );
+    }
+
     const login = authenticateLocalAccount({
       role: "customer",
       email: "nova@feirae.app",

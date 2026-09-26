@@ -20,6 +20,7 @@ import {
   Empty,
   FeiraeNotificationCard,
   ModuleHeader,
+  OperationalOnboardingCard,
   OperationsMenu,
   Panel,
 } from "../../components/AppComponents";
@@ -67,7 +68,7 @@ export function DeliveryOperations({
 }) {
   const unifiedOrderRevision = useUnifiedOrderRevision();
   const modules = [
-    "Painel",
+    "Disponibilidade",
     "Entregas",
     "Em andamento",
     "Financeiro",
@@ -576,6 +577,12 @@ export function DeliveryOperations({
     return end >= start ? current >= start && current <= end : current >= start || current <= end;
   })();
   const availableNow = online && scheduleAllowsNow && approvalStatus === "Aprovado";
+  const deliveryAccountReady = Boolean(deliveryAccount.cpf.trim() && deliveryAccount.phone.trim());
+  const deliveryOnboardingTarget = !deliveryAccountReady
+    ? "Conta"
+    : vehicles.length === 0
+      ? "Veículos"
+      : "Documentos";
   const vehicleReady = (vehicle: DeliveryVehicle) =>
     !requiresPlate(vehicle.type) ||
     (vehicle.documentStatus === "approved" && isValidBrazilianPlate(vehicle.plate));
@@ -968,6 +975,23 @@ export function DeliveryOperations({
               </article>
             </div>
           </div>
+          {approvalStatus !== "Aprovado" && (
+            <OperationalOnboardingCard
+              title="Complete seu cadastro para entregar"
+              status={approvalStatus}
+              text="Corridas só são liberadas depois dos dados pessoais, veículo e documentos obrigatórios estarem prontos e aprovados."
+              steps={["Conta", "Veículo", "Documentos", "Aprovação"]}
+              action={
+                deliveryOnboardingTarget === "Conta"
+                  ? "Completar minha conta"
+                  : deliveryOnboardingTarget === "Veículos"
+                    ? "Cadastrar veículo"
+                    : "Revisar documentos"
+              }
+              onAction={() => setActive(deliveryOnboardingTarget)}
+            />
+          )}
+
           <FeiraeNotificationCard
             permission={notificationPermission}
             message={
@@ -1000,7 +1024,7 @@ export function DeliveryOperations({
           </button>
           <div className="surface-card operation-card">
             <span className="eyebrow">{active}</span>
-            {active === "Painel" ? (
+            {active === "Disponibilidade" ? (
               <>
                 <div className="delivery-hero">
                   <span aria-hidden="true">
