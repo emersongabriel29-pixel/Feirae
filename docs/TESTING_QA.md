@@ -24,6 +24,14 @@ npm run test
 npm run build
 ```
 
+Em pull requests, o workflow também executa:
+
+```bash
+npm run check:sync
+```
+
+Esse gate não mede cobertura. Ele impede mudanças semânticas em `src/` sem teste alterado e exige documentação para mudanças de código/config/schema.
+
 ## 2. Contagem atual
 
 | Arquivo                                | Testes |
