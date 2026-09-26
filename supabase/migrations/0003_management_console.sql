@@ -436,16 +436,14 @@ begin
     return new;
   end if;
 
-  if tg_op = 'INSERT' then
-    if new.role = 'admin'
-       and (select auth.uid()) is not null
-       and not (select private.feirae_admin_has('permissions.manage')) then
-      raise exception 'Administrative roles cannot be self-assigned.';
-    end if;
-  elsif new.role is distinct from old.role
-        and not (select private.feirae_admin_has('permissions.manage')) then
-    raise exception 'Only an authorized administrator can change profile roles.';
+  if tg_op = 'INSERT' and new.role = 'admin' then
+    raise exception 'Administrative roles must be assigned by a trusted server-side action.';
   end if;
+
+  if tg_op = 'UPDATE' and new.role is distinct from old.role then
+    raise exception 'Profile role changes must use a trusted server-side action.';
+  end if;
+
   return new;
 end;
 $function$;
@@ -1257,12 +1255,6 @@ on public.profiles for all
 to authenticated
 using ((select private.feirae_admin_has('registrations.manage')))
 with check ((select private.feirae_admin_has('registrations.manage')));
-
-create policy "permission admins may promote profiles"
-on public.profiles for update
-to authenticated
-using ((select private.feirae_admin_has('permissions.manage')))
-with check ((select private.feirae_admin_has('permissions.manage')));
 
 create policy "admins manage fairs"
 on public.fairs for all
