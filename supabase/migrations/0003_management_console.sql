@@ -18,7 +18,7 @@ as $$
 $$;
 
 revoke all on function public.is_feirae_admin() from public;
-grant execute on function public.is_feirae_admin() to authenticated;
+grant execute on function public.is_feirae_admin() to anon, authenticated;
 
 create table if not exists public.platform_settings (
   key text primary key,
