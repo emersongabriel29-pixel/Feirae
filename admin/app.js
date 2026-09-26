@@ -115,6 +115,20 @@ function isUuid(value){
 }
 
 
+const ORDER_TRANSITIONS={
+  pending_payment:["paid","canceled"],
+  paid:["accepted","canceled","refunded"],
+  accepted:["preparing","canceled"],
+  preparing:["ready_for_pickup","canceled"],
+  ready_for_pickup:["driver_assigned","canceled"],
+  driver_assigned:["collected","canceled"],
+  collected:["out_for_delivery"],
+  out_for_delivery:["delivered"],
+  delivered:["refunded"],
+  canceled:["refunded"],
+  refunded:[]
+};
+
 const reportDefs={
   orders:{label:"Pedidos",table:"orders",dateField:"created_at",cols:["id","status","payment_status","subtotal","delivery_fee","total","created_at"]},
   deliveries:{label:"Entregas",table:"deliveries",dateField:"updated_at",cols:["id","order_id","delivery_id","status","fee","total_distance_km","eta_minutes","cancel_reason","accepted_at","delivered_at","updated_at"]},
@@ -438,7 +452,9 @@ async function renderOrderDetail(orderId){
    const res=await Promise.all(queries);
    const bad=res.find((x)=>x.error);if(bad)throw bad.error;
    const [items,vendors,delivery,payments,events,support,reviews,customer,address]=res;
-   let html='<div class="detail-head"><button class="secondary" id="backOrders">← Pedidos</button><div><b>#'+esc(order.id)+'</b><span class="badge '+esc(order.status)+'">'+esc(order.status)+'</span></div></div>';
+   let html='<div class="detail-head"><button class="secondary" id="backOrders">← Pedidos</button><div><b>#'+esc(order.id)+'</b><span class="badge '+esc(order.status)+'">'+esc(order.status)+'</span>'+
+   ((ORDER_TRANSITIONS[order.status]||[]).length?'<button class="primary" id="transitionOrder">Alterar etapa</button>':"")+
+   '</div></div>';
    html+=detailPairs([
      ["Cliente",customer.data?.full_name||order.customer_id],
      ["Pagamento",order.payment_status],
@@ -460,6 +476,7 @@ async function renderOrderDetail(orderId){
    html+=miniTable("Avaliações",["created_at","author_role","target_role","rating","comment","visible"],reviews.data||[]);
    $("#pageContent").innerHTML=html;
    $("#backOrders").onclick=()=>openModule("orders");
+   if($("#transitionOrder"))$("#transitionOrder").onclick=()=>openOrderTransition(order);
  }catch(e){renderError(e);}
 }
 
@@ -479,7 +496,10 @@ async function renderDeliveryDetail(deliveryId){
      state.supabase.from("order_reviews").select("*").eq("order_id",d.order_id).eq("target_role","delivery").order("created_at",{ascending:false})
    ]);
    const bad=[order,driver,vehicle,events,reviews].find((x)=>x.error);if(bad)throw bad.error;
-   let html='<div class="detail-head"><button class="secondary" id="backDeliveries">← Entregas</button><div><b>#'+esc(d.id)+'</b><span class="badge '+esc(d.status)+'">'+esc(d.status)+'</span></div></div>';
+   const canIntervene=!["collected","out_for_delivery","delivered","canceled"].includes(String(d.status));
+   let html='<div class="detail-head"><button class="secondary" id="backDeliveries">← Entregas</button><div><b>#'+esc(d.id)+'</b><span class="badge '+esc(d.status)+'">'+esc(d.status)+'</span>'+
+   (canIntervene?'<button class="secondary" id="removeDeliveryDriver">Remover entregador</button><button class="secondary" id="reassignDelivery">Reatribuir</button><button class="danger-btn" id="cancelDelivery">Cancelar corrida</button>':"")+
+   '</div></div>';
    html+=detailPairs([
      ["Pedido",d.order_id],
      ["Entregador",driver.data?.full_name||d.delivery_id||"Não atribuído"],
@@ -500,6 +520,9 @@ async function renderDeliveryDetail(deliveryId){
    html+=miniTable("Avaliações da entrega",["created_at","author_role","rating","comment","visible"],reviews.data||[]);
    $("#pageContent").innerHTML=html;
    $("#backDeliveries").onclick=()=>openModule("delivery_jobs");
+   if($("#removeDeliveryDriver"))$("#removeDeliveryDriver").onclick=()=>runDeliveryAction("delivery_remove_driver",d);
+   if($("#reassignDelivery"))$("#reassignDelivery").onclick=()=>openDeliveryReassign(d);
+   if($("#cancelDelivery"))$("#cancelDelivery").onclick=()=>openDeliveryCancel(d);
  }catch(e){renderError(e);}
 }
 
