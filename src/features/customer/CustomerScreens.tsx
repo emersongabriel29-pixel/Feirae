@@ -126,7 +126,13 @@ export function HomePage({
             .filter((product) => product.featured)
             .map((product) => (
               <article key={product.id} className="mini-product">
-                <span>{product.emoji}</span>
+                <span className="mini-product-art">
+                  {product.imageDataUrl ? (
+                    <img src={product.imageDataUrl} alt={`Foto de ${product.name}`} />
+                  ) : (
+                    product.emoji
+                  )}
+                </span>
                 <small>{product.feirante}</small>
                 <b>{product.name}</b>
                 <strong>
@@ -363,7 +369,11 @@ export function ProductCard({
         <Heart size={17} className={favorite ? "fill-red-500 text-red-500" : ""} />
       </button>
       <div className="product-art" data-category={product.category}>
-        <span aria-hidden="true">{product.emoji}</span>
+        {product.imageDataUrl ? (
+          <img src={product.imageDataUrl} alt={`Foto de ${product.name}`} />
+        ) : (
+          <span aria-hidden="true">{product.emoji}</span>
+        )}
         <small>{product.category}</small>
       </div>
       <div className="p-4">
