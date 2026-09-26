@@ -99,3 +99,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--brand-2);box-shadow:0
   .admin-card .actions{width:100%}
   .admin-card .actions button{flex:1}
 }
+
+.admin-promote{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:12px;align-items:end;padding:0 18px 16px}
+@media(max-width:640px){.admin-promote{grid-template-columns:1fr}.admin-promote button{width:100%}}
