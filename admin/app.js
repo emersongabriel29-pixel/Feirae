@@ -60,6 +60,7 @@ function label(k){return labels[k]||title(k.replaceAll("_"," "));}
 const reportDefs={
   orders:{label:"Pedidos",table:"orders",dateField:"created_at",cols:["id","status","payment_status","subtotal","delivery_fee","total","created_at"]},
   deliveries:{label:"Entregas",table:"deliveries",dateField:"updated_at",cols:["id","order_id","delivery_id","status","fee","total_distance_km","eta_minutes","cancel_reason","accepted_at","delivered_at","updated_at"]},
+  payments:{label:"Pagamentos",table:"payments",dateField:"created_at",cols:["id","order_id","provider","method","status","amount","provider_fee","platform_amount","vendor_amount","delivery_amount","refunded_amount","reconciled","created_at"]},
   payouts:{label:"Financeiro / repasses",table:"payouts",dateField:"created_at",cols:["id","profile_id","role","amount","status","provider_reference","requested_at","paid_at","created_at"]},
   cancellations:{label:"Cancelamentos",table:"orders",dateField:"created_at",cols:["id","status","payment_status","subtotal","delivery_fee","total","refund_amount","created_at"],statuses:["canceled","refunded"]},
   support:{label:"Suporte",table:"support_tickets",dateField:"created_at",cols:["id","order_id","actor_role","topic","priority","status","created_at"]},
@@ -249,6 +250,7 @@ async function loadReport(){
        '<div class="kpi-grid report-kpis">'+
          reportKpi("Registros",rows.length)+
          (type==="orders"?reportKpi("Valor total",money(rows.reduce((s,r)=>s+Number(r.total||0),0))):"")+
+         (type==="payments"?reportKpi("Volume pago",money(rows.reduce((s,r)=>s+Number(r.amount||0),0))):"")+
          (type==="deliveries"?reportKpi("Taxas de entrega",money(rows.reduce((s,r)=>s+Number(r.fee||0),0))):"")+
          (type==="payouts"?reportKpi("Valor dos repasses",money(rows.reduce((s,r)=>s+Number(r.amount||0),0))):"")+
          (type==="reviews"&&rows.length?reportKpi("Nota média",(rows.reduce((s,r)=>s+Number(r.rating||0),0)/rows.length).toFixed(2)):"")+
@@ -424,13 +426,14 @@ async function renderAlerts(){
    const expiryDays=settings["alerts.document_expiry_days"]||30;
    const now=Date.now(),orderCut=new Date(now-orderMinutes*60000).toISOString(),deliveryCut=new Date(now-deliveryMinutes*60000).toISOString();
    const expiry=new Date(now+expiryDays*86400000).toISOString().slice(0,10);
+   const empty={data:[],error:null};
    const [orders,deliveries,docs,payments,payouts,integrations]=await Promise.all([
-     state.supabase.from("orders").select("id,status,total,updated_at,created_at").not("status","in",["delivered","canceled","refunded"]).lt("updated_at",orderCut).order("updated_at"),
-     state.supabase.from("deliveries").select("id,order_id,status,delivery_id,updated_at").not("status","in",["delivered","canceled"]).lt("updated_at",deliveryCut).order("updated_at"),
-     state.supabase.from("onboarding_documents").select("id,profile_id,document_type,status,expires_at").not("status","eq","rejected").lte("expires_at",expiry).order("expires_at"),
+     state.supabase.from("orders").select("id,status,total,updated_at,created_at").not("status","in","(delivered,canceled,refunded)").lt("updated_at",orderCut).order("updated_at"),
+     state.supabase.from("deliveries").select("id,order_id,status,delivery_id,updated_at").not("status","in","(delivered,canceled)").lt("updated_at",deliveryCut).order("updated_at"),
+     canModule("documents")?state.supabase.from("onboarding_documents").select("id,profile_id,document_type,status,expires_at").neq("status","rejected").lte("expires_at",expiry).order("expires_at"):Promise.resolve(empty),
      state.supabase.from("payments").select("id,order_id,status,amount,failure_reason,created_at").in("status",["failed","error","declined"]).order("created_at",{ascending:false}).limit(100),
-     state.supabase.from("payouts").select("id,profile_id,status,amount,created_at").eq("status","failed").order("created_at",{ascending:false}).limit(100),
-     state.supabase.from("integration_registry").select("key,label,enabled,status,last_checked_at").eq("enabled",true).neq("status","ok")
+     canModule("finance")?state.supabase.from("payouts").select("id,profile_id,status,amount,created_at").eq("status","failed").order("created_at",{ascending:false}).limit(100):Promise.resolve(empty),
+     canModule("integration_health")?state.supabase.from("integration_registry").select("key,label,enabled,status,last_checked_at").eq("enabled",true).neq("status","ok"):Promise.resolve(empty)
    ]);
    const all=[orders,deliveries,docs,payments,payouts,integrations];const bad=all.find((x)=>x.error);if(bad)throw bad.error;
    const total=all.reduce((s,x)=>s+(x.data?.length||0),0);
