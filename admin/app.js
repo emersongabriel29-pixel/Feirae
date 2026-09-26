@@ -284,6 +284,273 @@ function exportCurrentReport(){
  document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
 
+
+function detailPairs(pairs){
+ return '<div class="detail-grid">'+pairs.map(([k,v])=>'<div class="detail-card"><span>'+esc(k)+'</span><strong>'+cell(k.toLowerCase().replaceAll(" ","_"),v)+'</strong></div>').join("")+'</div>';
+}
+
+function miniTable(titleText,cols,rows){
+ return '<section class="panel detail-section"><div class="panel-head"><div><h2>'+esc(titleText)+'</h2><p>'+rows.length+' registro(s)</p></div></div><div class="table-wrap"><table><thead><tr>'+cols.map((k)=>'<th>'+esc(label(k))+'</th>').join("")+'</tr></thead><tbody>'+
+ (rows.length?rows.map((r)=>'<tr>'+cols.map((k)=>'<td>'+cell(k,r[k])+'</td>').join("")+'</tr>').join(""):'<tr><td colspan="'+cols.length+'" class="empty">Sem registros.</td></tr>')+
+ '</tbody></table></div></section>';
+}
+
+async function renderOrderDetail(orderId){
+ $("#pageTitle").textContent="Detalhe do pedido";
+ $("#breadcrumb").textContent="Pedidos";
+ $("#pageContent").innerHTML='<div class="empty">Carregando pedido…</div>';
+ try{
+   const orderR=await state.supabase.from("orders").select("*").eq("id",orderId).single();
+   if(orderR.error)throw orderR.error;
+   const order=orderR.data;
+   const queries=[
+     state.supabase.from("order_items").select("*").eq("order_id",orderId),
+     state.supabase.from("order_vendors").select("*").eq("order_id",orderId),
+     state.supabase.from("deliveries").select("*").eq("order_id",orderId).maybeSingle(),
+     state.supabase.from("payments").select("*").eq("order_id",orderId).order("created_at",{ascending:false}),
+     state.supabase.from("order_events").select("*").eq("order_id",orderId).order("created_at",{ascending:true}),
+     state.supabase.from("support_tickets").select("*").eq("order_id",orderId).order("created_at",{ascending:false}),
+     state.supabase.from("order_reviews").select("*").eq("order_id",orderId).order("created_at",{ascending:false}),
+     state.supabase.from("profiles").select("id,full_name,phone,role").eq("id",order.customer_id).maybeSingle()
+   ];
+   if(order.address_id)queries.push(state.supabase.from("addresses").select("*").eq("id",order.address_id).maybeSingle());
+   const res=await Promise.all(queries);
+   const bad=res.find((x)=>x.error);if(bad)throw bad.error;
+   const [items,vendors,delivery,payments,events,support,reviews,customer,address]=res;
+   let html='<div class="detail-head"><button class="secondary" id="backOrders">← Pedidos</button><div><b>#'+esc(order.id)+'</b><span class="badge '+esc(order.status)+'">'+esc(order.status)+'</span></div></div>';
+   html+=detailPairs([
+     ["Cliente",customer.data?.full_name||order.customer_id],
+     ["Pagamento",order.payment_status],
+     ["Subtotal",money(order.subtotal)],
+     ["Frete",money(order.delivery_fee)],
+     ["Desconto",money(order.promotion_discount||0)],
+     ["Carteira",money(order.wallet_used||0)],
+     ["Reembolso",money(order.refund_amount||0)],
+     ["Total",money(order.total)],
+     ["Criado em",date(order.created_at)]
+   ]);
+   if(address?.data)html+=miniTable("Endereço",["recipient_name","address_line","number","neighborhood","city","state","postal_code"],[address.data]);
+   html+=miniTable("Itens",["product_name_snapshot","unit_price_snapshot","quantity","estimated_weight_kg","actual_weight_kg","total","unavailable"],items.data||[]);
+   html+=miniTable("Bancas do pedido",["vendor_id","status","subtotal"],vendors.data||[]);
+   if(delivery.data)html+=miniTable("Entrega",["id","delivery_id","status","fee","total_distance_km","eta_minutes","cancel_reason","accepted_at","collected_at","out_for_delivery_at","delivered_at"],[delivery.data]);
+   html+=miniTable("Pagamentos",["provider","method","status","amount","provider_fee","platform_amount","vendor_amount","delivery_amount","refunded_amount","reconciled","created_at"],payments.data||[]);
+   html+=miniTable("Linha do tempo",["created_at","actor_role","event_key","label","reason","details"],events.data||[]);
+   html+=miniTable("Suporte",["created_at","actor_role","topic","priority","status","details"],support.data||[]);
+   html+=miniTable("Avaliações",["created_at","author_role","target_role","rating","comment","visible"],reviews.data||[]);
+   $("#pageContent").innerHTML=html;
+   $("#backOrders").onclick=()=>openModule("orders");
+ }catch(e){renderError(e);}
+}
+
+async function renderDeliveryDetail(deliveryId){
+ $("#pageTitle").textContent="Detalhe da entrega";
+ $("#breadcrumb").textContent="Entregas";
+ $("#pageContent").innerHTML='<div class="empty">Carregando entrega…</div>';
+ try{
+   const dR=await state.supabase.from("deliveries").select("*").eq("id",deliveryId).single();
+   if(dR.error)throw dR.error;
+   const d=dR.data;
+   const [order,driver,vehicle,events,reviews]=await Promise.all([
+     state.supabase.from("orders").select("*").eq("id",d.order_id).maybeSingle(),
+     d.delivery_id?state.supabase.from("profiles").select("id,full_name,phone").eq("id",d.delivery_id).maybeSingle():Promise.resolve({data:null,error:null}),
+     d.vehicle_id?state.supabase.from("delivery_vehicles").select("*").eq("id",d.vehicle_id).maybeSingle():Promise.resolve({data:null,error:null}),
+     state.supabase.from("order_events").select("*").eq("order_id",d.order_id).order("created_at",{ascending:true}),
+     state.supabase.from("order_reviews").select("*").eq("order_id",d.order_id).eq("target_role","delivery").order("created_at",{ascending:false})
+   ]);
+   const bad=[order,driver,vehicle,events,reviews].find((x)=>x.error);if(bad)throw bad.error;
+   let html='<div class="detail-head"><button class="secondary" id="backDeliveries">← Entregas</button><div><b>#'+esc(d.id)+'</b><span class="badge '+esc(d.status)+'">'+esc(d.status)+'</span></div></div>';
+   html+=detailPairs([
+     ["Pedido",d.order_id],
+     ["Entregador",driver.data?.full_name||d.delivery_id||"Não atribuído"],
+     ["Valor da entrega",money(d.fee)],
+     ["Até a banca (km)",d.to_vendor_km],
+     ["Banca → cliente (km)",d.vendor_to_customer_km],
+     ["Total (km)",d.total_distance_km],
+     ["ETA (min)",d.eta_minutes],
+     ["Fonte da rota",d.route_source||"—"],
+     ["Aceita",date(d.accepted_at)],
+     ["Coletada",date(d.collected_at)],
+     ["Em rota",date(d.out_for_delivery_at)],
+     ["Entregue",date(d.delivered_at)]
+   ]);
+   if(vehicle.data)html+=miniTable("Veículo usado",["vehicle_type","brand_model","plate","capacity_kg","active","document_status"],[vehicle.data]);
+   if(order.data)html+=miniTable("Pedido relacionado",["id","status","payment_status","subtotal","delivery_fee","total","created_at"],[order.data]);
+   html+=miniTable("Linha do tempo",["created_at","actor_role","event_key","label","reason","details"],events.data||[]);
+   html+=miniTable("Avaliações da entrega",["created_at","author_role","rating","comment","visible"],reviews.data||[]);
+   $("#pageContent").innerHTML=html;
+   $("#backDeliveries").onclick=()=>openModule("delivery_jobs");
+ }catch(e){renderError(e);}
+}
+
+async function renderFinance(){
+ $("#pageContent").innerHTML='<div class="empty">Carregando conciliação financeira…</div>';
+ try{
+   const [payments,payouts]=await Promise.all([
+     state.supabase.from("payments").select("*").order("created_at",{ascending:false}).limit(1000),
+     state.supabase.from("payouts").select("*").order("created_at",{ascending:false}).limit(1000)
+   ]);
+   if(payments.error)throw payments.error;if(payouts.error)throw payouts.error;
+   const rows=payments.data||[];
+   const gross=rows.reduce((s,r)=>s+Number(r.amount||0),0);
+   const provider=rows.reduce((s,r)=>s+Number(r.provider_fee||0),0);
+   const platform=rows.reduce((s,r)=>s+Number(r.platform_amount||r.commission||0),0);
+   const vendors=rows.reduce((s,r)=>s+Number(r.vendor_amount||0),0);
+   const drivers=rows.reduce((s,r)=>s+Number(r.delivery_amount||0),0);
+   const refunded=rows.reduce((s,r)=>s+Number(r.refunded_amount||0),0);
+   const expected=rows.reduce((s,r)=>{
+     const allocated=Number(r.provider_fee||0)+Number(r.platform_amount||r.commission||0)+Number(r.vendor_amount||0)+Number(r.delivery_amount||0)+Number(r.refunded_amount||0);
+     return s+(Number(r.amount||0)-allocated);
+   },0);
+   const paidPayouts=(payouts.data||[]).filter((r)=>r.status==="paid").reduce((s,r)=>s+Number(r.amount||0),0);
+   let html='<div class="kpi-grid">'+
+     reportKpi("Recebido bruto",money(gross))+reportKpi("Taxas do provedor",money(provider))+
+     reportKpi("Receita Feiraê",money(platform))+reportKpi("Feirantes",money(vendors))+
+     reportKpi("Entregadores",money(drivers))+reportKpi("Reembolsado",money(refunded))+
+     reportKpi("Diferença a conciliar",money(expected))+reportKpi("Repasses pagos",money(paidPayouts))+
+   '</div>';
+   html+=miniTable("Conciliação por transação",["order_id","provider","method","status","amount","provider_fee","platform_amount","vendor_amount","delivery_amount","refunded_amount","reconciled","created_at"],rows);
+   html+='<div class="notice"><b>Segurança financeira:</b> confirmar cobrança, estornar no provedor e liquidar repasses continuam sendo operações server-side. A Gestão consulta e marca conciliação; não usa chave secreta no navegador.</div>';
+   $("#pageContent").innerHTML=html;
+ }catch(e){renderError(e);}
+}
+
+async function renderAlerts(){
+ $("#pageContent").innerHTML='<div class="empty">Verificando alertas operacionais…</div>';
+ try{
+   const settingR=await state.supabase.from("platform_settings").select("key,value").in("key",["alerts.order_stale_minutes","alerts.delivery_stale_minutes","alerts.document_expiry_days"]);
+   const settings=Object.fromEntries((settingR.data||[]).map((r)=>[r.key,Number(r.value)]));
+   const orderMinutes=settings["alerts.order_stale_minutes"]||45;
+   const deliveryMinutes=settings["alerts.delivery_stale_minutes"]||30;
+   const expiryDays=settings["alerts.document_expiry_days"]||30;
+   const now=Date.now(),orderCut=new Date(now-orderMinutes*60000).toISOString(),deliveryCut=new Date(now-deliveryMinutes*60000).toISOString();
+   const expiry=new Date(now+expiryDays*86400000).toISOString().slice(0,10);
+   const [orders,deliveries,docs,payments,payouts,integrations]=await Promise.all([
+     state.supabase.from("orders").select("id,status,total,updated_at,created_at").not("status","in",["delivered","canceled","refunded"]).lt("updated_at",orderCut).order("updated_at"),
+     state.supabase.from("deliveries").select("id,order_id,status,delivery_id,updated_at").not("status","in",["delivered","canceled"]).lt("updated_at",deliveryCut).order("updated_at"),
+     state.supabase.from("onboarding_documents").select("id,profile_id,document_type,status,expires_at").not("status","eq","rejected").lte("expires_at",expiry).order("expires_at"),
+     state.supabase.from("payments").select("id,order_id,status,amount,failure_reason,created_at").in("status",["failed","error","declined"]).order("created_at",{ascending:false}).limit(100),
+     state.supabase.from("payouts").select("id,profile_id,status,amount,created_at").eq("status","failed").order("created_at",{ascending:false}).limit(100),
+     state.supabase.from("integration_registry").select("key,label,enabled,status,last_checked_at").eq("enabled",true).neq("status","ok")
+   ]);
+   const all=[orders,deliveries,docs,payments,payouts,integrations];const bad=all.find((x)=>x.error);if(bad)throw bad.error;
+   const total=all.reduce((s,x)=>s+(x.data?.length||0),0);
+   let html='<div class="kpi-grid">'+reportKpi("Alertas ativos",total)+reportKpi("Pedidos parados",orders.data.length)+reportKpi("Entregas paradas",deliveries.data.length)+reportKpi("Documentos vencendo",docs.data.length)+reportKpi("Falhas financeiras",payments.data.length+payouts.data.length)+reportKpi("Integrações",integrations.data.length)+'</div>';
+   html+=miniTable("Pedidos sem atualização",["id","status","total","updated_at","created_at"],orders.data||[]);
+   html+=miniTable("Entregas sem atualização",["id","order_id","status","delivery_id","updated_at"],deliveries.data||[]);
+   html+=miniTable("Documentos vencidos ou próximos",["profile_id","document_type","status","expires_at"],docs.data||[]);
+   html+=miniTable("Pagamentos com falha",["order_id","status","amount","failure_reason","created_at"],payments.data||[]);
+   html+=miniTable("Repasses com falha",["profile_id","status","amount","created_at"],payouts.data||[]);
+   html+=miniTable("Integrações com atenção",["key","label","status","last_checked_at"],integrations.data||[]);
+   $("#pageContent").innerHTML=html;
+ }catch(e){renderError(e);}
+}
+
+async function renderIntegrationHealth(){
+ $("#pageContent").innerHTML='<div class="empty">Carregando saúde das integrações…</div>';
+ try{
+   const [registry,events]=await Promise.all([
+     state.supabase.from("integration_registry").select("*").order("label"),
+     state.supabase.from("integration_health_events").select("*").order("checked_at",{ascending:false}).limit(300)
+   ]);
+   if(registry.error)throw registry.error;if(events.error)throw events.error;
+   const latest={};for(const e of events.data||[]){if(!latest[e.integration_key])latest[e.integration_key]=e;}
+   const rows=(registry.data||[]).map((r)=>({...r,health_status:latest[r.key]?.status||r.status,health_message:latest[r.key]?.message||"",response_ms:latest[r.key]?.response_ms,checked_at:latest[r.key]?.checked_at||r.last_checked_at}));
+   let html='<div class="notice"><b>Teste real:</b> health checks que dependem de credenciais devem ser executados no backend/Edge Function. Esta tela exibe o resultado recebido e nunca expõe segredo no navegador.</div>';
+   html+=miniTable("Estado atual",["label","provider","environment","enabled","health_status","health_message","response_ms","checked_at"],rows);
+   html+=miniTable("Histórico de verificações",["integration_key","status","message","response_ms","checked_at"],events.data||[]);
+   $("#pageContent").innerHTML=html;
+ }catch(e){renderError(e);}
+}
+
+const ADMIN_PERMISSION_SET=["*","operations.manage","documents.review","accounts.enforce","registrations.manage","rules.manage","finance.manage","communications.manage","settings.manage","permissions.manage","audit.view","reports.view"];
+
+async function renderAdmins(){
+ $("#pageContent").innerHTML='<div class="empty">Carregando administradores…</div>';
+ try{
+   const [profiles,access,permissions]=await Promise.all([
+     state.supabase.from("profiles").select("id,full_name,phone,role,created_at").eq("role","admin").order("full_name"),
+     state.supabase.from("admin_access").select("*"),
+     state.supabase.from("admin_permissions").select("*")
+   ]);
+   if(profiles.error)throw profiles.error;if(access.error)throw access.error;if(permissions.error)throw permissions.error;
+   const accessMap=Object.fromEntries((access.data||[]).map((a)=>[a.profile_id,a]));
+   const permMap=(permissions.data||[]).reduce((a,p)=>{(a[p.profile_id]??=[]).push(p.permission);return a;},{});
+   let html='<section class="panel"><div class="panel-head"><div><h2>Administradores</h2><p>Ative/desative acessos e configure permissões sem compartilhar acesso total.</p></div><button class="primary" id="promoteAdmin">Promover usuário existente</button></div><div class="admin-list">';
+   for(const p of profiles.data||[]){
+     const ac=accessMap[p.id],active=ac?.active!==false,perms=permMap[p.id]||["* (acesso total enquanto não há regras explícitas)"];
+     html+='<div class="admin-card"><div><strong>'+esc(p.full_name||p.id)+'</strong><small>'+esc(p.id)+'</small><div class="permission-chips">'+perms.map((x)=>'<span>'+esc(x)+'</span>').join("")+'</div></div><div class="actions"><span class="badge '+(active?"true":"false")+'">'+(active?"Ativo":"Desativado")+'</span><button data-admin-access="'+esc(p.id)+'" data-active="'+active+'">'+(active?"Desativar":"Ativar")+'</button><button data-admin-permissions="'+esc(p.id)+'">Permissões</button></div></div>';
+   }
+   html+='</div></section><div class="notice">Promover alguém a administrador altera um papel sensível e exige a permissão <code>permissions.manage</code>. O painel não cria contas do Auth nem envia convite usando service role.</div>';
+   $("#pageContent").innerHTML=html;
+   $("#promoteAdmin").onclick=promoteExistingAdmin;
+   document.querySelectorAll("[data-admin-access]").forEach((b)=>b.onclick=()=>setAdminAccess(b.dataset.adminAccess,b.dataset.active!=="true"));
+   document.querySelectorAll("[data-admin-permissions]").forEach((b)=>b.onclick=()=>editAdminPermissions(b.dataset.adminPermissions,permMap[b.dataset.adminPermissions]||[]));
+ }catch(e){renderError(e);}
+}
+
+async function promoteExistingAdmin(){
+ const id=prompt("UUID do usuário existente que será promovido a administrador:");
+ if(!id)return;
+ const r=await state.supabase.from("profiles").update({role:"admin"}).eq("id",id).select("id,full_name").maybeSingle();
+ if(r.error){toast(r.error.message);return;}
+ if(!r.data){toast("Usuário não encontrado.");return;}
+ const a=await state.supabase.from("admin_access").upsert({profile_id:id,active:true,updated_by:state.session.user.id},{onConflict:"profile_id"});
+ if(a.error){toast(a.error.message);return;}
+ await audit("promote_admin","profiles",id,null,{role:"admin"});
+ toast("Administrador promovido.");
+ await renderAdmins();
+}
+
+async function setAdminAccess(profileId,active){
+ if(profileId===state.session.user.id&&!active){toast("Você não pode desativar seu próprio acesso nesta sessão.");return;}
+ const r=await state.supabase.from("admin_access").upsert({profile_id:profileId,active,updated_by:state.session.user.id,updated_at:new Date().toISOString()},{onConflict:"profile_id"});
+ if(r.error){toast(r.error.message);return;}
+ await audit(active?"admin_enable":"admin_disable","admin_access",profileId,null,{active});
+ toast(active?"Acesso ativado.":"Acesso desativado.");
+ await renderAdmins();
+}
+
+function editAdminPermissions(profileId,current){
+ state.editing={special:"admin_permissions",profileId};
+ $("#modalTitle").textContent="Permissões administrativas";
+ $("#editorForm").innerHTML='<div class="full-span permission-editor"><p>Marque as áreas permitidas. Sem nenhuma permissão explícita, o administrador mantém acesso total por compatibilidade de bootstrap.</p>'+
+ ADMIN_PERMISSION_SET.map((p)=>'<label class="check-row"><input type="checkbox" data-admin-perm="'+esc(p)+'" '+(current.includes(p)?"checked":"")+'><span>'+esc(p)+'</span></label>').join("")+'</div>';
+ $("#modal").classList.remove("hidden");
+}
+
+async function saveAdminPermissions(){
+ const id=state.editing.profileId;
+ const selected=[...$("#editorForm").querySelectorAll("[data-admin-perm]:checked")].map((x)=>x.dataset.adminPerm);
+ const del=await state.supabase.from("admin_permissions").delete().eq("profile_id",id);
+ if(del.error){toast(del.error.message);return false;}
+ if(selected.length){
+   const ins=await state.supabase.from("admin_permissions").insert(selected.map((permission)=>({profile_id:id,permission,granted_by:state.session.user.id})));
+   if(ins.error){toast(ins.error.message);return false;}
+ }
+ await audit("permissions_replace","admin_permissions",id,null,{permissions:selected});
+ return true;
+}
+
+async function renderAuditAdvanced(){
+ $("#pageContent").innerHTML=
+ '<section class="panel"><div class="panel-head"><div><h2>Auditoria</h2><p>Filtre alterações por administrador, entidade, ação e período.</p></div></div><div class="report-filters">'+
+ '<label>Administrador<input id="auditAdmin" placeholder="UUID"></label><label>Entidade<input id="auditEntity" placeholder="orders, fairs…"></label>'+
+ '<label>Ação<input id="auditAction" placeholder="update, insert…"></label><label>De<input id="auditFrom" type="date"></label><label>Até<input id="auditTo" type="date"></label>'+
+ '<div class="report-actions"><button id="runAudit" class="primary">Filtrar</button></div></div></section><div id="auditResult"></div>';
+ $("#runAudit").onclick=loadAuditAdvanced;
+ await loadAuditAdvanced();
+}
+
+async function loadAuditAdvanced(){
+ let q=state.supabase.from("admin_audit_logs").select("*").order("created_at",{ascending:false}).limit(1000);
+ const admin=$("#auditAdmin")?.value.trim(),entity=$("#auditEntity")?.value.trim(),action=$("#auditAction")?.value.trim(),from=$("#auditFrom")?.value,to=$("#auditTo")?.value;
+ if(admin)q=q.eq("admin_id",admin);if(entity)q=q.ilike("entity","%"+entity+"%");if(action)q=q.ilike("action","%"+action+"%");
+ if(from)q=q.gte("created_at",from+"T00:00:00");if(to)q=q.lte("created_at",to+"T23:59:59.999");
+ const r=await q;
+ if(r.error){$("#auditResult").innerHTML='<div class="notice">'+esc(r.error.message)+'</div>';return;}
+ $("#auditResult").innerHTML=miniTable("Eventos de auditoria",["created_at","admin_id","action","entity","entity_id","before_data","after_data"],r.data||[]);
+}
+
 async function renderSettings(){
  $("#pageContent").innerHTML='<div class="empty">Carregando configurações…</div>';
  const r=await state.supabase.from("platform_settings").select("*").order("category").order("label");
@@ -473,6 +740,13 @@ function readPayload(){
 
 async function saveEditor(){
  if(!state.editing)return;
+ if(state.editing.special==="admin_permissions"){
+   $("#saveEdit").disabled=true;
+   const ok=await saveAdminPermissions();
+   $("#saveEdit").disabled=false;
+   if(ok){closeEditor();toast("Permissões atualizadas.");await renderAdmins();}
+   return;
+ }
  const {m,row,isNew}=state.editing;let payload;
  try{payload=readPayload();}catch{toast("JSON inválido");return;}
  if(m.table==="account_enforcements"&&payload.action_type==="suspension"&&!payload.ends_at){
@@ -482,6 +756,10 @@ async function saveEditor(){
  if(m.table==="account_enforcements"&&payload.ends_at&&payload.starts_at&&new Date(payload.ends_at)<=new Date(payload.starts_at)){
    toast("A data final precisa ser posterior ao início.");
    return;
+ }
+ if(m.table==="payments"){
+   payload.reconciled_by=payload.reconciled?state.session.user.id:null;
+   payload.reconciled_at=payload.reconciled?new Date().toISOString():null;
  }
  $("#saveEdit").disabled=true;
  const key=m.key||"id";
