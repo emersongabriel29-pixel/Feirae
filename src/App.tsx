@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
@@ -32,6 +32,7 @@ import { useDemoCart } from "./hooks/useDemoCart";
 import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
 import { useUnifiedOrderRevision } from "./hooks/useUnifiedOrderRevision";
+import { useMarketplaceRevision } from "./hooks/useMarketplaceRevision";
 import {
   eventNow,
   migrateUnifiedOrderAccountKey,
@@ -55,6 +56,11 @@ import {
   scrubLegacyPlaintextPasswords,
   updateLocalAccount,
 } from "./domain/localAuth";
+import {
+  customerPromotionNotification,
+  orderEventNotification,
+  showFeiraeNotification,
+} from "./domain/feiraeNotifications";
 
 export default function App() {
   const { session, role, startSession, updateSession, clearSession } = useDemoSession();
@@ -113,6 +119,9 @@ export default function App() {
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast, notify } = useToast();
   const unifiedOrderRevision = useUnifiedOrderRevision();
+  const marketplaceRevision = useMarketplaceRevision();
+  const seenCustomerOrderNotifications = useRef<Set<string> | null>(null);
+  const seenCustomerOfferNotifications = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     scrubLegacyPlaintextPasswords();
@@ -205,6 +214,69 @@ export default function App() {
       return Array.from(byId.values());
     });
   }, [role, session?.email, setOrders, unifiedOrderRevision]);
+
+  useEffect(() => {
+    if (role !== "customer" || !session) return;
+    const unifiedOrders = readUnifiedOrders(session.email);
+    const currentKeys = new Set(
+      unifiedOrders.flatMap((order) =>
+        order.events.map((event) => `${order.id}:${event.key}:${event.at}`),
+      ),
+    );
+
+    if (seenCustomerOrderNotifications.current === null) {
+      seenCustomerOrderNotifications.current = currentKeys;
+      return;
+    }
+
+    if (orderUpdatesEnabled) {
+      unifiedOrders.forEach((order) => {
+        order.events.forEach((event) => {
+          const key = `${order.id}:${event.key}:${event.at}`;
+          if (seenCustomerOrderNotifications.current?.has(key)) return;
+          const message = orderEventNotification("customer", order, event);
+          if (message) void showFeiraeNotification(message);
+        });
+      });
+    }
+
+    seenCustomerOrderNotifications.current = currentKeys;
+  }, [orderUpdatesEnabled, role, session, unifiedOrderRevision]);
+
+  useEffect(() => {
+    if (role !== "customer") return;
+    const activeOffers = readSharedStores().flatMap((store) =>
+      store.promotions
+        .filter((promotion) => promotion.active)
+        .map((promotion) => ({
+          key: `${store.storeId}:${promotion.id}`,
+          message: customerPromotionNotification({
+            storeId: store.storeId,
+            storeName: store.name,
+            fairName: store.fairName,
+            promotionId: promotion.id,
+            promotionName: promotion.name,
+            rule: promotion.rule,
+          }),
+        })),
+    );
+    const currentKeys = new Set(activeOffers.map((offer) => offer.key));
+
+    if (seenCustomerOfferNotifications.current === null) {
+      seenCustomerOfferNotifications.current = currentKeys;
+      return;
+    }
+
+    if (offersEnabled) {
+      activeOffers.forEach((offer) => {
+        if (!seenCustomerOfferNotifications.current?.has(offer.key)) {
+          void showFeiraeNotification(offer.message);
+        }
+      });
+    }
+
+    seenCustomerOfferNotifications.current = currentKeys;
+  }, [marketplaceRevision, offersEnabled, role]);
 
   function login(nextRole: Role, email: string, name: string, password: string, isNewAccount: boolean) {
     const result = authenticateLocalAccount({
