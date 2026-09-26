@@ -1227,3 +1227,30 @@ html.compact-product-cards .product-card .stock {
   background: var(--fe-danger-soft);
   color: var(--fe-danger);
 }
+
+
+/* Marketplace imagery */
+.product-art {
+  position: relative;
+}
+.product-art > img,
+.mini-product-art > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.product-art > img {
+  position: absolute;
+  inset: 0;
+}
+.product-art > small {
+  position: relative;
+  z-index: 1;
+}
+.mini-product-art {
+  overflow: hidden;
+  border-radius: var(--fe-radius-md);
+}
+.mini-product-art > img {
+  min-height: 6.5rem;
+}
