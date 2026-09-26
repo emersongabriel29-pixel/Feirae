@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
     isSuperadmin: Boolean(access.is_superadmin),
     permissions: new Set((permissionRows ?? []).map((row) => String(row.permission))),
   };
+  const requestId = req.headers.get("x-request-id")?.trim() || crypto.randomUUID();
 
   const has = (permission: string) =>
     ctx.isSuperadmin || ctx.permissions.has(permission);
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
       entity_id: entityId,
       before_data: beforeData,
       after_data: afterData,
-      metadata,
+      metadata: { request_id: requestId, ...metadata },
     });
     if (error) throw new ResponseError("audit_failed", 500, error.message);
   };
@@ -749,7 +750,12 @@ Deno.serve(async (req) => {
         if (!activeKeys.has(String(alert.alert_key))) {
           await adminDb
             .from("operational_alerts")
-            .update({ status: "resolved", resolved_at: new Date().toISOString(), resolved_by: ctx.id })
+            .update({
+              status: "resolved",
+              resolved_at: new Date().toISOString(),
+              resolved_by: null,
+              metadata: { auto_resolved: true, request_id: requestId },
+            })
             .eq("id", alert.id);
         }
       }
