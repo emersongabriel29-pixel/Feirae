@@ -412,3 +412,11 @@ A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GA
 8. decisão `reviews` x `order_reviews`;
 9. estruturas do painel administrativo;
 10. RLS/policies completas.
+
+## Runtime configuration da Gestão
+
+A migration `0003_management_console.sql` adiciona configuração operacional persistida para Estados, Regiões, Veículos, Frete, Taxas, Pagamentos, Cancelamentos, Documentos, Feature Flags, Conteúdo, Integrações, Alertas, Restrições, RBAC e Auditoria.
+
+As capacidades em `src/domain/vehicles.ts` continuam sendo fallback do protótipo até o app principal consumir `vehicle_type_rules`. O mesmo princípio vale para regras de frete, meios de pagamento e cobertura geográfica: depois da integração runtime, o código local não deve ser a fonte autoritativa.
+
+Ações administrativas críticas não alteram estados por CRUD livre; `admin-actions` aplica as transições e registra auditoria.

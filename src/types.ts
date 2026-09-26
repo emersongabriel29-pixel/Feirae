@@ -57,6 +57,7 @@ export type VendorMetrics = {
 export type Fair = {
   name: string;
   place: string;
+  state?: string;
   address?: string;
   status: string;
   source?: "official" | "demo";

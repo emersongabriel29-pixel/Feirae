@@ -49,6 +49,13 @@ import {
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import { consumeWallet } from "./domain/walletBridge";
+import {
+  getRuntimeConfiguration,
+  mergeRuntimeFairs,
+  refreshRuntimeConfiguration,
+  runtimePaymentMethods,
+  runtimeStates,
+} from "./domain/runtimeConfig";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 import {
   authenticateLocalAccount,
@@ -60,6 +67,7 @@ export default function App() {
   const { session, role, startSession, updateSession, clearSession } = useDemoSession();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
+  const [runtimeRevision, setRuntimeRevision] = useState(0);
   const accountKey = session?.email ?? "guest";
   const [gpsEnabled] = usePersistentState<boolean>(scopedStorageKey("feirae:gps", accountKey), true);
   const [orderUpdatesEnabled] = usePersistentState<boolean>(
@@ -119,6 +127,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    refreshRuntimeConfiguration().finally(() => {
+      if (active) setRuntimeRevision((current) => current + 1);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     document.documentElement.classList.toggle("compact-product-cards", compactCards);
     return () => document.documentElement.classList.remove("compact-product-cards");
   }, [compactCards]);
@@ -148,12 +166,29 @@ export default function App() {
     openRoleRoot,
   } = useAppNavigation(role, () => setCartOpen(false));
 
+  // runtimeRevision força o rerender quando a configuração da Gestão muda.
+  void runtimeRevision;
+  const configuredFairs = mergeRuntimeFairs(fairs);
+  const serviceStates = runtimeStates();
+  const paymentMethods = runtimePaymentMethods();
+  const runtimeManaged = getRuntimeConfiguration().source === "supabase";
+
+  useEffect(() => {
+    if (!configuredFairs.length) return;
+    if (!configuredFairs.some((fair) => fair.name === selectedFair)) {
+      setSelectedFair(configuredFairs[0].name);
+    }
+  }, [configuredFairs, selectedFair, setSelectedFair]);
+
   const visibleProducts = useMemo(() => {
     const matches = filterProducts(catalog, query, category);
     if (query.trim()) return matches;
     return matches.filter((product) => product.fair === selectedFair);
   }, [catalog, query, category, selectedFair]);
-  const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
+  const fairsWithDistance = useMemo(
+    () => sortFairsByDistance(configuredFairs, coords),
+    [configuredFairs, coords],
+  );
   const trackedOrder =
     orders.find((order) => order.id === selectedOrderId) ??
     orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
@@ -551,6 +586,7 @@ export default function App() {
           <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             {tab === "home" && (
               <HomePage
+                firstFairName={fairsWithDistance[0]?.name}
                 onTab={openCustomerTab}
                 onFair={openFair}
                 onVendors={() => openScreen("vendors")}
@@ -558,7 +594,15 @@ export default function App() {
                 onAdd={addProductToCart}
               />
             )}
-            {tab === "fairs" && <FairsPage fairItems={fairsWithDistance} onFair={openFair} onMap={openMap} />}
+            {tab === "fairs" && (
+              <FairsPage
+                fairItems={fairsWithDistance}
+                serviceStates={serviceStates}
+                runtimeManaged={runtimeManaged}
+                onFair={openFair}
+                onMap={openMap}
+              />
+            )}
             {tab === "products" && (
               <CatalogPage
                 items={visibleProducts}
@@ -592,6 +636,7 @@ export default function App() {
         {screen === "fair" && (
           <FairDetail
             fairName={selectedFair}
+            fairItems={configuredFairs}
             onBack={() => openCustomerTab("fairs")}
             onMap={openMap}
             onAdd={addProductToCart}
@@ -614,6 +659,7 @@ export default function App() {
         {screen === "vendors" && (
           <VendorsPage
             fairName={selectedFair}
+            fairItems={configuredFairs}
             onBack={() => openCustomerTab("fairs")}
             onVendor={openVendor}
             vendorFavorites={vendorFavorites}
@@ -632,6 +678,8 @@ export default function App() {
             items={cartProducts}
             cart={cart}
             subtotal={subtotal}
+            paymentMethods={paymentMethods}
+            runtimeManaged={runtimeManaged}
             onBack={() => setCartOpen(true)}
             onConfirm={confirmOrder}
           />

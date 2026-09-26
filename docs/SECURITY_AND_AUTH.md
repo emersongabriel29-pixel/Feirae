@@ -33,17 +33,13 @@ Não é aceitável em produção porque:
 - não há MFA;
 - não há proteção multi-dispositivo.
 
-## 2. Supabase ainda não está conectado ao app
+## 2. Supabase: app principal x Gestão
 
-Fatos atuais:
+O app principal de Cliente/Feirante/Entregador ainda não usa Supabase como backend compartilhado e continua com persistência local em vários fluxos.
 
-- existem `.env.example`, 0001 e 0002;
-- `package.json` **não possui `@supabase/supabase-js`**;
-- não existe cliente Supabase no frontend;
-- não existe `supabase/config.toml`;
-- não existem Edge Functions no repositório.
+A Área de Gestão, porém, já possui integração própria com Supabase via `supabase-js` no navegador e uma Edge Function administrativa em `supabase/functions/admin-actions/index.ts`.
 
-Portanto, migrations existentes são preparação de schema, não backend ativo.
+A migration `0003_management_console.sql` e a Edge Function ainda precisam ser aplicadas/publicadas no projeto Supabase correto do Feiraê antes de uso real.
 
 ## 3. RLS: situação exata
 
@@ -208,16 +204,14 @@ Hoje `storedFile.ts`:
 - converte para Data URL;
 - usa `file.type` informado pelo navegador.
 
-Não há:
+No app principal local ainda não há:
 
 - magic bytes;
 - antivírus;
 - validação real de PDF/imagem;
-- Storage privado;
-- URL assinada;
-- auditoria de acesso.
+- upload remoto.
 
-Produção precisa de bucket privado e validação server-side.
+Para o backend futuro, a Gestão já adiciona bucket privado e a Edge Function `document-upload`, que valida tamanho, MIME e magic bytes de PDF/JPEG/PNG antes de gravar no Storage. A leitura administrativa usa URL assinada temporária. Antivírus/antimalware continua como camada adicional recomendada antes de produção.
 
 ## 8. Cartão
 
@@ -248,15 +242,21 @@ Antes de produção:
 
 ## 10. Admin
 
-O enum SQL possui `admin` e `fair_manager`, mas não existe:
+A Gestão implementa:
 
-- UI administrativa;
-- RBAC granular;
-- policy administrativa consolidada;
+- UI administrativa separada;
+- `admin_access`;
+- superadmin explícito;
+- permissões granulares;
+- MFA TOTP obrigatório com AAL2;
+- RLS administrativo;
 - audit log;
-- MFA.
+- ações críticas server-side;
+- bloqueio do papel `fair_manager` enquanto não existir escopo por feira.
 
-Isso precisa ser implementado antes de uso operacional.
+Não existe mais fallback de acesso total quando um admin não possui permissões. Acesso total só existe com `is_superadmin=true`.
+
+Pedidos, entregas, pagamentos, documentos, LGPD, moderação, restrições e gestão de administradores usam a Edge Function `admin-actions` para operações críticas.
 
 ## 11. Critério objetivo de segurança para staging
 
@@ -271,3 +271,16 @@ Staging só pode ser considerado backend-integrado quando:
 - testes de acesso cruzado passarem.
 
 Matriz completa de gaps: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
+
+## 12. Regras adicionais da Gestão
+
+- O browser não possui permissão genérica de UPDATE para pagamentos/repasses/pedidos/entregas.
+- A Edge Function valida o JWT, exige `aal2`, papel admin ativo e permissão.
+- `service_role` existe somente no ambiente da Edge Function.
+- O bucket `onboarding-documents` é privado e limitado a PDF/JPEG/PNG e 5 MB.
+- `document-upload` valida conteúdo por magic bytes e tamanho; antivírus/antimalware permanece como camada adicional recomendada antes de produção.
+- Health checks usam URLs HTTPS definidas em variáveis server-side; o navegador nunca recebe esses endpoints secretos quando houver proxy interno.
+
+## 13. Configuração do painel administrativo
+
+Em produção, a Gestão lê URL e chave publishable/anon de `admin/config.json`. A tela de troca manual de conexão só é aceita em localhost/desenvolvimento. Isso evita que um administrador aponte o painel publicado para outro banco pelo navegador. A chave pública continua protegida por RLS; segredos permanecem server-side.

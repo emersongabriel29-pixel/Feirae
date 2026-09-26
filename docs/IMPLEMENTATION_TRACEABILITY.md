@@ -211,3 +211,38 @@ Contagem real:
 - `utils.test.ts`: 4.
 
 Total: **69**.
+
+## Runtime configuration consumida pelo app público
+
+| Regra da Gestão             | Adapter no app                             | Efeito atual                                                  |
+| --------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
+| Estados/UF                  | `src/domain/runtimeConfig.ts`              | lista somente UFs ativas e habilitadas para pedidos           |
+| Feiras                      | `src/domain/runtimeConfig.ts` + `App.tsx`  | substitui a lista fallback quando o Supabase está configurado |
+| Tipos/capacidade de veículo | `runtimeConfig.ts` + `vehicles.ts`         | cadastro/logística usam tipos ativos e capacidade configurada |
+| Meios de pagamento          | `runtimeConfig.ts` + `CustomerScreens.tsx` | checkout mostra somente métodos ativos para cliente           |
+
+Configurações sensíveis que dependem de identidade/autoridade server-side continuam fora desse adapter público.
+
+## Gestão administrativa
+
+| Função                        | Interface                 | Persistência                                        | Segurança / ação                                     |
+| ----------------------------- | ------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
+| Dashboard e listas            | `admin/app.js`            | tabelas operacionais                                | RLS + RBAC                                           |
+| Estados/regiões               | `admin/modules.js`        | `service_states`, `service_regions`                 | `registrations.manage`                               |
+| Veículos globais              | `admin/modules.js`        | `vehicle_type_rules`                                | `rules.manage`                                       |
+| Frete/taxas                   | `admin/modules.js`        | `delivery_fee_rules`, `platform_fee_rules`          | `rules.manage`                                       |
+| Pedidos                       | detalhe em `admin/app.js` | `orders`, `order_events`                            | `admin-actions: order_transition`                    |
+| Entregas                      | detalhe em `admin/app.js` | `deliveries`                                        | `admin-actions: delivery_*`                          |
+| Documentos                    | `admin/app.js`            | `onboarding_documents`, Storage                     | `admin-actions: document_review` + `document-upload` |
+| Pagamentos                    | `admin/app.js`            | `payments`                                          | `admin-actions: payment_reconcile`                   |
+| Suporte                       | `admin/app.js`            | `support_tickets`                                   | `admin-actions: support_update`                      |
+| Avaliações                    | `admin/app.js`            | `order_reviews`                                     | `admin-actions: review_moderate`                     |
+| LGPD                          | `admin/app.js`            | `privacy_requests`                                  | `admin-actions: privacy_update`                      |
+| Restrições                    | `admin/app.js`            | `account_enforcements`                              | `admin-actions: enforcement_*`                       |
+| Administradores               | `admin/app.js`            | `admin_access`, `admin_permissions`                 | MFA + superadmin + Edge Function                     |
+| Alertas                       | `admin/app.js`            | `operational_alerts`                                | `refresh_alerts`, reconhecer/resolver                |
+| Integrações                   | `admin/app.js`            | `integration_registry`, `integration_health_events` | `health_check` server-side                           |
+| Aprovação feirante/entregador | `admin/app.js`            | `vendor_profiles`, `delivery_profiles`, documentos  | `admin-actions: profile_approval`                    |
+| Auditoria                     | `admin/app.js`            | `admin_audit_logs`                                  | `audit.view`                                         |
+
+Testes: `admin/management.test.js` e `admin/core.test.js`.

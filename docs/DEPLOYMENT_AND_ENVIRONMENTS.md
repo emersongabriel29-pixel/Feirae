@@ -35,15 +35,22 @@ Não existem no repositório atual:
 
 ### Supabase CLI/config
 
-Não existe:
+Existe:
 
 - `supabase/config.toml`.
 
+Ele mantém `verify_jwt = true` para as funções administrativas/publicadas.
+
 ### Edge Functions
 
-Não existe diretório de Edge Functions.
+Existem:
 
-Conclusão: o repositório não contém um pipeline explícito de deploy.
+- `supabase/functions/admin-actions/index.ts`;
+- `supabase/functions/document-upload/index.ts`.
+
+`admin-actions` executa ações administrativas críticas e valida MFA/AAL2, RBAC e auditoria. `document-upload` valida documentos autenticados antes do Storage.
+
+Conclusão: o repositório continua sem pipeline automático de deploy, mas agora possui artefato server-side que precisa ser publicado no Supabase do Feiraê.
 
 ## 1.1 Verificação de sincronização do projeto
 
@@ -72,6 +79,23 @@ VITE_SUPABASE_ANON_KEY=
 Mas o app ainda não possui cliente Supabase instalado.
 
 Essas variáveis não são usadas como backend ativo hoje.
+
+### Secrets/env da Gestão server-side
+
+A Edge Function usa os secrets padrão do Supabase:
+
+- `SUPABASE_URL`;
+- `SUPABASE_ANON_KEY`;
+- `SUPABASE_SERVICE_ROLE_KEY`.
+
+Health checks opcionais usam URLs HTTPS server-side:
+
+- `MAPS_HEALTH_URL`;
+- `PAYMENTS_HEALTH_URL`;
+- `WHATSAPP_HEALTH_URL`;
+- `PUSH_HEALTH_URL`.
+
+Essas URLs/secrets não devem ser colocadas em variáveis `VITE_*`.
 
 ## 3. Merge em main
 
@@ -145,9 +169,12 @@ Somente após staging aprovado:
 ## 8. Migrations existentes
 
 - 0001 core;
-- 0002 operations.
+- 0002 operations;
+- 0003 management console/runtime configuration.
 
-Não aplicar cegamente em produção porque há gaps conhecidos:
+A 0003 adiciona a Gestão, RBAC, MFA administrativo, alertas, regras de runtime e RLS administrativo.
+
+Não aplicar cegamente em produção porque o app principal ainda possui gaps conhecidos:
 
 - enum de pedido;
 - order_vendor status;
@@ -160,16 +187,19 @@ Ver [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
 ## 9. Ordem correta antes do primeiro deploy backend
 
-1. criar migration de correção;
-2. testar migrations em banco descartável;
-3. criar Supabase dev;
-4. conectar frontend;
-5. testar RLS;
-6. criar Storage;
-7. testar staging;
-8. adicionar E2E;
-9. configurar hosting/deploy;
-10. só então produção.
+1. identificar/criar o projeto Supabase correto do Feiraê;
+2. testar 0001 → 0002 → 0003 em banco descartável;
+3. aplicar no ambiente dev/staging;
+4. publicar `admin-actions` e `document-upload`;
+5. configurar MFA do Auth;
+6. configurar Storage privado;
+7. configurar health URLs server-side;
+8. publicar `admin/config.json` do ambiente;
+9. testar RLS/RBAC por papel;
+10. publicar a Gestão separadamente;
+11. conectar o app principal ao backend/runtime configuration;
+12. adicionar E2E/smoke;
+13. só então produção.
 
 ## 10. Pipeline alvo
 
@@ -235,3 +265,21 @@ Só afirmar após verificar:
 - smoke.
 
 Merge sozinho não é evidência.
+
+## 14. Deploy da Área de Gestão
+
+`/admin` é um artefato web separado do app público.
+
+Antes de produção:
+
+- usar URL/chave pública do Supabase correto;
+- não expor `service_role`;
+- aplicar migration 0003;
+- publicar `admin-actions` e `document-upload`;
+- publicar `admin/config.json` com a URL/chave pública do ambiente;
+- validar login + MFA;
+- validar permissões de um admin comum e de um superadmin;
+- validar que o browser recebe `permission denied` ao tentar mutações críticas diretamente;
+- executar smoke de pedidos, documentos, conciliação, alertas e auditoria.
+
+A configuração manual da URL/chave pública é aceita somente em localhost. Em produção, a conexão é lida de `admin/config.json`, provisionado pelo deploy. A chave publishable/anon não é segredo, mas o ambiente deve ser fixo para evitar apontamento arbitrário de banco.

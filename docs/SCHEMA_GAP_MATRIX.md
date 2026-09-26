@@ -324,56 +324,74 @@ Para produção faltam:
 
 ## 15. Administração
 
-Não existem tabelas para:
+Migration `0003_management_console.sql` fecha os gaps administrativos principais com:
 
-- catálogo global de tipos de veículo;
-- configuração de capacidade máxima por tipo;
-- UFs/estados atendidos;
-- regras de taxa versionadas;
-- suspensões;
-- audit log administrativo;
-- permissões granulares de admin.
+- `service_states`;
+- `service_regions`;
+- `vehicle_type_rules`;
+- `delivery_fee_rules`;
+- `platform_fee_rules`;
+- `payment_method_rules`;
+- `cancellation_reasons`;
+- `onboarding_requirements`;
+- `account_enforcements`;
+- `admin_access`;
+- `admin_permissions`;
+- `admin_audit_logs`;
+- `operational_alerts`;
+- `integration_registry`;
+- `integration_health_events`;
+- `privacy_requests`;
+- `content_blocks`;
+- `notification_templates`;
+- `system_announcements`.
 
-Essas estruturas são requisitos do painel de gestão e precisam de migrations próprias.
+Também adiciona MFA/AAL2 para acesso administrativo, ações críticas em `supabase/functions/admin-actions/index.ts` e upload autenticado com validação de magic bytes em `supabase/functions/document-upload/index.ts`.
+
+Pendência restante: o app principal ainda usa valores locais/hard-coded em vários fluxos e precisa consumir essas tabelas como runtime configuration para que a Gestão vire a fonte operacional efetiva.
 
 ## 16. RLS
 
-Tabelas sem RLS habilitada na migration atual:
+Após `0003_management_console.sql`, a Gestão habilita RLS e policies explícitas para as tabelas administrativas e também fecha exposição administrativa de:
 
-- `vendor_stores`
-- `categories`
-- `order_vendors`
-- `order_items`
-- `carts`
-- `deliveries`
-- `payments`
-- `reviews`
+- `categories`;
+- `deliveries`;
+- `order_items`;
+- `order_vendors`;
+- `fair_vendor_memberships`;
+- `vendor_stores`;
+- `payments`.
 
-Tabelas com RLS habilitada, mas sem policy funcional suficiente na migration:
+Ações críticas não ficam liberadas como CRUD administrativo no navegador. A migration revoga mutações diretas de:
 
-- `vendor_profiles`
-- `promotion_usages`
-- `support_tickets`
-- `order_reviews`
+- `orders`;
+- `deliveries`;
+- `payments`;
+- `payouts`;
+- `wallet_entries`;
+- `admin_access`;
+- `admin_permissions`;
+- `account_enforcements`;
+- `privacy_requests`.
 
-Exemplos de gaps:
+Intervenções administrativas passam por `admin-actions`, que valida MFA, papel, permissão, regra de transição e auditoria.
 
-- `products`: policy pública de SELECT existe; CRUD do feirante não está definido;
-- `orders`: cliente possui SELECT, mas criação/mutação segura não está modelada;
-- `onboarding_documents`: usuário envia/edita seus documentos, mas não há policy administrativa documentada para revisão/aprovação.
+Gaps de RLS ainda ligados ao **app principal** permanecem e devem ser fechados quando o frontend deixar o modo local, incluindo criação segura de pedido, estoque, suporte/avaliação pelo usuário e demais mutations de domínio.
 
 ## Próxima migration recomendada
 
-A próxima migration não deve ser genérica. Ela precisa, no mínimo:
+A próxima migration após `0003_management_console.sql` deve priorizar o domínio transacional compartilhado, e não repetir estruturas administrativas já criadas.
+
+Prioridades:
 
 1. criar `order_vendor_status`;
 2. normalizar `cancelled/canceled`;
-3. separar pagamento de `order_status`;
-4. completar campos de promoções;
-5. adicionar snapshots faltantes;
-6. decidir `reviews` x `order_reviews`;
-7. criar ledger por recebedor;
-8. modelar reserva de estoque;
-9. modelar catálogo de veículos/taxas/suspensões/admin audit;
-10. completar RLS/policies;
-11. testar tudo em banco descartável antes de staging.
+3. separar definitivamente pagamento de `order_status`;
+4. completar snapshots do pedido;
+5. criar ledger por recebedor;
+6. criar reserva de estoque atômica;
+7. modelar imagens de produto/Storage;
+8. decidir `reviews` x `order_reviews`;
+9. adicionar campos de correlação/transição em eventos;
+10. conectar regras administrativas de runtime ao backend do app;
+11. testar migrations e RLS em banco descartável/staging antes de produção.

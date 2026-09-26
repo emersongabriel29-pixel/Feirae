@@ -268,16 +268,23 @@ Produção precisa distinguir:
 
 ## 15. Acesso administrativo
 
-Painel ainda não existe.
+A Área de Gestão existe no código e usa menor privilégio por permissão:
 
-Quando existir, acesso deve ser limitado por função:
-
-- suporte;
 - operações;
 - documentos;
-- financeiro.
+- suspensões;
+- cadastros;
+- regras;
+- financeiro;
+- comunicação;
+- configurações;
+- permissões;
+- auditoria;
+- relatórios.
 
-Toda visualização/alteração sensível deve gerar auditoria quando apropriado.
+Acesso exige admin ativo e MFA/AAL2. Ações sensíveis registram responsável e data/hora em campos de domínio e/ou `admin_audit_logs`.
+
+Solicitações LGPD são tratadas por ação server-side, preenchendo `handled_by` e `resolved_at`.
 
 ## 16. Incidente
 
@@ -302,3 +309,9 @@ Antes de produção, definir procedimento específico para:
 - [ ] contrato com operadores;
 - [ ] resposta a incidente;
 - [ ] revisão jurídica.
+
+## 18. Documentos na Gestão
+
+A migration administrativa cria/configura bucket privado `onboarding-documents` com limite de 5 MB e MIME permitido para PDF/JPEG/PNG. Admin autorizado abre arquivos por URL assinada temporária.
+
+`supabase/functions/document-upload/index.ts` valida tamanho, MIME e magic bytes antes de gravar o arquivo. A política operacional de retenção e uma camada adicional de antimalware ainda precisam ser definidas antes de receber documentos reais em produção.

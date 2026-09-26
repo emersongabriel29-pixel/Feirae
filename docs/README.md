@@ -58,7 +58,8 @@ Um documento de requisito não é prova de implementação.
 
 ## Operação
 
-- [ADMIN_MANAGEMENT_SPEC.md](ADMIN_MANAGEMENT_SPEC.md)
+- [ADMIN_MANAGEMENT_SPEC.md](ADMIN_MANAGEMENT_SPEC.md) — contrato funcional e de segurança da Gestão.
+- [MANAGEMENT_CONSOLE.md](MANAGEMENT_CONSOLE.md) — implementação, módulos, runtime configuration e limites.
 - [ONBOARDING_AND_APPROVAL.md](ONBOARDING_AND_APPROVAL.md)
 - [MONEY_FLOW.md](MONEY_FLOW.md)
 - [LGPD_AND_PRIVACY.md](LGPD_AND_PRIVACY.md)

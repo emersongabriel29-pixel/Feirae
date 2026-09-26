@@ -1,4 +1,5 @@
 import type { StoredFile } from "./storedFile";
+import { getRuntimeConfiguration, runtimeVehicleRules } from "./runtimeConfig";
 
 export const vehicleCapacityDefaults = {
   Bicicleta: 10,
@@ -11,7 +12,7 @@ export const vehicleCapacityDefaults = {
   Outro: 10,
 } as const;
 
-export type DeliveryVehicleType = keyof typeof vehicleCapacityDefaults;
+export type DeliveryVehicleType = string;
 
 export type DeliveryVehicle = {
   id: string;
@@ -25,14 +26,33 @@ export type DeliveryVehicle = {
   documentStatus?: "pending" | "under_review" | "approved" | "correction_required";
 };
 
-export const vehicleTypeOptions = Object.keys(vehicleCapacityDefaults) as DeliveryVehicleType[];
+export function getVehicleTypeOptions(): DeliveryVehicleType[] {
+  const runtime = runtimeVehicleRules();
+  return getRuntimeConfiguration().source === "supabase"
+    ? runtime.map((rule) => rule.display_name)
+    : (Object.keys(vehicleCapacityDefaults) as DeliveryVehicleType[]);
+}
+
+function runtimeRule(type: DeliveryVehicleType) {
+  return runtimeVehicleRules().find((rule) => rule.display_name === type);
+}
 
 export function suggestedCapacityForVehicle(type: DeliveryVehicleType) {
-  return vehicleCapacityDefaults[type];
+  const runtime = runtimeRule(type);
+  if (runtime) return Number(runtime.default_capacity_kg);
+  return vehicleCapacityDefaults[type as keyof typeof vehicleCapacityDefaults] ?? 10;
 }
 
 export function requiresPlate(type: DeliveryVehicleType) {
+  const runtime = runtimeRule(type);
+  if (runtime) return runtime.requires_plate;
   return !["Bicicleta", "Bicicleta cargueira/triciclo", "Outro"].includes(type);
+}
+
+export function isVehicleTypeActive(type: DeliveryVehicleType) {
+  const runtime = runtimeVehicleRules();
+  if (getRuntimeConfiguration().source !== "supabase") return type in vehicleCapacityDefaults;
+  return runtime.some((rule) => rule.display_name === type && rule.active);
 }
 
 export function normalizePlate(value: string) {

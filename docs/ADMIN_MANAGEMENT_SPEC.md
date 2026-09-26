@@ -2,409 +2,448 @@
 
 Atualizado em 26/09/2026.
 
-Este documento corresponde ao painel separado solicitado para administrar o Feiraê sem alterar código.
+Este documento descreve o estado **implementado** da Área de Gestão e os limites que continuam dependentes de infraestrutura externa.
 
-## 1. Situação atual
+## 1. Estado atual
 
-O painel administrativo **não está implementado**.
+A Gestão está implementada em `/admin` como aplicação web separada do app de Cliente, Feirante e Entregador.
 
-O SQL possui papéis `admin` e `fair_manager`, mas ainda não existem:
+Arquivos principais:
 
-- telas admin;
-- RBAC granular;
-- tabela de suspensões;
-- tabela de auditoria;
-- tabela de regras de taxas;
-- catálogo global de veículos;
-- tabela de estados/UF atendidos.
+- `admin/index.html`;
+- `admin/app.js`;
+- `admin/modules.js`;
+- `admin/styles.css`;
+- `supabase/migrations/0003_management_console.sql`;
+- `supabase/functions/admin-actions/index.ts`;
+- `supabase/functions/document-upload/index.ts`;
+- `supabase/config.toml`;
+- `admin/management.test.js`;
+- `admin/core.test.js`.
 
-## 2. Estados/UF atendidos
+A migration ainda precisa ser aplicada no **projeto Supabase correto do Feiraê** e a Edge Function precisa ser publicada nesse mesmo ambiente.
 
-A gestão deve possuir uma tabela/configuração própria, por exemplo `service_regions`.
+## 2. Segurança administrativa
 
-Campos necessários:
+Acesso exige:
 
-- `uf`;
-- nome;
-- ativo/inativo;
-- aceita clientes;
-- aceita feirantes;
-- aceita entregadores;
-- data de ativação;
-- data de desativação;
-- observação;
-- admin responsável.
+1. Supabase Auth;
+2. `profiles.role = 'admin'`;
+3. linha ativa em `admin_access`;
+4. MFA/TOTP com sessão em `aal2`;
+5. permissão granular para o módulo, ou `admin_access.is_superadmin = true`.
 
-Ação: **ativar/desativar UF sem deploy**.
+Não existe mais a regra “admin sem permissões = acesso total”.
 
-Desativar uma UF impede novos cadastros/operações naquela UF, mas não apaga histórico.
+Administradores que já existiam antes da migration recebem `is_superadmin=true` apenas no bootstrap inicial. Novos administradores entram com menor privilégio.
 
-## 3. Feiras
+A permissão curinga `*` foi removida. Superadmin é uma propriedade explícita e protegida.
 
-Hoje SQL: `fairs.is_active`.
+O último superadmin ativo não pode perder esse nível por uma ação administrativa comum.
 
-Gestão precisa permitir:
+## 3. Papéis administrativos
 
-- cadastrar;
-- editar nome;
-- editar endereço;
-- coordenadas;
-- ativar/desativar;
-- definir agenda;
-- registrar fonte oficial;
-- `verified_at`;
-- `valid_from`;
-- `valid_until`;
-- exceções/feriados;
-- feirantes vinculados;
-- gestor responsável.
+O painel aceita somente `admin`.
 
-Desativar uma feira:
+O enum legado `fair_manager` permanece no schema por compatibilidade histórica, mas está **reservado e desativado**. Novas atribuições desse papel são bloqueadas até existir um modelo realmente limitado por feira.
 
-- remove de novas compras/publicação;
-- preserva pedidos e histórico.
+Não existe falsa sensação de segurança permitindo um `fair_manager` sem escopo.
 
-## 4. Catálogo global de tipos de veículo
+## 4. Operação
 
-Isto é diferente de editar o veículo particular de um entregador.
+### Dashboard
 
-Hoje os tipos estão hard-coded em `src/domain/vehicles.ts`:
+Exibe:
 
-| Tipo                         | Capacidade padrão atual |
-| ---------------------------- | ----------------------: |
-| Bicicleta                    |                   10 kg |
-| Bicicleta cargueira/triciclo |                   40 kg |
-| Moto                         |                   12 kg |
-| Moto com baú                 |                   20 kg |
-| Carro                        |                   80 kg |
-| Utilitário/Pickup            |                  250 kg |
-| Van                          |                  500 kg |
-| Outro                        |                   10 kg |
-
-A gestão deve mover isso para tabela, por exemplo `vehicle_types`:
-
-- id;
-- nome;
-- ativo;
-- capacidade padrão;
-- capacidade máxima permitida;
-- exige placa;
-- exige CRLV;
-- exige CNH;
-- exige motofrete;
-- ordem de exibição.
-
-Exemplos de ação administrativa:
-
-- desativar “Patinete” globalmente;
-- ativar “Bicicleta cargueira”;
-- alterar peso máximo permitido de Moto com baú;
-- criar novo tipo sem alterar frontend.
-
-Isso **não** significa editar a moto específica de João/entregador X.
-
-## 5. Veículos dos entregadores
-
-A gestão pode visualizar e moderar o cadastro individual:
-
-- entregador;
-- tipo global;
-- marca/modelo;
-- placa;
-- capacidade declarada;
-- status;
-- documento.
-
-Admin pode:
-
-- bloquear veículo;
-- pedir correção;
-- aprovar documento;
-- limitar capacidade ao teto do tipo.
-
-O admin não deve “inventar” dados do veículo do entregador.
-
-## 6. Taxas e valores
-
-Hoje as taxas de produção não estão modeladas.
-
-Criar regra versionada, por exemplo `pricing_rules`:
-
-- tipo da taxa;
-- versão;
-- valor fixo;
-- percentual;
-- por km;
-- por kg;
-- mínimo;
-- máximo;
-- UF/região;
-- feira opcional;
-- início de vigência;
-- fim;
-- ativo;
-- admin responsável.
-
-Tipos mínimos:
-
-- taxa administrativa;
-- tarifa base de entrega;
-- componente por distância;
-- componente por peso;
-- taxa mínima;
-- subsídio da plataforma;
-- limite promocional.
-
-Alterar regra nunca reescreve pedidos antigos. Pedido guarda snapshot da regra aplicada.
-
-## 7. Feirantes
-
-Admin deve acessar:
-
-- perfil;
-- PF/PJ;
-- banca;
-- feira/box;
-- produtos;
-- documentos;
-- avaliações;
 - pedidos;
-- recebíveis;
-- ocorrências.
-
-Ações:
-
-- aprovar;
-- solicitar correção;
-- suspender;
-- banir;
-- reativar;
-- bloquear publicação;
-- bloquear recebimento de novos pedidos;
-- bloquear saque.
-
-Toda sanção exige motivo e prazo quando temporária.
-
-## 8. Entregadores
-
-Admin deve acessar:
-
-- perfil;
+- aprovações pendentes;
+- suporte;
 - documentos;
-- veículos;
-- regiões;
-- disponibilidade;
-- corridas;
-- avaliações;
-- incidentes;
-- recebíveis.
+- repasses;
+- pedidos recentes;
+- integrações.
 
-Ações:
+### Alertas
 
-- aprovar;
-- solicitar correção;
-- suspender;
-- banir;
-- impedir ficar online;
-- impedir aceitar corridas;
-- bloquear veículo específico;
-- bloquear saque.
+`operational_alerts` persiste:
 
-## 9. Clientes
+- pedido parado;
+- entrega parada;
+- documento vencendo;
+- falha de pagamento;
+- falha de repasse;
+- integração com problema.
 
-Admin pode:
+Alertas possuem:
 
-- consultar conta;
-- pedidos;
-- tickets;
-- cancelamentos;
-- avaliações;
-- sanções.
-
-Ações possíveis:
-
-- suspender;
-- banir;
-- reativar;
-- restringir compras;
-- restringir avaliações, se política permitir.
-
-Não deve editar arbitrariamente histórico do cliente.
-
-## 10. Documentos
-
-Fila administrativa precisa mostrar:
-
-- titular;
-- papel;
-- tipo;
-- arquivo;
-- validade;
+- severidade;
+- primeira detecção;
+- última ocorrência;
 - status;
-- última revisão.
+- reconhecimento;
+- responsável;
+- resolução.
 
-Ações:
+A Edge Function recalcula as condições sem apagar reconhecimento/histórico.
 
-- aprovar;
-- rejeitar;
-- pedir correção;
-- definir motivo;
-- registrar validade;
-- suspender automaticamente se documento crítico expirar.
+### Pedidos
 
-## 11. Pedidos
+A Gestão exibe:
 
-Busca por:
-
-- ID;
 - cliente;
-- banca;
-- feira;
-- entregador;
-- período;
-- status.
-
-Visualização:
-
+- endereço;
 - itens;
-- snapshots;
-- estoque;
-- pagamento;
-- bancos/recebedores;
+- bancas;
+- pagamentos;
 - entrega;
 - eventos;
 - suporte;
 - avaliações.
 
-Admin não altera status com dropdown livre.
+Status **não é mais editado por dropdown genérico**.
 
-Ações excepcionais devem chamar função de domínio e gerar evento.
+Transições administrativas passam por `admin-actions`, que valida a transição e grava evento + auditoria.
 
-## 12. Entregas
+### Entregas
 
-Gestão vê:
+Detalhe inclui:
 
-- fila;
 - pedido;
 - entregador;
 - veículo;
-- peso;
-- rota;
+- quilometragem;
 - ETA;
-- aceite;
-- coleta;
-- entrega;
-- cancelamento;
-- incidente.
-
-Pode:
-
-- remover entregador antes da coleta;
-- bloquear corrida;
-- abrir incidente;
-- escalar suporte.
-
-## 13. Financeiro
-
-Painel precisa separar:
-
-- pagamento do cliente;
-- ledger;
-- recebível do feirante;
-- recebível do entregador;
-- comissão Feiraê;
-- taxa PSP;
-- subsídio;
-- estorno;
-- repasse.
-
-Não editar saldo diretamente.
-
-Ajuste financeiro = novo lançamento auditável.
-
-## 14. Suporte
-
-Ticket precisa ter:
-
-- protocolo;
-- pedido/corrida;
-- solicitante;
-- tópico;
-- descrição;
-- prioridade;
-- responsável;
-- status;
+- valor;
 - timestamps;
-- mensagens.
+- avaliações.
 
-## 15. Suspensões
+Ações administrativas permitidas antes da coleta:
 
-Criar tabela específica, por exemplo `account_restrictions`:
+- remover entregador;
+- reatribuir para entregador aprovado;
+- cancelar com motivo.
 
-- profile_id;
-- role;
-- restriction_type;
-- reason;
-- starts_at;
-- ends_at;
-- active;
-- created_by;
-- evidence/reference.
+Essas ações são server-side e auditadas.
 
-Tipos:
+## 5. Cadastros e cobertura
 
-- login;
-- publicar;
-- vender;
-- ficar online;
-- aceitar corrida;
-- sacar;
-- avaliar.
+A Gestão possui:
 
-## 16. Permissões administrativas
+- Estados;
+- Feiras;
+- Bancas/Boxes;
+- Usuários;
+- Feirantes;
+- Entregadores;
+- Produtos;
+- Categorias;
+- Regiões.
 
-O enum atual `admin/fair_manager` é insuficiente para menor privilégio.
+Listagens genéricas usam paginação server-side e busca no banco, em vez de carregar apenas os primeiros 300 registros.
 
-RBAC mínimo:
+Campos de Estado, Região e Tipo de Veículo usam seletores amigáveis quando aplicável.
 
-| Permissão         | Suporte  | Operações | Documentos    | Financeiro | Superadmin |
-| ----------------- | -------- | --------- | ------------- | ---------- | ---------- |
-| ver pedidos       | sim      | sim       | limitado      | sim        | sim        |
-| responder ticket  | sim      | sim       | não           | não        | sim        |
-| aprovar documento | não      | não       | sim           | não        | sim        |
-| suspender conta   | limitado | sim       | por documento | não        | sim        |
-| alterar taxa      | não      | não       | não           | sim        | sim        |
-| repasse/ajuste    | não      | não       | não           | sim        | sim        |
-| gerenciar admin   | não      | não       | não           | não        | sim        |
+## 6. Visão 360°
 
-## 17. Auditoria
+### Cliente
 
-Criar `admin_audit_log`.
+Pode reunir:
 
-Registrar:
+- perfil;
+- pedidos;
+- suporte;
+- avaliações;
+- restrições.
 
-- admin;
-- permissão usada;
+### Feirante
+
+Pode reunir:
+
+- perfil;
+- feiras/boxes;
+- lojas;
+- produtos;
+- documentos;
+- repasses;
+- restrições.
+
+### Entregador
+
+Pode reunir:
+
+- perfil;
+- veículos;
+- disponibilidade;
+- corridas;
+- documentos;
+- repasses;
+- restrições.
+
+As seções respeitam as permissões do administrador logado.
+
+## 7. Documentos
+
+A Gestão:
+
+- abre arquivo privado por URL assinada;
+- aprova;
+- rejeita;
+- solicita correção;
+- registra validade;
+- registra automaticamente `reviewed_by` e `reviewed_at`.
+
+A migration cria/configura bucket privado `onboarding-documents` com:
+
+- acesso público desativado;
+- limite de 5 MB;
+- PDF/JPEG/PNG;
+- políticas de acesso por pasta do próprio usuário;
+- leitura administrativa com `documents.review`.
+
+Magic bytes e antivírus continuam sendo responsabilidade do fluxo server-side de upload antes de produção.
+
+## 8. Veículos
+
+`vehicle_type_rules` é o catálogo global de modalidades aceitas.
+
+Configura:
+
+- código;
+- nome;
+- capacidade padrão;
+- placa;
+- documento;
+- CNH;
+- ativo/inativo;
+- ordem.
+
+`delivery_vehicles` continua sendo o veículo particular do entregador.
+
+O app principal ainda precisa consumir `vehicle_type_rules` em runtime para abandonar os valores hard-coded como fonte autoritativa.
+
+## 9. Frete e taxas
+
+A Gestão administra:
+
+- `delivery_fee_rules`;
+- `platform_fee_rules`;
+- vigência;
+- prioridade;
+- região;
+- veículo;
+- km;
+- minuto;
+- peso;
+- mínimo/máximo;
+- remuneração mínima;
+- percentual de plataforma.
+
+O cálculo final de preço deve permanecer server-side. O navegador administra parâmetros, não deve ser a autoridade do preço de um pedido real.
+
+## 10. Pagamentos e financeiro
+
+A Gestão separa:
+
+- bruto;
+- taxa do provedor;
+- Feiraê;
+- feirante;
+- entregador;
+- reembolso;
+- conciliação;
+- repasses.
+
+O browser possui leitura, mas não recebe permissão genérica para alterar valor/status de:
+
+- `payments`;
+- `payouts`;
+- `wallet_entries`.
+
+A conciliação passa pela Edge Function e registra:
+
+- administrador;
+- data/hora.
+
+Liquidação real e estorno continuam no PSP/backend.
+
+## 11. Suporte
+
+Ticket exibe:
+
+- pedido;
+- solicitante;
+- assunto;
+- prioridade;
+- status;
+- detalhes;
+- responsável;
+- resolução.
+
+Atualização passa por ação server-side e registra `assigned_to`, `resolved_by`, `resolved_at`.
+
+## 12. Suspensões e bloqueios
+
+`account_enforcements` suporta:
+
+- suspensão;
+- banimento;
+- bloqueio de pedidos;
+- bloqueio de vendas;
+- bloqueio de entregas.
+
+Criação/revogação passam pela Edge Function e preservam histórico.
+
+## 13. Avaliações
+
+Moderação passa por ação server-side.
+
+Registra:
+
+- visibilidade;
+- motivo;
+- `moderated_by`;
+- `moderated_at`.
+
+## 14. LGPD
+
+`privacy_requests` possui:
+
+- tipo;
+- detalhes;
+- status;
+- responsável;
+- resolução;
+- data de conclusão.
+
+A alteração administrativa passa pela Edge Function, não por CRUD livre.
+
+## 15. Administradores e RBAC
+
+Permissões atuais:
+
+- `operations.manage`;
+- `documents.review`;
+- `accounts.enforce`;
+- `registrations.manage`;
+- `rules.manage`;
+- `finance.manage`;
+- `communications.manage`;
+- `settings.manage`;
+- `permissions.manage`;
+- `audit.view`;
+- `reports.view`.
+
+A Gestão permite:
+
+- promover usuário existente a admin;
+- ativar/desativar acesso;
+- definir permissões;
+- conceder/remover superadmin somente por superadmin;
+- impedir auto-desativação;
+- impedir remoção do último superadmin.
+
+Mudanças passam por `admin-actions`.
+
+## 16. MFA
+
+Administradores usam MFA TOTP do Supabase Auth.
+
+Fluxo:
+
+- login por e-mail/senha;
+- checagem de AAL;
+- se não houver fator, Gestão inicia enrollment e exibe QR Code;
+- usuário confirma código;
+- sessão sobe para `aal2`;
+- RLS e Edge Function também exigem `aal2`.
+
+Portanto, esconder a tela de MFA no frontend não contorna a proteção do backend.
+
+## 17. Integrações
+
+A Gestão mostra:
+
+- provedor;
+- ambiente;
+- status;
+- latência;
+- última verificação;
+- histórico.
+
+O botão de health check chama a Edge Function.
+
+Endpoints de health check são definidos por secrets/env server-side:
+
+- `MAPS_HEALTH_URL`;
+- `PAYMENTS_HEALTH_URL`;
+- `WHATSAPP_HEALTH_URL`;
+- `PUSH_HEALTH_URL`.
+
+A URL precisa ser HTTPS. Segredos não ficam no navegador.
+
+## 18. Relatórios
+
+Relatórios disponíveis:
+
+- resumo;
+- pedidos;
+- pagamentos;
+- entregas;
+- repasses;
+- cancelamentos;
+- suporte;
+- documentos;
+- usuários;
+- avaliações;
+- restrições.
+
+A leitura ocorre em páginas de 1.000 registros, até 20.000 registros por geração no browser.
+
+Volumes superiores devem migrar para agregação/exportação server-side.
+
+## 19. Auditoria
+
+`admin_audit_logs` registra:
+
+- administrador;
 - ação;
 - entidade;
-- ID;
-- estado anterior;
-- estado novo;
-- motivo;
-- timestamp;
-- request/correlation ID.
+- registro;
+- antes;
+- depois;
+- metadata;
+- data/hora.
 
-Ações críticas não podem ser apagadas pelo próprio admin.
+A interface filtra administrador por nome, entidade, ação e período.
 
-## 18. Estruturas SQL ainda faltantes
+Ações críticas executadas pela Edge Function registram auditoria explicitamente.
 
-Para este painel funcionar ainda faltam migrations para:
+## 20. O que continua fora do browser
 
-- `service_regions`;
-- `vehicle_types`;
-- `pricing_rules`;
-- `account_restrictions`;
-- `admin_roles/admin_permissions` ou equivalente;
-- `admin_audit_log`.
+Não executar diretamente no painel:
 
-O painel não deve ser construído em cima de constantes hard-coded do frontend.
+- confirmação de cobrança;
+- webhook;
+- estorno real;
+- liquidação;
+- criação de ledger;
+- alteração arbitrária de saldo;
+- transição livre de status;
+- service role;
+- segredos de provedores.
+
+## 21. Dependências ainda externas
+
+Para operação real ainda é obrigatório:
+
+1. identificar o Supabase correto do Feiraê;
+2. aplicar `0001`, `0002` e `0003` nesse ambiente;
+3. publicar `admin-actions` e `document-upload`;
+4. publicar `admin/config.json` por ambiente;
+5. configurar health URLs/secrets;
+6. rodar advisors de segurança/performance;
+7. testar RLS por papel;
+8. conectar o app principal às tabelas de runtime configuration;
+9. substituir backend/localStorage do app principal por backend compartilhado.
+
+Esses itens não devem ser chamados de concluídos apenas porque a interface administrativa existe.
