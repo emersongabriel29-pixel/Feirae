@@ -404,9 +404,12 @@ Não armazenar:
 - somente `role=admin`;
 - permissões granulares persistidas em `admin_permissions`;
 - permissões aplicadas na interface **e nas políticas RLS**;
-- acesso total para o primeiro admin enquanto ele não possui regras explícitas;
+- superadmin explícito em `admin_access.is_superadmin`;
 - permissões para operação, documentos, punições, cadastros, regras, financeiro, comunicação, configurações e auditoria;
-- proteção contra autoatribuição de papel `admin`/`fair_manager`;
+- proteção contra autoatribuição de papel `admin`;
+- papel legado `fair_manager` reservado/desativado até existir escopo real por feira;
+- MFA/TOTP obrigatório com sessão AAL2;
+- administrador comum sem permissões fica sem acesso aos módulos protegidos;
 - log de alterações com antes/depois;
 - administrador responsável;
 - entidade, registro e data/hora.
@@ -572,3 +575,39 @@ Prioridade de migração:
 9. regras de frete/taxas no backend.
 
 Até essa migração do frontend/backend ser concluída, o painel pode salvar corretamente as configurações, mas telas ainda baseadas em dados locais não refletirão todas as mudanças.
+
+
+## Endurecimento após nova auditoria
+
+A nova auditoria da Gestão corrigiu os seguintes pontos:
+
+- branch refeita a partir da `main` atual para eliminar divergência do PR antigo;
+- remoção do fallback “sem permissões = acesso total”;
+- remoção da permissão curinga `*`;
+- superadmin explícito e proteção do último superadmin;
+- MFA obrigatório no frontend, RLS e Edge Function;
+- retirada de CRUD livre para pedido, entrega, pagamento, repasse, documento, avaliação, LGPD e restrições;
+- ações críticas movidas para `supabase/functions/admin-actions/index.ts`;
+- paginação server-side de listas;
+- busca no banco em vez de filtrar apenas linhas já carregadas;
+- alertas persistidos em `operational_alerts`, com reconhecer/resolver;
+- health check disparado server-side;
+- responsáveis/timestamps em revisão documental, moderação, suporte, conciliação e LGPD;
+- visão 360° de Cliente, Feirante e Entregador;
+- campos de Estado, Região e Veículo convertidos para seletores quando aplicável;
+- auditoria filtrável por nome do administrador;
+- testes estruturais da Gestão em `admin/management.test.js`;
+- bucket privado de documentos com limite/tipos permitidos.
+
+### Limites que continuam externos
+
+Não foram marcados como concluídos:
+
+- aplicação da migration no Supabase correto;
+- deploy da Edge Function;
+- validação de magic bytes/antivírus no upload;
+- integração do app principal às tabelas de runtime configuration;
+- PSP/ledger real;
+- staging/E2E em ambiente conectado.
+
+A única instância Supabase atualmente disponível na conexão desta sessão não foi identificada com segurança como o banco do Feiraê, portanto nenhuma migration foi aplicada nela.
