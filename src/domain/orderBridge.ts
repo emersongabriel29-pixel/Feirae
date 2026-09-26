@@ -82,6 +82,7 @@ export type UnifiedOrderRecord = {
   fulfillment: "delivery" | "pickup";
   paymentMethod: string;
   paymentStatus?: UnifiedPaymentStatus;
+  whatsappConsent?: boolean;
   refundAmount?: number;
   changeFor?: number;
   subtotal: number;
