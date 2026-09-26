@@ -495,9 +495,10 @@ export function OperationsMenu({
       {groups.map((group) => {
         const groupModules = modules.filter((module) => groupFor(module) === group);
         if (!groupModules.length) return null;
+        const groupId = `ops-group-${group.toLocaleLowerCase("pt-BR").replaceAll(" ", "-")}`;
         return (
-          <section className="ops-group" key={group} aria-labelledby={`ops-group-${group}`}>
-            <h3 className="ops-group-title" id={`ops-group-${group}`}>
+          <section className="ops-group" key={group} aria-labelledby={groupId}>
+            <h3 className="ops-group-title" id={groupId}>
               {group}
             </h3>
             <div className="ops-group-grid">
