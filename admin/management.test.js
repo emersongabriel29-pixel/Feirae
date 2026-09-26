@@ -6,6 +6,8 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const app = read("./app.js");
 const migration = read("../supabase/migrations/0003_management_console.sql");
 const edge = read("../supabase/functions/admin-actions/index.ts");
+const documentUpload = read("../supabase/functions/document-upload/index.ts");
+const supabaseConfig = read("../supabase/config.toml");
 
 describe("Feiraê Gestão hardening", () => {
   it("does not expose generic editors for critical operational records", () => {
@@ -16,6 +18,8 @@ describe("Feiraê Gestão hardening", () => {
     expect(modules.documents.fields).toEqual([]);
     expect(modules.reviews.fields).toEqual([]);
     expect(modules.privacy.fields).toEqual([]);
+    expect(modules.vendors.fields.some((field) => field.key === "approved")).toBe(false);
+    expect(modules.drivers.fields.some((field) => field.key === "approved")).toBe(false);
   });
 
   it("uses server-side pagination instead of the old 300 row cap", () => {
@@ -65,6 +69,7 @@ describe("Feiraê Gestão hardening", () => {
       "admin_permissions_replace",
       "refresh_alerts",
       "health_check",
+      "profile_approval",
     ]) {
       expect(edge).toContain(`action === "${action}"`);
     }
@@ -75,5 +80,25 @@ describe("Feiraê Gestão hardening", () => {
     expect(migration).toContain("insert into storage.buckets");
     expect(migration).toContain("'onboarding-documents'");
     expect(migration).toContain("false,");
+  });
+
+  it("prevents browser bypass of role, approval and audit protections", () => {
+    expect(migration).toContain("Profile role changes must use a trusted server-side action.");
+    expect(migration).toContain("Operational approval must use a trusted administrative action.");
+    expect(migration).toContain("revoke insert, update, delete on table public.admin_audit_logs from authenticated");
+  });
+
+  it("validates document content server-side and keeps JWT verification enabled", () => {
+    expect(documentUpload).toContain("file_signature_mismatch");
+    expect(documentUpload).toContain("matchesSignature");
+    expect(documentUpload).toContain("5 * 1024 * 1024");
+    expect(supabaseConfig).toContain("[functions.document-upload]");
+    expect(supabaseConfig).toContain("verify_jwt = true");
+  });
+
+  it("fixes the production Supabase connection instead of allowing arbitrary browser switching", () => {
+    expect(app).toContain('fetch("./config.json"');
+    expect(app).toContain("if(!isLocalAdmin)");
+    expect(app).toContain("A conexão da Gestão é fixa em produção.");
   });
 });
