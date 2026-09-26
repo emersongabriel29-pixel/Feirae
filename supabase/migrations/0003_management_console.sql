@@ -644,6 +644,8 @@ to authenticated;
 -- RLS for management data.
 alter table public.categories enable row level security;
 alter table public.deliveries enable row level security;
+alter table public.order_items enable row level security;
+alter table public.order_vendors enable row level security;
 alter table public.fair_vendor_memberships enable row level security;
 alter table public.vendor_stores enable row level security;
 alter table public.payments enable row level security;
@@ -708,6 +710,55 @@ to authenticated
 using ((select private.feirae_admin_has('operations.manage')))
 with check ((select private.feirae_admin_has('operations.manage')));
 
+drop policy if exists "order participants read order items" on public.order_items;
+create policy "order participants read order items"
+on public.order_items for select
+to authenticated
+using (
+  exists (
+    select 1 from public.orders o
+    where o.id = order_id
+      and (
+        o.customer_id = (select auth.uid())
+        or exists (
+          select 1 from public.order_vendors ov
+          where ov.order_id = o.id and ov.vendor_id = (select auth.uid())
+        )
+      )
+  )
+);
+
+create policy "admins view order items"
+on public.order_items for select
+to authenticated
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
+
+drop policy if exists "order participants read order vendors" on public.order_vendors;
+create policy "order participants read order vendors"
+on public.order_vendors for select
+to authenticated
+using (
+  exists (
+    select 1 from public.orders o
+    where o.id = order_id
+      and (
+        o.customer_id = (select auth.uid())
+        or vendor_id = (select auth.uid())
+      )
+  )
+);
+
+create policy "admins view order vendors"
+on public.order_vendors for select
+to authenticated
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
+
 drop policy if exists "vendors read own fair memberships" on public.fair_vendor_memberships;
 create policy "vendors read own fair memberships"
 on public.fair_vendor_memberships for select
@@ -747,7 +798,11 @@ using (
 create policy "admins read payments"
 on public.payments for select
 to authenticated
-using ((select private.feirae_admin_has('finance.manage')));
+using (
+  (select private.feirae_admin_has('finance.manage'))
+  or (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
 
 create policy "admins reconcile payments"
 on public.payments for update
@@ -772,7 +827,11 @@ using (
 create policy "admins view profiles in reports"
 on public.profiles for select
 to authenticated
-using ((select private.feirae_admin_has('reports.view')));
+using (
+  (select private.feirae_admin_has('reports.view'))
+  or (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('permissions.manage'))
+);
 
 create policy "admins view orders in reports"
 on public.orders for select
@@ -780,22 +839,6 @@ to authenticated
 using (
   (select private.feirae_admin_has('reports.view'))
   or (select private.feirae_admin_has('operations.manage'))
-);
-
-create policy "admins view order items"
-on public.order_items for select
-to authenticated
-using (
-  (select private.feirae_admin_has('operations.manage'))
-  or (select private.feirae_admin_has('reports.view'))
-);
-
-create policy "admins view order vendors"
-on public.order_vendors for select
-to authenticated
-using (
-  (select private.feirae_admin_has('operations.manage'))
-  or (select private.feirae_admin_has('reports.view'))
 );
 
 create policy "admins view order events for detail"
@@ -1128,6 +1171,14 @@ on public.support_tickets for all
 to authenticated
 using ((select private.feirae_admin_has('operations.manage')))
 with check ((select private.feirae_admin_has('operations.manage')));
+
+create policy "admins view order reviews operationally"
+on public.order_reviews for select
+to authenticated
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
 
 create policy "admins manage order reviews"
 on public.order_reviews for all
