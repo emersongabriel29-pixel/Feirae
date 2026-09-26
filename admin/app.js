@@ -3,7 +3,24 @@ import { navGroups, modules } from "./modules.js";
 
 const CONFIG_KEY="feirae:management:supabase";
 const $=(s)=>document.querySelector(s);
-const state={supabase:null,session:null,profile:null,active:"dashboard",rows:[],editing:null};
+const state={supabase:null,session:null,profile:null,active:"dashboard",rows:[],editing:null,permissions:new Set(),restricted:false};
+
+const permissionByModule={
+  orders:"operations.manage",delivery_jobs:"operations.manage",support:"operations.manage",
+  documents:"documents.review",enforcements:"accounts.enforce",
+  states:"registrations.manage",fairs:"registrations.manage",users:"registrations.manage",vendors:"registrations.manage",
+  drivers:"registrations.manage",products:"registrations.manage",categories:"registrations.manage",regions:"registrations.manage",
+  vehicle_rules:"rules.manage",delivery_fees:"rules.manage",platform_fees:"rules.manage",payment_methods:"rules.manage",
+  cancellation_reasons:"rules.manage",onboarding_requirements:"rules.manage",
+  promotions:"finance.manage",payouts:"finance.manage",reviews:"finance.manage",
+  content:"communications.manage",announcements:"communications.manage",notifications:"communications.manage",
+  settings:"settings.manage",features:"settings.manage",integrations:"settings.manage",privacy:"settings.manage",
+  permissions:"permissions.manage",audit:"audit.view"
+};
+function canModule(id){
+  const permission=permissionByModule[id];
+  return !permission||!state.restricted||state.permissions.has("*")||state.permissions.has(permission);
+}
 
 function show(id){["boot","setupView","loginView","appView"].forEach((x)=>$("#"+x).classList.toggle("hidden",x!==id));}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
@@ -32,7 +49,8 @@ const labels={
  author_role:"Autor",target_role:"Alvo",rating:"Nota",comment:"Comentário",visible:"Visível",key:"Chave",enabled:"Ativo",
  public_readable:"Público",area:"Área",title:"Título",audience:"Público",severity:"Tipo",channel:"Canal",title_template:"Título",
  provider:"Provedor",environment:"Ambiente",last_checked_at:"Última verificação",request_type:"Solicitação",resolved_at:"Resolvido",
- admin_id:"Admin",action:"Ação",entity:"Entidade",entity_id:"Registro"
+ admin_id:"Admin",action:"Ação",entity:"Entidade",entity_id:"Registro",code:"Código",file_path:"Arquivo",
+ action_type:"Ação",reason:"Motivo",ends_at:"Até",sort_order:"Ordem",permission:"Permissão"
 };
 function label(k){return labels[k]||title(k.replaceAll("_"," "));}
 
@@ -67,6 +85,9 @@ async function acceptSession(session){
    return false;
  }
  state.profile=r.data;
+ const permissions=await state.supabase.from("admin_permissions").select("permission").eq("profile_id",session.user.id);
+ state.permissions=new Set((permissions.data||[]).map((x)=>x.permission));
+ state.restricted=state.permissions.size>0&&!state.permissions.has("*");
  renderNav();
  $("#adminIdentity").textContent=r.data.full_name||session.user.email;
  show("appView");
@@ -77,14 +98,17 @@ async function acceptSession(session){
 function renderNav(){
  $("#nav").innerHTML=navGroups.map((group)=>{
    const name=group[0],items=group[1];
+   const allowed=items.filter((it)=>canModule(it[0]));
+   if(!allowed.length)return "";
    return '<div class="nav-group"><div class="nav-group-title">'+esc(name)+'</div>'+
-     items.map((it)=>'<button class="nav-item" data-module="'+esc(it[0])+'">'+esc(it[1])+'</button>').join("")+
+     allowed.map((it)=>'<button class="nav-item" data-module="'+esc(it[0])+'">'+esc(it[1])+'</button>').join("")+
      '</div>';
  }).join("");
  document.querySelectorAll("[data-module]").forEach((b)=>b.onclick=()=>openModule(b.dataset.module));
 }
 
 async function openModule(id){
+ if(!canModule(id)){toast("Você não possui permissão para esta área.");return;}
  state.active=id;state.rows=[];
  document.querySelectorAll(".nav-item").forEach((b)=>b.classList.toggle("active",b.dataset.module===id));
  $("#appView").classList.remove("menu-open");
@@ -187,18 +211,58 @@ function fillRows(m,rows){
    let line='<tr>'+m.cols.map((c)=>'<td>'+cell(c,row[c])+'</td>').join("");
    if(!m.readonly){
      line+='<td><div class="actions"><button data-edit="'+i+'">Editar</button>';
+     if(m.documentViewer&&row.file_path)line+='<button data-document="'+i+'">Abrir documento</button>';
+     if(m.enforcementTarget){
+       line+='<button data-suspend="'+i+'">Suspender</button><button data-ban="'+i+'">Banir</button>';
+       if(m.table==="delivery_profiles")line+='<button data-block-delivery="'+i+'">Bloquear entregas</button>';
+     }
      if(m.del!==false)line+='<button data-delete="'+i+'">Excluir</button>';
      line+='</div></td>';
    }
    return line+'</tr>';
  }).join("");
  body.querySelectorAll("[data-edit]").forEach((b)=>b.onclick=()=>openEditor(m,rows[Number(b.dataset.edit)]));
+ body.querySelectorAll("[data-document]").forEach((b)=>b.onclick=()=>openDocument(rows[Number(b.dataset.document)]));
+ body.querySelectorAll("[data-suspend]").forEach((b)=>b.onclick=()=>openEnforcement(rows[Number(b.dataset.suspend)].id,"suspension"));
+ body.querySelectorAll("[data-ban]").forEach((b)=>b.onclick=()=>openEnforcement(rows[Number(b.dataset.ban)].id,"ban"));
+ body.querySelectorAll("[data-block-delivery]").forEach((b)=>b.onclick=()=>openEnforcement(rows[Number(b.dataset.blockDelivery)].id,"deliveries_block"));
  body.querySelectorAll("[data-delete]").forEach((b)=>b.onclick=()=>removeRow(m,rows[Number(b.dataset.delete)]));
 }
 
-function openEditor(m,row){
- state.editing={m,row};
- $("#modalTitle").textContent=row?"Editar "+m.label:"Novo em "+m.label;
+async function openDocument(row){
+ const path=row?.file_path;
+ if(!path){toast("Este cadastro não possui arquivo enviado.");return;}
+ if(/^https?:\/\//i.test(path)){window.open(path,"_blank","noopener,noreferrer");return;}
+ const popup=window.open("about:blank","_blank");
+ const setting=await state.supabase.from("platform_settings").select("value").eq("key","documents.storage_bucket").maybeSingle();
+ const bucket=typeof setting.data?.value==="string"?setting.data.value:"onboarding-documents";
+ const signed=await state.supabase.storage.from(bucket).createSignedUrl(path,300);
+ if(signed.error){
+   if(popup)popup.close();
+   toast("Não foi possível abrir o documento: "+signed.error.message);
+   return;
+ }
+ if(popup)popup.location.href=signed.data.signedUrl;
+ else window.open(signed.data.signedUrl,"_blank","noopener,noreferrer");
+}
+
+function openEnforcement(profileId,actionType){
+ if(!canModule("enforcements")){toast("Sem permissão para suspensões e bloqueios.");return;}
+ const defaults={
+   profile_id:profileId,
+   action_type:actionType,
+   status:"active",
+   reason:"",
+   starts_at:new Date().toISOString(),
+   ends_at:null
+ };
+ openEditor(modules.enforcements,defaults,true);
+}
+
+function openEditor(m,row,forceCreate=false){
+ const isNew=forceCreate||!row;
+ state.editing={m,row,isNew};
+ $("#modalTitle").textContent=isNew?"Novo em "+m.label:"Editar "+m.label;
  $("#editorForm").innerHTML=m.fields.map((field)=>renderField(field,row?.[field.key])).join("");
  $("#modal").classList.remove("hidden");
 }
@@ -236,16 +300,19 @@ function readPayload(){
 
 async function saveEditor(){
  if(!state.editing)return;
- const {m,row}=state.editing;let payload;
+ const {m,row,isNew}=state.editing;let payload;
  try{payload=readPayload();}catch{toast("JSON inválido");return;}
  $("#saveEdit").disabled=true;
  const key=m.key||"id";
- const r=row
-   ? await state.supabase.from(m.table).update(payload).eq(key,row[key]).select().single()
-   : await state.supabase.from(m.table).insert(payload).select().single();
+ let r;
+ if(isNew){
+   r=await state.supabase.from(m.table).insert(payload).select().single();
+ }else{
+   r=await state.supabase.from(m.table).update(payload).eq(key,row[key]).select().single();
+ }
  $("#saveEdit").disabled=false;
  if(r.error){toast(r.error.message);return;}
- if(m.audit)await audit(row?"update":"insert",m.table,String(r.data?.[key]||""),row,r.data);
+ if(m.audit)await audit(isNew?"insert":"update",m.table,String(r.data?.[key]||""),isNew?null:row,r.data);
  closeEditor();toast("Alteração salva.");await openModule(state.active);
 }
 
