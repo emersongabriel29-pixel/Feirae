@@ -756,7 +756,9 @@ export function FeiranteOperations({
               : item,
           ),
         );
-        showNotice(`${document.name} enviado e armazenado neste dispositivo. O envio não equivale à aprovação.`);
+        showNotice(
+          `${document.name} enviado e armazenado neste dispositivo. O envio não equivale à aprovação.`,
+        );
       })
       .catch((error: Error) => showNotice(error.message));
   }
@@ -2519,7 +2521,11 @@ export function FeiranteOperations({
                       autoComplete="new-password"
                     />
                   </label>
-                  {accountError && <p className="operation-footnote" role="alert">{accountError}</p>}
+                  {accountError && (
+                    <p className="operation-footnote" role="alert">
+                      {accountError}
+                    </p>
+                  )}
                   {accountSaved && <p className="inline-success">Alterações salvas.</p>}
                   <div className="module-action-row">
                     <button className="primary-action" type="submit">

@@ -355,8 +355,7 @@ export function DeliveryOperations({
         : true,
       documentFileName: requiresPlate(vehicleType) ? vehicleDocumentName : "",
       documentFile: requiresPlate(vehicleType)
-        ? vehicleDocumentFile ??
-          vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFile
+        ? (vehicleDocumentFile ?? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFile)
         : undefined,
       documentStatus: requiresPlate(vehicleType)
         ? vehicleEditingId
@@ -1788,8 +1787,12 @@ export function DeliveryOperations({
                       <article key={ticket.id}>
                         <Info />
                         <div>
-                          <b>{ticket.id} · {ticket.topic}</b>
-                          <small>{ticket.createdAt} · {ticket.status}</small>
+                          <b>
+                            {ticket.id} · {ticket.topic}
+                          </b>
+                          <small>
+                            {ticket.createdAt} · {ticket.status}
+                          </small>
                           <p>{ticket.details}</p>
                         </div>
                       </article>
@@ -1915,7 +1918,10 @@ export function DeliveryOperations({
                         type="date"
                         value={deliveryAccountDraft.birthDate}
                         onChange={(event) =>
-                          setDeliveryAccountDraft((current) => ({ ...current, birthDate: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
                         }
                       />
                     </label>
@@ -2081,7 +2087,11 @@ export function DeliveryOperations({
                       autoComplete="new-password"
                     />
                   </label>
-                  {accountError && <p className="operation-footnote" role="alert">{accountError}</p>}
+                  {accountError && (
+                    <p className="operation-footnote" role="alert">
+                      {accountError}
+                    </p>
+                  )}
                   {accountSaved && <p className="inline-success">Dados da conta salvos neste dispositivo.</p>}
                   <div className="module-action-row">
                     <button type="submit" className="primary-action">

@@ -2107,11 +2107,7 @@ export function AccountPage({
       city: draft.city.trim(),
       state: draft.state.trim().toUpperCase(),
     };
-    const error = onAccountUpdate(
-      nextProfile.name,
-      nextProfile.email,
-      draft.newPassword.trim() || undefined,
-    );
+    const error = onAccountUpdate(nextProfile.name, nextProfile.email, draft.newPassword.trim() || undefined);
     if (error) {
       setFormError(error);
       setSaved(false);
@@ -2169,9 +2165,7 @@ export function AccountPage({
             <input
               value={draft.birthDate}
               type="date"
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, birthDate: event.target.value }))
-              }
+              onChange={(event) => setDraft((current) => ({ ...current, birthDate: event.target.value }))}
             />
           </label>
           <label>
@@ -2211,9 +2205,7 @@ export function AccountPage({
             Endereço
             <input
               value={draft.address}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, address: event.target.value }))
-              }
+              onChange={(event) => setDraft((current) => ({ ...current, address: event.target.value }))}
               placeholder="Rua, avenida, quadra..."
               autoComplete="street-address"
             />
@@ -2233,9 +2225,7 @@ export function AccountPage({
             Complemento
             <input
               value={draft.complement}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, complement: event.target.value }))
-              }
+              onChange={(event) => setDraft((current) => ({ ...current, complement: event.target.value }))}
               placeholder="Apartamento, bloco, referência"
             />
           </label>
@@ -2262,9 +2252,7 @@ export function AccountPage({
           Nova senha
           <input
             value={draft.newPassword}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, newPassword: event.target.value }))
-            }
+            onChange={(event) => setDraft((current) => ({ ...current, newPassword: event.target.value }))}
             type="password"
             placeholder="Deixe vazio para manter a atual"
             autoComplete="new-password"
@@ -2272,7 +2260,11 @@ export function AccountPage({
           />
           <small>A senha não é salva junto com os dados do perfil.</small>
         </label>
-        {formError && <p className="operation-footnote" role="alert">{formError}</p>}
+        {formError && (
+          <p className="operation-footnote" role="alert">
+            {formError}
+          </p>
+        )}
         {saved && <p className="inline-success">Alterações salvas.</p>}
         <div className="module-action-row">
           <button type="submit" className="primary-action">

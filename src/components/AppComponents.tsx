@@ -202,7 +202,11 @@ export function LoginPage({
                 <span>Veículo, capacidade, CNH/documentos, foto e validação antes de aceitar corridas.</span>
               </div>
             )}
-            {formError && <p className="operation-footnote" role="alert">{formError}</p>}
+            {formError && (
+              <p className="operation-footnote" role="alert">
+                {formError}
+              </p>
+            )}
             <button type="submit" className="primary-action w-full">
               {mode === "login" ? "Entrar" : "Criar conta"} como {roleLabels[selectedRole]}{" "}
               <ChevronRight size={18} />

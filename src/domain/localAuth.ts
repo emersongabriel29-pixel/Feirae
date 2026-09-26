@@ -52,7 +52,8 @@ export function authenticateLocalAccount(input: {
   const email = normalizeEmail(input.email);
   const password = input.password;
   if (!email || !email.includes("@")) return { ok: false as const, message: "Informe um e-mail válido." };
-  if (password.length < 6) return { ok: false as const, message: "A senha precisa ter pelo menos 6 caracteres." };
+  if (password.length < 6)
+    return { ok: false as const, message: "A senha precisa ter pelo menos 6 caracteres." };
 
   const accounts = readAccounts();
   const existing = accounts.find((account) => normalizeEmail(account.email) === email);
@@ -147,10 +148,9 @@ export function updateLocalAccount(input: {
     email,
     role: input.role,
     name,
-    passwordDigest:
-      input.newPassword
-        ? digestPassword(input.newPassword)
-        : previous?.passwordDigest ?? digestPassword(oldEmail.endsWith("@feirae.test") ? "123456" : "123456"),
+    passwordDigest: input.newPassword
+      ? digestPassword(input.newPassword)
+      : (previous?.passwordDigest ?? digestPassword(oldEmail.endsWith("@feirae.test") ? "123456" : "123456")),
     createdAt: previous?.createdAt ?? now,
     updatedAt: now,
   };
@@ -158,7 +158,6 @@ export function updateLocalAccount(input: {
   migrateScopedStorage(oldEmail, email);
   return { ok: true as const, account: next, oldEmail };
 }
-
 
 export function scrubLegacyPlaintextPasswords() {
   if (typeof window === "undefined") return;

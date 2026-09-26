@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-  authenticateLocalAccount,
-  scrubLegacyPlaintextPasswords,
-  updateLocalAccount,
-} from "./localAuth";
+import { authenticateLocalAccount, scrubLegacyPlaintextPasswords, updateLocalAccount } from "./localAuth";
 
 describe("local auth", () => {
   beforeEach(() => {

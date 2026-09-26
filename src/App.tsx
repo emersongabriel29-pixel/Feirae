@@ -70,10 +70,7 @@ export default function App() {
     scopedStorageKey("feirae:compact-cards", accountKey),
     false,
   );
-  const [offersEnabled] = usePersistentState<boolean>(
-    scopedStorageKey("feirae:offers", accountKey),
-    true,
-  );
+  const [offersEnabled] = usePersistentState<boolean>(scopedStorageKey("feirae:offers", accountKey), true);
   const catalog = marketplaceProducts(products);
   const [favorites, setFavorites] = usePersistentState<number[]>(
     scopedStorageKey("feirae:favorites", accountKey),
@@ -209,13 +206,7 @@ export default function App() {
     });
   }, [role, session?.email, setOrders, unifiedOrderRevision]);
 
-  function login(
-    nextRole: Role,
-    email: string,
-    name: string,
-    password: string,
-    isNewAccount: boolean,
-  ) {
+  function login(nextRole: Role, email: string, name: string, password: string, isNewAccount: boolean) {
     const result = authenticateLocalAccount({
       role: nextRole,
       email,
@@ -240,12 +231,7 @@ export default function App() {
     });
     if (!result.ok) return result.message;
 
-    migrateUnifiedOrderAccountKey(
-      session.email,
-      result.account.email,
-      session.role,
-      result.account.name,
-    );
+    migrateUnifiedOrderAccountKey(session.email, result.account.email, session.role, result.account.name);
     if (session.role === "feirante") {
       migrateMarketplaceAccountKey(session.email, result.account.email);
     }
