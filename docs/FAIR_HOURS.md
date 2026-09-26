@@ -10,6 +10,35 @@ Feiras sem entrada específica continuam com **Horário a confirmar**.
 
 Antes de alimentar produção, linhas marcadas **OFICIAL / REVALIDAR** ou **PENDENTE** devem passar por nova conferência da fonte competente.
 
+## Alias de Planaltina usado pelo app
+
+A Ordem de Serviço nº 58/2026 usa a denominação **“Feira do Produtor”**.
+
+O catálogo atual do Feiraê e `src/domain/fairHours.ts` usam **“Feira do Produtor Rural”** para a feira de Planaltina que funciona:
+
+- segunda: 19h–02h;
+- quinta: 19h–02h.
+
+Para evitar duplicidade no banco futuro, registrar:
+
+```
+nome_oficial = Feira do Produtor
+alias_app = Feira do Produtor Rural
+regiao = Planaltina
+fonte = OS 58/2026
+```
+
+Não cadastrar os dois nomes como duas feiras diferentes.
+
+## Hierarquia de evidência de horário
+
+- Ordem de Serviço/Portaria/Regimento vigente e específico: pode alimentar agenda após validação.
+- Comunicação institucional sem ato específico de horário: usar como apoio, não como norma equivalente.
+- Fonte antiga: marcar `revalidate`.
+- Sem fonte específica: `pending`.
+
+O caso do Núcleo Bandeirante permanece **OFICIAL / REVALIDAR**, mas a fonte citada é comunicação institucional da CLDF, não uma Ordem de Serviço específica de horário.
+
 ## Regra de uso no aplicativo
 
 O horário da feira não deve ser inventado nem reutilizado de outra feira.
