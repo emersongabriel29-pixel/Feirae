@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  Home,
   LocateFixed,
   LogOut,
   MapPin,
@@ -226,6 +227,7 @@ type HeaderProps = {
   locationLoading: boolean;
   notifications: number;
   itemCount: number;
+  showCustomerTools: boolean;
   onHome: () => void;
   onTab: (tab: CustomerTab) => void;
   onQuery: (value: string) => void;
@@ -255,19 +257,21 @@ export function Header(props: HeaderProps) {
           </button>
           {props.role === "customer" && (
             <nav className="ml-3 hidden items-center gap-1 lg:flex" aria-label="Navegação principal">
-              {(["fairs", "products", "orders", "profile"] as CustomerTab[]).map((item) => (
+              {(["home", "fairs", "products", "orders", "profile"] as CustomerTab[]).map((item) => (
                 <button
                   key={item}
                   onClick={() => props.onTab(item)}
                   className={props.tab === item ? "desktop-nav active" : "desktop-nav"}
                 >
-                  {item === "fairs"
-                    ? "Feiras"
-                    : item === "products"
-                      ? "Produtos"
-                      : item === "orders"
-                        ? "Pedidos"
-                        : "Perfil"}
+                  {item === "home"
+                    ? "Início"
+                    : item === "fairs"
+                      ? "Feiras"
+                      : item === "products"
+                        ? "Produtos"
+                        : item === "orders"
+                          ? "Pedidos"
+                          : "Perfil"}
                 </button>
               ))}
             </nav>
@@ -281,7 +285,7 @@ export function Header(props: HeaderProps) {
               <button
                 onClick={props.onCart}
                 className="cart-button"
-                aria-label={`Abrir sacola com ${props.itemCount} itens`}
+                aria-label={`Abrir sacola com ${props.itemCount} ${props.itemCount === 1 ? "unidade" : "unidades"}`}
               >
                 <ShoppingBag size={19} />
                 <span className="hidden sm:inline">Minha feira</span>
@@ -297,7 +301,7 @@ export function Header(props: HeaderProps) {
             </div>
           )}
         </div>
-        {props.role === "customer" && (
+        {props.role === "customer" && props.showCustomerTools && (
           <div className="customer-tools">
             <label className="search-field">
               <Search size={18} aria-hidden="true" />
@@ -600,11 +604,22 @@ export function CartDrawer({
                     <span>{cart[product.id]}</span>
                     <button
                       onClick={() => onAdd(product.id)}
-                      aria-label={`Adicionar uma unidade de ${product.name}`}
+                      disabled={(cart[product.id] ?? 0) >= product.stock}
+                      aria-label={
+                        (cart[product.id] ?? 0) >= product.stock
+                          ? `Limite de estoque atingido para ${product.name}`
+                          : `Adicionar uma unidade de ${product.name}`
+                      }
+                      title={
+                        (cart[product.id] ?? 0) >= product.stock ? "Limite de estoque atingido" : undefined
+                      }
                     >
                       <Plus size={15} />
                     </button>
                   </div>
+                  {(cart[product.id] ?? 0) >= product.stock && (
+                    <small className="stock-limit">Limite de estoque atingido</small>
+                  )}
                 </div>
                 <button
                   onClick={() => onRemove(product.id, true)}
@@ -651,6 +666,7 @@ export function MobileNavigation({
   onTab: (tab: CustomerTab) => void;
 }) {
   const items: Array<[CustomerTab, string, ReactNode]> = [
+    ["home", "Início", <Home />],
     ["fairs", "Feiras", <Store />],
     ["products", "Produtos", <ShoppingBag />],
     ["orders", "Pedidos", <Package />],
