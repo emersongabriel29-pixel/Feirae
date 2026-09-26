@@ -39,6 +39,10 @@ import {
   patchUnifiedOrderItem,
   readUnifiedOrders,
 } from "../../domain/orderBridge";
+import {
+  feiraeNotificationPermission,
+  requestFeiraeNotificationPermission,
+} from "../../domain/feiraeNotifications";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
@@ -53,6 +57,7 @@ import {
 import {
   Choice,
   Empty,
+  FeiraeNotificationCard,
   PageHeading,
   Panel,
   QuickAction,
@@ -1713,6 +1718,12 @@ export function NotificationsPage({
     Cancelado: "Pedido cancelado.",
   };
   const [offersEnabled] = usePersistentState<boolean>(scopedStorageKey("feirae:offers"), true);
+  const [notificationPermission, setNotificationPermission] = useState(feiraeNotificationPermission());
+
+  async function enableFeiraeNotifications() {
+    setNotificationPermission(await requestFeiraeNotificationPermission());
+  }
+
   const orderMessages = orders.flatMap((order) => {
     const events = order.events?.length
       ? order.events
@@ -1748,7 +1759,12 @@ export function NotificationsPage({
       }
       onBack={onBack}
     >
-      <div className="mb-4 flex justify-end">
+      <FeiraeNotificationCard
+        permission={notificationPermission}
+        message="Pedidos, entrega e promoções podem chegar como alerta do Feiraê neste dispositivo."
+        onEnable={() => void enableFeiraeNotifications()}
+      />
+      <div className="mb-4 mt-4 flex justify-end">
         <button onClick={onClear} className="text-button">
           Marcar todas como lidas
         </button>
