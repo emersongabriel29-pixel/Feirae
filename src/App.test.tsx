@@ -532,6 +532,28 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
   });
 
+  it("does not expose demo delivery offers to a newly created real account", () => {
+    window.localStorage.removeItem("feirae:session");
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^criar conta$/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /entregador/i }));
+    fireEvent.change(screen.getByLabelText(/nome completo/i), {
+      target: { value: "Entregador Auditoria" },
+    });
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "entregador.auditoria@feirae.app" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /criar conta como entregador/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
+    expect(screen.queryByText("FE-1024")).not.toBeInTheDocument();
+    expect(screen.getByText(/nenhuma corrida dentro dos seus filtros/i)).toBeInTheDocument();
+  });
+
   it("lets the delivery person complete all delivery stages", () => {
     render(<App />);
     loginAs("entregador");
