@@ -233,6 +233,20 @@ function overallVendorStatus(order: UnifiedOrderRecord, vendors: UnifiedOrderVen
   if (vendors.some((vendor) => vendor.status === "rejected")) return "cancelled" as const;
   if (order.status === "delivered" || order.status === "cancelled") return order.status;
   if (["driver_assigned", "collected", "out_for_delivery"].includes(order.status)) return order.status;
+  if (
+    order.fulfillment === "pickup" &&
+    vendors.length &&
+    vendors.every((vendor) => vendor.status === "delivered")
+  ) {
+    return "delivered" as const;
+  }
+  if (
+    order.fulfillment === "pickup" &&
+    vendors.some((vendor) => vendor.status === "delivered") &&
+    vendors.every((vendor) => ["ready", "delivered"].includes(vendor.status))
+  ) {
+    return "ready_for_pickup" as const;
+  }
   if (vendors.length && vendors.every((vendor) => vendor.status === "ready"))
     return "ready_for_pickup" as const;
   if (vendors.some((vendor) => ["accepted", "preparing", "ready"].includes(vendor.status))) {

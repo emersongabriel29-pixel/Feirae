@@ -14,7 +14,7 @@ describe("unified order bridge", () => {
     window.localStorage.removeItem("feirae:unified-orders:v2");
   });
 
-  function seedOrder() {
+  function seedOrder(fulfillment: "delivery" | "pickup" = "delivery") {
     upsertUnifiedOrder({
       id: "FE-MULTI",
       createdAt: "2026-09-25T12:00:00-03:00",
@@ -22,7 +22,7 @@ describe("unified order bridge", () => {
       customerKey: "cliente@feirae.test",
       fairName: "Feira do Produtor Rural",
       customerName: "Cliente",
-      fulfillment: "delivery",
+      fulfillment,
       paymentMethod: "Pix",
       paymentStatus: "authorized",
       subtotal: 50,
@@ -83,6 +83,20 @@ describe("unified order bridge", () => {
 
     patchVendorStatus("FE-MULTI", "vendor:b", "ready");
     expect(readUnifiedOrders()[0].status).toBe("ready_for_pickup");
+  });
+
+  it("keeps multi-vendor pickup open until every vendor confirms handoff", () => {
+    seedOrder("pickup");
+
+    patchVendorStatus("FE-MULTI", "vendor:a", "ready");
+    patchVendorStatus("FE-MULTI", "vendor:b", "ready");
+    expect(readUnifiedOrders()[0].status).toBe("ready_for_pickup");
+
+    patchVendorStatus("FE-MULTI", "vendor:a", "delivered");
+    expect(readUnifiedOrders()[0].status).toBe("ready_for_pickup");
+
+    patchVendorStatus("FE-MULTI", "vendor:b", "delivered");
+    expect(readUnifiedOrders()[0].status).toBe("delivered");
   });
 
   it("propagates actual separated weight to logistics", () => {

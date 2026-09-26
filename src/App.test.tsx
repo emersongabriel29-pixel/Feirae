@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { readUnifiedOrders } from "./domain/orderBridge";
+import { readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
 function loginAs(role: "cliente" | "feirante" | "entregador") {
   fireEvent.click(screen.getByRole("radio", { name: new RegExp(role, "i") }));
@@ -526,10 +526,62 @@ describe("Feiraê role access", () => {
     ).toBeInTheDocument();
   });
 
+  it("does not auto-approve a real vendor when document storage is missing", () => {
+    const email = "feirante.auditoria@feirae.app";
+    window.localStorage.removeItem("feirae:session");
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^criar conta$/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /feirante/i }));
+    fireEvent.change(screen.getByLabelText(/nome completo/i), {
+      target: { value: "Feirante Auditoria" },
+    });
+    fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: email } });
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /criar conta como feirante/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /sair/i }));
+    window.localStorage.removeItem(`feirae:vendor-documents:${email}`);
+
+    fireEvent.click(screen.getByRole("radio", { name: /feirante/i }));
+    fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: email } });
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /entrar como feirante/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
+
+    expect(screen.getByText(/status do cadastro: documentação pendente/i)).toBeInTheDocument();
+  });
+
   it("opens the delivery experience selected at login", () => {
     render(<App />);
     loginAs("entregador");
     expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
+  });
+
+  it("does not expose demo delivery offers to a newly created real account", () => {
+    window.localStorage.removeItem("feirae:session");
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^criar conta$/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /entregador/i }));
+    fireEvent.change(screen.getByLabelText(/nome completo/i), {
+      target: { value: "Entregador Auditoria" },
+    });
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "entregador.auditoria@feirae.app" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /criar conta como entregador/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
+    expect(screen.queryByText("FE-1024")).not.toBeInTheDocument();
+    expect(screen.getByText(/nenhuma corrida dentro dos seus filtros/i)).toBeInTheDocument();
   });
 
   it("lets the delivery person complete all delivery stages", () => {
@@ -550,6 +602,48 @@ describe("Feiraê role access", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /confirmar entrega/i }));
     expect(screen.getByText(/nenhuma entrega ativa/i)).toBeInTheDocument();
+  });
+
+  it("clears a stale active-delivery lock after the shared order is cancelled", () => {
+    window.localStorage.removeItem("feirae:session");
+    upsertUnifiedOrder({
+      id: "FE-CANCELLED-AUDIT",
+      createdAt: "2026-09-26T09:00:00-03:00",
+      updatedAt: "2026-09-26T09:05:00-03:00",
+      customerKey: "cliente@feirae.test",
+      fairName: "Feira do Produtor Rural",
+      customerName: "Cliente",
+      customerCity: "Planaltina",
+      customerAddress: "Planaltina, DF",
+      fulfillment: "delivery",
+      paymentMethod: "Pix",
+      paymentStatus: "refunded",
+      subtotal: 40,
+      calculatedDeliveryFee: 10,
+      deliverySubsidy: 0,
+      customerDeliveryFee: 10,
+      total: 50,
+      items: [],
+      vendors: [],
+      status: "cancelled",
+      driver: {
+        driverKey: "entregador@feirae.test",
+        name: "Entregador",
+        vehicle: "Moto",
+      },
+      events: [],
+    });
+    window.localStorage.setItem(
+      "feirae:delivery-active:entregador@feirae.test",
+      JSON.stringify("FE-CANCELLED-AUDIT"),
+    );
+    window.localStorage.setItem("feirae:delivery-stage:entregador@feirae.test", JSON.stringify(1));
+
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
+
+    expect(screen.getAllByRole("button", { name: /aceitar/i })[0]).toBeEnabled();
   });
 
   it("offers all delivery vehicle types with editable carrying capacity", () => {

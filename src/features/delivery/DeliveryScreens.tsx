@@ -443,6 +443,13 @@ export function DeliveryOperations({
   ];
   const sharedOrders = readUnifiedOrders();
   void unifiedOrderRevision;
+  const acceptedSharedOrder = accepted ? sharedOrders.find((order) => order.id === accepted) : undefined;
+  const acceptedSharedOrderIsActive =
+    acceptedSharedOrder &&
+    ["driver_assigned", "collected", "out_for_delivery"].includes(acceptedSharedOrder.status) &&
+    acceptedSharedOrder.driver?.driverKey === session.email;
+  const effectiveAccepted = acceptedSharedOrder && !acceptedSharedOrderIsActive ? null : accepted;
+
   const deliveredReviewOrders = sharedOrders.filter(
     (order) =>
       order.status === "delivered" &&
@@ -488,18 +495,18 @@ export function DeliveryOperations({
       };
     });
   const sharedIds = new Set(sharedDeliveries.map((delivery) => delivery.id));
-  const deliveries = [
-    ...sharedDeliveries,
-    ...deliveryFixtures
-      .filter((delivery) => !sharedIds.has(delivery.id))
-      .map((delivery) => ({
-        ...delivery,
-        available: true,
-        paymentMethod: "Pago no aplicativo",
-        changeFor: undefined as number | undefined,
-        assignedDriverKey: undefined as string | undefined,
-      })),
-  ];
+  const fixtureDeliveries = seedDemoData
+    ? deliveryFixtures
+        .filter((delivery) => !sharedIds.has(delivery.id))
+        .map((delivery) => ({
+          ...delivery,
+          available: true,
+          paymentMethod: "Pago no aplicativo",
+          changeFor: undefined as number | undefined,
+          assignedDriverKey: undefined as string | undefined,
+        }))
+    : [];
+  const deliveries = [...sharedDeliveries, ...fixtureDeliveries];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
   const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
   const hasMoto = activeVehicles.some(
@@ -529,7 +536,9 @@ export function DeliveryOperations({
     deliveryLedger
       .filter((entry) => entry.status === "pending")
       .reduce((sum, entry) => sum + entry.amount, 0) +
-    (accepted ? (deliveries.find((delivery) => delivery.id === accepted)?.feeAmount ?? 0) : 0);
+    (effectiveAccepted
+      ? (deliveries.find((delivery) => delivery.id === effectiveAccepted)?.feeAmount ?? 0)
+      : 0);
   const availableAmount = deliveryLedger
     .filter((entry) => entry.status === "available")
     .reduce((sum, entry) => sum + entry.amount, 0);
@@ -579,7 +588,7 @@ export function DeliveryOperations({
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find(
     (delivery) =>
-      delivery.id === accepted ||
+      delivery.id === effectiveAccepted ||
       (delivery.assignedDriverKey === session.email && delivery.available === false),
   );
   const activeDeliveryVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
@@ -807,14 +816,14 @@ export function DeliveryOperations({
           </div>
         </div>
       )}
-      {visibleDeliveries.filter((delivery) => delivery.id !== accepted).length === 0 ? (
+      {visibleDeliveries.filter((delivery) => delivery.id !== effectiveAccepted).length === 0 ? (
         <Empty
           title="Nenhuma corrida dentro dos seus filtros"
           text="Aumente o raio, altere as regiões ou aguarde uma nova corrida."
         />
       ) : (
         visibleDeliveries
-          .filter((delivery) => delivery.id !== accepted)
+          .filter((delivery) => delivery.id !== effectiveAccepted)
           .map((delivery) => {
             const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
             return (
@@ -844,11 +853,13 @@ export function DeliveryOperations({
                   </small>
                 </div>
                 <button
-                  disabled={!availableNow || accepted !== null || !compatibleVehicle}
+                  disabled={!availableNow || effectiveAccepted !== null || !compatibleVehicle}
                   onClick={() => {
                     if (!compatibleVehicle || !availableNow) return;
                     setAccepted(delivery.id);
                     setStage(0);
+                    setCancelReason("");
+                    setCancelDetails("");
                     patchUnifiedOrder(
                       delivery.id,
                       {
