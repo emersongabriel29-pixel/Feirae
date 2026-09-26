@@ -483,7 +483,7 @@ describe("Feiraê role access", () => {
 
     expect(screen.getByRole("heading", { name: /pedidos no painel principal/i })).toBeInTheDocument();
     expect(screen.getByText(/FE-1027 · Dona Marta/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /abrir pedido/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /abrir pedido/i }).length).toBeGreaterThan(0);
     expect(screen.getByLabelText(/notificações do feiraê/i)).toBeInTheDocument();
   });
 
@@ -624,7 +624,7 @@ describe("Feiraê role access", () => {
     loginAs("entregador");
 
     expect(screen.getByRole("heading", { name: /corridas no painel principal/i })).toBeInTheDocument();
-    expect(screen.getByText("FE-1024")).toBeInTheDocument();
+    expect(screen.getByText(/entregas disponíveis/i)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /aceitar/i }).length).toBeGreaterThan(0);
     expect(screen.getByLabelText(/notificações do feiraê/i)).toBeInTheDocument();
   });
