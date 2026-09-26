@@ -235,3 +235,17 @@ Para sair do protótipo:
 8. suspensão auditável.
 
 Fontes oficiais existentes no documento devem ser revalidadas no momento da implementação regulatória.
+
+
+## 17. Fontes oficiais de referência
+
+As regras abaixo são referência regulatória e precisam ser revalidadas quando o backend de aprovação for implementado.
+
+- Lei nº 6.956/2021 — feiras públicas do DF:
+  https://www.sinj.df.gov.br/sinj/Norma/410afc4ea07d467a89a433d0fda0e5a1/Lei_6956_2021
+- Detran-DF — vistoria/autorização de motofrete:
+  https://sisman.maestro.detran.df.gov.br/visualizar-carta/pdf/?area=28&layout=true
+- DNIT — requisitos de motofrete/mototáxi:
+  https://www.gov.br/dnit/pt-br/assuntos/noticias/motofretista-e-mototaxista-o-que-diz-a-lei
+
+O código atual não consulta automaticamente nenhuma dessas fontes.
