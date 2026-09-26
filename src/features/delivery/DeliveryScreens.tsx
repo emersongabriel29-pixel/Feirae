@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Bell,
@@ -16,7 +16,13 @@ import {
   Wallet,
   XCircle,
 } from "lucide-react";
-import { Empty, ModuleHeader, OperationsMenu, Panel } from "../../components/AppComponents";
+import {
+  Empty,
+  FeiraeNotificationCard,
+  ModuleHeader,
+  OperationsMenu,
+  Panel,
+} from "../../components/AppComponents";
 import { deliveryModuleDetails } from "../../domain/operations";
 import { fairs } from "../../data";
 import { drivingRoute, geocodeAddress } from "../../domain/routing";
@@ -34,6 +40,11 @@ import { usePersistentState } from "../../usePersistentState";
 import { useUnifiedOrderRevision } from "../../hooks/useUnifiedOrderRevision";
 import { money } from "../../utils";
 import { consumeInventory } from "../../domain/inventoryBridge";
+import {
+  feiraeNotificationPermission,
+  requestFeiraeNotificationPermission,
+  showFeiraeNotification,
+} from "../../domain/feiraeNotifications";
 import { readFileForLocalStorage, storedFileLabel, type StoredFile } from "../../domain/storedFile";
 import {
   appendReview,
@@ -103,6 +114,8 @@ export function DeliveryOperations({
     { id: string; deliveryId: string; reason: string; details: string; createdAt: string }[]
   >(`feirae:delivery-cancellations:${session.email}`, []);
   const [active, setActive] = useState("Central");
+  const [notificationPermission, setNotificationPermission] = useState(feiraeNotificationPermission());
+  const seenOfferIds = useRef<Set<string> | null>(null);
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
   const [helpDetail, setHelpDetail] = useState("Preciso falar com o suporte da rota");
   const [helpProtocol, setHelpProtocol] = useState("");
@@ -582,9 +595,35 @@ export function DeliveryOperations({
       const bPreferred = b.totalDistanceKm <= deliveryPreferences.preferredDistanceKm ? 0 : 1;
       return aPreferred - bPreferred || a.totalDistanceKm - b.totalDistanceKm;
     });
-  const compatibleDeliveryCount = visibleDeliveries.filter((delivery) =>
+  const compatibleVisibleDeliveries = visibleDeliveries.filter((delivery) =>
     compatibleVehicleForWeight(delivery.weight),
-  ).length;
+  );
+  const compatibleDeliveryCount = compatibleVisibleDeliveries.length;
+
+  useEffect(() => {
+    const currentIds = new Set(compatibleVisibleDeliveries.map((delivery) => delivery.id));
+    if (seenOfferIds.current === null || !availableNow) {
+      seenOfferIds.current = currentIds;
+      return;
+    }
+
+    const incoming = compatibleVisibleDeliveries.filter(
+      (delivery) => !seenOfferIds.current?.has(delivery.id),
+    );
+    incoming.forEach((delivery) => {
+      void showFeiraeNotification({
+        title: "Nova corrida",
+        body: `${delivery.fair} · ${delivery.totalDistanceKm.toLocaleString("pt-BR")} km · ganho ${delivery.fee}`,
+        tag: `feirae-delivery-offer-${delivery.id}`,
+        url: "/",
+      });
+    });
+    seenOfferIds.current = currentIds;
+  }, [availableNow, compatibleVisibleDeliveries]);
+
+  async function enableFeiraeNotifications() {
+    setNotificationPermission(await requestFeiraeNotificationPermission());
+  }
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find(
     (delivery) =>
@@ -929,6 +968,29 @@ export function DeliveryOperations({
               </article>
             </div>
           </div>
+          <FeiraeNotificationCard
+            permission={notificationPermission}
+            message={
+              availableNow
+                ? compatibleDeliveryCount > 0
+                  ? `${compatibleDeliveryCount} corrida(s) compatível(is) disponível(is)`
+                  : "Você está ativo e o Feiraê avisará quando uma corrida chegar"
+                : "Ative sua disponibilidade para receber novas corridas"
+            }
+            onEnable={() => void enableFeiraeNotifications()}
+          />
+
+          {activeDelivery && activeDeliverySection}
+
+          <section className="central-live-feed" aria-label="Corridas no painel principal">
+            <ModuleHeader
+              badge={availableNow ? "Ao vivo" : "Pausado"}
+              title="Corridas no painel principal"
+              description="Novas corridas compatíveis aparecem aqui automaticamente enquanto você estiver disponível."
+            />
+            {deliveryList}
+          </section>
+
           <OperationsMenu modules={modules} details={deliveryModuleDetails} onOpen={setActive} />
         </div>
       ) : (

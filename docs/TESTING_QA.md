@@ -31,7 +31,7 @@ npm run build
 
 | Arquivo                                | Testes |
 | -------------------------------------- | -----: |
-| `src/App.test.tsx`                     |     47 |
+| `src/App.test.tsx`                     |     49 |
 | `src/domain/orderBridge.test.ts`       |      5 |
 | `src/domain/marketplaceBridge.test.ts` |      4 |
 | `src/domain/inventoryBridge.test.ts`   |      3 |
@@ -39,11 +39,11 @@ npm run build
 | `src/domain/marketplace.test.ts`       |      4 |
 | `src/domain/session.test.ts`           |      3 |
 | `src/utils.test.ts`                    |      4 |
-| **Total**                              | **74** |
+| **Total**                              | **76** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 47 testes cobrem explicitamente:
+Os 49 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -78,6 +78,8 @@ Os 47 testes cobrem explicitamente:
 ### Feirante
 
 - abrir experiência;
+- mostrar pedidos novos/em andamento diretamente no painel principal;
+- exibir card de notificações Feiraê;
 - produto/estoque;
 - conta separada da banca;
 - pedido sequencial;
@@ -92,6 +94,8 @@ Os 47 testes cobrem explicitamente:
 ### Entregador
 
 - abrir experiência;
+- mostrar corridas compatíveis diretamente no painel principal;
+- exibir card de notificações Feiraê;
 - completar etapas de entrega;
 - tipos/capacidade de veículo;
 - conta com CPF/CNH;
@@ -133,7 +137,7 @@ Os 47 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 74 testes NÃO comprovam diretamente
+## 5. O que os 76 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -147,7 +151,8 @@ Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 - status SQL/RLS;
 - integração Supabase;
 - pagamento real;
-- KYC real.
+- KYC real;
+- notificação Web Push remota com o app totalmente fechado e backend real.
 
 ## 6. E2E atual não é browser E2E
 

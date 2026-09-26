@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   CalendarClock,
@@ -15,7 +15,13 @@ import {
   Wallet,
   XCircle,
 } from "lucide-react";
-import { ModuleHeader, OperationsMenu, Panel, Toggle } from "../../components/AppComponents";
+import {
+  FeiraeNotificationCard,
+  ModuleHeader,
+  OperationsMenu,
+  Panel,
+  Toggle,
+} from "../../components/AppComponents";
 import { fairs } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
 import { vehicleRules } from "../../domain/marketplace";
@@ -32,6 +38,11 @@ import {
   patchVendorStatus,
   readUnifiedOrders,
 } from "../../domain/orderBridge";
+import {
+  feiraeNotificationPermission,
+  requestFeiraeNotificationPermission,
+  showFeiraeNotification,
+} from "../../domain/feiraeNotifications";
 import { readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
 import { vendorIdFor } from "../../domain/identity";
 import { consumeInventory, releaseInventory } from "../../domain/inventoryBridge";
@@ -184,6 +195,8 @@ export function FeiranteOperations({
 }) {
   const unifiedOrderRevision = useUnifiedOrderRevision();
   const [active, setActive] = useState("Central");
+  const [notificationPermission, setNotificationPermission] = useState(feiraeNotificationPermission());
+  const seenNewOrderIds = useRef<Set<string> | null>(null);
   const seedDemoData = session.email.endsWith("@feirae.test") && !session.isNewAccount;
   const [storeOpen, setStoreOpen] = usePersistentState<boolean>(
     `feirae:vendor-store-open:${session.email}`,
@@ -422,6 +435,34 @@ export function FeiranteOperations({
   const pendingOrders = orders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
   );
+  const newOrders = orders.filter((order) => order.status === "new");
+  const centralOrders = [...pendingOrders]
+    .sort((a, b) => Number(b.status === "new") - Number(a.status === "new"))
+    .slice(0, 3);
+
+  useEffect(() => {
+    const currentNewOrders = orders.filter((order) => order.status === "new");
+    const currentIds = new Set(currentNewOrders.map((order) => order.id));
+    if (seenNewOrderIds.current === null) {
+      seenNewOrderIds.current = currentIds;
+      return;
+    }
+
+    const incoming = currentNewOrders.filter((order) => !seenNewOrderIds.current?.has(order.id));
+    incoming.forEach((order) => {
+      void showFeiraeNotification({
+        title: "Novo pedido",
+        body: `${order.id} · ${order.customer} · ${money(order.value)}`,
+        tag: `feirae-vendor-order-${order.id}`,
+        url: "/",
+      });
+    });
+    seenNewOrderIds.current = currentIds;
+  }, [orders]);
+
+  async function enableFeiraeNotifications() {
+    setNotificationPermission(await requestFeiraeNotificationPermission());
+  }
   const lowStockCount = vendorItems.filter((item) => item.active && item.stock <= item.minStock).length;
   const pausedCount = vendorItems.filter((item) => !item.active && item.stock > 0).length;
   const outOfStockCount = vendorItems.filter((item) => item.stock <= 0).length;
@@ -844,6 +885,57 @@ export function FeiranteOperations({
               </article>
             </div>
           </div>
+          <FeiraeNotificationCard
+            permission={notificationPermission}
+            message={
+              newOrders.length > 0
+                ? `${newOrders.length} novo(s) pedido(s) aguardando sua banca`
+                : "Alertas de novos pedidos com a identidade do Feiraê"
+            }
+            onEnable={() => void enableFeiraeNotifications()}
+          />
+
+          <section className="central-live-feed" aria-label="Pedidos no painel principal">
+            <ModuleHeader
+              badge={newOrders.length ? `${newOrders.length} novo(s)` : "Agora"}
+              title="Pedidos no painel principal"
+              description="Pedidos novos e em andamento aparecem aqui sem precisar abrir outro módulo."
+            />
+            {centralOrders.length ? (
+              <div className="operation-list detailed">
+                {centralOrders.map((order) => (
+                  <article key={order.id}>
+                    <Package />
+                    <div>
+                      <b>
+                        {order.id} · {order.customer}
+                      </b>
+                      <small>
+                        {vendorOrderStatusLabel(order.status)} · {order.items.length} itens ·{" "}
+                        {money(order.value)}
+                      </small>
+                      <small>
+                        {order.fulfillment === "pickup" ? "Retirada na feira" : order.city} ·{" "}
+                        {order.createdAt}
+                      </small>
+                    </div>
+                    <button
+                      className="mini-toggle active"
+                      onClick={() => {
+                        setSelectedOrderId(order.id);
+                        setActive("Pedidos");
+                      }}
+                    >
+                      Abrir pedido
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="central-live-feed-empty">Nenhum pedido novo ou em andamento agora.</p>
+            )}
+          </section>
+
           <OperationsMenu modules={modules} details={dynamicModuleDetails} onOpen={setActive} />
         </div>
       ) : (

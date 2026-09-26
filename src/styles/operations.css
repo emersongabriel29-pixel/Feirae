@@ -122,6 +122,87 @@
   color: var(--fe-muted);
   font-size: 0.82rem;
 }
+.feirae-notification-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--fe-green) 22%, var(--fe-border));
+  border-radius: var(--fe-radius-lg);
+  background:
+    radial-gradient(circle at 92% 10%, rgba(223, 243, 107, 0.24), transparent 8rem),
+    linear-gradient(135deg, #f7fbf7, var(--fe-surface));
+  padding: 0.9rem;
+  box-shadow: var(--fe-shadow-sm);
+}
+.feirae-notification-card > img {
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 0.9rem;
+}
+.feirae-notification-card > div {
+  min-width: 0;
+}
+.feirae-notification-card span,
+.feirae-notification-card b,
+.feirae-notification-card small {
+  display: block;
+}
+.feirae-notification-card span {
+  color: var(--fe-green);
+  font-size: 0.68rem;
+  font-weight: 950;
+}
+.feirae-notification-card b {
+  margin-top: 0.08rem;
+  color: var(--fe-ink);
+  font-size: 0.95rem;
+  font-weight: 950;
+}
+.feirae-notification-card small {
+  margin-top: 0.15rem;
+  color: var(--fe-muted);
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+.feirae-notification-card > button {
+  display: inline-flex;
+  min-height: var(--fe-touch);
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: var(--fe-radius-sm);
+  background: var(--fe-green);
+  padding: 0.65rem 0.85rem;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+.central-live-feed {
+  border: 1px solid var(--fe-border);
+  border-radius: var(--fe-radius-lg);
+  background: var(--fe-surface);
+  padding: clamp(0.9rem, 2.5vw, 1.2rem);
+  box-shadow: var(--fe-shadow-sm);
+}
+.central-live-feed .module-header {
+  margin-bottom: 0.7rem;
+}
+.central-live-feed .operation-list {
+  margin-top: 0.65rem;
+}
+.central-live-feed .operation-list article {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(223, 243, 107, 0.13), transparent 6rem), var(--fe-surface-soft);
+}
+.central-live-feed .operation-list article > button {
+  flex: none;
+}
+.central-live-feed-empty {
+  color: var(--fe-muted);
+  font-size: 0.75rem;
+}
+
 .ops-card-grid {
   display: grid;
   gap: 0.85rem;
@@ -674,5 +755,15 @@
 @media (min-width: 1024px) {
   .ops-group-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .feirae-notification-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .feirae-notification-card > button {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 }
