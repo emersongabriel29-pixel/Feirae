@@ -4,6 +4,7 @@ export type DemoSession = {
   role: Role;
   email: string;
   name: string;
+  isNewAccount?: boolean;
 };
 
 export type CustomerTab = "home" | "fairs" | "products" | "orders" | "profile";
@@ -40,6 +41,9 @@ export type Product = {
   minQuantity?: number;
   volume: "leve" | "medio" | "pesado";
   featured?: boolean;
+  vendorId?: string;
+  storeId?: string;
+  active?: boolean;
 };
 
 export type VendorMetrics = {

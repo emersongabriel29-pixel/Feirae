@@ -22,8 +22,19 @@ import { vehicleRules } from "../../domain/marketplace";
 import { vendorModuleDetails } from "../../domain/operations";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
+import { useUnifiedOrderRevision } from "../../hooks/useUnifiedOrderRevision";
 import { money } from "../../utils";
-import { eventNow, patchUnifiedOrder, readUnifiedOrders } from "../../domain/orderBridge";
+import {
+  appendReview,
+  eventNow,
+  patchUnifiedOrder,
+  patchUnifiedOrderItem,
+  patchVendorStatus,
+  readUnifiedOrders,
+} from "../../domain/orderBridge";
+import { readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
+import { vendorIdFor } from "../../domain/identity";
+import { consumeInventory, releaseInventory } from "../../domain/inventoryBridge";
 import {
   initialBankProfile,
   initialVendorDocuments,
@@ -32,6 +43,7 @@ import {
   initialVendorPromotions,
   initialVendorReviews,
   initialVendorSchedule,
+  newVendorBankProfile,
   productCategories,
   productSaleUnits,
   vendorDocumentStatusLabel,
@@ -161,19 +173,24 @@ function promotionStatus(promotion: VendorPromotion) {
 }
 
 export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
+  const unifiedOrderRevision = useUnifiedOrderRevision();
   const [active, setActive] = useState("Central");
-  const [storeOpen, setStoreOpen] = usePersistentState<boolean>("feirae:vendor-store-open", true);
+  const seedDemoData = session.email.endsWith("@feirae.test") && !session.isNewAccount;
+  const [storeOpen, setStoreOpen] = usePersistentState<boolean>(
+    `feirae:vendor-store-open:${session.email}`,
+    seedDemoData,
+  );
   const [vendorItems, setVendorItems] = usePersistentState<VendorProduct[]>(
     `feirae:vendor-products:${session.email}`,
-    initialVendorProducts,
+    seedDemoData ? initialVendorProducts : [],
   );
   const [orders, setOrders] = usePersistentState<VendorOrder[]>(
     `feirae:vendor-orders:${session.email}`,
-    initialVendorOrders,
+    seedDemoData ? initialVendorOrders : [],
   );
   const [bankProfile, setBankProfile] = usePersistentState<VendorBankProfile>(
     `feirae:vendor-bank:${session.email}`,
-    initialBankProfile,
+    seedDemoData ? initialBankProfile : newVendorBankProfile(session.name),
   );
   const [useFairHours, setUseFairHours] = usePersistentState<boolean>(
     `feirae:vendor-use-fair-hours:${session.email}`,
@@ -189,20 +206,28 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       deliveryEnabled: true,
       pickupEnabled: true,
       absorbDeliveryFee: false,
+      acceptCashOnDelivery: true,
+      acceptCardOnDelivery: true,
       pickupInstructions: "Retirada no box da banca após confirmação de pedido pronto.",
     },
   );
   const [promotions, setPromotions] = usePersistentState<VendorPromotion[]>(
     `feirae:vendor-promotions:${session.email}`,
-    initialVendorPromotions,
+    seedDemoData ? initialVendorPromotions : [],
   );
   const [reviews, setReviews] = usePersistentState<VendorReview[]>(
     `feirae:vendor-reviews:${session.email}`,
-    initialVendorReviews,
+    seedDemoData ? initialVendorReviews : [],
   );
   const [documents, setDocuments] = usePersistentState<VendorDocument[]>(
     `feirae:vendor-documents:${session.email}`,
-    initialVendorDocuments,
+    session.isNewAccount
+      ? initialVendorDocuments.map((document) => ({
+          ...document,
+          status: "pending" as const,
+          fileName: "",
+        }))
+      : initialVendorDocuments,
   );
   const [stockHistory, setStockHistory] = usePersistentState<
     { id: string; product: string; delta: number; reason: string; createdAt: string }[]
@@ -245,11 +270,21 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     minimumOrder: 0,
     discountValue: 0,
     target: "",
+    couponCode: "",
+    payQuantity: 2,
+    takeQuantity: 3,
   });
   const [stockReason, setStockReason] = useState("Ajuste manual");
   const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
   const [reviewReply, setReviewReply] = useState("");
   const [accountSaved, setAccountSaved] = useState(false);
+  const [vendorReviewOrderId, setVendorReviewOrderId] = useState<string | null>(null);
+  const [vendorReviewScore, setVendorReviewScore] = useState(5);
+  const [vendorReviewComment, setVendorReviewComment] = useState("");
+  const [settlementStatus, setSettlementStatus] = usePersistentState<Record<string, "requested" | "paid">>(
+    `feirae:vendor-settlements:${session.email}`,
+    {},
+  );
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -261,10 +296,27 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   }, [setPromotions]);
 
   useEffect(() => {
+    const sharedStore = readStoreByIdentity(bankProfile.fairName, bankProfile.name);
+    if (!sharedStore) return;
+    setPromotions((current) =>
+      current.map((promotion) => {
+        const shared = sharedStore.promotions.find((item) => item.id === promotion.id);
+        return shared && shared.usedCount > promotion.usedCount
+          ? { ...promotion, usedCount: shared.usedCount }
+          : promotion;
+      }),
+    );
+  }, [bankProfile.fairName, bankProfile.name, setPromotions]);
+
+  useEffect(() => {
+    const accountVendorId = vendorIdFor(session.email);
     const sharedOrders = readUnifiedOrders().filter(
       (order) =>
         order.fairName === bankProfile.fairName &&
-        order.items.some((item) => item.vendor === bankProfile.name),
+        (order.vendors?.some(
+          (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+        ) ??
+          order.items.some((item) => item.vendor === bankProfile.name)),
     );
     if (!sharedOrders.length) return;
 
@@ -282,26 +334,42 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     setOrders((current) => {
       const byId = new Map(current.map((order) => [order.id, order]));
       sharedOrders.forEach((record) => {
-        const items = record.items.filter((item) => item.vendor === bankProfile.name);
+        const vendorState = record.vendors?.find(
+          (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+        );
+        const resolvedVendorId = vendorState?.vendorId ?? accountVendorId;
+        const items = record.items.filter(
+          (item) => item.vendorId === resolvedVendorId || item.vendor === bankProfile.name,
+        );
         const currentOrder = byId.get(record.id);
-        const alreadySeparated = [
-          "ready_for_pickup",
-          "driver_assigned",
-          "collected",
-          "out_for_delivery",
-          "delivered",
-        ].includes(record.status);
+        const localStatus =
+          record.status === "delivered"
+            ? "delivered"
+            : record.status === "cancelled" || vendorState?.status === "rejected"
+              ? "rejected"
+              : ["collected", "out_for_delivery"].includes(record.status)
+                ? "collected"
+                : vendorState?.status === "ready"
+                  ? "ready_for_pickup"
+                  : vendorState?.status === "collected"
+                    ? "collected"
+                    : vendorState?.status === "accepted" || vendorState?.status === "preparing"
+                      ? "preparing"
+                      : statusMap[record.status];
+        const alreadySeparated = ["ready_for_pickup", "collected", "delivered"].includes(localStatus);
         byId.set(record.id, {
           id: record.id,
+          fulfillment: record.fulfillment,
+          vendorId: resolvedVendorId,
           customer: record.customerName,
           createdAt: new Intl.DateTimeFormat("pt-BR", {
             dateStyle: "short",
             timeStyle: "short",
           }).format(new Date(record.createdAt)),
-          status: statusMap[record.status],
+          status: localStatus,
           value: items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
           deliveryFee: record.calculatedDeliveryFee,
-          city: record.customerCity ?? "Entrega",
+          city: record.customerCity ?? (record.fulfillment === "pickup" ? "Retirada na feira" : "Entrega"),
           estimatedPickupMinutes: currentOrder?.estimatedPickupMinutes ?? 20,
           rejectReason: record.cancelReason ?? currentOrder?.rejectReason ?? "",
           driverName: record.driver?.name ?? currentOrder?.driverName ?? "",
@@ -309,22 +377,33 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
             const oldItem = currentOrder?.items.find((old) => old.id === `${record.id}-${item.productId}`);
             return {
               id: `${record.id}-${item.productId}`,
+              productId: item.productId,
               name: item.name,
               quantityLabel: `${item.quantity} ${item.unit}`,
-              estimatedWeightKg: item.weightKg,
-              actualWeightKg: oldItem?.actualWeightKg ?? item.weightKg,
+              estimatedWeightKg: item.estimatedWeightKg ?? item.weightKg,
+              actualWeightKg: item.actualWeightKg ?? oldItem?.actualWeightKg ?? item.weightKg,
               separated: oldItem?.separated ?? alreadySeparated,
-              unavailable: oldItem?.unavailable ?? false,
-              note: oldItem?.note ?? "",
+              unavailable: item.unavailable ?? oldItem?.unavailable ?? false,
+              note: item.note ?? oldItem?.note ?? "",
             };
           }),
         });
       });
       return Array.from(byId.values());
     });
-  }, [bankProfile.fairName, bankProfile.name, setOrders]);
+  }, [bankProfile.fairName, bankProfile.name, session.email, setOrders, unifiedOrderRevision]);
 
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
+  const accountVendorId = vendorIdFor(session.email);
+  const vendorUnifiedOrders = readUnifiedOrders().filter((order) =>
+    order.vendors?.some(
+      (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+    ),
+  );
+  const pendingVendorReviewOrders = vendorUnifiedOrders.filter(
+    (order) =>
+      order.status === "delivered" && !order.reviews?.some((review) => review.authorRole === "vendor"),
+  );
   const pendingOrders = orders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
   );
@@ -344,6 +423,15 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const availableGross = orders
     .filter((order) => order.status === "delivered")
     .reduce((sum, order) => sum + order.value, 0);
+  const vendorAvailableForPayout = orders
+    .filter((order) => order.status === "delivered" && !settlementStatus[order.id])
+    .reduce((sum, order) => sum + order.value, 0);
+  const vendorRequestedPayout = orders
+    .filter((order) => settlementStatus[order.id] === "requested")
+    .reduce((sum, order) => sum + order.value, 0);
+  const vendorPaidPayout = orders
+    .filter((order) => settlementStatus[order.id] === "paid")
+    .reduce((sum, order) => sum + order.value, 0);
   const approvalStatus = documents
     .filter((document) => document.required)
     .every((document) => document.status === "approved")
@@ -358,7 +446,37 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const scheduleForStatus =
     useFairHours && bankProfile.fairName === "Feira do Produtor Rural" ? initialVendorSchedule : schedule;
   const currentScheduleStatus = vendorScheduleStatus(scheduleForStatus);
-  const effectiveStoreOpen = storeOpen && currentScheduleStatus.open;
+  const effectiveStoreOpen = approvalStatus === "Aprovado" && storeOpen && currentScheduleStatus.open;
+
+  useEffect(() => {
+    syncVendorMarketplace({
+      accountKey: session.email,
+      name: bankProfile.name,
+      fairName: bankProfile.fairName,
+      isOpen: effectiveStoreOpen,
+      approved: approvalStatus === "Aprovado",
+      deliveryEnabled: deliverySettings.deliveryEnabled,
+      pickupEnabled: deliverySettings.pickupEnabled,
+      absorbDeliveryFee: deliverySettings.absorbDeliveryFee,
+      acceptCashOnDelivery: deliverySettings.acceptCashOnDelivery,
+      acceptCardOnDelivery: deliverySettings.acceptCardOnDelivery,
+      promotions,
+      products: vendorItems,
+    });
+  }, [
+    bankProfile.fairName,
+    bankProfile.name,
+    deliverySettings.absorbDeliveryFee,
+    deliverySettings.deliveryEnabled,
+    deliverySettings.pickupEnabled,
+    deliverySettings.acceptCashOnDelivery,
+    deliverySettings.acceptCardOnDelivery,
+    effectiveStoreOpen,
+    promotions,
+    session.email,
+    vendorItems,
+    approvalStatus,
+  ]);
 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
@@ -406,30 +524,60 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   }
 
   function updateOrderItem(orderId: string, itemId: string, update: Partial<VendorOrder["items"][number]>) {
+    const order = orders.find((item) => item.id === orderId);
+    const orderItem = order?.items.find((item) => item.id === itemId);
     setOrders((current) =>
-      current.map((order) =>
-        order.id === orderId
+      current.map((item) =>
+        item.id === orderId
           ? {
-              ...order,
-              items: order.items.map((item) => (item.id === itemId ? { ...item, ...update } : item)),
+              ...item,
+              items: item.items.map((child) => (child.id === itemId ? { ...child, ...update } : child)),
             }
-          : order,
+          : item,
       ),
     );
+    if (order?.vendorId && orderItem?.productId) {
+      patchUnifiedOrderItem(orderId, order.vendorId, orderItem.productId, {
+        actualWeightKg: update.actualWeightKg,
+        unavailable: update.unavailable,
+        note: update.note,
+      });
+    }
   }
 
   function acceptOrder(order: VendorOrder) {
+    if (approvalStatus !== "Aprovado") {
+      showNotice("Finalize a aprovação documental antes de aceitar pedidos.");
+      return;
+    }
+    const vendorId = order.vendorId ?? vendorIdFor(session.email);
     updateOrder(order.id, { status: "preparing", rejectReason: "" });
-    showNotice(`Pedido ${order.id} aceito. Cliente notificado na aplicativo.`);
+    patchVendorStatus(
+      order.id,
+      vendorId,
+      "accepted",
+      eventNow("vendor-confirmed", "Confirmado pela banca", "vendor"),
+    );
+    patchVendorStatus(order.id, vendorId, "preparing", eventNow("preparing", "Em separação", "vendor"));
+    showNotice(`Pedido ${order.id} aceito. Cliente notificado.`);
   }
 
   function rejectOrder(order: VendorOrder) {
     updateOrder(order.id, { status: "rejected", rejectReason });
-    patchUnifiedOrder(
+    releaseInventory(order.id);
+    patchVendorStatus(
       order.id,
-      { status: "cancelled", cancelReason: rejectReason },
+      order.vendorId ?? vendorIdFor(session.email),
+      "rejected",
       eventNow("vendor-rejected", "Pedido cancelado", "vendor", { reason: rejectReason }),
     );
+    const unified = readUnifiedOrders().find((item) => item.id === order.id);
+    if (unified?.paymentStatus === "authorized") {
+      patchUnifiedOrder(order.id, {
+        paymentStatus: "refunded",
+        refundAmount: unified.total,
+      });
+    }
     showNotice(`Pedido ${order.id} recusado. Motivo registrado.`);
   }
 
@@ -439,13 +587,26 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       showNotice("Conclua ou resolva todos os itens antes de marcar o pedido como pronto.");
       return;
     }
+    if (approvalStatus !== "Aprovado") {
+      showNotice("Finalize a aprovação documental antes de liberar pedidos.");
+      return;
+    }
     updateOrder(order.id, { status: "ready_for_pickup" });
-    patchUnifiedOrder(
+    patchVendorStatus(
       order.id,
-      { status: "ready_for_pickup" },
-      eventNow("ready", "Pronto para coleta", "vendor"),
+      order.vendorId ?? vendorIdFor(session.email),
+      "ready",
+      eventNow(
+        "ready",
+        order.fulfillment === "pickup" ? "Pronto para retirada" : "Pronto para coleta",
+        "vendor",
+      ),
     );
-    showNotice(`Pedido ${order.id} pronto. Agora aguarda um entregador compatível.`);
+    showNotice(
+      order.fulfillment === "pickup"
+        ? `Pedido ${order.id} pronto para retirada do cliente.`
+        : `Pedido ${order.id} pronto. Aguarda as demais bancas e um entregador compatível.`,
+    );
   }
 
   function openNewProduct() {
@@ -536,6 +697,17 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     event.preventDefault();
     if (!promotionDraft.name.trim() || !promotionDraft.rule.trim()) {
       showNotice("Informe o nome e a regra da campanha.");
+      return;
+    }
+    if (promotionDraft.type === "cupom" && !promotionDraft.couponCode?.trim()) {
+      showNotice("Informe o código do cupom.");
+      return;
+    }
+    if (
+      promotionDraft.type === "compreLeve" &&
+      (promotionDraft.takeQuantity ?? 0) <= (promotionDraft.payQuantity ?? 0)
+    ) {
+      showNotice("Em Compre X Leve Y, a quantidade levada deve ser maior que a quantidade paga.");
       return;
     }
     const next = {
@@ -827,6 +999,26 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                             >
                               Indisponível
                             </button>
+                            {item.unavailable && item.note.trim() && (
+                              <button
+                                className="mini-toggle"
+                                onClick={() => {
+                                  patchUnifiedOrder(
+                                    selectedOrder.id,
+                                    {},
+                                    eventNow(
+                                      `substitution-${item.productId ?? item.id}`,
+                                      `Substituição solicitada para ${item.name}`,
+                                      "vendor",
+                                      { details: item.note.trim() },
+                                    ),
+                                  );
+                                  showNotice("Opção de substituição enviada ao cliente.");
+                                }}
+                              >
+                                Enviar substituição ao cliente
+                              </button>
+                            )}
                           </div>
                         )}
                       </article>
@@ -838,18 +1030,48 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       Marcar pedido como pronto para coleta
                     </button>
                   )}
-                  {selectedOrder.status === "ready_for_pickup" && (
-                    <div className="region-strip">
-                      <Truck size={18} />
-                      <div>
-                        <b>Aguardando entregador</b>
-                        <p>
-                          O feirante terminou sua etapa. Coleta, rota e entrega pertencem ao fluxo do
-                          entregador.
-                        </p>
+                  {selectedOrder.status === "ready_for_pickup" &&
+                    (selectedOrder.fulfillment === "pickup" ? (
+                      <div className="surface-card">
+                        <span className="eyebrow">Retirada na banca</span>
+                        <b>Pedido pronto para o cliente</b>
+                        <p>Confirme somente quando o pedido tiver sido entregue ao cliente no balcão.</p>
+                        <button
+                          className="primary-action"
+                          onClick={() => {
+                            updateOrder(selectedOrder.id, { status: "delivered" });
+                            patchVendorStatus(
+                              selectedOrder.id,
+                              selectedOrder.vendorId ?? vendorIdFor(session.email),
+                              "delivered",
+                            );
+                            consumeInventory(selectedOrder.id);
+                            patchUnifiedOrder(
+                              selectedOrder.id,
+                              {
+                                status: "delivered",
+                                pickupConfirmedAt: new Date().toISOString(),
+                              },
+                              eventNow("pickup-complete", "Retirado na banca", "vendor"),
+                            );
+                            showNotice(`Retirada do pedido ${selectedOrder.id} confirmada.`);
+                          }}
+                        >
+                          <Check size={17} /> Confirmar retirada pelo cliente
+                        </button>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="region-strip">
+                        <Truck size={18} />
+                        <div>
+                          <b>Aguardando entregador</b>
+                          <p>
+                            Sua parte está pronta. A corrida só é liberada quando todas as bancas do pedido
+                            estiverem prontas.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   {selectedOrder.status === "collected" && (
                     <p className="inline-success">
                       Coleta confirmada pelo fluxo logístico. O feirante não altera mais o status da entrega.
@@ -1466,6 +1688,22 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   }
                 />
                 <Toggle
+                  label="Aceitar dinheiro na entrega"
+                  description="Libera pagamento em dinheiro ao receber. O cliente pode informar valor para troco."
+                  checked={deliverySettings.acceptCashOnDelivery}
+                  onChange={(checked) =>
+                    setDeliverySettings((current) => ({ ...current, acceptCashOnDelivery: checked }))
+                  }
+                />
+                <Toggle
+                  label="Aceitar cartão na maquininha"
+                  description="Libera pagamento por cartão no recebimento quando a operação possui maquininha."
+                  checked={deliverySettings.acceptCardOnDelivery}
+                  onChange={(checked) =>
+                    setDeliverySettings((current) => ({ ...current, acceptCardOnDelivery: checked }))
+                  }
+                />
+                <Toggle
                   label="Oferecer frete grátis pago pela banca"
                   description="O cliente paga R$ 0 pela entrega; a remuneração do entregador é abatida do recebível do feirante."
                   checked={deliverySettings.absorbDeliveryFee}
@@ -1633,7 +1871,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           <input
                             type="number"
                             min="0"
-                            step={promotionDraft.type === "percentual" ? "1" : "0.01"}
+                            step={promotionDraft.type === "valorFixo" ? "0.01" : "1"}
                             value={promotionDraft.discountValue ?? 0}
                             onChange={(event) =>
                               setPromotionDraft((current) => ({
@@ -1657,6 +1895,59 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                             placeholder="Ex.: Cesta de frutas ou Hortifruti"
                           />
                         </label>
+                      )}
+                      {promotionDraft.type === "cupom" && (
+                        <label>
+                          Código do cupom
+                          <input
+                            value={promotionDraft.couponCode ?? ""}
+                            onChange={(event) =>
+                              setPromotionDraft((current) => ({
+                                ...current,
+                                couponCode: event.target.value.toLocaleUpperCase("pt-BR"),
+                              }))
+                            }
+                            placeholder="Ex.: FEIRA10"
+                            required
+                          />
+                        </label>
+                      )}
+                      {promotionDraft.type === "compreLeve" && (
+                        <>
+                          <label>
+                            Pague por X unidades
+                            <input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={promotionDraft.payQuantity ?? 2}
+                              onChange={(event) =>
+                                setPromotionDraft((current) => ({
+                                  ...current,
+                                  payQuantity: Math.max(1, Number(event.target.value) || 1),
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            Leve Y unidades
+                            <input
+                              type="number"
+                              min={(promotionDraft.payQuantity ?? 2) + 1}
+                              step="1"
+                              value={promotionDraft.takeQuantity ?? 3}
+                              onChange={(event) =>
+                                setPromotionDraft((current) => ({
+                                  ...current,
+                                  takeQuantity: Math.max(
+                                    (current.payQuantity ?? 2) + 1,
+                                    Number(event.target.value) || 3,
+                                  ),
+                                }))
+                              }
+                            />
+                          </label>
+                        </>
                       )}
                       <label>
                         Pedido mínimo (R$)
@@ -1755,7 +2046,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <ModuleHeader
                   badge="Receitas e repasses"
                   title="Financeiro da banca"
-                  description="Valores separados por estado. Taxas comerciais reais só serão aplicadas quando o provedor for integrado."
+                  description="Acompanhe valores pendentes, disponíveis, solicitados e recebidos."
                 />
                 <div className="operation-metrics">
                   <article>
@@ -1778,15 +2069,15 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   </p>
                   <p>
                     <span>Taxa Feiraê</span>
-                    <strong>A definir</strong>
+                    <strong>Não configurada</strong>
                   </p>
                   <p>
-                    <span>Taxa do provedor</span>
-                    <strong>A definir</strong>
+                    <span>Taxa de processamento</span>
+                    <strong>Não configurada</strong>
                   </p>
                   <p>
                     <span>Próximo repasse</span>
-                    <strong>Depende do provedor</strong>
+                    <strong>{vendorRequestedPayout > 0 ? "Solicitado" : "Aguardando solicitação"}</strong>
                   </p>
                 </div>
                 {activeFreeShipping || deliverySettings.absorbDeliveryFee ? (
@@ -1810,10 +2101,46 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                     </article>
                   ))}
                 </div>
-                {!vendorAccount.pixKey && (
+                {!vendorAccount.pixKey && !vendorAccount.accountNumber ? (
                   <button className="primary-action" onClick={() => setActive("Conta")}>
                     Cadastrar destino de recebimento
                   </button>
+                ) : vendorAvailableForPayout > 0 ? (
+                  <button
+                    className="primary-action"
+                    onClick={() =>
+                      setSettlementStatus((current) => {
+                        const next = { ...current };
+                        for (const order of orders) {
+                          if (order.status === "delivered" && !next[order.id]) next[order.id] = "requested";
+                        }
+                        return next;
+                      })
+                    }
+                  >
+                    Solicitar repasse de {money(vendorAvailableForPayout)}
+                  </button>
+                ) : null}
+                {vendorRequestedPayout > 0 && (
+                  <button
+                    className="secondary-action"
+                    onClick={() =>
+                      setSettlementStatus(
+                        (current) =>
+                          Object.fromEntries(
+                            Object.entries(current).map(([id, status]) => [
+                              id,
+                              status === "requested" ? "paid" : status,
+                            ]),
+                          ) as Record<string, "requested" | "paid">,
+                      )
+                    }
+                  >
+                    Registrar recebimento de {money(vendorRequestedPayout)}
+                  </button>
+                )}
+                {vendorPaidPayout > 0 && (
+                  <p className="inline-success">{money(vendorPaidPayout)} registrado como recebido.</p>
                 )}
               </>
             ) : active === "Avaliações" ? (
@@ -1822,6 +2149,44 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   badge={`${averageRating.toFixed(1)} ★`}
                   title="Avaliações recebidas"
                   description="Média no topo e avaliações individuais com pedido, data, comentário e resposta da banca."
+                />
+                <SectionHistoryReview
+                  orders={pendingVendorReviewOrders}
+                  selectedOrderId={vendorReviewOrderId}
+                  score={vendorReviewScore}
+                  comment={vendorReviewComment}
+                  onSelect={setVendorReviewOrderId}
+                  onScore={setVendorReviewScore}
+                  onComment={setVendorReviewComment}
+                  onSubmit={(orderId) => {
+                    const order = vendorUnifiedOrders.find((item) => item.id === orderId);
+                    if (!order) return;
+                    const reviewSequence = (order.reviews?.length ?? 0) + 1;
+                    appendReview(order.id, {
+                      id: `vendor-customer-${order.id}-${reviewSequence}`,
+                      authorRole: "vendor",
+                      targetRole: "customer",
+                      targetId: order.customerKey,
+                      rating: vendorReviewScore,
+                      comment: vendorReviewComment.trim(),
+                      createdAt: new Date().toISOString(),
+                    });
+                    if (order.driver?.driverKey) {
+                      appendReview(order.id, {
+                        id: `vendor-delivery-${order.id}-${reviewSequence}`,
+                        authorRole: "vendor",
+                        targetRole: "delivery",
+                        targetId: order.driver.driverKey,
+                        rating: vendorReviewScore,
+                        comment: vendorReviewComment.trim(),
+                        createdAt: new Date().toISOString(),
+                      });
+                    }
+                    setVendorReviewOrderId(null);
+                    setVendorReviewScore(5);
+                    setVendorReviewComment("");
+                    showNotice("Avaliação enviada.");
+                  }}
                 />
                 <div className="operation-metrics">
                   <article>
@@ -1896,7 +2261,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                 <ModuleHeader
                   badge="Dados pessoais e recebimento"
                   title="Minha conta"
-                  description="Dados do responsável e destino de recebimento. O provedor real validará titularidade e pagamentos."
+                  description="Dados do responsável e destino de recebimento."
                 />
                 <form
                   className="form-card"
@@ -2064,7 +2429,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                       </label>
                     </div>
                   )}
-                  {accountSaved && <p className="inline-success">Alterações salvas neste dispositivo.</p>}
+                  {accountSaved && <p className="inline-success">Alterações salvas.</p>}
                   <button className="primary-action" type="submit">
                     <Edit3 size={17} /> Salvar alterações
                   </button>
@@ -2126,6 +2491,87 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
         </div>
       )}
     </Panel>
+  );
+}
+
+function SectionHistoryReview({
+  orders,
+  selectedOrderId,
+  score,
+  comment,
+  onSelect,
+  onScore,
+  onComment,
+  onSubmit,
+}: {
+  orders: ReturnType<typeof readUnifiedOrders>;
+  selectedOrderId: string | null;
+  score: number;
+  comment: string;
+  onSelect: (id: string | null) => void;
+  onScore: (value: number) => void;
+  onComment: (value: string) => void;
+  onSubmit: (orderId: string) => void;
+}) {
+  return (
+    <div className="surface-card">
+      <span className="eyebrow">Avaliar cliente e entrega</span>
+      {orders.length ? (
+        <div className="operation-list detailed">
+          {orders.map((order) => (
+            <article key={order.id}>
+              <Star />
+              <div>
+                <b>
+                  {order.id} · {order.customerName}
+                </b>
+                <small>
+                  {order.driver?.name ? `Entregador: ${order.driver.name}` : "Retirada pelo cliente"}
+                </small>
+                {selectedOrderId === order.id && (
+                  <div className="form-card compact">
+                    <label>
+                      Nota
+                      <select value={score} onChange={(event) => onScore(Number(event.target.value))}>
+                        {[5, 4, 3, 2, 1].map((value) => (
+                          <option value={value} key={value}>
+                            {value} estrela{value === 1 ? "" : "s"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Comentário
+                      <textarea
+                        rows={3}
+                        value={comment}
+                        onChange={(event) => onComment(event.target.value)}
+                        placeholder="Como foi a entrega e o atendimento do cliente?"
+                      />
+                    </label>
+                    <div className="module-action-row">
+                      <button className="primary-action" onClick={() => onSubmit(order.id)}>
+                        Enviar avaliação
+                      </button>
+                      <button className="secondary-action" onClick={() => onSelect(null)}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {selectedOrderId !== order.id && (
+                <button className="mini-toggle" onClick={() => onSelect(order.id)}>
+                  Avaliar
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="operation-footnote">Nenhum pedido entregue aguardando avaliação da banca.</p>
+      )}
+    </div>
   );
 }
 

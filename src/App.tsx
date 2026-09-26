@@ -31,22 +31,58 @@ import { useAppNavigation } from "./hooks/useAppNavigation";
 import { useDemoCart } from "./hooks/useDemoCart";
 import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
+import { useUnifiedOrderRevision } from "./hooks/useUnifiedOrderRevision";
 import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
+import { marketplaceProducts, readStoreByIdentity, registerPromotionUsage } from "./domain/marketplaceBridge";
+import { scopedStorageKey } from "./domain/storage";
+import { storeIdFor, vendorIdFor } from "./domain/identity";
+import { consumeWallet } from "./domain/walletBridge";
+import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 
 export default function App() {
   const { session, role, startSession, clearSession } = useDemoSession();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
-  const [favorites, setFavorites] = usePersistentState<number[]>("feirae:favorites", [2]);
-  const [vendorFavorites, setVendorFavorites] = usePersistentState<string[]>("feirae:vendor-favorites", []);
-  const [orders, setOrders] = usePersistentState<DemoOrder[]>("feirae:orders", initialOrders);
+  const accountKey = session?.email ?? "guest";
+  const [gpsEnabled] = usePersistentState<boolean>(scopedStorageKey("feirae:gps", accountKey), true);
+  const [orderUpdatesEnabled] = usePersistentState<boolean>(
+    scopedStorageKey("feirae:order-updates", accountKey),
+    true,
+  );
+  const catalog = marketplaceProducts(products);
+  const [favorites, setFavorites] = usePersistentState<number[]>(
+    scopedStorageKey("feirae:favorites", accountKey),
+    [2],
+  );
+  const [vendorFavorites, setVendorFavorites] = usePersistentState<string[]>(
+    scopedStorageKey("feirae:vendor-favorites", accountKey),
+    [],
+  );
+  const customerSeedOrders =
+    session?.role === "customer" && session.email.endsWith("@feirae.test") && !session.isNewAccount
+      ? initialOrders
+      : [];
+  const [orders, setOrders] = usePersistentState<DemoOrder[]>(
+    scopedStorageKey("feirae:orders", accountKey),
+    customerSeedOrders,
+  );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [notifications, setNotifications] = useState(2);
+  const [readNotificationKeys, setReadNotificationKeys] = usePersistentState<string[]>(
+    scopedStorageKey("feirae:notification-read", accountKey),
+    [],
+  );
+  const notificationKeys = orders.flatMap((order) =>
+    (order.events ?? []).map((event) => `${order.id}:${event.key}:${event.at}`),
+  );
+  const notifications = orderUpdatesEnabled
+    ? notificationKeys.filter((key) => !readNotificationKeys.includes(key)).length
+    : 0;
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLabel, setLocationLabel] = useState("Planaltina, DF");
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast, notify } = useToast();
+  const unifiedOrderRevision = useUnifiedOrderRevision();
   const {
     cart,
     setCart,
@@ -74,10 +110,10 @@ export default function App() {
   } = useAppNavigation(role, () => setCartOpen(false));
 
   const visibleProducts = useMemo(() => {
-    const matches = filterProducts(products, query, category);
+    const matches = filterProducts(catalog, query, category);
     if (query.trim()) return matches;
     return matches.filter((product) => product.fair === selectedFair);
-  }, [query, category, selectedFair]);
+  }, [catalog, query, category, selectedFair]);
   const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
   const trackedOrder =
     orders.find((order) => order.id === selectedOrderId) ??
@@ -86,7 +122,7 @@ export default function App() {
 
   useEffect(() => {
     if (role !== "customer") return;
-    const unified = readUnifiedOrders();
+    const unified = readUnifiedOrders(session?.email);
     if (!unified.length) return;
     const statusMap = {
       received: "Recebido",
@@ -129,10 +165,10 @@ export default function App() {
       });
       return Array.from(byId.values());
     });
-  }, [role, setOrders]);
+  }, [role, session?.email, setOrders, unifiedOrderRevision]);
 
-  function login(nextRole: Role, email: string) {
-    startSession(nextRole, email);
+  function login(nextRole: Role, email: string, name: string, isNewAccount: boolean) {
+    startSession(nextRole, email, name, isNewAccount);
     resetForRole(nextRole);
   }
 
@@ -154,16 +190,26 @@ export default function App() {
   }
 
   function openFavoriteVendor(name: string) {
-    const product = products.find((item) => item.feirante === name);
+    const product = catalog.find((item) => item.feirante === name);
     if (product) setSelectedFair(product.fair);
     openVendor(name);
   }
   function addProductToCart(id: number) {
-    const product = products.find((item) => item.id === id);
-    if (product && !cartFairName) setSelectedFair(product.fair);
+    const product = catalog.find((item) => item.id === id);
+    if (!product) return;
+    const store = readStoreByIdentity(product.fair, product.feirante);
+    if (store && !store.isOpen) {
+      notify("Esta banca está fechada no momento.");
+      return;
+    }
+    if (!cartFairName) setSelectedFair(product.fair);
     addToCart(id);
   }
   function requestLocation() {
+    if (!gpsEnabled) {
+      notify("Ative o uso de localização nas Configurações para ordenar feiras próximas.");
+      return;
+    }
     if (!navigator.geolocation) {
       setLocationLabel("Localização indisponível");
       notify("Seu navegador não oferece geolocalização.");
@@ -209,14 +255,29 @@ export default function App() {
       calculatedDeliveryFee: number;
       deliverySubsidy: number;
       customerDeliveryFee: number;
+      promotionDiscount: number;
+      walletUsed: number;
+      appliedPromotions: string[];
+      changeFor?: number;
     },
   ) {
-    const id = `FE-${String(1025 + orders.length).padStart(4, "0")}`;
+    const id = `FE-${String(Date.now()).slice(-8)}`;
+    const reservation = reserveInventory(id, products, cart);
+    if (!reservation.ok) {
+      notify(reservation.message);
+      return;
+    }
     const now = new Date();
     const date = new Intl.DateTimeFormat("pt-BR", {
       dateStyle: "short",
       timeStyle: "short",
     }).format(now);
+    const paymentOnDelivery = details.paymentMethod.toLocaleLowerCase("pt-BR").includes("entrega");
+    const paymentEvent = {
+      key: paymentOnDelivery ? "payment-on-delivery" : "payment-authorized",
+      label: paymentOnDelivery ? "Pagamento na entrega selecionado" : "Pagamento confirmado",
+      at: date,
+    };
     setOrders((current) => [
       {
         id,
@@ -227,7 +288,7 @@ export default function App() {
         fairName: details.fairName,
         fulfillment: details.fulfillment,
         paymentMethod: details.paymentMethod,
-        events: [{ key: "received", label: "Pedido recebido", at: date }],
+        events: [paymentEvent, { key: "received", label: "Pedido recebido", at: date }],
       },
       ...current,
     ]);
@@ -242,8 +303,13 @@ export default function App() {
       customerLat: details.customerLat,
       customerLng: details.customerLng,
       fulfillment: details.fulfillment,
+      customerKey: session?.email,
       paymentMethod: details.paymentMethod,
+      paymentStatus: paymentOnDelivery ? "due_on_delivery" : "authorized",
+      changeFor: details.changeFor,
       subtotal,
+      promotionDiscount: details.promotionDiscount,
+      walletUsed: details.walletUsed,
       calculatedDeliveryFee: details.calculatedDeliveryFee,
       deliverySubsidy: details.deliverySubsidy,
       customerDeliveryFee: details.customerDeliveryFee,
@@ -252,13 +318,42 @@ export default function App() {
         productId: product.id,
         name: product.name,
         vendor: product.feirante,
+        vendorId: product.vendorId ?? vendorIdFor(product.feirante),
+        storeId: product.storeId ?? storeIdFor(product.fair, product.feirante),
         quantity: cart[product.id] ?? 0,
         unit: product.unit,
         unitPrice: product.price,
         weightKg: product.weightKg * (cart[product.id] ?? 0),
+        estimatedWeightKg: product.weightKg * (cart[product.id] ?? 0),
       })),
+      vendors: Array.from(
+        new Map(
+          cartProducts.map((product) => {
+            const vendorId = product.vendorId ?? vendorIdFor(product.feirante);
+            const storeId = product.storeId ?? storeIdFor(product.fair, product.feirante);
+            return [
+              vendorId,
+              {
+                vendorId,
+                storeId,
+                vendorName: product.feirante,
+                status: "pending" as const,
+                productIds: cartProducts
+                  .filter((item) => (item.vendorId ?? vendorIdFor(item.feirante)) === vendorId)
+                  .map((item) => item.id),
+              },
+            ];
+          }),
+        ).values(),
+      ),
       status: "received",
       events: [
+        {
+          key: paymentOnDelivery ? "payment-on-delivery" : "payment-authorized",
+          label: paymentOnDelivery ? "Pagamento na entrega selecionado" : "Pagamento confirmado",
+          at: date,
+          actor: "system",
+        },
         {
           key: "received",
           label: "Pedido recebido",
@@ -267,7 +362,10 @@ export default function App() {
         },
       ],
     });
-    setNotifications((current) => current + 1);
+    if (details.walletUsed > 0 && session?.email) {
+      consumeWallet(session.email, id, details.walletUsed);
+    }
+    registerPromotionUsage(details.appliedPromotions);
     setSelectedOrderId(id);
     setCart({});
     openCustomerTab("orders");
@@ -292,10 +390,24 @@ export default function App() {
           : order,
       ),
     );
+    const unifiedOrder = readUnifiedOrders(session?.email).find((order) => order.id === orderId);
+    releaseInventory(orderId);
+    const shouldRefund = unifiedOrder?.paymentStatus === "authorized";
     patchUnifiedOrder(
       orderId,
-      { status: "cancelled", cancelReason: reason, cancelDetails: details },
-      eventNow("cancelled", "Pedido cancelado", "customer", { reason, details }),
+      {
+        status: "cancelled",
+        cancelReason: reason,
+        cancelDetails: details,
+        paymentStatus: shouldRefund ? "refunded" : unifiedOrder?.paymentStatus,
+        refundAmount: shouldRefund ? unifiedOrder?.total : unifiedOrder?.refundAmount,
+      },
+      eventNow(
+        "cancelled",
+        shouldRefund ? "Pedido cancelado · reembolso liberado" : "Pedido cancelado",
+        "customer",
+        { reason, details },
+      ),
     );
     notify(`Cancelamento do pedido ${orderId} registrado.`);
   }
@@ -313,11 +425,19 @@ export default function App() {
     openScreen("tracking");
   }
   function buyAgain(orderId?: string) {
-    restoreDemoBasket();
+    const history = readUnifiedOrders(session?.email);
+    const source =
+      (orderId && history.find((order) => order.id === orderId)) ??
+      history.find((order) => order.status === "delivered") ??
+      history[0];
+    if (!source) {
+      notify("Nenhum pedido anterior disponível para repetir.");
+      return;
+    }
+    restoreDemoBasket(source.items.map((item) => ({ productId: item.productId, quantity: item.quantity })));
+    setSelectedFair(source.fairName);
     setCartOpen(true);
-    notify(
-      orderId ? `Itens do pedido ${orderId} voltaram para a sacola.` : "Última compra voltou para a sacola.",
-    );
+    notify(`Itens disponíveis do pedido ${source.id} voltaram para a sacola.`);
   }
 
   if (!role) return <LoginPage onLogin={login} />;
@@ -392,6 +512,7 @@ export default function App() {
         {role !== "customer" && screen === "main" && (
           <RoleDashboard
             role={role}
+            newAccount={Boolean(session?.isNewAccount)}
             onOpen={() => openScreen(role === "feirante" ? "feiranteOps" : "deliveryOps")}
           />
         )}
@@ -401,6 +522,8 @@ export default function App() {
             onBack={() => openCustomerTab("fairs")}
             onMap={openMap}
             onAdd={addProductToCart}
+            favorites={favorites}
+            onFavorite={toggleFavorite}
           />
         )}
         {screen === "feirante" && (
@@ -455,9 +578,10 @@ export default function App() {
         {screen === "notifications" && (
           <NotificationsPage
             orders={orders}
+            readKeys={readNotificationKeys}
             onBack={() => openCustomerTab("home")}
             onClear={() => {
-              setNotifications(0);
+              setReadNotificationKeys(notificationKeys);
               notify("Notificações marcadas como lidas.");
             }}
           />

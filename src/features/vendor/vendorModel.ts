@@ -19,6 +19,7 @@ export type VendorOrderStatus =
 
 export type VendorOrderItem = {
   id: string;
+  productId?: number;
   name: string;
   quantityLabel: string;
   estimatedWeightKg: number;
@@ -30,6 +31,8 @@ export type VendorOrderItem = {
 
 export type VendorOrder = {
   id: string;
+  fulfillment?: "delivery" | "pickup";
+  vendorId?: string;
   customer: string;
   createdAt: string;
   status: VendorOrderStatus;
@@ -89,6 +92,9 @@ export type VendorPromotion = {
   minimumOrder?: number;
   discountValue?: number;
   target?: string;
+  couponCode?: string;
+  payQuantity?: number;
+  takeQuantity?: number;
 };
 
 export type VendorReview = {
@@ -340,6 +346,22 @@ export const initialVendorOrders: VendorOrder[] = [
     ],
   },
 ];
+
+export function newVendorBankProfile(name: string): VendorBankProfile {
+  return {
+    name: name ? `Banca de ${name}` : "Minha banca",
+    description: "",
+    fairName: "Feira do Produtor Rural",
+    box: "",
+    corridor: "",
+    reference: "",
+    categories: "",
+    phone: "",
+    whatsapp: "",
+    logoDataUrl: "",
+    coverDataUrl: "",
+  };
+}
 
 export const initialBankProfile: VendorBankProfile = {
   name: "Sítio da Vó",

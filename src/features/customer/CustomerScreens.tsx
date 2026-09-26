@@ -23,6 +23,21 @@ import {
 } from "lucide-react";
 import { categories, fairs, products, vendorMetrics } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
+import {
+  calculateCheckoutPromotions,
+  marketplaceProducts,
+  readStoreByIdentity,
+} from "../../domain/marketplaceBridge";
+import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
+import { walletBalance, walletHistory } from "../../domain/walletBridge";
+import {
+  appendReview,
+  appendSupportTicket,
+  eventNow,
+  patchUnifiedOrder,
+  patchUnifiedOrderItem,
+  readUnifiedOrders,
+} from "../../domain/orderBridge";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
@@ -58,6 +73,7 @@ export function HomePage({
   onTracking: () => void;
   onAdd: (id: number) => void;
 }) {
+  const liveProducts = marketplaceProducts(products);
   return (
     <div className="space-y-12">
       <section className="hero">
@@ -105,7 +121,7 @@ export function HomePage({
           onAction={() => onTab("products")}
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {products
+          {liveProducts
             .filter((product) => product.featured)
             .map((product) => (
               <article key={product.id} className="mini-product">
@@ -482,14 +498,19 @@ export function FairDetail({
   onBack,
   onMap,
   onAdd,
+  favorites,
+  onFavorite,
 }: {
   fairName: string;
   onBack: () => void;
   onMap: (destination: number | string, lng?: number) => void;
   onAdd: (id: number) => void;
+  favorites: number[];
+  onFavorite: (id: number) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
-  const fairProducts = products.filter((product) => product.fair === fair.name);
+  const liveProducts = marketplaceProducts(products);
+  const fairProducts = liveProducts.filter((product) => product.fair === fair.name);
 
   return (
     <Panel
@@ -527,8 +548,8 @@ export function FairDetail({
               key={product.id}
               product={product}
               onAdd={onAdd}
-              favorite={false}
-              onFavorite={() => undefined}
+              favorite={favorites.includes(product.id)}
+              onFavorite={onFavorite}
             />
           ))}
         </div>
@@ -556,7 +577,8 @@ export function VendorsPage({
   onVendorFavorite: (name: string) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName);
-  const fairProducts = products.filter((product) => product.fair === fairName);
+  const liveProducts = marketplaceProducts(products);
+  const fairProducts = liveProducts.filter((product) => product.fair === fairName);
   const vendors = vendorSummaries(fairProducts, vendorMetrics);
   return (
     <Panel
@@ -630,12 +652,22 @@ export function VendorStore({
   storeFavorite: boolean;
   onStoreFavorite: () => void;
 }) {
-  const vendorProducts = products.filter(
+  const liveProducts = marketplaceProducts(products);
+  const vendorProducts = liveProducts.filter(
     (product) => product.feirante === vendorName && product.fair === fairName,
   );
+  const sharedStore = readStoreByIdentity(fairName, vendorName);
   const metrics = metricForVendor(vendorName, vendorMetrics);
   return (
-    <Panel title={vendorName} subtitle={fairName + " · loja do feirante"} onBack={onBack}>
+    <Panel
+      title={vendorName}
+      subtitle={
+        fairName +
+        " · " +
+        (sharedStore ? (sharedStore.isOpen ? "Aberta agora" : "Fechada") : "loja do feirante")
+      }
+      onBack={onBack}
+    >
       <div className="detail-banner">
         <div>
           <Store size={30} />
@@ -659,7 +691,7 @@ export function VendorStore({
             <ProductCard
               key={product.id}
               product={product}
-              onAdd={onAdd}
+              onAdd={sharedStore?.isOpen === false ? () => undefined : onAdd}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
             />
@@ -684,7 +716,23 @@ export function DeliveryTracking({
   const [cancelDetails, setCancelDetails] = useState("");
   const [showReview, setShowReview] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
+  const [productScore, setProductScore] = useState(5);
+  const [vendorScore, setVendorScore] = useState(5);
+  const [deliveryScore, setDeliveryScore] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSaved, setReviewSaved] = useState(false);
+  const [reviews, setReviews] = usePersistentState<
+    {
+      id: string;
+      type: string;
+      target: string;
+      orderId: string;
+      rating: number;
+      text: string;
+    }[]
+  >(scopedStorageKey("feirae:customer-reviews"), []);
 
+  const unifiedOrder = readUnifiedOrders().find((item) => item.id === order.id);
   const statusConfig: Record<
     DemoOrder["status"],
     { title: string; description: string; activeStep: number }
@@ -696,22 +744,33 @@ export function DeliveryTracking({
     },
     Preparando: {
       title: "Seu pedido está sendo preparado",
-      description: "A banca confirmou e está separando os produtos.",
+      description: "As bancas do pedido estão separando os produtos.",
       activeStep: 2,
     },
     Coleta: {
-      title: "Pedido pronto para coleta",
-      description: "A corrida pode ser aceita por um entregador compatível.",
-      activeStep: 3,
+      title:
+        order.fulfillment === "pickup"
+          ? "Pedido pronto para retirada"
+          : unifiedOrder?.status === "driver_assigned"
+            ? "Entregador a caminho da banca"
+            : "Pedido pronto para coleta",
+      description:
+        order.fulfillment === "pickup"
+          ? "Apresente o pedido na banca para concluir a retirada."
+          : unifiedOrder?.status === "driver_assigned"
+            ? "A corrida foi aceita e o entregador segue para a banca."
+            : "A corrida pode ser aceita por um entregador compatível.",
+      activeStep: order.fulfillment === "pickup" ? 3 : unifiedOrder?.status === "driver_assigned" ? 4 : 3,
     },
     "Em rota": {
       title: "Seu pedido está a caminho",
       description: "O pedido já foi coletado e segue para o endereço de entrega.",
-      activeStep: 6,
+      activeStep: unifiedOrder?.status === "collected" ? 5 : 6,
     },
     Entregue: {
-      title: "Pedido entregue",
-      description: "A entrega foi concluída.",
+      title: order.fulfillment === "pickup" ? "Pedido retirado" : "Pedido entregue",
+      description:
+        order.fulfillment === "pickup" ? "A retirada foi confirmada pela banca." : "A entrega foi concluída.",
       activeStep: 7,
     },
     Cancelado: {
@@ -723,31 +782,98 @@ export function DeliveryTracking({
     },
   };
 
-  const timeline = [
-    "Pedido recebido",
-    "Confirmado pela banca",
-    "Em separação",
-    "Pronto para coleta",
-    "Entregador a caminho da banca",
-    "Pedido coletado",
-    "A caminho do cliente",
-    "Entregue",
-  ];
+  const timeline =
+    order.fulfillment === "pickup"
+      ? [
+          "Pedido recebido",
+          "Confirmado pela banca",
+          "Em separação",
+          "Pronto para retirada",
+          "Retirado na banca",
+        ]
+      : [
+          "Pedido recebido",
+          "Confirmado pela banca",
+          "Em separação",
+          "Pronto para coleta",
+          "Entregador a caminho da banca",
+          "Pedido coletado",
+          "A caminho do cliente",
+          "Entregue",
+        ];
   const config = statusConfig[order.status];
-  const needsSupport = ["Coleta", "Em rota"].includes(order.status);
+  const collected = ["collected", "out_for_delivery", "delivered"].includes(unifiedOrder?.status ?? "");
+  const pendingSubstitutions =
+    unifiedOrder?.items.filter((item) => item.unavailable && item.note?.trim()) ?? [];
+  const needsSupport = collected;
   const otherSelected = cancelReason === "Outro";
   const canSubmit = Boolean(cancelReason && (!otherSelected || cancelDetails.trim()));
+  const alreadyReviewed =
+    reviews.some((review) => review.orderId === order.id) ||
+    Boolean(unifiedOrder?.reviews?.some((review) => review.authorRole === "customer"));
+
+  function saveReview() {
+    if (alreadyReviewed || reviewSaved) return;
+    const now = new Date().toISOString();
+    const vendorName = unifiedOrder?.vendors?.[0]?.vendorName ?? order.fairName ?? "Banca";
+    const reviewSequence = reviews.filter((review) => review.orderId === order.id).length + 1;
+    const entries = [
+      {
+        id: `customer-product-${order.id}-${reviewSequence}`,
+        type: "Produto",
+        target: unifiedOrder?.items[0]?.name ?? "Pedido",
+        orderId: order.id,
+        rating: productScore,
+        text: reviewComment.trim(),
+      },
+      {
+        id: `customer-vendor-${order.id}-${reviewSequence}`,
+        type: "Banca",
+        target: vendorName,
+        orderId: order.id,
+        rating: vendorScore,
+        text: reviewComment.trim(),
+      },
+      {
+        id: `customer-delivery-${order.id}-${reviewSequence}`,
+        type: "Entrega",
+        target: unifiedOrder?.driver?.name ?? "Entrega",
+        orderId: order.id,
+        rating: deliveryScore,
+        text: reviewComment.trim(),
+      },
+    ];
+    setReviews((current) => [...entries, ...current]);
+    for (const entry of entries) {
+      appendReview(order.id, {
+        id: entry.id,
+        authorRole: "customer",
+        targetRole: entry.type === "Produto" ? "product" : entry.type === "Banca" ? "vendor" : "delivery",
+        targetId: entry.target,
+        rating: entry.rating,
+        comment: entry.text,
+        createdAt: now,
+      });
+    }
+    setReviewSaved(true);
+  }
 
   return (
     <Panel
-      title="Acompanhar entrega"
+      title="Acompanhar pedido"
       subtitle={"Pedido " + order.id + " · " + (order.fairName ?? "Feiraê") + " · " + order.status}
       onBack={onBack}
     >
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="tracking-map">
           <span aria-hidden="true">
-            {order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : "🛵"}
+            {order.status === "Entregue"
+              ? "✅"
+              : order.status === "Cancelado"
+                ? "✕"
+                : order.fulfillment === "pickup"
+                  ? "🧺"
+                  : "🛵"}
           </span>
           <div className="route-line">
             {timeline.map((step, index) => (
@@ -759,7 +885,7 @@ export function DeliveryTracking({
           </div>
           <h2>{config.title}</h2>
           <p>{config.description}</p>
-          {["Coleta", "Em rota", "Entregue"].includes(order.status) && (
+          {order.fulfillment === "delivery" && ["Coleta", "Em rota", "Entregue"].includes(order.status) && (
             <div className="surface-card">
               <span className="eyebrow">Entrega</span>
               {order.driver ? (
@@ -810,12 +936,60 @@ export function DeliveryTracking({
             );
           })}
 
+          {pendingSubstitutions.length > 0 && order.status !== "Cancelado" && (
+            <div className="surface-card">
+              <span className="eyebrow">Substituição aguardando sua decisão</span>
+              {pendingSubstitutions.map((item) => (
+                <div className="timeline-item" key={`substitution-${item.productId}`}>
+                  <Package size={17} />
+                  <div>
+                    <b>{item.name}</b>
+                    <small>{item.note}</small>
+                    <div className="module-action-row">
+                      <button
+                        className="primary-action"
+                        onClick={() => {
+                          if (!item.vendorId) return;
+                          patchUnifiedOrderItem(order.id, item.vendorId, item.productId, {
+                            unavailable: false,
+                            note: `Substituição aceita: ${item.note}`,
+                          });
+                          patchUnifiedOrder(
+                            order.id,
+                            {},
+                            eventNow(
+                              `substitution-accepted-${item.productId}`,
+                              `Substituição aceita para ${item.name}`,
+                              "customer",
+                            ),
+                          );
+                          setRequestSent(true);
+                        }}
+                      >
+                        Aceitar substituição
+                      </button>
+                      <button
+                        className="secondary-action"
+                        onClick={() => {
+                          setCancelReason("Item indisponível / substituição recusada");
+                          setCancelDetails(item.name);
+                        }}
+                      >
+                        Não aceitar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {order.status !== "Entregue" && order.status !== "Cancelado" && (
             <div className="cancel-panel">
               <b>{needsSupport ? "Pedir ajuda com este pedido" : "Cancelar pedido"}</b>
               <p>
                 {needsSupport
-                  ? "Depois que a coleta começou, o cancelamento vira uma ocorrência de suporte."
+                  ? "Depois da coleta, qualquer interrupção vira uma ocorrência de suporte."
                   : "Antes da coleta, escolha o motivo do cancelamento."}
               </p>
               <select
@@ -861,8 +1035,18 @@ export function DeliveryTracking({
                 className="secondary-action"
                 disabled={!canSubmit}
                 onClick={() => {
-                  if (needsSupport) setRequestSent(true);
-                  else {
+                  if (needsSupport) {
+                    appendSupportTicket(order.id, {
+                      id: `SUP-${order.id}-${(unifiedOrder?.supportTickets?.length ?? 0) + 1}`,
+                      actor: "customer",
+                      topic: cancelReason,
+                      details: cancelDetails.trim(),
+                      createdAt: new Date().toISOString(),
+                      priority: "normal",
+                      status: "open",
+                    });
+                    setRequestSent(true);
+                  } else {
                     onCancel(order.id, cancelReason, cancelDetails.trim());
                     setRequestSent(true);
                   }
@@ -874,7 +1058,7 @@ export function DeliveryTracking({
               {requestSent && (
                 <p className="inline-success">
                   {needsSupport
-                    ? "Solicitação registrada com motivo, data e hora."
+                    ? "Solicitação registrada no histórico do pedido."
                     : "Cancelamento registrado no histórico do pedido."}
                 </p>
               )}
@@ -894,20 +1078,47 @@ export function DeliveryTracking({
           {order.status === "Entregue" && (
             <>
               <button className="primary-action w-full" onClick={() => setShowReview((value) => !value)}>
-                Avaliar pedido, banca e entrega
+                {alreadyReviewed || reviewSaved ? "Avaliação enviada" : "Avaliar pedido, banca e entrega"}
               </button>
-              {showReview && (
-                <div className="review-grid compact">
-                  {["Produto", "Banca", "Entrega"].map((item) => (
-                    <article className="review-card" key={item}>
-                      <strong>★ ★ ★ ★ ★</strong>
-                      <div>
-                        <b>{item}</b>
-                        <small>Toque para registrar a nota do {item.toLocaleLowerCase("pt-BR")}.</small>
-                      </div>
-                    </article>
+              {showReview && !alreadyReviewed && !reviewSaved && (
+                <div className="form-card compact">
+                  {[
+                    ["Produto", productScore, setProductScore],
+                    ["Banca", vendorScore, setVendorScore],
+                    ["Entrega", deliveryScore, setDeliveryScore],
+                  ].map(([label, value, setter]) => (
+                    <label key={String(label)}>
+                      {String(label)}
+                      <select
+                        value={Number(value)}
+                        onChange={(event) =>
+                          (setter as React.Dispatch<React.SetStateAction<number>>)(Number(event.target.value))
+                        }
+                      >
+                        {[5, 4, 3, 2, 1].map((score) => (
+                          <option value={score} key={score}>
+                            {score} estrela{score === 1 ? "" : "s"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                   ))}
+                  <label>
+                    Comentário
+                    <textarea
+                      rows={3}
+                      value={reviewComment}
+                      onChange={(event) => setReviewComment(event.target.value)}
+                      placeholder="Conte como foi sua experiência"
+                    />
+                  </label>
+                  <button className="primary-action" onClick={saveReview}>
+                    <Star size={17} /> Enviar avaliação
+                  </button>
                 </div>
+              )}
+              {(alreadyReviewed || reviewSaved) && (
+                <p className="inline-success">Avaliação registrada para este pedido.</p>
               )}
             </>
           )}
@@ -940,6 +1151,10 @@ export function Checkout({
       calculatedDeliveryFee: number;
       deliverySubsidy: number;
       customerDeliveryFee: number;
+      promotionDiscount: number;
+      walletUsed: number;
+      appliedPromotions: string[];
+      changeFor?: number;
     },
   ) => void;
 }) {
@@ -948,21 +1163,62 @@ export function Checkout({
   const [needsChange, setNeedsChange] = useState(false);
   const [changeFor, setChangeFor] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
-  const [addresses] = usePersistentState<Address[]>("feirae:addresses", []);
+  const [couponCode, setCouponCode] = useState("");
+  const [useWallet, setUseWallet] = useState(false);
+  const [addresses] = usePersistentState<Address[]>(scopedStorageKey("feirae:addresses"), []);
   const [cards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
-  >("feirae:cards-v3", []);
+  >(scopedStorageKey("feirae:cards-v3"), []);
   const defaultAddress = addresses.find((address) => address.isDefault) ?? addresses[0];
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const fairName = items[0]?.fair ?? "Feiraê";
-  const calculatedDeliveryFee = fulfillment === "delivery" ? 8.9 : 0;
-  const deliverySubsidy = fulfillment === "delivery" && subtotal >= 80 ? calculatedDeliveryFee : 0;
+  const stores = Array.from(
+    new Map(
+      items.map((item) => {
+        const store = readStoreByIdentity(item.fair, item.feirante);
+        return [`${item.fair}::${item.feirante}`, store] as const;
+      }),
+    ).values(),
+  ).filter(Boolean);
+  const deliveryAllowed = stores.every((store) => store?.deliveryEnabled !== false);
+  const pickupAllowed = stores.every((store) => store?.pickupEnabled !== false);
+  const cashOnDeliveryAllowed = stores.every((store) => store?.acceptCashOnDelivery !== false);
+  const cardOnDeliveryAllowed = stores.every((store) => store?.acceptCardOnDelivery !== false);
+  const storesOpen = stores.every((store) => store?.isOpen !== false);
+  const fallbackDeliveryFee = Math.max(
+    0,
+    ...Array.from(new Set(items.map((item) => item.feirante))).map(
+      (vendor) => metricForVendor(vendor, vendorMetrics).deliveryFee,
+    ),
+  );
+  const calculatedDeliveryFee = fulfillment === "delivery" ? fallbackDeliveryFee : 0;
+  const promotionResult = calculateCheckoutPromotions(items, cart, calculatedDeliveryFee, couponCode);
+  const promotionDiscount = promotionResult.promotionDiscount;
+  const deliverySubsidy =
+    fulfillment === "delivery"
+      ? Math.max(
+          promotionResult.deliverySubsidy,
+          stores.some((store) => store?.absorbDeliveryFee) ? calculatedDeliveryFee : 0,
+        )
+      : 0;
   const customerDeliveryFee = Math.max(0, calculatedDeliveryFee - deliverySubsidy);
-  const total = subtotal + customerDeliveryFee;
+  const beforeWallet = Math.max(0, subtotal - promotionDiscount + customerDeliveryFee);
+  const availableWallet = walletBalance(currentAccountKey());
+  const walletUsed = useWallet ? Math.min(availableWallet, beforeWallet) : 0;
+  const total = Math.max(0, beforeWallet - walletUsed);
   const cardPayment = payment === "Cartão";
   const cashPayment = payment === "Dinheiro na entrega";
-  const canConfirm = fulfillment === "pickup" || Boolean(defaultAddress);
+  const parsedChangeFor = Number(changeFor.replace(/[^0-9,.-]/g, "").replace(",", "."));
+  const changeValid =
+    !cashPayment || !needsChange || (Number.isFinite(parsedChangeFor) && parsedChangeFor >= total);
+  const canConfirm =
+    storesOpen &&
+    (fulfillment === "pickup" ? pickupAllowed : Boolean(defaultAddress) && deliveryAllowed) &&
+    (payment !== "Dinheiro na entrega" || cashOnDeliveryAllowed) &&
+    (payment !== "Cartão na entrega" || cardOnDeliveryAllowed) &&
+    (!cardPayment || Boolean(selectedCardId)) &&
+    changeValid;
 
   if (!items.length)
     return (
@@ -983,17 +1239,17 @@ export function Checkout({
             <div className="grid grid-cols-2 gap-3">
               <Choice
                 active={fulfillment === "delivery"}
-                onClick={() => setFulfillment("delivery")}
+                onClick={() => deliveryAllowed && setFulfillment("delivery")}
                 icon={<Truck />}
                 title="Entrega"
-                text="Receba em casa"
+                text={deliveryAllowed ? "Receba em casa" : "Indisponível para uma das bancas"}
               />
               <Choice
                 active={fulfillment === "pickup"}
-                onClick={() => setFulfillment("pickup")}
+                onClick={() => pickupAllowed && setFulfillment("pickup")}
                 icon={<Store />}
                 title="Retirada"
-                text="Busque na feira"
+                text={pickupAllowed ? "Busque na feira" : "Indisponível para uma das bancas"}
               />
             </div>
           </Step>
@@ -1041,7 +1297,7 @@ export function Checkout({
                 onClick={() => setPayment("Pix")}
                 icon={<Wallet />}
                 title="Pix"
-                text="QR Code e copia e cola"
+                text="Pagamento confirmado pelo fluxo de checkout"
               />
               <Choice
                 active={payment === "Cartão"}
@@ -1057,17 +1313,17 @@ export function Checkout({
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Choice
                     active={payment === "Dinheiro na entrega"}
-                    onClick={() => setPayment("Dinheiro na entrega")}
+                    onClick={() => cashOnDeliveryAllowed && setPayment("Dinheiro na entrega")}
                     icon={<Wallet />}
                     title="Dinheiro"
-                    text="Pagamento ao receber"
+                    text={cashOnDeliveryAllowed ? "Pagamento ao receber" : "Não aceito por uma das bancas"}
                   />
                   <Choice
                     active={payment === "Cartão na entrega"}
-                    onClick={() => setPayment("Cartão na entrega")}
+                    onClick={() => cardOnDeliveryAllowed && setPayment("Cartão na entrega")}
                     icon={<CreditCard />}
                     title="Cartão na maquininha"
-                    text="Se disponível na operação"
+                    text={cardOnDeliveryAllowed ? "Pagamento ao receber" : "Não aceito por uma das bancas"}
                   />
                 </div>
               </>
@@ -1109,6 +1365,31 @@ export function Checkout({
               </div>
             )}
           </Step>
+
+          <div className="form-card compact">
+            <label>
+              Cupom
+              <input
+                value={couponCode}
+                onChange={(event) => setCouponCode(event.target.value.toLocaleUpperCase("pt-BR"))}
+                placeholder="Digite o código, se tiver"
+              />
+            </label>
+            {couponCode && promotionResult.appliedPromotions.length === 0 && (
+              <small>Nenhum cupom válido foi aplicado a este carrinho.</small>
+            )}
+          </div>
+
+          {availableWallet > 0 && (
+            <div className="form-card compact">
+              <Toggle
+                label="Usar saldo da carteira"
+                description={`Você tem ${money(availableWallet)} em créditos de reembolso.`}
+                checked={useWallet}
+                onChange={setUseWallet}
+              />
+            </div>
+          )}
 
           {hasVariableWeight && (
             <div className="region-strip">
@@ -1166,7 +1447,7 @@ export function Checkout({
                 </p>
                 {deliverySubsidy > 0 && (
                   <p>
-                    <span>Desconto da banca</span>
+                    <span>Subsídio de entrega</span>
                     <b>−{money(deliverySubsidy)}</b>
                   </p>
                 )}
@@ -1175,6 +1456,21 @@ export function Checkout({
                   <b>{customerDeliveryFee ? money(customerDeliveryFee) : "Grátis"}</b>
                 </p>
               </>
+            )}
+            {promotionDiscount > 0 && (
+              <p>
+                <span>Descontos de promoções</span>
+                <b>−{money(promotionDiscount)}</b>
+              </p>
+            )}
+            {promotionResult.appliedPromotions.length > 0 && (
+              <small>Promoções aplicadas: {promotionResult.appliedPromotions.join(" · ")}</small>
+            )}
+            {walletUsed > 0 && (
+              <p>
+                <span>Crédito da carteira</span>
+                <b>−{money(walletUsed)}</b>
+              </p>
             )}
             <p>
               <span>Pagamento</span>
@@ -1186,7 +1482,7 @@ export function Checkout({
             </p>
           </div>
           <button
-            disabled={!canConfirm || (cardPayment && !selectedCardId && cards.length > 0)}
+            disabled={!canConfirm}
             onClick={() =>
               onConfirm(total, {
                 fulfillment,
@@ -1199,13 +1495,34 @@ export function Checkout({
                 calculatedDeliveryFee,
                 deliverySubsidy,
                 customerDeliveryFee,
+                promotionDiscount,
+                walletUsed,
+                appliedPromotions: promotionResult.appliedPromotions,
+                changeFor:
+                  cashPayment && needsChange && Number.isFinite(parsedChangeFor)
+                    ? parsedChangeFor
+                    : undefined,
               })
             }
             className="primary-action w-full"
           >
             Confirmar pedido
           </button>
-          {!canConfirm && <small>Cadastre um endereço para entrega antes de confirmar.</small>}
+          {!canConfirm && (
+            <small>
+              {!storesOpen
+                ? "Uma das bancas está fechada no momento."
+                : !deliveryAllowed && fulfillment === "delivery"
+                  ? "Uma das bancas não aceita entrega."
+                  : !pickupAllowed && fulfillment === "pickup"
+                    ? "Uma das bancas não aceita retirada."
+                    : cardPayment && !selectedCardId
+                      ? "Selecione um cartão salvo antes de confirmar."
+                      : cashPayment && needsChange && !changeValid
+                        ? "Informe um valor de troco igual ou maior que o total."
+                        : "Cadastre um endereço para entrega antes de confirmar."}
+            </small>
+          )}
         </aside>
       </div>
     </Panel>
@@ -1230,10 +1547,11 @@ export function FavoritesPage({
   onBack: () => void;
   onExplore: () => void;
 }) {
-  const favoriteProducts = products.filter((product) => ids.includes(product.id));
+  const liveProducts = marketplaceProducts(products);
+  const favoriteProducts = liveProducts.filter((product) => ids.includes(product.id));
   const favoriteVendors = vendorFavorites
     .map((name) => {
-      const vendorProducts = products.filter((product) => product.feirante === name);
+      const vendorProducts = liveProducts.filter((product) => product.feirante === name);
       return vendorProducts.length
         ? { name, fair: vendorProducts[0].fair, count: vendorProducts.length }
         : null;
@@ -1288,41 +1606,53 @@ export function FavoritesPage({
 }
 export function NotificationsPage({
   orders,
+  readKeys,
   onBack,
   onClear,
 }: {
   orders: DemoOrder[];
+  readKeys: string[];
   onBack: () => void;
   onClear: () => void;
 }) {
-  const messages = orders.map((order) => {
-    const textByStatus: Record<DemoOrder["status"], string> = {
-      Recebido: `Pedido ${order.id} recebido e aguardando confirmação da banca.`,
-      Preparando: `Pedido ${order.id} está sendo preparado.`,
-      Coleta: `Pedido ${order.id} está pronto para coleta.`,
-      "Em rota": `Pedido ${order.id} saiu para entrega.`,
-      Entregue: `Pedido ${order.id} foi entregue. Você já pode avaliar.`,
-      Cancelado: `Pedido ${order.id} foi cancelado.`,
-    };
-    return textByStatus[order.status];
+  const fallbackText: Record<DemoOrder["status"], string> = {
+    Recebido: "Pedido recebido e aguardando confirmação da banca.",
+    Preparando: "Pedido em preparação.",
+    Coleta: "Pedido pronto para coleta ou retirada.",
+    "Em rota": "Pedido em rota.",
+    Entregue: "Pedido concluído. Você já pode avaliar.",
+    Cancelado: "Pedido cancelado.",
+  };
+  const messages = orders.flatMap((order) => {
+    const events = order.events?.length
+      ? order.events
+      : [{ key: "status", label: fallbackText[order.status], at: order.date }];
+    return events.map((event) => ({
+      key: `${order.id}:${event.key}:${event.at}`,
+      title: `${order.id} · ${event.label}`,
+      at: event.at,
+    }));
   });
 
   return (
-    <Panel title="Notificações" subtitle="Atualizações dos seus pedidos e avisos da conta." onBack={onBack}>
+    <Panel title="Notificações" subtitle="Histórico real das mudanças dos seus pedidos." onBack={onBack}>
       <div className="mb-4 flex justify-end">
         <button onClick={onClear} className="text-button">
           Marcar todas como lidas
         </button>
       </div>
       {messages.length ? (
-        messages.map((text, index) => (
-          <article key={text} className={index < 2 ? "notification unread" : "notification"}>
+        messages.map((message) => (
+          <article
+            key={message.key}
+            className={readKeys.includes(message.key) ? "notification" : "notification unread"}
+          >
             <span>
               <Bell size={18} />
             </span>
             <div>
-              <b>{text}</b>
-              <small>Gerado pelo estado atual do pedido</small>
+              <b>{message.title}</b>
+              <small>{message.at}</small>
             </div>
           </article>
         ))
@@ -1332,9 +1662,8 @@ export function NotificationsPage({
     </Panel>
   );
 }
-
 export function AddressesPage({ onBack }: { onBack: () => void }) {
-  const [addresses, setAddresses] = usePersistentState<Address[]>("feirae:addresses", [
+  const [addresses, setAddresses] = usePersistentState<Address[]>(scopedStorageKey("feirae:addresses"), [
     {
       id: 1,
       label: "Casa",
@@ -1835,7 +2164,7 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
             autoComplete="new-password"
           />
         </label>
-        {saved && <p className="inline-success">Alterações salvas neste dispositivo.</p>}
+        {saved && <p className="inline-success">Alterações salvas.</p>}
         <button type="submit" className="primary-action">
           <Edit3 size={17} /> Salvar alterações
         </button>
@@ -1847,7 +2176,7 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
 export function PaymentsPage({ onBack }: { onBack: () => void }) {
   const [cards, setCards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
-  >("feirae:cards-v3", [
+  >(scopedStorageKey("feirae:cards-v3"), [
     {
       id: "demo-card",
       holder: "Cliente Feiraê",
@@ -2046,17 +2375,24 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
 
         <div className="surface-card wallet-card">
           <span className="eyebrow">Carteira</span>
-          <h2>R$ 18,90</h2>
-          <p>Crédito de reembolso disponível para a próxima compra.</p>
-          <div className="finance-breakdown">
-            <p>
-              <span>Reembolso</span>
-              <strong>R$ 18,90</strong>
-            </p>
-            <p>
-              <span>Uso</span>
-              <strong>Próxima compra</strong>
-            </p>
+          <h2>{money(walletBalance(currentAccountKey()))}</h2>
+          <p>Créditos de reembolso podem ser usados no checkout.</p>
+          <div className="operation-list detailed">
+            {walletHistory(currentAccountKey())
+              .slice(0, 6)
+              .map((entry) => (
+                <article key={entry.id}>
+                  <Wallet />
+                  <div>
+                    <b>{entry.label}</b>
+                    <small>{entry.orderId}</small>
+                  </div>
+                  <strong>
+                    {entry.type === "credit" ? "+" : "−"}
+                    {money(entry.amount)}
+                  </strong>
+                </article>
+              ))}
           </div>
         </div>
       </div>
@@ -2064,34 +2400,48 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
   );
 }
 export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: () => void }) {
-  const [reviews] = usePersistentState("feirae:customer-reviews", [
+  const [reviews, setReviews] = usePersistentState<
     {
-      id: "review-product-1",
-      type: "Produto",
-      target: "Cesta de frutas",
-      orderId: "FE-1019",
-      rating: 5,
-      text: "Frutas bonitas e bem embaladas.",
-    },
-    {
-      id: "review-vendor-1",
-      type: "Banca",
-      target: "Sítio da Vó",
-      orderId: "FE-1019",
-      rating: 4.9,
-      text: "Atendimento rápido na separação.",
-    },
-    {
-      id: "review-delivery-1",
-      type: "Entrega",
-      target: "Entregador do pedido",
-      orderId: "FE-1019",
-      rating: 4.8,
-      text: "Entrega cuidadosa.",
-    },
-  ]);
+      id: string;
+      type: string;
+      target: string;
+      orderId: string;
+      rating: number;
+      text: string;
+    }[]
+  >(scopedStorageKey("feirae:customer-reviews"), []);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
   const reviewedOrderIds = new Set(reviews.map((review) => review.orderId));
   const pending = orders.filter((order) => order.status === "Entregue" && !reviewedOrderIds.has(order.id));
+
+  function submitPendingReview(order: DemoOrder) {
+    const unified = readUnifiedOrders().find((item) => item.id === order.id);
+    const vendor = unified?.vendors?.[0]?.vendorName ?? order.fairName ?? "Banca";
+    const id = `review-${order.id}-${reviews.filter((review) => review.orderId === order.id).length + 1}`;
+    const entry = {
+      id,
+      type: "Pedido",
+      target: vendor,
+      orderId: order.id,
+      rating,
+      text: comment.trim(),
+    };
+    setReviews((current) => [entry, ...current]);
+    appendReview(order.id, {
+      id,
+      authorRole: "customer",
+      targetRole: "vendor",
+      targetId: unified?.vendors?.[0]?.vendorId ?? vendor,
+      rating,
+      comment: comment.trim(),
+      createdAt: new Date().toISOString(),
+    });
+    setSelectedOrderId(null);
+    setRating(5);
+    setComment("");
+  }
 
   return (
     <Panel
@@ -2107,9 +2457,44 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
               <Star />
               <div>
                 <b>{order.id}</b>
-                <small>Avalie produtos, banca e entrega deste pedido.</small>
+                <small>Avalie sua experiência com este pedido.</small>
+                {selectedOrderId === order.id && (
+                  <div className="form-card compact">
+                    <label>
+                      Nota
+                      <select value={rating} onChange={(event) => setRating(Number(event.target.value))}>
+                        {[5, 4, 3, 2, 1].map((score) => (
+                          <option value={score} key={score}>
+                            {score} estrela{score === 1 ? "" : "s"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Comentário
+                      <textarea
+                        rows={3}
+                        value={comment}
+                        onChange={(event) => setComment(event.target.value)}
+                        placeholder="Conte como foi sua experiência"
+                      />
+                    </label>
+                    <div className="module-action-row">
+                      <button className="primary-action" onClick={() => submitPendingReview(order)}>
+                        Enviar avaliação
+                      </button>
+                      <button className="secondary-action" onClick={() => setSelectedOrderId(null)}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <button className="mini-toggle">Avaliar</button>
+              {selectedOrderId !== order.id && (
+                <button className="mini-toggle" onClick={() => setSelectedOrderId(order.id)}>
+                  Avaliar
+                </button>
+              )}
             </article>
           ))}
         </div>
@@ -2118,38 +2503,64 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
       )}
 
       <SectionHeading eyebrow="Histórico" title="Avaliações já enviadas" />
-      <div className="review-grid">
-        {reviews.map((review) => (
-          <article className="review-card" key={review.id}>
-            <strong>{review.rating.toLocaleString("pt-BR")} ★</strong>
-            <div>
-              <b>
-                {review.type} · {review.target}
-              </b>
-              <small>{review.orderId}</small>
-              <p>{review.text}</p>
-            </div>
-          </article>
-        ))}
-      </div>
+      {reviews.length ? (
+        <div className="review-grid">
+          {reviews.map((review) => (
+            <article className="review-card" key={review.id}>
+              <strong>{review.rating.toLocaleString("pt-BR")} ★</strong>
+              <div>
+                <b>
+                  {review.type} · {review.target}
+                </b>
+                <small>{review.orderId}</small>
+                {review.text && <p>{review.text}</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="operation-footnote">Você ainda não enviou avaliações.</p>
+      )}
     </Panel>
   );
 }
-
 export function ChatPage({ onBack }: { onBack: () => void }) {
   const [topic, setTopic] = useState("Pedido em andamento");
-  const [messages, setMessages] = useState(["Olá! Escolha o assunto e descreva o problema."]);
+  const [messages, setMessages] = usePersistentState<string[]>(scopedStorageKey("feirae:support-messages"), [
+    "Olá! Escolha o assunto e descreva o problema.",
+  ]);
+  const [tickets, setTickets] = usePersistentState<
+    { id: string; topic: string; message: string; createdAt: string; status: "Aberto" | "Resolvido" }[]
+  >(scopedStorageKey("feirae:support-general"), []);
   const [message, setMessage] = useState("");
+
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!message.trim()) return;
+    const protocol = `FE-SUP-${String(tickets.length + 1).padStart(4, "0")}`;
+    const createdAt = new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date());
+    const userMessage = message.trim();
+    setTickets((current) => [
+      {
+        id: protocol,
+        topic,
+        message: userMessage,
+        createdAt,
+        status: "Aberto",
+      },
+      ...current,
+    ]);
     setMessages((current) => [
       ...current,
-      message.trim(),
-      `Protocolo FE-${Math.floor(2000 + Math.random() * 7000)} aberto em ${topic}. Nossa equipe acompanha por aqui.`,
+      userMessage,
+      `Protocolo ${protocol} aberto em ${topic}. Nossa equipe acompanha por aqui.`,
     ]);
     setMessage("");
   }
+
   return (
     <Panel
       title="Suporte Feiraê"
@@ -2186,17 +2597,38 @@ export function ChatPage({ onBack }: { onBack: () => void }) {
           </button>
         </form>
       </div>
+      {tickets.length > 0 && (
+        <div className="surface-card mt-4">
+          <span className="eyebrow">Protocolos</span>
+          <div className="operation-list detailed">
+            {tickets.slice(0, 6).map((ticket) => (
+              <article key={ticket.id}>
+                <MessageCircle />
+                <div>
+                  <b>
+                    {ticket.id} · {ticket.topic}
+                  </b>
+                  <small>
+                    {ticket.createdAt} · {ticket.status}
+                  </small>
+                  <p>{ticket.message}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </Panel>
   );
 }
 export function SettingsPage({ onBack }: { onBack: () => void }) {
-  const [offers, setOffers] = usePersistentState("feirae:offers", true);
-  const [orderUpdates, setOrderUpdates] = usePersistentState("feirae:order-updates", true);
-  const [whatsapp, setWhatsapp] = usePersistentState("feirae:whatsapp", false);
-  const [useGps, setUseGps] = usePersistentState("feirae:gps", true);
-  const [compactCards, setCompactCards] = usePersistentState("feirae:compact-cards", false);
+  const [offers, setOffers] = usePersistentState(scopedStorageKey("feirae:offers"), true);
+  const [orderUpdates, setOrderUpdates] = usePersistentState(scopedStorageKey("feirae:order-updates"), true);
+  const [whatsapp, setWhatsapp] = usePersistentState(scopedStorageKey("feirae:whatsapp"), false);
+  const [useGps, setUseGps] = usePersistentState(scopedStorageKey("feirae:gps"), true);
+  const [compactCards, setCompactCards] = usePersistentState(scopedStorageKey("feirae:compact-cards"), false);
   return (
-    <Panel title="Configurações" subtitle="Preferências salvas neste dispositivo." onBack={onBack}>
+    <Panel title="Configurações" subtitle="Preferências da sua conta." onBack={onBack}>
       <div className="surface-card max-w-2xl">
         <Toggle
           label="Ofertas e novidades"

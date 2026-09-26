@@ -11,7 +11,12 @@ export function readSession(value: unknown): DemoSession | null {
   if (!isRole(candidate.role) || typeof candidate.email !== "string" || typeof candidate.name !== "string") {
     return null;
   }
-  return { role: candidate.role, email: candidate.email, name: candidate.name };
+  return {
+    role: candidate.role,
+    email: candidate.email,
+    name: candidate.name,
+    isNewAccount: Boolean(candidate.isNewAccount),
+  };
 }
 
 export function nameFromEmail(email: string) {

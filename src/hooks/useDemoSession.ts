@@ -7,8 +7,13 @@ export function useDemoSession() {
   const session = readSession(storedSession);
   const role = session?.role ?? null;
 
-  function startSession(nextRole: Role, email: string) {
-    setStoredSession({ role: nextRole, email, name: nameFromEmail(email) });
+  function startSession(nextRole: Role, email: string, name?: string, isNewAccount = false) {
+    setStoredSession({
+      role: nextRole,
+      email,
+      name: name?.trim() || nameFromEmail(email),
+      isNewAccount,
+    });
   }
 
   function clearSession() {

@@ -32,10 +32,15 @@ const roleLabels: Record<Role, string> = {
   delivery: "Entregador",
 };
 
-export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) => void }) {
+export function LoginPage({
+  onLogin,
+}: {
+  onLogin: (role: Role, email: string, name: string, isNewAccount: boolean) => void;
+}) {
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const options: Array<{ role: Role; title: string; text: string; icon: ReactNode }> = [
@@ -61,7 +66,7 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    onLogin(selectedRole, email.trim());
+    onLogin(selectedRole, email.trim(), name.trim(), mode === "signup");
   }
 
   return (
@@ -136,7 +141,13 @@ export function LoginPage({ onLogin }: { onLogin: (role: Role, email: string) =>
             {mode === "signup" && (
               <label>
                 Nome completo
-                <input placeholder="Seu nome" autoComplete="name" required />
+                <input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Seu nome"
+                  autoComplete="name"
+                  required
+                />
               </label>
             )}
             <label>
@@ -329,7 +340,15 @@ export function Header(props: HeaderProps) {
   );
 }
 
-export function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void }) {
+export function RoleDashboard({
+  role,
+  newAccount = false,
+  onOpen,
+}: {
+  role: Role;
+  newAccount?: boolean;
+  onOpen: () => void;
+}) {
   const config =
     role === "feirante"
       ? {
@@ -363,8 +382,40 @@ export function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void
           <p>{config.subtitle}</p>
         </div>
       </div>
+      {newAccount && (
+        <div className="region-strip mt-5">
+          <Check size={18} />
+          <div>
+            <b>
+              {role === "feirante"
+                ? "Configure sua banca para começar"
+                : "Complete seu cadastro para entregar"}
+            </b>
+            <p>
+              {role === "feirante"
+                ? "Preencha dados da banca, envie documentos, defina horários e cadastre seus primeiros produtos."
+                : "Envie documentos, cadastre veículo/capacidade, escolha sua área e aguarde a aprovação antes de ficar disponível."}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="metrics">
-        {config.metrics.map(([value, label]) => (
+        {(newAccount
+          ? role === "feirante"
+            ? [
+                ["0", "pedidos"],
+                ["R$ 0", "vendas"],
+                ["0", "produtos"],
+                ["—", "avaliação"],
+              ]
+            : [
+                ["0", "disponíveis"],
+                ["0", "em rota"],
+                ["R$ 0", "ganhos hoje"],
+                ["—", "avaliação"],
+              ]
+          : config.metrics
+        ).map(([value, label]) => (
           <article key={label}>
             <strong>{value}</strong>
             <span>{label}</span>
@@ -372,7 +423,7 @@ export function RoleDashboard({ role, onOpen }: { role: Role; onOpen: () => void
         ))}
       </div>
       <button onClick={onOpen} className="primary-action mt-6">
-        Abrir central operacional <ChevronRight size={18} />
+        {newAccount ? "Começar configuração" : "Abrir central operacional"} <ChevronRight size={18} />
       </button>
     </main>
   );

@@ -31,8 +31,16 @@ import {
 } from "../../domain/vehicles";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
+import { useUnifiedOrderRevision } from "../../hooks/useUnifiedOrderRevision";
 import { money } from "../../utils";
-import { eventNow, patchUnifiedOrder, readUnifiedOrders } from "../../domain/orderBridge";
+import { consumeInventory } from "../../domain/inventoryBridge";
+import {
+  appendReview,
+  appendSupportTicket,
+  eventNow,
+  patchUnifiedOrder,
+  readUnifiedOrders,
+} from "../../domain/orderBridge";
 
 export function DeliveryOperations({
   session,
@@ -43,6 +51,7 @@ export function DeliveryOperations({
   onBack: () => void;
   onMap: (destination?: string) => void;
 }) {
+  const unifiedOrderRevision = useUnifiedOrderRevision();
   const modules = [
     "Painel",
     "Entregas",
@@ -60,7 +69,11 @@ export function DeliveryOperations({
     "Vantagens",
     "Avaliações",
   ];
-  const [online, setOnline] = usePersistentState<boolean>(`feirae:delivery-online:${session.email}`, true);
+  const seedDemoData = session.email.endsWith("@feirae.test") && !session.isNewAccount;
+  const [online, setOnline] = usePersistentState<boolean>(
+    `feirae:delivery-online:${session.email}`,
+    seedDemoData,
+  );
   const [deliveryPreferences, setDeliveryPreferences] = usePersistentState(
     `feirae:delivery-preferences:${session.email}`,
     {
@@ -75,9 +88,12 @@ export function DeliveryOperations({
       baseLabel: "Localização não definida",
     },
   );
-  const [accepted, setAccepted] = useState<string | null>(null);
+  const [accepted, setAccepted] = usePersistentState<string | null>(
+    `feirae:delivery-active:${session.email}`,
+    null,
+  );
   const [, setRouteRevision] = useState(0);
-  const [stage, setStage] = useState(0);
+  const [stage, setStage] = usePersistentState<number>(`feirae:delivery-stage:${session.email}`, 0);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelDetails, setCancelDetails] = useState("");
   const [deliveryCancellationLog, setDeliveryCancellationLog] = usePersistentState<
@@ -87,6 +103,10 @@ export function DeliveryOperations({
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
   const [helpProtocol, setHelpProtocol] = useState("");
   const [accountSaved, setAccountSaved] = useState(false);
+  const [deliveryReviewOrderId, setDeliveryReviewOrderId] = useState<string | null>(null);
+  const [deliveryReviewScore, setDeliveryReviewScore] = useState(5);
+  const [deliveryReviewComment, setDeliveryReviewComment] = useState("");
+  const [incidentNotice, setIncidentNotice] = useState("");
   const [vehicleFormOpen, setVehicleFormOpen] = useState(false);
   const [vehicleEditingId, setVehicleEditingId] = useState<string | null>(null);
   const [vehicleError, setVehicleError] = useState("");
@@ -117,18 +137,20 @@ export function DeliveryOperations({
   );
   const [vehicles, setVehicles] = usePersistentState<DeliveryVehicle[]>(
     `feirae:delivery-vehicles:${session.email}`,
-    [
-      {
-        id: "demo-moto",
-        type: "Moto",
-        capacityKg: suggestedCapacityForVehicle("Moto"),
-        brandModel: "",
-        plate: "ABC1D23",
-        active: true,
-        documentFileName: "crlv-demo.pdf",
-        documentStatus: "approved",
-      },
-    ],
+    seedDemoData
+      ? [
+          {
+            id: "demo-moto",
+            type: "Moto",
+            capacityKg: suggestedCapacityForVehicle("Moto"),
+            brandModel: "",
+            plate: "ABC1D23",
+            active: true,
+            documentFileName: "crlv-demo.pdf",
+            documentStatus: "approved",
+          },
+        ]
+      : [],
   );
 
   const [deliveryLedger, setDeliveryLedger] = usePersistentState<
@@ -139,22 +161,69 @@ export function DeliveryOperations({
       amount: number;
       status: "pending" | "available" | "withdrawal_requested" | "paid";
     }[]
-  >(`feirae:delivery-ledger:${session.email}`, [
+  >(
+    `feirae:delivery-ledger:${session.email}`,
+    seedDemoData
+      ? [
+          {
+            id: "ledger-1022",
+            deliveryId: "FE-1022",
+            label: "Feira Central",
+            amount: 18.9,
+            status: "paid",
+          },
+          {
+            id: "ledger-1023",
+            deliveryId: "FE-1023",
+            label: "Torre",
+            amount: 24.2,
+            status: "available",
+          },
+        ]
+      : [],
+  );
+  const defaultDeliveryDocuments = [
     {
-      id: "ledger-1022",
-      deliveryId: "FE-1022",
-      label: "Feira Central",
-      amount: 18.9,
-      status: "paid",
+      id: "identity",
+      name: "Documento oficial com foto",
+      description: "RG, CNH ou documento oficial válido.",
+      status: "approved" as const,
+      fileName: "identidade.pdf",
+      expiresAt: "",
     },
     {
-      id: "ledger-1023",
-      deliveryId: "FE-1023",
-      label: "Torre",
-      amount: 24.2,
-      status: "available",
+      id: "address",
+      name: "Comprovante de residência",
+      description: "Comprovante ou declaração de residência.",
+      status: "approved" as const,
+      fileName: "residencia.pdf",
+      expiresAt: "",
     },
-  ]);
+    {
+      id: "cnh",
+      name: "CNH compatível e válida",
+      description: "Obrigatória para veículos motorizados que exigem habilitação.",
+      status: "approved" as const,
+      fileName: "cnh.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "crlv",
+      name: "CRLV-e do veículo",
+      description: "Obrigatório para veículo motorizado cadastrado.",
+      status: "approved" as const,
+      fileName: "crlv.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "motofrete",
+      name: "Curso/autorização de motofrete",
+      description: "Obrigatório quando a operação usar moto/motoneta para entrega remunerada.",
+      status: "approved" as const,
+      fileName: "motofrete.pdf",
+      expiresAt: "",
+    },
+  ].map((document) => (seedDemoData ? document : { ...document, status: "pending" as const, fileName: "" }));
   const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
     {
       id: string;
@@ -164,48 +233,7 @@ export function DeliveryOperations({
       fileName: string;
       expiresAt: string;
     }[]
-  >(`feirae:delivery-documents:${session.email}`, [
-    {
-      id: "identity",
-      name: "Documento oficial com foto",
-      description: "RG, CNH ou documento oficial válido.",
-      status: "approved",
-      fileName: "identidade.pdf",
-      expiresAt: "",
-    },
-    {
-      id: "address",
-      name: "Comprovante de residência",
-      description: "Comprovante ou declaração de residência.",
-      status: "approved",
-      fileName: "residencia.pdf",
-      expiresAt: "",
-    },
-    {
-      id: "cnh",
-      name: "CNH compatível e válida",
-      description: "Obrigatória para veículos motorizados que exigem habilitação.",
-      status: "approved",
-      fileName: "cnh.pdf",
-      expiresAt: "",
-    },
-    {
-      id: "crlv",
-      name: "CRLV-e do veículo",
-      description: "Obrigatório para veículo motorizado cadastrado.",
-      status: "approved",
-      fileName: "crlv.pdf",
-      expiresAt: "",
-    },
-    {
-      id: "motofrete",
-      name: "Curso/autorização de motofrete",
-      description: "Obrigatório quando a operação usar moto/motoneta para entrega remunerada.",
-      status: "approved",
-      fileName: "motofrete.pdf",
-      expiresAt: "",
-    },
-  ]);
+  >(`feirae:delivery-documents:${session.email}`, defaultDeliveryDocuments);
 
   useEffect(() => {
     const baseLat = deliveryPreferences.baseLat;
@@ -395,6 +423,13 @@ export function DeliveryOperations({
     },
   ];
   const sharedOrders = readUnifiedOrders();
+  void unifiedOrderRevision;
+  const deliveredReviewOrders = sharedOrders.filter(
+    (order) =>
+      order.status === "delivered" &&
+      order.driver?.driverKey === session.email &&
+      !order.reviews?.some((review) => review.authorRole === "delivery"),
+  );
   const sharedRoutePendingCount = sharedOrders.filter(
     (order) =>
       order.fulfillment === "delivery" &&
@@ -425,6 +460,10 @@ export function DeliveryOperations({
         etaMinutes: route.etaMinutes,
         fee: money(order.calculatedDeliveryFee),
         feeAmount: order.calculatedDeliveryFee,
+        paymentMethod: order.paymentMethod,
+        changeFor: order.changeFor,
+        available: order.status === "ready_for_pickup" && !order.driver,
+        assignedDriverKey: order.driver?.driverKey,
         weight,
         items: order.items.map((item) => `${item.quantity}× ${item.name}`),
       };
@@ -432,7 +471,15 @@ export function DeliveryOperations({
   const sharedIds = new Set(sharedDeliveries.map((delivery) => delivery.id));
   const deliveries = [
     ...sharedDeliveries,
-    ...deliveryFixtures.filter((delivery) => !sharedIds.has(delivery.id)),
+    ...deliveryFixtures
+      .filter((delivery) => !sharedIds.has(delivery.id))
+      .map((delivery) => ({
+        ...delivery,
+        available: true,
+        paymentMethod: "Pago no aplicativo",
+        changeFor: undefined as number | undefined,
+        assignedDriverKey: undefined as string | undefined,
+      })),
   ];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
   const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
@@ -496,6 +543,7 @@ export function DeliveryOperations({
       .filter((vehicle) => vehicle.capacityKg >= weight && vehicleReady(vehicle))
       .sort((a, b) => a.capacityKg - b.capacityKg)[0] ?? null;
   const visibleDeliveries = deliveries
+    .filter((delivery) => delivery.available !== false)
     .filter((delivery) => delivery.totalDistanceKm <= deliveryPreferences.radiusKm)
     .filter(
       (delivery) =>
@@ -510,7 +558,11 @@ export function DeliveryOperations({
     compatibleVehicleForWeight(delivery.weight),
   ).length;
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
-  const activeDelivery = deliveries.find((delivery) => delivery.id === accepted);
+  const activeDelivery = deliveries.find(
+    (delivery) =>
+      delivery.id === accepted ||
+      (delivery.assignedDriverKey === session.email && delivery.available === false),
+  );
   const activeDeliveryVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
   const activeDeliverySection = activeDelivery ? (
     <section className="active-delivery">
@@ -550,6 +602,16 @@ export function DeliveryOperations({
           <span>Ganho</span>
           <strong>{activeDelivery.fee}</strong>
         </p>
+        <p>
+          <span>Pagamento</span>
+          <strong>{activeDelivery.paymentMethod}</strong>
+        </p>
+        {typeof activeDelivery.changeFor === "number" && (
+          <p>
+            <span>Troco para</span>
+            <strong>{money(activeDelivery.changeFor)}</strong>
+          </p>
+        )}
       </div>
       <div className="operation-list detailed">
         {activeDelivery.items.map((item) => (
@@ -591,16 +653,24 @@ export function DeliveryOperations({
                 { status: "collected" },
                 eventNow("collected", "Pedido coletado", "delivery"),
               );
+              setStage(2);
             } else if (stage === 2) {
               patchUnifiedOrder(
                 activeDelivery.id,
                 { status: "out_for_delivery" },
                 eventNow("out-for-delivery", "A caminho do cliente", "delivery"),
               );
+              setStage(3);
             } else if (stage === deliveryStages.length - 1) {
+              consumeInventory(activeDelivery.id);
+              const unified = readUnifiedOrders().find((order) => order.id === activeDelivery.id);
               patchUnifiedOrder(
                 activeDelivery.id,
-                { status: "delivered" },
+                {
+                  status: "delivered",
+                  paymentStatus:
+                    unified?.paymentStatus === "due_on_delivery" ? "authorized" : unified?.paymentStatus,
+                },
                 eventNow("delivered", "Entregue", "delivery"),
               );
               setDeliveryLedger((current) => [
@@ -765,6 +835,7 @@ export function DeliveryOperations({
                       {
                         status: "driver_assigned",
                         driver: {
+                          driverKey: session.email,
                           name: deliveryAccount.name || session.name,
                           vehicle: compatibleVehicle.type,
                           plateMasked: compatibleVehicle.plate
@@ -874,7 +945,7 @@ export function DeliveryOperations({
                   <article>
                     <strong>
                       {money(
-                        deliveries
+                        visibleDeliveries
                           .filter((delivery) => compatibleVehicleForWeight(delivery.weight))
                           .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
                       )}
@@ -981,6 +1052,22 @@ export function DeliveryOperations({
                     Solicitar saque/repasse
                   </button>
                 ) : null}
+                {requestedAmount > 0 && (
+                  <button
+                    className="secondary-action"
+                    onClick={() =>
+                      setDeliveryLedger((current) =>
+                        current.map((entry) =>
+                          entry.status === "withdrawal_requested"
+                            ? { ...entry, status: "paid" as const }
+                            : entry,
+                        ),
+                      )
+                    }
+                  >
+                    Registrar repasse recebido
+                  </button>
+                )}
                 <p className="operation-footnote">
                   A solicitação é apenas simulada localmente. O envio real do dinheiro dependerá do provedor
                   de pagamentos e do split do marketplace.
@@ -1420,29 +1507,97 @@ export function DeliveryOperations({
             ) : active === "Avaliações" ? (
               <>
                 <ModuleHeader
-                  badge="Após cada etapa"
+                  badge="Após a entrega"
                   title="Avaliações cruzadas"
-                  description="Cliente, entregador e banca se avaliam nos momentos certos, sem poluir a tela inicial."
+                  description="Avalie cliente e banca depois de concluir a corrida."
                 />
-                <div className="operation-list detailed">
-                  {[
-                    ["Depois da entrega", "Cliente avalia entregador e entrega."],
-                    ["Depois da entrega", "Entregador avalia cliente."],
-                    [
-                      "Depois da coleta",
-                      "Entregador avalia banca quando houver problema de preparo, embalagem ou peso.",
-                    ],
-                    ["Mensalmente", "Usuário pode avaliar o app uma vez por mês."],
-                  ].map(([title, text]) => (
-                    <article key={`${title}-${text}`}>
-                      <Star />
-                      <div>
-                        <b>{title}</b>
-                        <small>{text}</small>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                {deliveredReviewOrders.length ? (
+                  <div className="operation-list detailed">
+                    {deliveredReviewOrders.map((order) => (
+                      <article key={order.id}>
+                        <Star />
+                        <div>
+                          <b>
+                            {order.id} · {order.customerName}
+                          </b>
+                          <small>{order.vendors?.map((vendor) => vendor.vendorName).join(" · ")}</small>
+                          {deliveryReviewOrderId === order.id && (
+                            <div className="form-card compact">
+                              <label>
+                                Nota
+                                <select
+                                  value={deliveryReviewScore}
+                                  onChange={(event) => setDeliveryReviewScore(Number(event.target.value))}
+                                >
+                                  {[5, 4, 3, 2, 1].map((score) => (
+                                    <option value={score} key={score}>
+                                      {score} estrela{score === 1 ? "" : "s"}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label>
+                                Comentário
+                                <textarea
+                                  rows={3}
+                                  value={deliveryReviewComment}
+                                  onChange={(event) => setDeliveryReviewComment(event.target.value)}
+                                  placeholder="Como foi a coleta e o atendimento?"
+                                />
+                              </label>
+                              <div className="module-action-row">
+                                <button
+                                  className="primary-action"
+                                  onClick={() => {
+                                    const reviewSequence = (order.reviews?.length ?? 0) + 1;
+                                    appendReview(order.id, {
+                                      id: `delivery-customer-${order.id}-${reviewSequence}`,
+                                      authorRole: "delivery",
+                                      targetRole: "customer",
+                                      targetId: order.customerKey,
+                                      rating: deliveryReviewScore,
+                                      comment: deliveryReviewComment.trim(),
+                                      createdAt: new Date().toISOString(),
+                                    });
+                                    for (const vendor of order.vendors ?? []) {
+                                      appendReview(order.id, {
+                                        id: `delivery-vendor-${vendor.vendorId}-${reviewSequence}`,
+                                        authorRole: "delivery",
+                                        targetRole: "vendor",
+                                        targetId: vendor.vendorId,
+                                        rating: deliveryReviewScore,
+                                        comment: deliveryReviewComment.trim(),
+                                        createdAt: new Date().toISOString(),
+                                      });
+                                    }
+                                    setDeliveryReviewOrderId(null);
+                                    setDeliveryReviewComment("");
+                                    setDeliveryReviewScore(5);
+                                  }}
+                                >
+                                  Enviar avaliação
+                                </button>
+                                <button
+                                  className="secondary-action"
+                                  onClick={() => setDeliveryReviewOrderId(null)}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        {deliveryReviewOrderId !== order.id && (
+                          <button className="mini-toggle" onClick={() => setDeliveryReviewOrderId(order.id)}>
+                            Avaliar
+                          </button>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="operation-footnote">Nenhuma entrega concluída aguardando sua avaliação.</p>
+                )}
               </>
             ) : active === "Alertas graves" ? (
               <>
@@ -1462,11 +1617,38 @@ export function DeliveryOperations({
                       <XCircle />
                       <div>
                         <b>{item}</b>
-                        <small>Abre suporte prioritário e registra ocorrência da corrida.</small>
+                        <small>Registra ocorrência prioritária e pausa novas ofertas de corrida.</small>
                       </div>
+                      <button
+                        className="mini-toggle"
+                        disabled={!activeDelivery}
+                        onClick={() => {
+                          if (!activeDelivery) return;
+                          const ticketId = `URG-${activeDelivery.id}-${incidentNotice ? 2 : 1}`;
+                          appendSupportTicket(activeDelivery.id, {
+                            id: ticketId,
+                            actor: "delivery",
+                            topic: item,
+                            details: `Ocorrência registrada durante a corrida ${activeDelivery.id}.`,
+                            createdAt: new Date().toISOString(),
+                            priority: "urgent",
+                            status: "open",
+                          });
+                          patchUnifiedOrder(
+                            activeDelivery.id,
+                            {},
+                            eventNow("urgent-support", `Alerta grave: ${item}`, "delivery"),
+                          );
+                          setOnline(false);
+                          setIncidentNotice(`Protocolo ${ticketId} aberto. Novas corridas foram pausadas.`);
+                        }}
+                      >
+                        Registrar alerta
+                      </button>
                     </article>
                   ))}
                 </div>
+                {incidentNotice && <p className="inline-success">{incidentNotice}</p>}
               </>
             ) : active === "Notificações" ? (
               <>
