@@ -281,8 +281,8 @@ export function FairCard({
               ? `${ratingLabel(fair.rating)} (${fair.reviewCount})`
               : "Sem avaliações"}
           </span>
-          <span>{fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Entrega a configurar"}</span>
-          <span>{typeof fair.deliveryFee === "number" ? money(fair.deliveryFee) : "Taxa a configurar"}</span>
+          <span>{fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Entrega indisponível no momento"}</span>
+          <span>{typeof fair.deliveryFee === "number" ? money(fair.deliveryFee) : "Taxa indisponível no momento"}</span>
         </div>
         <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
           <button onClick={() => onFair(fair.name)} className="primary-action">
@@ -848,6 +848,9 @@ export function DeliveryTracking({
           "Entregue",
         ];
   const config = statusConfig[order.status];
+  const deliveredEvent = order.events?.find(
+    (event) => event.key === "delivered" || event.label === "Entregue",
+  );
   const collected = ["collected", "out_for_delivery", "delivered"].includes(unifiedOrder?.status ?? "");
   const pendingSubstitutions =
     unifiedOrder?.items.filter((item) => item.unavailable && item.note?.trim()) ?? [];
@@ -942,13 +945,25 @@ export function DeliveryTracking({
                     {order.driver.plateMasked ? " · placa " + order.driver.plateMasked : ""}
                   </p>
                   <div className="market-meta">
-                    {typeof order.driver.distanceKm === "number" && (
-                      <span>{order.driver.distanceKm.toLocaleString("pt-BR")} km</span>
+                    {order.status === "Entregue" ? (
+                      <>
+                        {typeof order.driver.distanceKm === "number" && (
+                          <span>Rota {order.driver.distanceKm.toLocaleString("pt-BR")} km</span>
+                        )}
+                        {deliveredEvent?.at && <span>Entregue em {deliveredEvent.at}</span>}
+                        <span>Ajuda pós-entrega</span>
+                      </>
+                    ) : (
+                      <>
+                        {typeof order.driver.distanceKm === "number" && (
+                          <span>{order.driver.distanceKm.toLocaleString("pt-BR")} km</span>
+                        )}
+                        {typeof order.driver.etaMinutes === "number" && order.driver.etaMinutes > 0 && (
+                          <span>{order.driver.etaMinutes} min</span>
+                        )}
+                        <span>Suporte disponível</span>
+                      </>
                     )}
-                    {typeof order.driver.etaMinutes === "number" && (
-                      <span>{order.driver.etaMinutes} min</span>
-                    )}
-                    <span>Suporte disponível</span>
                   </div>
                 </>
               ) : (
@@ -1240,7 +1255,9 @@ export function Checkout({
       (vendor) => metricForVendor(vendor, vendorMetrics).deliveryFee,
     ),
   );
-  const calculatedDeliveryFee = fulfillment === "delivery" ? fallbackDeliveryFee : 0;
+  const hasDeliveryAddress = Boolean(defaultAddress);
+  const freightReady = fulfillment === "delivery" && hasDeliveryAddress && deliveryAllowed;
+  const calculatedDeliveryFee = freightReady ? fallbackDeliveryFee : 0;
   const promotionResult = calculateCheckoutPromotions(items, cart, calculatedDeliveryFee, couponCode);
   const promotionDiscount = promotionResult.promotionDiscount;
   const deliverySubsidy =
@@ -1494,10 +1511,10 @@ export function Checkout({
             {fulfillment === "delivery" && (
               <>
                 <p>
-                  <span>Frete calculado</span>
-                  <b>{money(calculatedDeliveryFee)}</b>
+                  <span>Frete estimado</span>
+                  <b>{freightReady ? money(calculatedDeliveryFee) : "A calcular"}</b>
                 </p>
-                {deliverySubsidy > 0 && (
+                {freightReady && deliverySubsidy > 0 && (
                   <p>
                     <span>Subsídio de entrega</span>
                     <b>−{money(deliverySubsidy)}</b>
@@ -1505,8 +1522,17 @@ export function Checkout({
                 )}
                 <p>
                   <span>Você paga de entrega</span>
-                  <b>{customerDeliveryFee ? money(customerDeliveryFee) : "Grátis"}</b>
+                  <b>
+                    {freightReady
+                      ? customerDeliveryFee
+                        ? money(customerDeliveryFee)
+                        : "Grátis"
+                      : "A calcular"}
+                  </b>
                 </p>
+                {!freightReady && (
+                  <small>O frete só entra no total depois que um endereço de entrega estiver disponível.</small>
+                )}
               </>
             )}
             {promotionDiscount > 0 && (
