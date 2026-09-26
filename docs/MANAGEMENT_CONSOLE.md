@@ -52,6 +52,33 @@ Por isso, o painel administrativo sozinho não deve ser tratado como fonte efeti
 - pedidos recentes;
 - status das integrações.
 
+### 1.1 Relatórios
+
+Relatórios com filtro por data e exportação:
+
+- resumo executivo;
+- pedidos;
+- entregas;
+- financeiro e repasses;
+- cancelamentos e reembolsos;
+- suporte;
+- documentos e aprovações;
+- usuários;
+- avaliações;
+- suspensões e bloqueios.
+
+O resumo mostra volume de pedidos, entregues, cancelados/reembolsados, valor bruto, frete cobrado, ticket médio, repasses pagos, suportes abertos e movimentação de entregas.
+
+A Gestão permite:
+
+- escolher período;
+- consultar tabela detalhada;
+- exportar CSV;
+- imprimir ou salvar o relatório em PDF pelo navegador;
+- liberar acesso com a permissão específica `reports.view`.
+
+A permissão de relatório concede leitura dos dados necessários via RLS, sem conceder automaticamente poder de edição operacional ou financeira.
+
 ### 2. Configurações gerais
 
 Editar sem código:
