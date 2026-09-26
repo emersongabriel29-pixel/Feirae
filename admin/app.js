@@ -24,7 +24,7 @@ const permissionByModule={
 };
 function canModule(id){
   const permission=permissionByModule[id];
-  return !permission||state.isSuperadmin||state.permissions.has("*")||state.permissions.has(permission);
+  return !permission||state.isSuperadmin||state.permissions.has(permission);
 }
 
 function show(id){["boot","setupView","loginView","mfaView","appView"].forEach((x)=>$("#"+x).classList.toggle("hidden",x!==id));}
@@ -936,7 +936,7 @@ async function runHealthCheck(key){
  }catch(e){toast(e.message||String(e));}
 }
 
-const ADMIN_PERMISSION_SET=["*","operations.manage","documents.review","accounts.enforce","registrations.manage","rules.manage","finance.manage","communications.manage","settings.manage","permissions.manage","audit.view","reports.view"];
+const ADMIN_PERMISSION_SET=["operations.manage","documents.review","accounts.enforce","registrations.manage","rules.manage","finance.manage","communications.manage","settings.manage","permissions.manage","audit.view","reports.view"];
 
 async function renderAdmins(){
  $("#pageContent").innerHTML='<div class="empty">Carregando administradores…</div>';
