@@ -134,6 +134,7 @@ Veja [Testes e QA](docs/TESTING_QA.md).
 
 Documentos centrais:
 
+- [Status da documentação](docs/DOCUMENTATION_STATUS.md)
 - [Especificação funcional](docs/FUNCTIONAL_SPEC.md)
 - [Arquitetura](docs/ARCHITECTURE.md)
 - [Modelo de dados e estados](docs/DATA_MODEL_AND_STATES.md)
