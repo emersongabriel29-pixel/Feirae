@@ -342,11 +342,13 @@ export function ProductCard({
   onAdd,
   favorite,
   onFavorite,
+  addDisabled = false,
 }: {
   product: Product;
   onAdd: (id: number) => void;
   favorite: boolean;
   onFavorite: (id: number) => void;
+  addDisabled?: boolean;
 }) {
   const metrics = metricForVendor(product.feirante, vendorMetrics);
   const variableWeight = ["kg", "g"].includes(product.unit);
@@ -388,8 +390,13 @@ export function ProductCard({
           </div>
           <button
             onClick={() => onAdd(product.id)}
+            disabled={addDisabled}
             className="add-button"
-            aria-label={`Adicionar ${product.name} à sacola`}
+            aria-label={
+              addDisabled
+                ? `${product.name} indisponível porque a banca está fechada`
+                : `Adicionar ${product.name} à sacola`
+            }
           >
             <Plus size={19} />
           </button>
@@ -691,7 +698,8 @@ export function VendorStore({
             <ProductCard
               key={product.id}
               product={product}
-              onAdd={sharedStore?.isOpen === false ? () => undefined : onAdd}
+              onAdd={onAdd}
+              addDisabled={sharedStore?.isOpen === false}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
             />
@@ -1239,14 +1247,16 @@ export function Checkout({
             <div className="grid grid-cols-2 gap-3">
               <Choice
                 active={fulfillment === "delivery"}
-                onClick={() => deliveryAllowed && setFulfillment("delivery")}
+                onClick={() => setFulfillment("delivery")}
+                disabled={!deliveryAllowed}
                 icon={<Truck />}
                 title="Entrega"
                 text={deliveryAllowed ? "Receba em casa" : "Indisponível para uma das bancas"}
               />
               <Choice
                 active={fulfillment === "pickup"}
-                onClick={() => pickupAllowed && setFulfillment("pickup")}
+                onClick={() => setFulfillment("pickup")}
+                disabled={!pickupAllowed}
                 icon={<Store />}
                 title="Retirada"
                 text={pickupAllowed ? "Busque na feira" : "Indisponível para uma das bancas"}
@@ -1313,14 +1323,16 @@ export function Checkout({
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Choice
                     active={payment === "Dinheiro na entrega"}
-                    onClick={() => cashOnDeliveryAllowed && setPayment("Dinheiro na entrega")}
+                    onClick={() => setPayment("Dinheiro na entrega")}
+                    disabled={!cashOnDeliveryAllowed}
                     icon={<Wallet />}
                     title="Dinheiro"
                     text={cashOnDeliveryAllowed ? "Pagamento ao receber" : "Não aceito por uma das bancas"}
                   />
                   <Choice
                     active={payment === "Cartão na entrega"}
-                    onClick={() => cardOnDeliveryAllowed && setPayment("Cartão na entrega")}
+                    onClick={() => setPayment("Cartão na entrega")}
+                    disabled={!cardOnDeliveryAllowed}
                     icon={<CreditCard />}
                     title="Cartão na maquininha"
                     text={cardOnDeliveryAllowed ? "Pagamento ao receber" : "Não aceito por uma das bancas"}
