@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
+  Bell,
   CalendarClock,
   Check,
   Edit3,
@@ -41,6 +42,7 @@ import {
 } from "../../domain/orderBridge";
 import {
   feiraeNotificationPermission,
+  orderEventNotification,
   requestFeiraeNotificationPermission,
   showFeiraeNotification,
 } from "../../domain/feiraeNotifications";
@@ -73,6 +75,7 @@ import {
 
 const modules = [
   "Pedidos",
+  "Notificações",
   "Minha banca",
   "Produtos",
   "Estoque",
@@ -196,7 +199,7 @@ export function FeiranteOperations({
   const unifiedOrderRevision = useUnifiedOrderRevision();
   const [active, setActive] = useState("Central");
   const [notificationPermission, setNotificationPermission] = useState(feiraeNotificationPermission());
-  const seenNewOrderIds = useRef<Set<string> | null>(null);
+  const seenVendorNotificationKeys = useRef<Set<string> | null>(null);
   const seedDemoData = session.email.endsWith("@feirae.test") && !session.isNewAccount;
   const [storeOpen, setStoreOpen] = usePersistentState<boolean>(
     `feirae:vendor-store-open:${session.email}`,
@@ -441,24 +444,35 @@ export function FeiranteOperations({
     .slice(0, 3);
 
   useEffect(() => {
-    const currentNewOrders = orders.filter((order) => order.status === "new");
-    const currentIds = new Set(currentNewOrders.map((order) => order.id));
-    if (seenNewOrderIds.current === null) {
-      seenNewOrderIds.current = currentIds;
+    const accountVendorId = vendorIdFor(session.email);
+    const relevantOrders = readUnifiedOrders().filter(
+      (order) =>
+        order.fairName === bankProfile.fairName &&
+        (order.vendors?.some(
+          (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+        ) ??
+          order.items.some((item) => item.vendor === bankProfile.name)),
+    );
+    const currentKeys = new Set(
+      relevantOrders.flatMap((order) => order.events.map((event) => `${order.id}:${event.key}:${event.at}`)),
+    );
+
+    if (seenVendorNotificationKeys.current === null) {
+      seenVendorNotificationKeys.current = currentKeys;
       return;
     }
 
-    const incoming = currentNewOrders.filter((order) => !seenNewOrderIds.current?.has(order.id));
-    incoming.forEach((order) => {
-      void showFeiraeNotification({
-        title: "Novo pedido",
-        body: `${order.id} · ${order.customer} · ${money(order.value)}`,
-        tag: `feirae-vendor-order-${order.id}`,
-        url: "/",
+    relevantOrders.forEach((order) => {
+      order.events.forEach((event) => {
+        const key = `${order.id}:${event.key}:${event.at}`;
+        if (seenVendorNotificationKeys.current?.has(key)) return;
+        const message = orderEventNotification("feirante", order, event);
+        if (message) void showFeiraeNotification(message);
       });
     });
-    seenNewOrderIds.current = currentIds;
-  }, [orders]);
+
+    seenVendorNotificationKeys.current = currentKeys;
+  }, [bankProfile.fairName, bankProfile.name, session.email, unifiedOrderRevision]);
 
   async function enableFeiraeNotifications() {
     setNotificationPermission(await requestFeiraeNotificationPermission());
@@ -547,6 +561,10 @@ export function FeiranteOperations({
     Pedidos: {
       ...vendorModuleDetails.Pedidos,
       badge: `${orders.filter((order) => order.status === "new").length} novos`,
+    },
+    Notificações: {
+      ...vendorModuleDetails.Notificações,
+      badge: `${vendorUnifiedOrders.flatMap((order) => order.events).length} eventos`,
     },
     "Minha banca": {
       ...vendorModuleDetails["Minha banca"],
@@ -1497,6 +1515,40 @@ export function FeiranteOperations({
                 </label>
                 {inventory}
                 <SectionHistory history={stockHistory} />
+              </>
+            ) : active === "Notificações" ? (
+              <>
+                <ModuleHeader
+                  badge="Fluxo da banca"
+                  title="Notificações do feirante"
+                  description="Novo pedido, pagamento, coleta, entrega, cancelamento e troca de entregador aparecem aqui."
+                />
+                <div className="operation-list detailed">
+                  {vendorUnifiedOrders
+                    .flatMap((order) =>
+                      order.events.map((event) => ({
+                        key: `${order.id}:${event.key}:${event.at}`,
+                        at: event.at,
+                        message: orderEventNotification("feirante", order, event),
+                      })),
+                    )
+                    .filter((item) => item.message)
+                    .slice(-12)
+                    .reverse()
+                    .map((item) => (
+                      <article key={item.key}>
+                        <Bell />
+                        <div>
+                          <b>{item.message?.title}</b>
+                          <small>{item.message?.body}</small>
+                          <small>{item.at}</small>
+                        </div>
+                      </article>
+                    ))}
+                </div>
+                {!vendorUnifiedOrders.some((order) =>
+                  order.events.some((event) => orderEventNotification("feirante", order, event)),
+                ) && <p className="operation-footnote">As movimentações dos seus pedidos aparecerão aqui.</p>}
               </>
             ) : active === "Minha banca" ? (
               <>

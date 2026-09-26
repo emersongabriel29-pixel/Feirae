@@ -49,6 +49,7 @@ type SharedMarketplace = {
   products: SharedCatalogProduct[];
 };
 
+export const MARKETPLACE_EVENT = "feirae:marketplace-changed";
 const STORAGE_KEY = "feirae:marketplace:v2";
 const STATIC_ADJUSTMENT_KEY = "feirae:static-stock-adjustments:v1";
 
@@ -81,6 +82,7 @@ function readMarketplace(): SharedMarketplace {
 function writeMarketplace(value: SharedMarketplace) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+  window.dispatchEvent(new Event(MARKETPLACE_EVENT));
 }
 
 export function migrateMarketplaceAccountKey(oldEmail: string, newEmail: string) {

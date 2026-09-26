@@ -50,6 +50,7 @@ Implementado em `src/features/customer/CustomerScreens.tsx` e `src/App.tsx`:
 - promoções;
 - carteira local;
 - pedidos;
+- notificações de pedido e promoções com identidade Feiraê;
 - rastreamento por estados;
 - cancelamento;
 - suporte;
@@ -72,7 +73,7 @@ Implementado em `src/features/vendor/VendorScreens.tsx`:
 - pagamento na entrega;
 - pedidos;
 - pedidos novos e em andamento no painel principal;
-- alerta local/browser “Feiraê • Novo pedido” após permissão;
+- notificações locais/browser para novo pedido, pagamento, coleta, entrega e cancelamento;
 - separação;
 - peso real;
 - documentos;
@@ -93,7 +94,7 @@ Implementado em `src/features/delivery/DeliveryScreens.tsx`:
 - regiões;
 - ofertas;
 - corridas compatíveis no painel principal;
-- alerta local/browser “Feiraê • Nova corrida” quando disponível e com permissão;
+- notificações locais/browser para nova corrida, rota, coleta, aproximação, conclusão e cancelamento;
 - corrida ativa;
 - coleta;
 - rota;
@@ -172,6 +173,57 @@ Na Central:
 `public/feirae-sw.js` já recebe eventos `push` e exibe a identidade Feiraê, mas o protótipo ainda não possui backend que salve `PushSubscription` e envie notificações remotas.
 
 Portanto, **notificação com o app totalmente fechado não está completa ponta a ponta** até existir backend compartilhado e Web Push. Ver [NOTIFICATIONS.md](NOTIFICATIONS.md).
+
+## 3.2. Matriz de notificações por papel
+
+As notificações seguem o fluxo de cada experiência e usam a identidade **Feiraê**.
+
+### Cliente
+
+Eventos principais:
+
+- **Pedido feito**;
+- **Pagamento confirmado** ou **Pagamento na entrega**;
+- **Pedido em preparação**;
+- **Pedido pronto** / **Pronto para retirada**;
+- **Entregador a caminho da banca**;
+- **Saiu para entrega**;
+- **Pedido chegando**;
+- **Pedido chegou**;
+- cancelamento, substituição e promoções.
+
+O cliente pode ativar notificações do sistema dentro da tela **Notificações**. As preferências **Ofertas e novidades** e **Atualizações dos pedidos** continuam independentes.
+
+### Feirante
+
+Eventos principais:
+
+- **Novo pedido**;
+- pagamento confirmado ou pagamento na entrega;
+- entregador a caminho;
+- rota calculada;
+- pedido coletado;
+- pedido entregue;
+- troca/cancelamento de corrida;
+- cancelamento do pedido.
+
+O módulo **Notificações** da operação lista eventos relevantes somente da banca.
+
+### Entregador
+
+Eventos principais:
+
+- **Nova corrida**;
+- **Pedido pronto para coleta**;
+- **Rota atualizada**;
+- **Corrida aceita**;
+- **Coleta confirmada**;
+- **Rota para o cliente**;
+- **Chegada sinalizada**;
+- **Entrega concluída**;
+- cancelamento e suporte prioritário.
+
+A etapa operacional ganhou **Avisar chegada** entre iniciar a entrega e confirmar a entrega. Esse evento gera **Pedido chegando** para o Cliente.
 
 ## 4. Cliente — carrinho
 

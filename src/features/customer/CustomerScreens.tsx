@@ -39,6 +39,10 @@ import {
   patchUnifiedOrderItem,
   readUnifiedOrders,
 } from "../../domain/orderBridge";
+import {
+  feiraeNotificationPermission,
+  requestFeiraeNotificationPermission,
+} from "../../domain/feiraeNotifications";
 import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
@@ -53,6 +57,7 @@ import {
 import {
   Choice,
   Empty,
+  FeiraeNotificationCard,
   PageHeading,
   Panel,
   QuickAction,
@@ -1713,16 +1718,48 @@ export function NotificationsPage({
     Cancelado: "Pedido cancelado.",
   };
   const [offersEnabled] = usePersistentState<boolean>(scopedStorageKey("feirae:offers"), true);
+  const [notificationPermission, setNotificationPermission] = useState(feiraeNotificationPermission());
+
+  async function enableFeiraeNotifications() {
+    setNotificationPermission(await requestFeiraeNotificationPermission());
+  }
+
   const orderMessages = orders.flatMap((order) => {
     const events = order.events?.length
       ? order.events
       : [{ key: "status", label: fallbackText[order.status], at: order.date }];
-    return events.map((event) => ({
-      key: `${order.id}:${event.key}:${event.at}`,
-      title: `${order.id} · ${event.label}`,
-      at: event.at,
-      kind: "order" as const,
-    }));
+    return events.map((event) => {
+      const friendlyLabel =
+        event.key === "received"
+          ? "Pedido feito"
+          : ["vendor-confirmed", "preparing"].includes(event.key)
+            ? "Pedido em preparação"
+            : event.key === "ready"
+              ? order.fulfillment === "pickup"
+                ? "Pronto para retirada"
+                : "Pedido pronto"
+              : event.key === "driver-assigned"
+                ? "Entregador a caminho da banca"
+                : ["collected", "out-for-delivery"].includes(event.key)
+                  ? "Saiu para entrega"
+                  : event.key === "approaching"
+                    ? "Pedido chegando"
+                    : event.key === "delivered"
+                      ? "Pedido chegou"
+                      : ["cancelled", "vendor-rejected"].includes(event.key)
+                        ? "Pedido cancelado"
+                        : event.key === "payment-authorized"
+                          ? "Pagamento confirmado"
+                          : event.key === "payment-on-delivery"
+                            ? "Pagamento na entrega"
+                            : event.label;
+      return {
+        key: `${order.id}:${event.key}:${event.at}`,
+        title: `${order.id} · ${friendlyLabel}`,
+        at: event.at,
+        kind: "order" as const,
+      };
+    });
   });
   const offerMessages = offersEnabled
     ? readSharedStores().flatMap((store) =>
@@ -1748,7 +1785,12 @@ export function NotificationsPage({
       }
       onBack={onBack}
     >
-      <div className="mb-4 flex justify-end">
+      <FeiraeNotificationCard
+        permission={notificationPermission}
+        message="Pedidos, entrega e promoções podem chegar como alerta do Feiraê neste dispositivo."
+        onEnable={() => void enableFeiraeNotifications()}
+      />
+      <div className="mb-4 mt-4 flex justify-end">
         <button onClick={onClear} className="text-button">
           Marcar todas como lidas
         </button>

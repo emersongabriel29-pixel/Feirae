@@ -393,8 +393,9 @@ describe("Feiraê customer flow", () => {
     loginAs("cliente");
     fireEvent.click(screen.getByRole("button", { name: /abrir notificações/i }));
 
-    expect(screen.getByText(/fe-1024 · a caminho do cliente/i)).toBeInTheDocument();
-    expect(screen.getByText(/fe-1019 · entregue/i)).toBeInTheDocument();
+    expect(screen.getByText(/fe-1024 · saiu para entrega/i)).toBeInTheDocument();
+    expect(screen.getByText(/fe-1019 · pedido chegou/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/notificações do feiraê/i)).toBeInTheDocument();
     expect(screen.queryByText(/novo desconto na feira/i)).not.toBeInTheDocument();
   });
 
@@ -708,6 +709,9 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("button", { name: /iniciar entrega/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /iniciar entrega/i }));
+    expect(screen.getByRole("button", { name: /avisar chegada/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /avisar chegada/i }));
     expect(screen.getByRole("button", { name: /confirmar entrega/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /confirmar entrega/i }));

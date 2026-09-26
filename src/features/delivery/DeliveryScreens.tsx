@@ -43,6 +43,7 @@ import { money } from "../../utils";
 import { consumeInventory } from "../../domain/inventoryBridge";
 import {
   feiraeNotificationPermission,
+  orderEventNotification,
   requestFeiraeNotificationPermission,
   showFeiraeNotification,
 } from "../../domain/feiraeNotifications";
@@ -117,6 +118,7 @@ export function DeliveryOperations({
   const [active, setActive] = useState("Central");
   const [notificationPermission, setNotificationPermission] = useState(feiraeNotificationPermission());
   const seenOfferIds = useRef<Set<string> | null>(null);
+  const seenDeliveryNotificationKeys = useRef<Set<string> | null>(null);
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
   const [helpDetail, setHelpDetail] = useState("Preciso falar com o suporte da rota");
   const [helpProtocol, setHelpProtocol] = useState("");
@@ -301,15 +303,19 @@ export function DeliveryOperations({
         const toCustomer = await drivingRoute(fairPoint, customerPoint);
         if (!toVendor || !toCustomer || cancelled) continue;
 
-        patchUnifiedOrder(order.id, {
-          route: {
-            toVendorKm: toVendor.distanceKm,
-            vendorToCustomerKm: toCustomer.distanceKm,
-            totalKm: Math.round((toVendor.distanceKm + toCustomer.distanceKm) * 10) / 10,
-            etaMinutes: toVendor.durationMinutes + toCustomer.durationMinutes,
-            source: "osrm",
+        patchUnifiedOrder(
+          order.id,
+          {
+            route: {
+              toVendorKm: toVendor.distanceKm,
+              vendorToCustomerKm: toCustomer.distanceKm,
+              totalKm: Math.round((toVendor.distanceKm + toCustomer.distanceKm) * 10) / 10,
+              etaMinutes: toVendor.durationMinutes + toCustomer.durationMinutes,
+              source: "osrm",
+            },
           },
-        });
+          eventNow("route-updated", "Rota calculada", "system"),
+        );
       }
       if (!cancelled) setRouteRevision((value) => value + 1);
     }
@@ -628,10 +634,41 @@ export function DeliveryOperations({
     seenOfferIds.current = currentIds;
   }, [availableNow, compatibleVisibleDeliveries]);
 
+  useEffect(() => {
+    const relevantOrders = readUnifiedOrders().filter(
+      (order) => order.driver?.driverKey === session.email || order.id === effectiveAccepted,
+    );
+    const currentKeys = new Set(
+      relevantOrders.flatMap((order) => order.events.map((event) => `${order.id}:${event.key}:${event.at}`)),
+    );
+
+    if (seenDeliveryNotificationKeys.current === null) {
+      seenDeliveryNotificationKeys.current = currentKeys;
+      return;
+    }
+
+    relevantOrders.forEach((order) => {
+      order.events.forEach((event) => {
+        const key = `${order.id}:${event.key}:${event.at}`;
+        if (seenDeliveryNotificationKeys.current?.has(key)) return;
+        const message = orderEventNotification("delivery", order, event);
+        if (message) void showFeiraeNotification(message);
+      });
+    });
+
+    seenDeliveryNotificationKeys.current = currentKeys;
+  }, [effectiveAccepted, session.email, unifiedOrderRevision]);
+
   async function enableFeiraeNotifications() {
     setNotificationPermission(await requestFeiraeNotificationPermission());
   }
-  const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
+  const deliveryStages = [
+    "Ir para a banca",
+    "Confirmar coleta",
+    "Iniciar entrega",
+    "Avisar chegada",
+    "Confirmar entrega",
+  ];
   const activeDelivery = deliveries.find(
     (delivery) =>
       delivery.id === effectiveAccepted ||
@@ -698,7 +735,7 @@ export function DeliveryOperations({
           </article>
         ))}
       </div>
-      <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de 4`}>
+      <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de ${deliveryStages.length}`}>
         {deliveryStages.map((label, index) => (
           <span className={index <= stage ? "done" : ""} key={label}>
             {index + 1}
@@ -735,6 +772,18 @@ export function DeliveryOperations({
                 eventNow("out-for-delivery", "A caminho do cliente", "delivery"),
               );
               setStage(3);
+            } else if (stage === 3) {
+              const unified = readUnifiedOrders().find((order) => order.id === activeDelivery.id);
+              patchUnifiedOrder(
+                activeDelivery.id,
+                {
+                  driver: unified?.driver
+                    ? { ...unified.driver, etaMinutes: Math.min(unified.driver.etaMinutes ?? 5, 5) }
+                    : undefined,
+                },
+                eventNow("approaching", "Pedido chegando", "delivery"),
+              );
+              setStage(4);
             } else if (stage === deliveryStages.length - 1) {
               consumeInventory(activeDelivery.id);
               const unified = readUnifiedOrders().find((order) => order.id === activeDelivery.id);
@@ -1785,6 +1834,28 @@ export function DeliveryOperations({
                   description="Central para corridas novas, alteração de rota, pagamento e mensagens do suporte."
                 />
                 <div className="operation-list detailed">
+                  {sharedOrders
+                    .filter((order) => order.driver?.driverKey === session.email)
+                    .flatMap((order) =>
+                      order.events.map((event) => ({
+                        key: `${order.id}:${event.key}:${event.at}`,
+                        at: event.at,
+                        message: orderEventNotification("delivery", order, event),
+                      })),
+                    )
+                    .filter((item) => item.message)
+                    .slice(-8)
+                    .reverse()
+                    .map((item) => (
+                      <article key={item.key}>
+                        <Bell />
+                        <div>
+                          <b>{item.message?.title}</b>
+                          <small>{item.message?.body}</small>
+                          <small>{item.at}</small>
+                        </div>
+                      </article>
+                    ))}
                   {[
                     [
                       "Novas corridas compatíveis",
