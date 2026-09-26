@@ -71,6 +71,8 @@ Implementado em `src/features/vendor/VendorScreens.tsx`:
 - entrega/retirada;
 - pagamento na entrega;
 - pedidos;
+- pedidos novos e em andamento no painel principal;
+- alerta local/browser “Feiraê • Novo pedido” após permissão;
 - separação;
 - peso real;
 - documentos;
@@ -90,6 +92,8 @@ Implementado em `src/features/delivery/DeliveryScreens.tsx`:
 - raio;
 - regiões;
 - ofertas;
+- corridas compatíveis no painel principal;
+- alerta local/browser “Feiraê • Nova corrida” quando disponível e com permissão;
 - corrida ativa;
 - coleta;
 - rota;
@@ -111,6 +115,33 @@ Persistência real atual:
 
 Consequência: duas pessoas em aparelhos diferentes não compartilham estado real.
 
+## 3.1. Central operacional e notificações
+
+Feirante e entregador não precisam abrir um módulo secundário para descobrir trabalho novo.
+
+### Feirante
+
+Na Central:
+
+- pedidos novos e em andamento aparecem em lista própria;
+- o resumo mostra cliente, itens, valor, forma de atendimento e horário;
+- “Abrir pedido” leva direto ao detalhe;
+- o card de notificações usa a identidade Feiraê.
+
+### Entregador
+
+Na Central:
+
+- corridas compatíveis aparecem na própria tela principal;
+- corrida ativa permanece visível;
+- filtros de raio, região, disponibilidade e veículo continuam valendo;
+- novas corridas compatíveis podem disparar notificação local/browser.
+
+### Aplicativo fechado
+
+`public/feirae-sw.js` já recebe eventos `push` e exibe a identidade Feiraê, mas o protótipo ainda não possui backend que salve `PushSubscription` e envie notificações remotas.
+
+Portanto, **notificação com o app totalmente fechado não está completa ponta a ponta** até existir backend compartilhado e Web Push. Ver [NOTIFICATIONS.md](NOTIFICATIONS.md).
 ## 4. Cliente — carrinho
 
 O carrinho exibe:
