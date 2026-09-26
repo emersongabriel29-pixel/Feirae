@@ -103,6 +103,16 @@ Implementado em `src/features/delivery/DeliveryScreens.tsx`:
 - avaliações;
 - financeiro local.
 
+## 2.0. Mensagem de entrada
+
+Na tela inicial de autenticação:
+
+- slogan: **A feira do seu jeito**;
+- título de propósito: **Da banca até você.**;
+- apoio: **Compre de feirantes locais, gerencie sua banca ou faça entregas. Tudo pelo Feiraê.**
+
+A mensagem deve comunicar imediatamente Cliente, Feirante e Entregador sem competir com o slogan principal.
+
 ## 2.1. Login e onboarding operacional
 
 ### Autenticação
