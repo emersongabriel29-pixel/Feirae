@@ -77,3 +77,25 @@ input:focus,textarea:focus,select:focus{border-color:var(--brand-2);box-shadow:0
   .panel,.kpi{box-shadow:none!important;break-inside:avoid}
   .table-wrap{overflow:visible}
 }
+
+
+/* Operational detail views */
+.detail-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.detail-head>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.detail-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:6px}
+.detail-card span{font-size:12px;color:var(--muted)}
+.detail-card strong{font-size:15px;word-break:break-word}
+.detail-section{margin-top:16px}
+.admin-list{display:grid;gap:12px;padding:0 18px 18px}
+.admin-card{border:1px solid var(--line);border-radius:16px;padding:15px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;background:var(--surface-2)}
+.admin-card>div:first-child{display:grid;gap:5px;min-width:0}
+.admin-card small{color:var(--muted);word-break:break-all}
+.permission-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.permission-chips span{font-size:11px;border:1px solid var(--line);background:var(--surface);padding:5px 8px;border-radius:999px}
+.permission-editor{display:grid;gap:8px}
+@media(max-width:720px){
+  .admin-card,.detail-head{flex-direction:column;align-items:stretch}
+  .admin-card .actions{width:100%}
+  .admin-card .actions button{flex:1}
+}
