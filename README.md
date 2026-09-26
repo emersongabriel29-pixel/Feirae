@@ -93,7 +93,7 @@ Isso significa que o protótipo não prova sincronização entre aparelhos difer
 - OSRM público;
 - Google Maps aberto por URL.
 
-O preço do frete **não é calculado pelo OSRM**. O checkout usa `vendorMetrics.deliveryFee` como valor local de fallback.
+O preço do frete **não é calculado pelo OSRM**. O checkout usa `vendorMetrics.deliveryFee` como valor local de fallback, mas só exibe e aplica esse valor depois que existe endereço de entrega; sem endereço, o frete fica como **A calcular** e não entra no total.
 
 ## Veículos atuais
 
@@ -132,9 +132,9 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 
 Suite atual:
 
-- 43 testes em `App.test.tsx`;
-- 26 testes de domínio/utilidades;
-- **69 testes no total**.
+- 47 testes em `App.test.tsx`;
+- 27 testes de domínio/utilidades;
+- **74 testes no total**.
 
 CI:
 
