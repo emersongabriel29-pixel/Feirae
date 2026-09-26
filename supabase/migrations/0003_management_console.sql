@@ -669,8 +669,7 @@ grant insert, update, delete on table
   public.admin_permissions
 to authenticated;
 
-grant insert on table public.admin_audit_logs to authenticated;
-grant usage, select on sequence public.admin_audit_logs_id_seq to authenticated;
+-- Audit rows are written only by database triggers or trusted server-side actions.
 
 -- Explicit privileges for legacy operational tables used by the management console.
 grant select on table public.categories to anon, authenticated;
@@ -1147,11 +1146,6 @@ on public.admin_audit_logs for select
 to authenticated
 using ((select private.feirae_admin_has('audit.view')));
 
-create policy "admins write audit logs"
-on public.admin_audit_logs for insert
-to authenticated
-with check ((select private.is_feirae_admin()));
-
 -- Private onboarding files remain in Supabase Storage. This policy lets admins
 -- read objects from the configured default bucket through the Storage API.
 drop policy if exists "feirae admins read onboarding documents" on storage.objects;
@@ -1275,11 +1269,13 @@ to authenticated
 using ((select private.feirae_admin_has('finance.manage')))
 with check ((select private.feirae_admin_has('finance.manage')));
 
-create policy "admins manage order events"
-on public.order_events for all
+create policy "admins view order events"
+on public.order_events for select
 to authenticated
-using ((select private.feirae_admin_has('operations.manage')))
-with check ((select private.feirae_admin_has('operations.manage')));
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
 
 create policy "admins view support tickets"
 on public.support_tickets for select
@@ -1326,6 +1322,9 @@ revoke insert, update, delete on table public.admin_access from authenticated;
 revoke insert, update, delete on table public.admin_permissions from authenticated;
 revoke insert, update, delete on table public.account_enforcements from authenticated;
 revoke insert, update, delete on table public.privacy_requests from authenticated;
+revoke insert, update, delete on table public.order_events from authenticated;
+revoke insert, update, delete on table public.admin_audit_logs from authenticated;
+revoke usage on sequence public.admin_audit_logs_id_seq from authenticated;
 
 -- Automatic audit trail for management/configuration tables.
 create or replace function private.log_feirae_admin_change()
@@ -1389,7 +1388,16 @@ begin
     'admin_access',
     'admin_permissions',
     'fair_vendor_memberships',
-    'vendor_stores'
+    'vendor_stores',
+    'fairs',
+    'profiles',
+    'vendor_profiles',
+    'delivery_profiles',
+    'delivery_vehicles',
+    'delivery_preferences',
+    'products',
+    'categories',
+    'promotions'
   ]
   loop
     execute format('drop trigger if exists feirae_admin_audit on public.%I', tbl);
