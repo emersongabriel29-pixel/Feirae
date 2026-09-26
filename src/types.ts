@@ -35,6 +35,7 @@ export type Product = {
   price: number;
   category: string;
   emoji: string;
+  imageDataUrl?: string;
   stock: number;
   unit: string;
   weightKg: number;
