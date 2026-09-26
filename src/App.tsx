@@ -648,7 +648,7 @@ export default function App() {
             onVendorFavorite={toggleVendorFavorite}
             onVendor={openFavoriteVendor}
             onBack={() => openCustomerTab("profile")}
-            onExplore={() => openScreen("vendors")}
+            onExplore={() => openCustomerTab("fairs")}
           />
         )}
         {screen === "notifications" && (
