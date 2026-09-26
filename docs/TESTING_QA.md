@@ -1,179 +1,14 @@
 # Testes e QA — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 com contagem e nomes reais da suite.
 
-## Estado atual
+## 1. Pipeline atual
 
-Referência: commit `33fd6b58`.
+Arquivo:
 
-GitHub Actions aprovou:
+`.github/workflows/quality.yml`.
 
-- 8 arquivos de teste;
-- 69 testes;
-- ESLint;
-- TypeScript + build Vite;
-- Prettier.
-
-Workflow: `.github/workflows/quality.yml`.
-
-## Tipos de testes atuais
-
-### `src/App.test.tsx`
-
-Testes comportamentais com Testing Library:
-
-- login/cadastro;
-- senha;
-- navegação;
-- carrinho;
-- checkout;
-- retirada;
-- entrega;
-- feirante;
-- entregador;
-- financeiro local;
-- conta;
-- edição;
-- suporte;
-- preferências.
-
-### Domínio
-
-- `orderBridge.test.ts`: multi-banca, peso, suporte/avaliação, isolamento.
-- `marketplaceBridge.test.ts`: catálogo e promoções.
-- `inventoryBridge.test.ts`: reserva/liberação/consumo.
-- `localAuth.test.ts`: credenciais/alteração.
-- `marketplace.test.ts`: regras puras.
-- `session.test.ts`.
-- `utils.test.ts`.
-
-## O que “69 testes passando” significa
-
-Confirma o comportamento coberto no ambiente jsdom.
-
-Não confirma sozinho:
-
-- funcionamento em navegador/dispositivo real;
-- backend;
-- RLS;
-- pagamento;
-- concorrência;
-- rede ruim;
-- acessibilidade completa;
-- performance;
-- segurança.
-
-## Matriz mínima de regressão
-
-### Cliente
-
-- login correto/incorreto;
-- criar conta;
-- editar/descartar conta;
-- adicionar/remover carrinho;
-- estoque insuficiente;
-- entrega/retirada indisponível;
-- pagamento;
-- cupom;
-- carteira;
-- troco;
-- cancelamento;
-- suporte pós-coleta;
-- avaliação;
-- comprar novamente.
-
-### Feirante
-
-- editar/cancelar banca;
-- produto CRUD;
-- estoque;
-- horário;
-- promoção;
-- pedido;
-- multi-banca;
-- peso real;
-- substituição;
-- retirada;
-- financeiro;
-- documentos.
-
-### Entregador
-
-- documentos/aprovação;
-- veículo;
-- placa/capacidade;
-- disponibilidade;
-- filtros de corrida;
-- corrida completa;
-- persistência de etapa;
-- incidente;
-- suporte;
-- avaliação;
-- repasse.
-
-## Testes que faltam para staging/produção
-
-### Browser E2E
-
-Adicionar Playwright/Cypress ou equivalente:
-
-- Chrome;
-- Android viewport;
-- Safari/WebKit quando relevante;
-- navegação real;
-- upload;
-- geolocation mocking;
-- reload/retomada.
-
-### Banco
-
-Rodar migrations em banco descartável e testar:
-
-- constraints;
-- foreign keys;
-- funções;
-- RLS;
-- rollback/forward migration.
-
-### Concorrência
-
-- dois clientes comprando último item;
-- dupla aceitação de corrida;
-- webhook duplicado;
-- retry de checkout;
-- dupla solicitação de saque.
-
-### Integrações
-
-Contract/integration tests para:
-
-- PSP;
-- rotas;
-- KYC;
-- Storage;
-- notificações.
-
-### Segurança
-
-- acesso cruzado por papel;
-- manipulação de preço;
-- IDOR;
-- upload malicioso;
-- rate limit;
-- secrets.
-
-### Acessibilidade
-
-- teclado;
-- foco;
-- labels;
-- contraste;
-- leitor de tela;
-- reduced motion.
-
-## Política de CI
-
-PR para `main` deve executar:
+Executa:
 
 ```bash
 npm ci
@@ -181,17 +16,204 @@ npm run check
 npm run format:check
 ```
 
-Não fazer merge com falha.
+`npm run check` executa:
 
-## Evidência de QA
+```bash
+npm run lint
+npm run test
+npm run build
+```
 
-Para release, registrar:
+## 2. Contagem atual
+
+| Arquivo | Testes |
+| --- | ---: |
+| `src/App.test.tsx` | 43 |
+| `src/domain/orderBridge.test.ts` | 4 |
+| `src/domain/marketplaceBridge.test.ts` | 4 |
+| `src/domain/inventoryBridge.test.ts` | 3 |
+| `src/domain/localAuth.test.ts` | 4 |
+| `src/domain/marketplace.test.ts` | 4 |
+| `src/domain/session.test.ts` | 3 |
+| `src/utils.test.ts` | 4 |
+| **Total** | **69** |
+
+## 3. Cobertura comprovada de App.test.tsx
+
+Os 43 testes cobrem explicitamente:
+
+### Cliente
+
+- abrir catálogo;
+- concluir checkout demo;
+- identidade da conta;
+- campos de conta;
+- endereço estruturado;
+- mostrar/ocultar senha;
+- senha incorreta;
+- alterar nome/e-mail/senha;
+- cards compactos;
+- feiras em área correta;
+- filtro por região;
+- detalhe de pedido;
+- bancas da feira;
+- impedir mistura entre feiras;
+- busca sem acento;
+- horários verificados;
+- pagar agora/na entrega;
+- formulário de cartão e CVV não persistido;
+- motivos de cancelamento;
+- notificações a partir de estados;
+- avaliações;
+- retirada completa;
+- consentimento WhatsApp explícito;
+- descarte de perfil inválido.
+
+### Feirante
+
+- abrir experiência;
+- produto/estoque;
+- conta separada da banca;
+- pedido sequencial;
+- cancelar edição da banca;
+- editar banca;
+- horário oficial/customizado;
+- entrega/retirada/frete grátis;
+- recebimento/taxas não configuradas;
+- documento enviado entra em análise.
+
+### Entregador
+
+- abrir experiência;
+- completar etapas de entrega;
+- tipos/capacidade de veículo;
+- conta com CPF/CNH;
+- suporte com detalhe digitado;
+- Pix/conta bancária;
+- estados de repasse;
+- aprovação documental;
+- trocar perfil somente após logout.
+
+## 4. Cobertura comprovada de domínio
+
+### orderBridge
+
+- multi-banca só libera após todas prontas;
+- peso real propaga;
+- suporte/avaliações ficam no mesmo pedido;
+- histórico isolado por cliente.
+
+### marketplaceBridge
+
+- catálogo dinâmico substitui fixture;
+- cupom válido e consumo;
+- Compre X Leve Y;
+- banca não aprovada fica oculta.
+
+### inventoryBridge
+
+- reservar/liberar;
+- não liberar depois de consumir;
+- rejeitar excesso de estoque.
+
+### localAuth
+
+- senha demo;
+- criar conta e exigir senha;
+- trocar e-mail/senha;
+- remover senha antiga em texto.
+
+## 5. O que os 69 testes NÃO comprovam diretamente
+
+Não afirmar “CI cobre” estes itens sem adicionar teste específico:
+
+- cancelamento pago → crédito/reembolso na carteira ponta a ponta;
+- conteúdo binário/Data URL do documento persistido após reload;
+- toggle de ofertas alterando a lista de notificações;
+- consentimento WhatsApp persistido no `UnifiedOrder` após checkout;
+- todos os quatro casos de opção indisponível no checkout;
+- rota multi-banca com múltiplas paradas;
+- cálculo de frete por distância/peso;
+- status SQL/RLS;
+- integração Supabase;
+- pagamento real;
+- KYC real.
+
+## 6. E2E atual não é browser E2E
+
+`App.test.tsx` usa Testing Library + jsdom.
+
+Não há Playwright/Cypress.
+
+Portanto não há evidência automatizada atual de:
+
+- Chrome real;
+- Android real;
+- Safari/WebKit;
+- permissão GPS real;
+- upload real no browser;
+- comportamento após refresh em browser real;
+- navegação externa Google Maps.
+
+## 7. Testes necessários antes de conectar Supabase
+
+Criar suite de banco descartável para:
+
+- migrations 0001/0002 + migrations novas;
+- constraints;
+- enum de estados;
+- RLS por papel;
+- Storage policies;
+- RPCs;
+- rollback/forward fix.
+
+## 8. Casos de concorrência obrigatórios
+
+- dois clientes no último item;
+- duas bancas alterando o mesmo pedido;
+- dois entregadores aceitando a mesma corrida;
+- webhook duplicado;
+- retry de pedido;
+- estorno duplicado;
+- payout duplicado.
+
+## 9. Casos de segurança
+
+- cliente acessando pedido de outro;
+- feirante acessando banca alheia;
+- entregador assumindo corrida atribuída;
+- alteração de preço via devtools;
+- alteração de status via API;
+- upload executável mascarado;
+- IDOR;
+- service key no bundle.
+
+## 10. Gaps de teste que devem virar testes antes de marcar “concluído”
+
+Adicionar testes específicos para:
+
+1. reembolso + carteira;
+2. WhatsApp no pedido;
+3. ofertas/notificações;
+4. documento Data URL + limite;
+5. opções disabled no checkout;
+6. rejeição/cancelamento multi-banca;
+7. promoção `horario` após implementação real;
+8. promoção `combo` após implementação real;
+9. múltiplas paradas após implementação;
+10. migration/RLS.
+
+## 11. Critério de release
+
+Uma release deve registrar:
 
 - commit;
 - ambiente;
-- data;
-- suite executada;
-- resultado;
+- migrations aplicadas;
+- total de testes;
+- browser E2E;
+- integrações testadas;
 - bugs conhecidos;
-- migrations;
-- integrações testadas.
+- rollback disponível.
+
+O número 69 é referência do protótipo atual, não selo de produção.
