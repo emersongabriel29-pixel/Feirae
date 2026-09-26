@@ -50,6 +50,7 @@ import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import { consumeWallet } from "./domain/walletBridge";
 import {
+  getRuntimeConfiguration,
   mergeRuntimeFairs,
   refreshRuntimeConfiguration,
   runtimeStates,
@@ -166,6 +167,10 @@ export default function App() {
 
   const configuredFairs = useMemo(() => mergeRuntimeFairs(fairs), [runtimeRevision]);
   const serviceStates = useMemo(() => runtimeStates(), [runtimeRevision]);
+  const runtimeManaged = useMemo(
+    () => getRuntimeConfiguration().source === "supabase",
+    [runtimeRevision],
+  );
 
   useEffect(() => {
     if (!configuredFairs.length) return;
@@ -592,6 +597,7 @@ export default function App() {
               <FairsPage
                 fairItems={fairsWithDistance}
                 serviceStates={serviceStates}
+                runtimeManaged={runtimeManaged}
                 onFair={openFair}
                 onMap={openMap}
               />
