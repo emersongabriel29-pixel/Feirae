@@ -574,7 +574,7 @@ export function OperationsMenu({
   onOpen: (module: string) => void;
 }) {
   const groupFor = (module: string) => {
-    if (["Painel", "Pedidos", "Entregas", "Em andamento"].includes(module)) return "Agora";
+    if (["Pedidos", "Entregas", "Em andamento", "Disponibilidade"].includes(module)) return "Agora";
     if (
       [
         "Minha banca",
