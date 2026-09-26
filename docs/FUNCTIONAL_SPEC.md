@@ -103,6 +103,26 @@ Implementado em `src/features/delivery/DeliveryScreens.tsx`:
 - avaliações;
 - financeiro local.
 
+## 2.1. Login e onboarding operacional
+
+### Autenticação
+
+- mensagens de erro são descartadas ao mudar de Entrar para Criar conta, trocar o papel selecionado ou editar o e-mail;
+- quando um e-mail já pertence a outro papel, a mensagem informa explicitamente o acesso correto;
+- no cadastro mobile, a apresentação promocional é compactada para priorizar os campos.
+
+### Feirante
+
+Se o cadastro não estiver aprovado, a Central mostra um bloco prioritário **Complete seu cadastro para vender** e leva primeiro à banca ou aos documentos conforme a pendência.
+
+O antigo card **Painel** foi removido da grade porque a própria Central já cumpre essa função.
+
+### Entregador
+
+Se o cadastro não estiver aprovado, a Central mostra **Complete seu cadastro para entregar** e direciona para Conta, Veículos ou Documentos conforme a próxima pendência.
+
+A área que antes se chamava **Painel** agora se chama **Disponibilidade**, preservando o controle de ficar online/offline sem duplicar o conceito de Central.
+
 ## 3. Limite do protótipo
 
 A aplicação ainda não usa Supabase como fonte de verdade.
