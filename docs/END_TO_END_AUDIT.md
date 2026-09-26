@@ -105,39 +105,39 @@ A jornada local do protótipo está encadeada para compra, preparo, logística, 
 
 ## Feirante
 
-| Fluxo                        | Implementado | Teste direto                          | Limite                     |
-| ---------------------------- | ------------ | ------------------------------------- | -------------------------- |
-| conta                        | sim          | sim                                   | local                      |
-| banca editar/salvar/cancelar | sim          | sim                                   | local                      |
-| produto CRUD                 | sim          | sim parcial                           | foto única                 |
-| estoque                      | sim          | sim                                   | sem reserva SQL            |
-| horário oficial/custom       | sim          | sim                                   | fontes parciais            |
-| virar meia-noite             | sim          | sim indiretamente no fluxo de horário | local                      |
-| promoções                    | sim/parcial  | cupom/compre-leve no domínio          | combo/horário incompletos  |
-| documentos                   | sim          | upload→análise testado                | arquivo Data URL           |
+| Fluxo                        | Implementado | Teste direto                          | Limite                           |
+| ---------------------------- | ------------ | ------------------------------------- | -------------------------------- |
+| conta                        | sim          | sim                                   | local                            |
+| banca editar/salvar/cancelar | sim          | sim                                   | local                            |
+| produto CRUD                 | sim          | sim parcial                           | foto única                       |
+| estoque                      | sim          | sim                                   | sem reserva SQL                  |
+| horário oficial/custom       | sim          | sim                                   | fontes parciais                  |
+| virar meia-noite             | sim          | sim indiretamente no fluxo de horário | local                            |
+| promoções                    | sim/parcial  | cupom/compre-leve no domínio          | combo/horário incompletos        |
+| documentos                   | sim          | upload→análise testado                | arquivo Data URL                 |
 | aprovação                    | parcial      | bloqueio local testado                | conta real não tem revisor/admin |
-| pedido                       | sim          | sim                                   | local                      |
-| multi-banca                  | sim          | sim domínio                           | sem rota multi-stop        |
-| peso real                    | sim          | sim domínio                           | sem ajuste financeiro real |
-| recebível                    | simulação    | sim de UI                             | sem PSP/ledger             |
+| pedido                       | sim          | sim                                   | local                            |
+| multi-banca                  | sim          | sim domínio                           | sem rota multi-stop              |
+| peso real                    | sim          | sim domínio                           | sem ajuste financeiro real       |
+| recebível                    | simulação    | sim de UI                             | sem PSP/ledger                   |
 
 ## Entregador
 
-| Fluxo             | Implementado | Teste direto            | Limite                |
-| ----------------- | ------------ | ----------------------- | --------------------- |
-| conta             | sim          | sim                     | local                 |
+| Fluxo             | Implementado | Teste direto            | Limite                           |
+| ----------------- | ------------ | ----------------------- | -------------------------------- |
+| conta             | sim          | sim                     | local                            |
 | documentos        | sim          | bloqueio local testado  | conta real não tem revisor/admin |
-| veículo           | sim          | sim                     | catálogo hard-coded   |
-| capacidade        | sim          | sim                     | regra local           |
-| disponibilidade   | sim          | parcial                 | local                 |
-| agenda            | sim          | parcial                 | local                 |
-| raio/região       | sim          | parcial                 | local                 |
-| aceitar corrida   | sim          | sim no fluxo sequencial | sem concorrência real |
-| coleta            | sim          | sim                     | local                 |
-| iniciar rota      | sim          | sim                     | local                 |
-| confirmar entrega | sim          | sim                     | local                 |
-| suporte           | sim          | sim                     | local                 |
-| repasse           | simulação    | sim de UI               | sem PSP               |
+| veículo           | sim          | sim                     | catálogo hard-coded              |
+| capacidade        | sim          | sim                     | regra local                      |
+| disponibilidade   | sim          | parcial                 | local                            |
+| agenda            | sim          | parcial                 | local                            |
+| raio/região       | sim          | parcial                 | local                            |
+| aceitar corrida   | sim          | sim no fluxo sequencial | sem concorrência real            |
+| coleta            | sim          | sim                     | local                            |
+| iniciar rota      | sim          | sim                     | local                            |
+| confirmar entrega | sim          | sim                     | local                            |
+| suporte           | sim          | sim                     | local                            |
+| repasse           | simulação    | sim de UI               | sem PSP                          |
 
 ## Integridade comprovada por teste de domínio
 
