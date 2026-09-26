@@ -305,11 +305,20 @@ for each row execute function private.stamp_account_enforcement();
 create table if not exists public.admin_access (
   profile_id uuid primary key references public.profiles(id) on delete cascade,
   active boolean not null default true,
+  is_superadmin boolean not null default false,
   title text,
   notes text,
   updated_by uuid references public.profiles(id) on delete set null default auth.uid(),
   updated_at timestamptz not null default now()
 );
+
+-- One-time bootstrap: admins that already existed before this migration become
+-- explicit superadmins. New admins created later default to least privilege.
+insert into public.admin_access (profile_id, active, is_superadmin, title)
+select p.id, true, true, 'Administrador inicial'
+from public.profiles p
+where p.role = 'admin'
+on conflict (profile_id) do nothing;
 
 create table if not exists public.integration_health_events (
   id bigint generated always as identity primary key,
@@ -323,6 +332,28 @@ create table if not exists public.integration_health_events (
 
 create index if not exists integration_health_events_key_checked_idx
   on public.integration_health_events(integration_key, checked_at desc);
+
+create table if not exists public.operational_alerts (
+  id uuid primary key default gen_random_uuid(),
+  alert_key text not null unique,
+  alert_type text not null,
+  severity text not null default 'warning' check (severity in ('info','warning','critical')),
+  entity text not null,
+  entity_id text not null,
+  title text not null,
+  message text,
+  status text not null default 'open' check (status in ('open','acknowledged','resolved')),
+  detected_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now(),
+  acknowledged_by uuid references public.profiles(id) on delete set null,
+  acknowledged_at timestamptz,
+  resolved_by uuid references public.profiles(id) on delete set null,
+  resolved_at timestamptz,
+  metadata jsonb not null default '{}'::jsonb
+);
+
+create index if not exists operational_alerts_status_seen_idx
+  on public.operational_alerts(status, last_seen_at desc);
 
 -- After admin_access exists, access can be disabled without changing the profile role.
 create or replace function private.is_feirae_admin()
@@ -340,13 +371,11 @@ as $function$
       where p.id = (select auth.uid())
         and p.role = 'admin'
     )
-    and coalesce(
-      (
-        select aa.active
-        from public.admin_access aa
-        where aa.profile_id = (select auth.uid())
-      ),
-      true
+    and exists (
+      select 1
+      from public.admin_access aa
+      where aa.profile_id = (select auth.uid())
+        and aa.active
     );
 $function$;
 
@@ -372,12 +401,16 @@ as $function$
   select
     (select private.is_feirae_admin())
     and (
-      not exists (
-        select 1 from public.admin_permissions ap
-        where ap.profile_id = (select auth.uid())
+      exists (
+        select 1
+        from public.admin_access aa
+        where aa.profile_id = (select auth.uid())
+          and aa.active
+          and aa.is_superadmin
       )
       or exists (
-        select 1 from public.admin_permissions ap
+        select 1
+        from public.admin_permissions ap
         where ap.profile_id = (select auth.uid())
           and ap.permission in ('*', required_permission)
       )
@@ -432,6 +465,11 @@ alter table public.order_reviews
   add column if not exists moderation_reason text,
   add column if not exists moderated_by uuid references public.profiles(id) on delete set null,
   add column if not exists moderated_at timestamptz;
+
+alter table public.support_tickets
+  add column if not exists assigned_to uuid references public.profiles(id) on delete set null,
+  add column if not exists resolved_by uuid references public.profiles(id) on delete set null,
+  add column if not exists updated_at timestamptz not null default now();
 
 alter table public.reviews
   add column if not exists visible boolean not null default true,
@@ -548,6 +586,21 @@ values
   ('push','push_provider','Notificações push',false,'not_configured')
 on conflict (key) do nothing;
 
+-- Private bucket for onboarding documents. This does not replace server-side
+-- magic-byte/antivirus validation, but prevents public access and constrains size/MIME.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'onboarding-documents',
+  'onboarding-documents',
+  false,
+  5242880,
+  array['application/pdf','image/jpeg','image/png']::text[]
+)
+on conflict (id) do update
+set public = false,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
 -- Explicit Data API grants. Supabase no longer guarantees automatic exposure for new tables.
 grant select on table
   public.platform_settings,
@@ -582,6 +635,7 @@ grant select on table
   public.admin_access,
   public.admin_permissions,
   public.integration_health_events,
+  public.operational_alerts,
   public.admin_audit_logs
 to authenticated;
 
@@ -628,7 +682,6 @@ grant select on table
   public.delivery_vehicles
 to authenticated;
 
-grant update on table public.payments to authenticated;
 grant usage, select on sequence public.integration_health_events_id_seq to authenticated;
 
 -- Reporting reads. RLS below decides which rows an administrator may see.
@@ -668,6 +721,7 @@ alter table public.account_enforcements enable row level security;
 alter table public.admin_access enable row level security;
 alter table public.admin_permissions enable row level security;
 alter table public.integration_health_events enable row level security;
+alter table public.operational_alerts enable row level security;
 alter table public.admin_audit_logs enable row level security;
 
 drop policy if exists "public read active categories" on public.categories;
@@ -704,11 +758,13 @@ using (
   )
 );
 
-create policy "admins manage deliveries"
-on public.deliveries for all
+create policy "admins view deliveries"
+on public.deliveries for select
 to authenticated
-using ((select private.feirae_admin_has('operations.manage')))
-with check ((select private.feirae_admin_has('operations.manage')));
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
 
 drop policy if exists "order participants read order items" on public.order_items;
 create policy "order participants read order items"
@@ -804,11 +860,7 @@ using (
   or (select private.feirae_admin_has('reports.view'))
 );
 
-create policy "admins reconcile payments"
-on public.payments for update
-to authenticated
-using ((select private.feirae_admin_has('finance.manage')))
-with check ((select private.feirae_admin_has('finance.manage')));
+-- Payment mutations are server-side only through the admin-actions Edge Function.
 
 create policy "admins read own access state"
 on public.admin_access for select
@@ -821,17 +873,24 @@ using (
   )
 );
 
-create policy "admins manage admin access"
-on public.admin_access for all
+create policy "permission admins read admin access"
+on public.admin_access for select
 to authenticated
-using ((select private.feirae_admin_has('permissions.manage')))
-with check ((select private.feirae_admin_has('permissions.manage')));
+using ((select private.feirae_admin_has('permissions.manage')));
 
 create policy "admins view integration health"
 on public.integration_health_events for select
 to authenticated
 using (
   (select private.feirae_admin_has('settings.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
+
+create policy "admins view operational alerts"
+on public.operational_alerts for select
+to authenticated
+using (
+  (select private.feirae_admin_has('operations.manage'))
   or (select private.feirae_admin_has('reports.view'))
 );
 
@@ -1070,11 +1129,10 @@ using (
   and (select private.is_feirae_admin())
 );
 
-create policy "admins manage permissions"
-on public.admin_permissions for all
+create policy "permission admins read permissions"
+on public.admin_permissions for select
 to authenticated
-using ((select private.feirae_admin_has('permissions.manage')))
-with check ((select private.feirae_admin_has('permissions.manage')));
+using ((select private.feirae_admin_has('permissions.manage')));
 
 create policy "admins read audit logs"
 on public.admin_audit_logs for select
@@ -1102,6 +1160,37 @@ using (
     'onboarding-documents'
   )
   and (select private.feirae_admin_has('documents.review'))
+);
+
+drop policy if exists "users upload own onboarding files" on storage.objects;
+create policy "users upload own onboarding files"
+on storage.objects for insert
+to authenticated
+with check (
+  bucket_id = 'onboarding-documents'
+  and (storage.foldername(name))[1] = (select auth.uid())::text
+);
+
+drop policy if exists "users read own onboarding files" on storage.objects;
+create policy "users read own onboarding files"
+on storage.objects for select
+to authenticated
+using (
+  bucket_id = 'onboarding-documents'
+  and (storage.foldername(name))[1] = (select auth.uid())::text
+);
+
+drop policy if exists "users replace own onboarding files" on storage.objects;
+create policy "users replace own onboarding files"
+on storage.objects for update
+to authenticated
+using (
+  bucket_id = 'onboarding-documents'
+  and (storage.foldername(name))[1] = (select auth.uid())::text
+)
+with check (
+  bucket_id = 'onboarding-documents'
+  and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
 -- Admin access to operational entities that already use RLS.
@@ -1135,11 +1224,13 @@ to authenticated
 using ((select private.feirae_admin_has('registrations.manage')))
 with check ((select private.feirae_admin_has('registrations.manage')));
 
-create policy "admins manage orders"
-on public.orders for all
+create policy "admins view orders operationally"
+on public.orders for select
 to authenticated
-using ((select private.feirae_admin_has('operations.manage')))
-with check ((select private.feirae_admin_has('operations.manage')));
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
 
 create policy "admins manage delivery profiles"
 on public.delivery_profiles for all
@@ -1159,11 +1250,10 @@ to authenticated
 using ((select private.feirae_admin_has('registrations.manage')))
 with check ((select private.feirae_admin_has('registrations.manage')));
 
-create policy "admins manage onboarding documents"
-on public.onboarding_documents for all
+create policy "admins view onboarding documents"
+on public.onboarding_documents for select
 to authenticated
-using ((select private.feirae_admin_has('documents.review')))
-with check ((select private.feirae_admin_has('documents.review')));
+using ((select private.feirae_admin_has('documents.review')));
 
 create policy "admins manage promotions"
 on public.promotions for all
@@ -1183,11 +1273,10 @@ to authenticated
 using ((select private.feirae_admin_has('operations.manage')))
 with check ((select private.feirae_admin_has('operations.manage')));
 
-create policy "admins manage support tickets"
-on public.support_tickets for all
+create policy "admins view support tickets"
+on public.support_tickets for select
 to authenticated
-using ((select private.feirae_admin_has('operations.manage')))
-with check ((select private.feirae_admin_has('operations.manage')));
+using ((select private.feirae_admin_has('operations.manage')));
 
 create policy "admins view order reviews operationally"
 on public.order_reviews for select
@@ -1197,23 +1286,37 @@ using (
   or (select private.feirae_admin_has('reports.view'))
 );
 
-create policy "admins manage order reviews"
-on public.order_reviews for all
+create policy "admins view order reviews for moderation"
+on public.order_reviews for select
 to authenticated
-using ((select private.feirae_admin_has('finance.manage')))
-with check ((select private.feirae_admin_has('finance.manage')));
+using ((select private.feirae_admin_has('finance.manage')));
 
-create policy "admins manage payouts"
-on public.payouts for all
+create policy "admins view payouts"
+on public.payouts for select
 to authenticated
-using ((select private.feirae_admin_has('finance.manage')))
-with check ((select private.feirae_admin_has('finance.manage')));
+using (
+  (select private.feirae_admin_has('finance.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
 
-create policy "admins manage wallet entries"
-on public.wallet_entries for all
+create policy "admins view wallet entries"
+on public.wallet_entries for select
 to authenticated
-using ((select private.feirae_admin_has('finance.manage')))
-with check ((select private.feirae_admin_has('finance.manage')));
+using ((select private.feirae_admin_has('finance.manage')));
+
+-- Critical operational/admin mutations are only performed by trusted server-side
+-- actions. Browser roles keep SELECT access but cannot bypass transition validation.
+revoke insert, update, delete on table public.orders from authenticated;
+revoke insert, update, delete on table public.deliveries from authenticated;
+revoke insert, update, delete on table public.payments from authenticated;
+revoke insert, update, delete on table public.payouts from authenticated;
+revoke insert, update, delete on table public.wallet_entries from authenticated;
+revoke insert, update, delete on table public.onboarding_documents from authenticated;
+grant insert, update on table public.onboarding_documents to authenticated;
+revoke update, delete on table public.order_reviews from authenticated;
+revoke insert, update, delete on table public.admin_access from authenticated;
+revoke insert, update, delete on table public.admin_permissions from authenticated;
+revoke insert, update, delete on table public.account_enforcements from authenticated;
 
 -- Automatic audit trail for management/configuration tables.
 create or replace function private.log_feirae_admin_change()
