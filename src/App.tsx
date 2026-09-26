@@ -53,6 +53,7 @@ import {
   getRuntimeConfiguration,
   mergeRuntimeFairs,
   refreshRuntimeConfiguration,
+  runtimePaymentMethods,
   runtimeStates,
 } from "./domain/runtimeConfig";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
@@ -169,6 +170,7 @@ export default function App() {
   void runtimeRevision;
   const configuredFairs = mergeRuntimeFairs(fairs);
   const serviceStates = runtimeStates();
+  const paymentMethods = runtimePaymentMethods();
   const runtimeManaged = getRuntimeConfiguration().source === "supabase";
 
   useEffect(() => {
@@ -676,6 +678,8 @@ export default function App() {
             items={cartProducts}
             cart={cart}
             subtotal={subtotal}
+            paymentMethods={paymentMethods}
+            runtimeManaged={runtimeManaged}
             onBack={() => setCartOpen(true)}
             onConfirm={confirmOrder}
           />
