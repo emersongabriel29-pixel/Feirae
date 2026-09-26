@@ -86,7 +86,10 @@ describe("Feiraê role notification messages", () => {
   });
 
   it("uses delivery language for route and active delivery stages", () => {
-    const routed = { ...order, route: { toVendorKm: 2, vendorToCustomerKm: 4, totalKm: 6, etaMinutes: 20, source: "osrm" as const } };
+    const routed = {
+      ...order,
+      route: { toVendorKm: 2, vendorToCustomerKm: 4, totalKm: 6, etaMinutes: 20, source: "osrm" as const },
+    };
     expect(orderEventNotification("delivery", routed, event("route-updated", "Rota calculada"))?.title).toBe(
       "Rota atualizada",
     );
