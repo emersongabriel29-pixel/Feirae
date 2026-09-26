@@ -190,7 +190,6 @@ Mudanças registradas:
 
 A documentação não afirma regressão visual automatizada: Playwright/Cypress e screenshot testing continuam ausentes.
 
-
 ## Governança permanente de atualização
 
 A partir desta rodada, a sincronização do projeto deixa de ser apenas uma convenção manual.
