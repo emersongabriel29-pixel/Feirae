@@ -40,7 +40,7 @@ describe("Feiraê customer flow", () => {
   it("shows the demonstration account identity instead of visitor", () => {
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     expect(screen.getByRole("heading", { name: /olá, cliente/i })).toBeInTheDocument();
     expect(screen.getByText(/cliente@feirae\.test/i)).toBeInTheDocument();
   });
@@ -48,7 +48,7 @@ describe("Feiraê customer flow", () => {
   it("shows CPF, birth date and address fields in the customer account", () => {
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /minha conta/i }));
 
     expect(screen.getByLabelText(/^cpf$/i)).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe("Feiraê customer flow", () => {
   it("uses structured address fields and does not promise delivery before calculation", () => {
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /meus endereços/i }));
     fireEvent.click(screen.getByRole("button", { name: /adicionar endereço/i }));
 
@@ -110,7 +110,7 @@ describe("Feiraê customer flow", () => {
   it("applies customer name email and password only when the account form is saved", () => {
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /minha conta/i }));
 
     fireEvent.change(screen.getByLabelText(/nome completo/i), {
@@ -137,14 +137,14 @@ describe("Feiraê customer flow", () => {
       target: { value: "nova123" },
     });
     fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     expect(screen.getByRole("heading", { name: /olá, cliente atualizada/i })).toBeInTheDocument();
   });
 
   it("applies the compact cards preference to the interface", () => {
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /configurações/i }));
 
     fireEvent.click(screen.getByLabelText(/cards compactos/i));
@@ -274,7 +274,7 @@ describe("Feiraê customer flow", () => {
   it("asks for complete card data but does not describe storing CVV", () => {
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /pagamentos e carteira/i }));
     fireEvent.click(screen.getByRole("button", { name: /adicionar/i }));
 
@@ -323,7 +323,7 @@ describe("Feiraê customer flow", () => {
     );
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /minhas avaliações/i }));
 
     expect(screen.getByRole("heading", { name: /pedidos para avaliar/i })).toBeInTheDocument();
@@ -347,10 +347,10 @@ describe("Feiraê customer flow", () => {
     expect(created.fulfillment).toBe("pickup");
     expect(created.status).toBe("received");
 
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /sair da conta/i }));
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^pedidos$/i })[0]);
 
     const createdOrderCard = screen
       .getAllByText(new RegExp(created.id, "i"))
@@ -374,7 +374,7 @@ describe("Feiraê customer flow", () => {
   it("makes WhatsApp consent explicit and optional", () => {
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
     fireEvent.click(screen.getByRole("button", { name: /configurações/i }));
 
     expect(
@@ -403,7 +403,7 @@ describe("Feiraê role access", () => {
   it("lets the vendor manage products and inventory in the demo", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /^produtos$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^produtos$/i })[0]);
     expect(screen.getByText(/30 cesta\(s\)/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /editar r\$/i })).not.toBeInTheDocument();
     fireEvent.click(screen.getAllByRole("button", { name: /editar produto/i })[0]);
@@ -433,7 +433,7 @@ describe("Feiraê role access", () => {
   it("keeps the vendor order flow sequential and hands delivery stages to the driver", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^pedidos$/i })[0]);
 
     const firstOrder = screen.getByText(/FE-1027 · Dona Marta/i).closest("article");
     expect(firstOrder).not.toBeNull();
@@ -529,7 +529,7 @@ describe("Feiraê role access", () => {
   it("opens the delivery experience selected at login", () => {
     render(<App />);
     loginAs("entregador");
-    expect(screen.getByRole("heading", { name: /operação do entregador/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
   });
 
   it("lets the delivery person complete all delivery stages", () => {
