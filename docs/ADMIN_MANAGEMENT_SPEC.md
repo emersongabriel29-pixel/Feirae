@@ -16,7 +16,10 @@ Arquivos principais:
 - `admin/styles.css`;
 - `supabase/migrations/0003_management_console.sql`;
 - `supabase/functions/admin-actions/index.ts`;
-- `admin/management.test.js`.
+- `supabase/functions/document-upload/index.ts`;
+- `supabase/config.toml`;
+- `admin/management.test.js`;
+- `admin/core.test.js`.
 
 A migration ainda precisa ser aplicada no **projeto Supabase correto do Feiraê** e a Edge Function precisa ser publicada nesse mesmo ambiente.
 
@@ -435,11 +438,12 @@ Para operação real ainda é obrigatório:
 
 1. identificar o Supabase correto do Feiraê;
 2. aplicar `0001`, `0002` e `0003` nesse ambiente;
-3. publicar `admin-actions`;
-4. configurar health URLs/secrets;
-5. rodar advisors de segurança/performance;
-6. testar RLS por papel;
-7. conectar o app principal às tabelas de runtime configuration;
-8. substituir backend/localStorage do app principal por backend compartilhado.
+3. publicar `admin-actions` e `document-upload`;
+4. publicar `admin/config.json` por ambiente;
+5. configurar health URLs/secrets;
+6. rodar advisors de segurança/performance;
+7. testar RLS por papel;
+8. conectar o app principal às tabelas de runtime configuration;
+9. substituir backend/localStorage do app principal por backend compartilhado.
 
 Esses itens não devem ser chamados de concluídos apenas porque a interface administrativa existe.
