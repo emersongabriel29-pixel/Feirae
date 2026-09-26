@@ -28,7 +28,7 @@ Este documento é a fonte oficial de acompanhamento das auditorias do Feiraê. A
 | 9   | Onboarding                                                                         | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 10  | Papéis e permissões                                                                | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 11  | Aprovação e documentação                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 12  | Gestão/administração                                                               | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
+| 12  | Gestão/administração                                                               | EM ANDAMENTO | 26/09/2026    | RBAC, MFA, CRUD crítico, escala e observabilidade | Correções na branch | Supabase correto, deploy/staging e integração runtime | feat/management-console-v2 |
 | 13  | Feiras                                                                             | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 14  | Bancas/lojas                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 15  | Produtos                                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
@@ -75,6 +75,28 @@ Este documento é a fonte oficial de acompanhamento das auditorias do Feiraê. A
 | 56  | Produto                                                                            | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 57  | Prontidão para produção                                                            | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | MÃE | Rastreabilidade requisito → tela → ação → regra → banco → permissão → docs → teste | CONTÍNUA   | 26/09/2026      | Mantida durante todas as auditorias | —                   | Depende dos resultados das auditorias 1–57           | Checklist Mestre       |
+
+## Auditoria 12 — Gestão/administração em andamento
+
+A auditoria específica da Gestão foi reaberta em 26/09/2026 por solicitação da usuária.
+
+A branch `feat/management-console-v2` parte da `main` atual e corrige, entre outros:
+
+- divergência do PR administrativo antigo;
+- fallback inseguro de permissões;
+- superadmin explícito;
+- MFA/AAL2;
+- ações críticas server-side;
+- auditoria imutável;
+- paginação e busca no banco;
+- alertas persistentes;
+- health checks;
+- responsáveis/timestamps;
+- visões 360°;
+- campos técnicos substituídos por seletores;
+- testes e documentação administrativa.
+
+Não marcar como `CONCLUÍDA` antes de CI verde, merge em `main` e registro dos bloqueios externos que permanecerem.
 
 ## Auditoria 1 — registro fechado
 
