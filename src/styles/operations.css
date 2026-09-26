@@ -122,6 +122,94 @@
   color: var(--fe-muted);
   font-size: 0.82rem;
 }
+.operational-onboarding-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid color-mix(in srgb, var(--fe-warning) 26%, var(--fe-border));
+  border-radius: var(--fe-radius-lg);
+  background:
+    radial-gradient(circle at 95% 10%, rgba(223, 243, 107, 0.22), transparent 9rem),
+    linear-gradient(135deg, #fffdf5, var(--fe-surface));
+  padding: clamp(1rem, 3vw, 1.3rem);
+  box-shadow: var(--fe-shadow-card);
+}
+.operational-onboarding-card h2 {
+  margin-top: 0.2rem;
+  color: var(--fe-ink);
+  font-size: clamp(1.2rem, 4vw, 1.55rem);
+  font-weight: 950;
+}
+.operational-onboarding-card p {
+  max-width: 52rem;
+  margin-top: 0.35rem;
+  color: var(--fe-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.onboarding-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
+.onboarding-steps span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  background: var(--fe-surface-soft);
+  padding: 0.35rem 0.55rem;
+  color: var(--fe-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+.onboarding-steps i {
+  display: grid;
+  width: 1.3rem;
+  height: 1.3rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--fe-green-soft);
+  color: var(--fe-green-dark);
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 950;
+}
+.onboarding-action {
+  min-width: 12rem;
+  text-align: right;
+}
+.onboarding-action small,
+.onboarding-action strong {
+  display: block;
+}
+.onboarding-action small {
+  color: var(--fe-muted);
+  font-size: 0.65rem;
+}
+.onboarding-action strong {
+  margin-top: 0.1rem;
+  color: var(--fe-warning);
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+.onboarding-action button {
+  display: inline-flex;
+  min-height: var(--fe-touch);
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-top: 0.65rem;
+  border-radius: var(--fe-radius-sm);
+  background: var(--fe-green);
+  padding: 0.65rem 0.85rem;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
 .feirae-notification-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -764,6 +852,19 @@
   }
   .feirae-notification-card > button {
     grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 639px) {
+  .operational-onboarding-card {
+    grid-template-columns: 1fr;
+  }
+  .onboarding-action {
+    min-width: 0;
+    text-align: left;
+  }
+  .onboarding-action button {
     width: 100%;
   }
 }
