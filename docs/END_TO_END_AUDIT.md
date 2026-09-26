@@ -2,137 +2,159 @@
 
 Atualizado em 26/09/2026.
 
-Este documento transforma a auditoria funcional em critérios de aceite executáveis. O objetivo é impedir que uma tela pareça pronta enquanto a etapa seguinte do processo não recebe os mesmos dados.
+Esta auditoria separa três níveis:
 
-## Regra central
-
-Toda compra deve permanecer vinculada ao mesmo pedido do início ao fim:
-
-```
-Feira → Banca → Produto → Carrinho → Endereço/retirada → Pagamento
-→ Pedido → Bancas → Separação → Pronto → Entregador/retirada
-→ Coleta → Rota → Conclusão → Avaliações → Repasse
-```
-
-O pedido unificado registra eventos de transição e mantém estados separados por banca quando a compra envolve mais de uma banca.
+- **implementado**: código atual executa;
+- **testado**: existe teste automatizado direto;
+- **pendente de produção**: exige backend/provedor.
 
 ## Cliente
 
-| Fluxo                        | Início                     | Andamento                             | Fim esperado                                                           |
-| ---------------------------- | -------------------------- | ------------------------------------- | ---------------------------------------------------------------------- |
-| Cadastro                     | Criar conta                | nome/e-mail/papel                     | sessão criada sem dados fictícios                                      |
-| Carrinho                     | adicionar produto          | quantidade/peso/estoque/feira         | checkout                                                               |
-| Endereço                     | adicionar endereço         | manual ou GPS                         | endereço principal utilizável                                          |
-| Checkout                     | escolher modalidade        | promoções, carteira, frete, pagamento | pedido criado                                                          |
-| Pagamento agora              | Pix/cartão                 | status autorizado no fluxo local      | pedido liberado                                                        |
-| Pagamento na entrega         | dinheiro/maquininha        | informação chega à corrida            | autorizado ao concluir entrega                                         |
-| Cancelamento antes da coleta | escolher motivo            | outro exige descrição                 | pedido cancelado + estoque liberado + reembolso local quando aplicável |
-| Problema após coleta         | abrir suporte              | ocorrência vinculada ao pedido        | protocolo aberto                                                       |
-| Retirada                     | selecionar retirada        | banca prepara                         | banca confirma retirada e pedido termina entregue                      |
-| Entrega                      | pedido pronto              | entregador aceita/coleta/rota         | pedido entregue                                                        |
-| Substituição                 | item indisponível          | banca propõe/cliente decide           | aceite registrado ou cliente cancela                                   |
-| Avaliação                    | pedido entregue            | produto/banca/entrega                 | avaliação persistida                                                   |
-| Comprar novamente            | selecionar pedido anterior | restaura itens ainda disponíveis      | nova sacola                                                            |
-| Carteira                     | receber reembolso          | saldo aparece no checkout             | crédito consumido em nova compra                                       |
-| Notificações                 | evento do pedido           | histórico cronológico                 | leitura persistida                                                     |
+| Fluxo | Implementado | Teste direto | Limite atual |
+| --- | --- | --- | --- |
+| login com senha | sim | sim | localAuth/localStorage |
+| criar conta | sim | sim | local |
+| editar nome/e-mail/senha | sim | sim | local |
+| endereço manual | sim | sim parcial | sem backend |
+| GPS | sim | não em browser real | Geolocation/Nominatim |
+| catálogo/banca | sim | sim | marketplace local |
+| impedir mistura de feiras | sim | sim | local |
+| checkout | sim | sim | sem PSP |
+| pagamento agora | simulação | sim de UI | não cobra |
+| pagamento na entrega | simulação | sim de UI | sem conciliação |
+| Pix | UI | não como integração | sem QR real |
+| cartão salvo | sim local | sim | sem tokenização PSP |
+| promoção percentual | sim | parcial | local |
+| cupom | sim | sim domínio | SQL incompleto |
+| Compre X Leve Y | sim | sim domínio | SQL incompleto |
+| promoção horário | parcial | não | age como percentual |
+| combo | parcial | não | age como percentual |
+| carteira | sim local | parcial | sem ledger real |
+| cancelamento | sim | motivos testados | reembolso ponta a ponta sem teste dedicado |
+| retirada | sim | sim | local |
+| entrega | sim | sim | local |
+| avaliações | sim | sim | local |
+| comprar novamente | sim | matriz de regressão, sem teste nominal dedicado | local |
+| WhatsApp consent | sim | UI testada | persistência no pedido sem teste dedicado |
+| ofertas/notificações | sim | notificações testadas | toggle de ofertas sem teste dedicado |
 
 ## Feirante
 
-| Fluxo                | Início                      | Andamento                    | Fim esperado                                       |
-| -------------------- | --------------------------- | ---------------------------- | -------------------------------------------------- |
-| Cadastro operacional | dados da banca              | documentos/horários/produtos | catálogo publicado após aprovação                  |
-| Pedido               | pedido recebido             | aceitar → separar            | parte da banca pronta                              |
-| Multi-banca          | uma banca conclui           | status individual por banca  | logística só libera quando todas estão prontas     |
-| Peso real            | separar item                | informar peso real           | logística usa o peso atualizado                    |
-| Estoque              | cadastrar/editar produto    | reservar no pedido           | consumir na conclusão ou devolver no cancelamento  |
-| Promoção             | criar campanha              | período/uso/alvo/cupom       | desconto refletido no checkout e uso contabilizado |
-| Horário              | horário da feira ou próprio | suporta virada da meia-noite | banca aberta/fechada governa compra                |
-| Pagamento na entrega | habilitar formas            | checkout respeita banca      | instrução chega à corrida                          |
-| Avaliação            | pedido concluído            | avaliar cliente/entregador   | avaliação vinculada ao pedido                      |
-| Financeiro           | pedido entregue             | disponível → solicitado      | recebido registrado no fluxo local                 |
+| Fluxo | Implementado | Teste direto | Limite |
+| --- | --- | --- | --- |
+| conta | sim | sim | local |
+| banca editar/salvar/cancelar | sim | sim | local |
+| produto CRUD | sim | sim parcial | foto única |
+| estoque | sim | sim | sem reserva SQL |
+| horário oficial/custom | sim | sim | fontes parciais |
+| virar meia-noite | sim | sim indiretamente no fluxo de horário | local |
+| promoções | sim/parcial | cupom/compre-leve no domínio | combo/horário incompletos |
+| documentos | sim | upload→análise testado | arquivo Data URL |
+| aprovação | sim local | sim indiretamente | sem KYC/admin |
+| pedido | sim | sim | local |
+| multi-banca | sim | sim domínio | sem rota multi-stop |
+| peso real | sim | sim domínio | sem ajuste financeiro real |
+| recebível | simulação | sim de UI | sem PSP/ledger |
 
 ## Entregador
 
-| Fluxo                      | Início            | Andamento                        | Fim esperado                         |
-| -------------------------- | ----------------- | -------------------------------- | ------------------------------------ |
-| Cadastro                   | dados pessoais    | documentos + veículo             | aprovação antes de ficar disponível  |
-| Veículo                    | cadastrar         | capacidade/documento/ativo       | veículo elegível para corridas       |
-| Disponibilidade            | ligar             | agenda/raio/região               | corridas filtradas                   |
-| Corrida                    | oferta compatível | aceitar → banca → coletar → rota | confirmar entrega                    |
-| Recarregar durante corrida | corrida aceita    | ID e etapa persistidos           | continua da mesma etapa              |
-| Peso                       | pedido liberado   | capacidade >= peso real          | somente veículos compatíveis recebem |
-| Alerta grave               | ocorrência        | protocolo prioritário            | novas ofertas pausadas               |
-| Avaliação                  | entrega concluída | cliente/banca                    | avaliação persistida                 |
-| Financeiro                 | entrega concluída | disponível → saque solicitado    | repasse recebido registrado          |
+| Fluxo | Implementado | Teste direto | Limite |
+| --- | --- | --- | --- |
+| conta | sim | sim | local |
+| documentos | sim | aprovação testada | sem verificação real |
+| veículo | sim | sim | catálogo hard-coded |
+| capacidade | sim | sim | regra local |
+| disponibilidade | sim | parcial | local |
+| agenda | sim | parcial | local |
+| raio/região | sim | parcial | local |
+| aceitar corrida | sim | sim no fluxo sequencial | sem concorrência real |
+| coleta | sim | sim | local |
+| iniciar rota | sim | sim | local |
+| confirmar entrega | sim | sim | local |
+| suporte | sim | sim | local |
+| repasse | simulação | sim de UI | sem PSP |
 
-## Integridade
+## Integridade comprovada por teste de domínio
 
-- Dados de cliente são isolados por conta no armazenamento local do protótipo.
-- Relação operacional usa IDs de banca/loja; nome permanece apresentação.
-- Renomear uma banca preserva aliases para não quebrar catálogo e histórico.
-- Estoque é reservado ao criar pedido, devolvido quando o pedido é cancelado e consumido ao concluir.
-- Pedidos em `driver_assigned`, `collected` ou `out_for_delivery` não voltam à fila pública.
-- Corrida ativa e etapa do entregador persistem.
-- Uma banca não aprovada não publica produtos no catálogo compartilhado.
-- Configurações de entrega/retirada e pagamento na entrega da banca governam o checkout.
-- Eventos do pedido alimentam rastreamento e notificações.
+### Multi-banca
 
-## Limites de produção
+`orderBridge.test.ts`:
+“only releases a multi-vendor order after every vendor is ready”.
 
-O frontend fecha os ciclos para validação funcional, mas produção exige serviços externos/reais para:
+### Peso real
 
-- autenticação e autorização;
-- autorização/captura de Pix/cartão e webhooks;
-- split, saque e conciliação;
-- roteamento/geocodificação com SLA;
-- aprovação documental humana ou serviço KYC;
-- rastreamento em tempo real;
-- notificações push/WhatsApp;
-- antifraude e chargeback.
+`orderBridge.test.ts`:
+“propagates actual separated weight to logistics”.
 
-A migration `supabase/migrations/0002_feirae_operations.sql` prepara as entidades necessárias para levar esses fluxos ao backend. As transições financeiras, estoque, aprovação documental e liquidação devem ser executadas no servidor com idempotência.
+### Estoque
 
-## Auditoria posterior de botões e edição
+`inventoryBridge.test.ts`:
 
-Depois da auditoria de fluxos, foi executada uma segunda auditoria sobre controles de interface.
+- reserva/libera;
+- não libera após consumo;
+- rejeita excesso.
 
-Foram corrigidos:
+### Catálogo
 
-- senha ignorada no login;
-- atualização local de e-mail/nome/senha;
-- formulários que persistiam enquanto o usuário digitava;
-- edição da banca sem cancelar;
-- botões indisponíveis que aceitavam clique sem efeito;
-- preferências sem consumidor funcional;
-- detalhe de suporte do entregador ignorado;
-- protocolos não persistidos;
-- uploads que guardavam apenas o nome do arquivo.
+`marketplaceBridge.test.ts`:
 
-Referência: [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md).
+- produto dinâmico substitui fixture;
+- banca não aprovada fica oculta.
 
-## Validação atual
+## Limitações que impedem chamar de end-to-end de produção
 
-No commit de referência `33fd6b58`:
+### 1. Mesmo navegador
 
-- 8 arquivos de teste;
-- 69 testes aprovados;
-- ESLint aprovado;
-- TypeScript/build aprovado;
-- Prettier aprovado.
+Cliente, feirante e entregador compartilham `localStorage`.
 
-Esses testes validam o protótipo local; não substituem E2E em navegador, RLS, banco, pagamentos ou integrações.
+Não prova operação entre três dispositivos reais.
 
-## Critérios de regressão
+### 2. Multi-banca logística
 
-O CI deve falhar se qualquer um destes pontos quebrar:
+A corrida pode juntar nomes de várias bancas, mas não existe lista/otimização de múltiplas paradas.
 
-1. corrida não avança de coleta para rota e entrega;
-2. pedido multi-banca libera logística antes de todas as bancas estarem prontas;
-3. peso real não propaga para o pedido;
-4. estoque não é reservado/liberado/consumido;
-5. catálogo da banca diverge de preço/estoque/status publicados;
-6. retirada não chega a entregue;
-7. dados de um cliente aparecem na conta de outro;
-8. promoção configurada não afeta o checkout;
-9. cancelamento pago não gera reembolso local;
-10. suporte/avaliação deixam de ficar vinculados ao pedido.
+### 3. Frete
+
+Preço não usa rota/peso.
+
+### 4. Financeiro
+
+Não há cobrança/ledger/repasse real.
+
+### 5. Aprovação
+
+Status é local, sem revisor/KYC real.
+
+### 6. Backend
+
+Migrations existem, mas app não está conectado.
+
+## Critérios que o CI realmente garante hoje
+
+O CI deve falhar quando um teste existente quebrar, incluindo:
+
+- senha incorreta;
+- edição de conta;
+- retirada;
+- etapas de entrega;
+- multi-banca pronta;
+- peso real;
+- estoque;
+- cupom;
+- Compre X Leve Y;
+- banca não aprovada;
+- suporte do entregador.
+
+## Critérios ainda sem teste dedicado
+
+Não afirmar que o CI os garante até adicionar testes:
+
+1. cancelamento pago → reembolso → carteira;
+2. WhatsApp persistido no pedido;
+3. toggle de ofertas;
+4. conteúdo do arquivo após reload;
+5. todos os disabled do checkout;
+6. rota multi-stop;
+7. promoções horário/ combo com semântica real.
+
+Cobertura completa: [TESTING_QA.md](TESTING_QA.md).
