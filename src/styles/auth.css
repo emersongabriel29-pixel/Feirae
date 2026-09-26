@@ -387,6 +387,8 @@
 }
 .search-field {
   display: flex;
+  width: 100%;
+  grid-column: 1 / -1;
   min-height: 2.85rem;
   align-items: center;
   gap: 0.6rem;
@@ -420,6 +422,7 @@
 }
 .customer-tools {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 0.5rem;
   padding-bottom: 0.65rem;
 }
@@ -428,6 +431,7 @@
 }
 .header-context {
   display: grid;
+  grid-column: 1 / -1;
   grid-template-columns: auto auto;
   gap: 0.5rem;
 }
