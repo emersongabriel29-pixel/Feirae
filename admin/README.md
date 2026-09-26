@@ -36,6 +36,15 @@ Depois disso, a gestão de papéis pode ser feita pelo próprio painel, com audi
 ## Módulos
 
 - Visão geral e indicadores;
+- Central de alertas operacionais;
+- Pedidos com detalhe completo;
+- Entregas com detalhe completo;
+- Bancas/boxes por feira e feirante;
+- Pagamentos e conciliação financeira;
+- Gestão de administradores e acessos;
+- Saúde e histórico de integrações;
+- Ações em lote;
+- Auditoria avançada;
 - Relatórios por período com KPIs, CSV e impressão/PDF;
 - Pedidos;
 - Entregas;
