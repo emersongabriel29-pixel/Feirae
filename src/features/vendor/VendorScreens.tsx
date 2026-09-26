@@ -1390,6 +1390,7 @@ export function FeiranteOperations({
                     className="form-card"
                     onSubmit={(event) => {
                       event.preventDefault();
+                      setBankProfile({ ...bankDraft });
                       setBankEditing(false);
                       showNotice("Dados da banca salvos.");
                     }}
@@ -1398,18 +1399,18 @@ export function FeiranteOperations({
                       <label>
                         Nome da banca
                         <input
-                          value={bankProfile.name}
+                          value={bankDraft.name}
                           onChange={(event) =>
-                            setBankProfile((current) => ({ ...current, name: event.target.value }))
+                            setBankDraft((current) => ({ ...current, name: event.target.value }))
                           }
                         />
                       </label>
                       <label>
                         Feira
                         <select
-                          value={bankProfile.fairName}
+                          value={bankDraft.fairName}
                           onChange={(event) =>
-                            setBankProfile((current) => ({ ...current, fairName: event.target.value }))
+                            setBankDraft((current) => ({ ...current, fairName: event.target.value }))
                           }
                         >
                           {fairs
@@ -1424,18 +1425,18 @@ export function FeiranteOperations({
                       <label>
                         Box/banca
                         <input
-                          value={bankProfile.box}
+                          value={bankDraft.box}
                           onChange={(event) =>
-                            setBankProfile((current) => ({ ...current, box: event.target.value }))
+                            setBankDraft((current) => ({ ...current, box: event.target.value }))
                           }
                         />
                       </label>
                       <label>
                         Corredor/ala
                         <input
-                          value={bankProfile.corridor}
+                          value={bankDraft.corridor}
                           onChange={(event) =>
-                            setBankProfile((current) => ({ ...current, corridor: event.target.value }))
+                            setBankDraft((current) => ({ ...current, corridor: event.target.value }))
                           }
                         />
                       </label>
@@ -1443,9 +1444,9 @@ export function FeiranteOperations({
                     <label>
                       Descrição pública
                       <textarea
-                        value={bankProfile.description}
+                        value={bankDraft.description}
                         onChange={(event) =>
-                          setBankProfile((current) => ({ ...current, description: event.target.value }))
+                          setBankDraft((current) => ({ ...current, description: event.target.value }))
                         }
                         rows={3}
                       />
@@ -1453,9 +1454,9 @@ export function FeiranteOperations({
                     <label>
                       Categorias
                       <input
-                        value={bankProfile.categories}
+                        value={bankDraft.categories}
                         onChange={(event) =>
-                          setBankProfile((current) => ({ ...current, categories: event.target.value }))
+                          setBankDraft((current) => ({ ...current, categories: event.target.value }))
                         }
                         placeholder="Ex.: hortifruti, orgânicos, cestas"
                       />
@@ -1463,9 +1464,9 @@ export function FeiranteOperations({
                     <label>
                       Ponto de referência
                       <input
-                        value={bankProfile.reference}
+                        value={bankDraft.reference}
                         onChange={(event) =>
-                          setBankProfile((current) => ({ ...current, reference: event.target.value }))
+                          setBankDraft((current) => ({ ...current, reference: event.target.value }))
                         }
                       />
                     </label>
@@ -1473,18 +1474,18 @@ export function FeiranteOperations({
                       <label>
                         Telefone comercial
                         <input
-                          value={bankProfile.phone}
+                          value={bankDraft.phone}
                           onChange={(event) =>
-                            setBankProfile((current) => ({ ...current, phone: event.target.value }))
+                            setBankDraft((current) => ({ ...current, phone: event.target.value }))
                           }
                         />
                       </label>
                       <label>
                         WhatsApp comercial
                         <input
-                          value={bankProfile.whatsapp}
+                          value={bankDraft.whatsapp}
                           onChange={(event) =>
-                            setBankProfile((current) => ({ ...current, whatsapp: event.target.value }))
+                            setBankDraft((current) => ({ ...current, whatsapp: event.target.value }))
                           }
                         />
                       </label>
@@ -1497,7 +1498,7 @@ export function FeiranteOperations({
                             const file = event.target.files?.[0];
                             if (!file) return;
                             imageFileToDataUrl(file, (logoDataUrl) =>
-                              setBankProfile((current) => ({ ...current, logoDataUrl })),
+                              setBankDraft((current) => ({ ...current, logoDataUrl })),
                             );
                           }}
                         />
@@ -1511,15 +1512,27 @@ export function FeiranteOperations({
                             const file = event.target.files?.[0];
                             if (!file) return;
                             imageFileToDataUrl(file, (coverDataUrl) =>
-                              setBankProfile((current) => ({ ...current, coverDataUrl })),
+                              setBankDraft((current) => ({ ...current, coverDataUrl })),
                             );
                           }}
                         />
                       </label>
                     </div>
-                    <button className="primary-action" type="submit">
-                      Salvar banca
-                    </button>
+                    <div className="module-action-row">
+                      <button className="primary-action" type="submit">
+                        Salvar banca
+                      </button>
+                      <button
+                        className="secondary-action"
+                        type="button"
+                        onClick={() => {
+                          setBankDraft({ ...bankProfile });
+                          setBankEditing(false);
+                        }}
+                      >
+                        Cancelar alterações
+                      </button>
+                    </div>
                   </form>
                 ) : (
                   <>
@@ -1546,7 +1559,13 @@ export function FeiranteOperations({
                       </button>
                     </div>
                     <div className="module-action-row">
-                      <button className="primary-action" onClick={() => setBankEditing(true)}>
+                      <button
+                        className="primary-action"
+                        onClick={() => {
+                          setBankDraft({ ...bankProfile });
+                          setBankEditing(true);
+                        }}
+                      >
                         <Edit3 size={17} /> Editar banca
                       </button>
                       <button className="secondary-action" onClick={() => setBankPreview((value) => !value)}>
