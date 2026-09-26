@@ -2582,7 +2582,19 @@ export function FeiranteOperations({
                         )}
                       </div>
                       <div className="item-actions">
-                        <span className="document-status">{vendorDocumentStatusLabel(document.status)}</span>
+                        <span
+                          className={`document-status ${
+                            document.status === "approved"
+                              ? "status-approved"
+                              : document.status === "under_review"
+                                ? "status-review"
+                                : document.status === "correction_required"
+                                  ? "status-error"
+                                  : ""
+                          }`}
+                        >
+                          {vendorDocumentStatusLabel(document.status)}
+                        </span>
                         <label className="mini-toggle">
                           {document.fileName ? "Substituir" : "Enviar"}
                           <input
