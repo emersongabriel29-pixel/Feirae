@@ -142,6 +142,7 @@ Na Central:
 `public/feirae-sw.js` já recebe eventos `push` e exibe a identidade Feiraê, mas o protótipo ainda não possui backend que salve `PushSubscription` e envie notificações remotas.
 
 Portanto, **notificação com o app totalmente fechado não está completa ponta a ponta** até existir backend compartilhado e Web Push. Ver [NOTIFICATIONS.md](NOTIFICATIONS.md).
+
 ## 4. Cliente — carrinho
 
 O carrinho exibe:
