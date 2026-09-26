@@ -212,7 +212,7 @@ function fillRows(m,rows){
    if(!m.readonly){
      line+='<td><div class="actions"><button data-edit="'+i+'">Editar</button>';
      if(m.documentViewer&&row.file_path)line+='<button data-document="'+i+'">Abrir documento</button>';
-     if(m.enforcementTarget){
+     if(m.enforcementTarget&&canModule("enforcements")){
        line+='<button data-suspend="'+i+'">Suspender</button><button data-ban="'+i+'">Banir</button>';
        if(m.table==="delivery_profiles")line+='<button data-block-delivery="'+i+'">Bloquear entregas</button>';
      }
