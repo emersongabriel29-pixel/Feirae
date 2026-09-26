@@ -281,8 +281,14 @@ export function FairCard({
               ? `${ratingLabel(fair.rating)} (${fair.reviewCount})`
               : "Sem avaliações"}
           </span>
-          <span>{fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Entrega indisponível no momento"}</span>
-          <span>{typeof fair.deliveryFee === "number" ? money(fair.deliveryFee) : "Taxa indisponível no momento"}</span>
+          <span>
+            {fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Entrega indisponível no momento"}
+          </span>
+          <span>
+            {typeof fair.deliveryFee === "number"
+              ? money(fair.deliveryFee)
+              : "Taxa indisponível no momento"}
+          </span>
         </div>
         <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
           <button onClick={() => onFair(fair.name)} className="primary-action">
@@ -1531,7 +1537,9 @@ export function Checkout({
                   </b>
                 </p>
                 {!freightReady && (
-                  <small>O frete só entra no total depois que um endereço de entrega estiver disponível.</small>
+                  <small>
+                    O frete só entra no total depois que um endereço de entrega estiver disponível.
+                  </small>
                 )}
               </>
             )}
