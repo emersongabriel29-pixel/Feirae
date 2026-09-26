@@ -41,6 +41,7 @@ Um documento de requisito não é prova de implementação.
 
 - [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) — comportamento atual e limites.
 - [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido e entrega.
+- [NOTIFICATIONS.md](NOTIFICATIONS.md) — alertas operacionais, identidade Feiraê e limite do Web Push atual.
 - [END_TO_END_AUDIT.md](END_TO_END_AUDIT.md) — implementado x testado x pendente.
 - [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md) — botões/campos/edição.
 - [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) — identidade, tokens, responsividade e regras de layout.
