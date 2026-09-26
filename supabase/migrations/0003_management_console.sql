@@ -358,7 +358,7 @@ values
   ('finance.minimum_payout_amount','finance','Saque mínimo','20'::jsonb,'Valor mínimo de saque, se o provedor permitir saque manual.',false),
   ('finance.payout_delay_days','finance','Prazo padrão de liberação','2'::jsonb,'Dias para tornar o valor disponível quando aplicável.',false),
   ('catalog.allow_multi_fair_cart','catalog','Carrinho com várias feiras','false'::jsonb,'Mantém uma compra vinculada a uma feira por padrão.',true),
-  ('documents.storage_bucket','documents','Bucket de documentos','"onboarding-documents"'::jsonb,'Bucket privado usado para documentos de cadastro. Não contém segredo.',false)
+  ('documents.storage_bucket','documents','Bucket de documentos','"onboarding-documents"'::jsonb,'Bucket privado usado para documentos de cadastro. O nome do bucket não é segredo.',true)
 on conflict (key) do nothing;
 
 insert into public.service_states
@@ -715,7 +715,14 @@ create policy "feirae admins read onboarding documents"
 on storage.objects for select
 to authenticated
 using (
-  bucket_id = 'onboarding-documents'
+  bucket_id = coalesce(
+    (
+      select ps.value #>> '{}'
+      from public.platform_settings ps
+      where ps.key = 'documents.storage_bucket'
+    ),
+    'onboarding-documents'
+  )
   and (select private.feirae_admin_has('documents.review'))
 );
 
