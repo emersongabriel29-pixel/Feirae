@@ -45,6 +45,7 @@ Quando houver conflito, a prioridade é:
 
 ## Planejamento
 
+- [DOCUMENTATION_STATUS.md](DOCUMENTATION_STATUS.md) — resultado da auditoria documental.
 - [MVP_CHECKLIST.md](MVP_CHECKLIST.md) — concluído x pendente.
 - [ROADMAP.md](ROADMAP.md) — próximas fases.
 - [TECHNICAL_REVIEW.md](TECHNICAL_REVIEW.md) — revisão técnica atual.
