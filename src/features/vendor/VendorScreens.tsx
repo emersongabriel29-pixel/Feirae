@@ -358,7 +358,7 @@ export function FeiranteOperations({
         );
         const currentOrder = byId.get(record.id);
         const localStatus =
-          record.status === "delivered"
+          record.status === "delivered" || vendorState?.status === "delivered"
             ? "delivered"
             : record.status === "cancelled" || vendorState?.status === "rejected"
               ? "rejected"
