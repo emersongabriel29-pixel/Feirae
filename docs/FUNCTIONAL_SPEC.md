@@ -120,9 +120,11 @@ O carrinho exibe:
 - subtotal;
 - peso estimado.
 
-Regra implementada:
+Regras implementadas:
 
-- não misturar produtos de feiras diferentes.
+- não misturar produtos de feiras diferentes;
+- o contador da sacola representa a quantidade total de unidades;
+- ao atingir o estoque disponível, o botão `+` da sacola fica desabilitado e informa o limite.
 
 O código não mostra “veículo indicado” para o cliente.
 
@@ -241,8 +243,11 @@ Código atual em `CustomerScreens.tsx`:
 2. lê `vendorMetrics.deliveryFee`;
 3. pega o maior valor entre as bancas;
 4. chama esse valor de `fallbackDeliveryFee`;
-5. define `calculatedDeliveryFee = fallbackDeliveryFee` para entrega;
-6. aplica subsídio/promoção.
+5. exige endereço de entrega antes de considerar o frete pronto;
+6. sem endereço, mantém `calculatedDeliveryFee = 0`, mostra **A calcular** e não inclui frete no total;
+7. com endereço, aplica o fallback local e então calcula subsídio/promoção.
+
+Para **retirada**, frete permanece zero e endereço de entrega não é exigido.
 
 Portanto, hoje:
 
@@ -250,7 +255,7 @@ Portanto, hoje:
 - rota calcula distância/ETA para logística;
 - peso **não** altera preço;
 - distância real **não** altera preço;
-- frete exibido vem de métrica fixture/local.
+- frete exibido vem de métrica fixture/local, somente depois de existir endereço de entrega.
 
 Produção precisa substituir esse cálculo por regra server-side configurável.
 
@@ -508,3 +513,18 @@ Regra:
 ## 23. Mapeamento direto para código
 
 Veja [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).
+
+
+## 21. Navegação e cabeçalho do cliente
+
+- navegação móvel: **Início, Feiras, Produtos, Pedidos e Perfil**;
+- **Início** usa ícone de casa e abre `#/cliente/inicio`;
+- em telas de descoberta (`Início`, `Feiras`, `Produtos`), a busca ocupa uma linha inteira acima do contexto de feira/localização;
+- em `Pedidos`, `Perfil`, checkout, rastreamento e demais subtelas, busca e contexto de feira/localização não são exibidos;
+- o cabeçalho continua mantendo marca, notificações e sacola.
+
+## 22. Feiras com configuração incompleta
+
+Na interface do cliente, campos administrativos incompletos não usam mais os textos “Entrega a configurar” e “Taxa a configurar”; aparecem como indisponíveis no momento.
+
+A regra de **bloquear ativação/publicação de uma feira com configuração obrigatória incompleta** pertence ao painel de gestão. O contrato está em `ADMIN_MANAGEMENT_SPEC.md`; o painel administrativo runtime ainda não existe no repositório e não deve ser documentado como implementado.
