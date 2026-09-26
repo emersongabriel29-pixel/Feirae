@@ -295,8 +295,15 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
 
-    const createdOrderCard = screen.getByText(new RegExp(created.id, "i")).closest("article");
-    expect(createdOrderCard).not.toBeNull();
+    const createdOrderCard = screen
+      .getAllByText(new RegExp(created.id, "i"))
+      .map((node) => node.closest("article"))
+      .find(
+        (article): article is HTMLElement =>
+          Boolean(article) &&
+          Boolean(within(article as HTMLElement).queryByRole("button", { name: /abrir pedido/i })),
+      );
+    expect(createdOrderCard).toBeTruthy();
     fireEvent.click(
       within(createdOrderCard as HTMLElement).getByRole("button", { name: /abrir pedido/i }),
     );
@@ -438,8 +445,8 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /^financeiro$/i }));
 
     expect(screen.getByText(/taxa feiraê/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/a definir/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/depende do provedor/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/não configurada/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/valor bruto antes de taxas\/repasses reais/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /cadastrar destino de recebimento/i })).toBeInTheDocument();
   });
 
