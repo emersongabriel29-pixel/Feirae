@@ -63,7 +63,10 @@ let currentConfig = emptyConfig;
 const listeners = new Set<() => void>();
 
 function envValue(name: "VITE_SUPABASE_URL" | "VITE_SUPABASE_ANON_KEY") {
-  return String(import.meta.env[name] ?? "").trim();
+  const meta = import.meta as ImportMeta & {
+    env?: Partial<Record<"VITE_SUPABASE_URL" | "VITE_SUPABASE_ANON_KEY", string>>;
+  };
+  return String(meta.env?.[name] ?? "").trim();
 }
 
 function dataApiConfigured() {
