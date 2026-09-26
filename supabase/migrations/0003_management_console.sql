@@ -285,8 +285,8 @@ as $function$
 begin
   new.updated_at := now();
   if new.status = 'revoked' and old.status is distinct from 'revoked' then
-    new.revoked_by := (select auth.uid());
-    new.revoked_at := now();
+    new.revoked_by := coalesce((select auth.uid()), new.revoked_by);
+    new.revoked_at := coalesce(new.revoked_at, now());
   elsif new.status <> 'revoked' then
     new.revoked_by := null;
     new.revoked_at := null;
@@ -371,6 +371,7 @@ as $function$
       where p.id = (select auth.uid())
         and p.role = 'admin'
     )
+    and coalesce((select auth.jwt()->>'aal'), 'aal1') = 'aal2'
     and exists (
       select 1
       from public.admin_access aa
@@ -427,6 +428,10 @@ security invoker
 set search_path = ''
 as $function$
 begin
+  if (select auth.uid()) is null then
+    return new;
+  end if;
+
   if tg_op = 'INSERT' then
     if new.role in ('admin','fair_manager')
        and (select auth.uid()) is not null
