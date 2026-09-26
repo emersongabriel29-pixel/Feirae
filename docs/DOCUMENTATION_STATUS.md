@@ -129,7 +129,8 @@ Requisito passou a incluir concretamente:
 ## Documentos novos desta rodada
 
 - `SCHEMA_GAP_MATRIX.md`;
-- `IMPLEMENTATION_TRACEABILITY.md`.
+- `IMPLEMENTATION_TRACEABILITY.md`;
+- `DESIGN_SYSTEM.md`.
 
 ## Documentos reescritos com base no código
 
@@ -170,3 +171,22 @@ A documentação agora registra, mas não resolve sozinha:
 - PSP/KYC/Storage ausentes.
 
 Esses itens só podem ser marcados concluídos quando o código correspondente for implementado e testado.
+
+
+## Atualização visual posterior — 26/09/2026
+
+A auditoria de design/layout foi aplicada ao código e documentada.
+
+Mudanças registradas:
+
+- design tokens semânticos;
+- responsividade mobile;
+- navegação Cliente;
+- entrada direta nas Centrais de Feirante/Entregador;
+- agrupamento de módulos;
+- estados semânticos de pedidos/documentos;
+- erros visuais;
+- publicação/renderização local de foto de produto;
+- regras de QA visual.
+
+A documentação não afirma regressão visual automatizada: Playwright/Cypress e screenshot testing continuam ausentes.
