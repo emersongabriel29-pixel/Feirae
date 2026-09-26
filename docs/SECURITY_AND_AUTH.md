@@ -204,16 +204,14 @@ Hoje `storedFile.ts`:
 - converte para Data URL;
 - usa `file.type` informado pelo navegador.
 
-Não há:
+No app principal local ainda não há:
 
 - magic bytes;
 - antivírus;
 - validação real de PDF/imagem;
-- Storage privado;
-- URL assinada;
-- auditoria de acesso.
+- upload remoto.
 
-Produção precisa de bucket privado e validação server-side.
+Para o backend futuro, a Gestão já adiciona bucket privado e a Edge Function `document-upload`, que valida tamanho, MIME e magic bytes de PDF/JPEG/PNG antes de gravar no Storage. A leitura administrativa usa URL assinada temporária. Antivírus/antimalware continua como camada adicional recomendada antes de produção.
 
 ## 8. Cartão
 
@@ -281,5 +279,10 @@ Matriz completa de gaps: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 - A Edge Function valida o JWT, exige `aal2`, papel admin ativo e permissão.
 - `service_role` existe somente no ambiente da Edge Function.
 - O bucket `onboarding-documents` é privado e limitado a PDF/JPEG/PNG e 5 MB.
-- Upload de documentos ainda precisa de validação real de conteúdo/magic bytes e antivírus antes de produção.
+- `document-upload` valida conteúdo por magic bytes e tamanho; antivírus/antimalware permanece como camada adicional recomendada antes de produção.
 - Health checks usam URLs HTTPS definidas em variáveis server-side; o navegador nunca recebe esses endpoints secretos quando houver proxy interno.
+
+
+## 13. Configuração do painel administrativo
+
+Em produção, a Gestão lê URL e chave publishable/anon de `admin/config.json`. A tela de troca manual de conexão só é aceita em localhost/desenvolvimento. Isso evita que um administrador aponte o painel publicado para outro banco pelo navegador. A chave pública continua protegida por RLS; segredos permanecem server-side.
