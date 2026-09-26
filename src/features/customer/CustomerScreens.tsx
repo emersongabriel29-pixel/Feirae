@@ -26,6 +26,7 @@ import { fairHoursForName } from "../../domain/fairHours";
 import {
   calculateCheckoutPromotions,
   marketplaceProducts,
+  readSharedStores,
   readStoreByIdentity,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
@@ -1162,6 +1163,7 @@ export function Checkout({
       promotionDiscount: number;
       walletUsed: number;
       appliedPromotions: string[];
+      whatsappConsent: boolean;
       changeFor?: number;
     },
   ) => void;
@@ -1173,6 +1175,7 @@ export function Checkout({
   const [selectedCardId, setSelectedCardId] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [useWallet, setUseWallet] = useState(false);
+  const [whatsappConsent] = usePersistentState<boolean>(scopedStorageKey("feirae:whatsapp"), false);
   const [addresses] = usePersistentState<Address[]>(scopedStorageKey("feirae:addresses"), []);
   const [cards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
@@ -1488,6 +1491,10 @@ export function Checkout({
               <span>Pagamento</span>
               <b>{payment}</b>
             </p>
+            <p>
+              <span>WhatsApp</span>
+              <b>{whatsappConsent ? "Autorizado" : "Não autorizado"}</b>
+            </p>
             <p className="total">
               <span>{hasVariableWeight ? "Total estimado" : "Total"}</span>
               <b>{money(total)}</b>
@@ -1510,6 +1517,7 @@ export function Checkout({
                 promotionDiscount,
                 walletUsed,
                 appliedPromotions: promotionResult.appliedPromotions,
+                whatsappConsent,
                 changeFor:
                   cashPayment && needsChange && Number.isFinite(parsedChangeFor)
                     ? parsedChangeFor
