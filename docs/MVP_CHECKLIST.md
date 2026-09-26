@@ -1,123 +1,209 @@
 # Checklist de MVP — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 após auditoria contra o código e schema.
 
 Legenda:
 
-- [x] concluído no protótipo local;
-- [ ] pendente para backend/produção;
-- [~] parcialmente implementado.
+- [x] implementado no protótipo local;
+- [~] parcialmente implementado;
+- [ ] não implementado.
 
-## Protótipo funcional
+## Cliente
 
-- [x] três papéis: cliente, feirante e entregador;
-- [x] login/cadastro local com validação de senha;
-- [x] edição local de nome/e-mail/senha;
-- [x] catálogo e banca compartilhados;
-- [x] carrinho/checkout;
-- [x] pedido unificado;
-- [x] multi-banca;
-- [x] estoque local reservado/liberado/consumido;
-- [x] preparo e peso real;
-- [x] retirada completa;
-- [x] entrega completa;
-- [x] veículos/capacidade/raio/região/disponibilidade;
-- [x] promoções e cupons;
+- [x] login/cadastro local com senha;
+- [x] edição de nome/e-mail/senha;
+- [x] feiras e bancas;
+- [x] catálogo;
+- [x] carrinho;
+- [x] impedir mistura de feiras;
+- [x] endereço manual;
+- [x] GPS/reverse geocoding de protótipo;
+- [x] checkout;
+- [x] pagar agora como estado local;
+- [x] pagar na entrega;
+- [x] dinheiro/troco;
+- [x] cartões locais com últimos 4;
+- [x] favoritos;
+- [x] pedidos;
+- [x] retirada;
+- [x] entrega;
 - [x] cancelamento/suporte;
-- [x] reembolso/carteira local;
 - [x] avaliações;
-- [x] notificações baseadas em eventos;
-- [x] repasses simulados;
-- [x] documentos armazenados localmente no protótipo;
-- [x] auditoria de botões e campos;
-- [x] 69 testes passando no commit de referência `33fd6b58`.
+- [x] comprar novamente;
+- [x] carteira local;
+- [x] WhatsApp consent local;
+- [~] Pix — UI/estado, sem cobrança/QR real;
+- [~] rastreamento — estados/ETA, sem GPS em tempo real.
 
-## Banco e infraestrutura
+## Feirante
 
-- [x] migration core `0001_feirae_core.sql`;
-- [x] migration operacional `0002_feirae_operations.sql`;
-- [ ] aplicar migrations em ambientes reais;
-- [ ] estratégia dev/staging/prod;
-- [ ] backup/restore;
-- [ ] observabilidade;
-- [ ] Error Boundary e recuperação.
+- [x] conta;
+- [x] editar banca;
+- [x] salvar/cancelar rascunho;
+- [x] produtos;
+- [x] estoque local;
+- [x] peso real;
+- [x] horários;
+- [x] entrega/retirada;
+- [x] pagamento na entrega;
+- [x] documentos locais;
+- [x] aprovação local;
+- [x] pedido sequencial;
+- [x] multi-banca no pedido;
+- [x] avaliações;
+- [x] recebível/repasse simulado;
+- [x] percentual;
+- [x] valor fixo;
+- [x] produto/categoria;
+- [x] frete grátis;
+- [x] cupom no frontend;
+- [x] Compre X Leve Y no frontend;
+- [~] promoção por horário — sem regra temporal específica;
+- [~] combo — sem composição própria;
+- [~] fotos — somente uma foto Data URL, não galeria/Storage.
 
-## Autenticação e segurança
+## Entregador
 
-- [~] autenticação local do protótipo;
-- [ ] Supabase Auth;
-- [ ] recuperação real de senha;
-- [ ] RLS completa e testada por papel;
-- [ ] rate limit;
-- [ ] sessões/revogação;
-- [ ] secrets somente server-side;
-- [ ] pentest/revisão de segurança antes de produção.
+- [x] conta;
+- [x] documentos locais;
+- [x] aprovação local dinâmica;
+- [x] veículos;
+- [x] capacidade editável;
+- [x] placa;
+- [x] disponibilidade;
+- [x] agenda;
+- [x] raio;
+- [x] regiões;
+- [x] aceitar corrida;
+- [x] coleta;
+- [x] iniciar entrega;
+- [x] concluir entrega;
+- [x] cancelar corrida;
+- [x] suporte;
+- [x] avaliações;
+- [x] recebível/repasse simulado;
+- [~] validação documental — status local, sem Detran/KYC;
+- [~] rota multi-banca — nomes agregados, sem múltiplas paradas.
 
-## Catálogo e estoque real
+## Promoções e schema
 
-- [x] comportamento local de produto/estoque;
-- [ ] repository/adapters no Supabase;
-- [ ] Storage para imagens;
-- [ ] reserva de estoque transacional server-side;
-- [ ] preço recalculado no servidor;
-- [ ] soft delete/histórico;
-- [ ] concorrência/idempotência testadas.
+- [~] promoções completas no banco;
+- [ ] adicionar `coupon_code` em `promotions`;
+- [ ] adicionar `pay_quantity`;
+- [ ] adicionar `take_quantity`;
+- [ ] implementar semântica própria de `horario`;
+- [ ] implementar semântica própria de `combo`.
 
-## Pedidos e entrega real
+## Supabase/schema
 
-- [x] fluxo completo no protótipo;
-- [ ] máquina de estados server-side;
-- [ ] eventos imutáveis no banco;
-- [ ] cálculo real de rota;
-- [ ] rastreamento;
-- [ ] comprovante de coleta/entrega;
-- [ ] notifications server-side.
+- [x] migration 0001;
+- [x] migration 0002;
+- [ ] instalar/conectar cliente Supabase;
+- [ ] criar config Supabase;
+- [ ] aplicar migrations em banco de desenvolvimento;
+- [ ] normalizar `cancelled/canceled`;
+- [ ] criar enum próprio de `order_vendors.status`;
+- [ ] separar pagamento de `order_status`;
+- [ ] snapshots faltantes;
+- [ ] resolver `reviews` x `order_reviews`;
+- [ ] reserva de estoque no banco;
+- [ ] ledger multi-banca;
+- [ ] imagens de produto;
+- [ ] notificações persistentes.
 
-## Documentos e aprovação
+## RLS
 
-- [x] formulário/upload local para validar UX;
-- [ ] Storage privado;
-- [ ] revisão administrativa;
-- [ ] KYC/verificação;
-- [ ] revalidação por vencimento;
-- [ ] bloqueio server-side por aprovação.
+- [ ] RLS/policies para `vendor_stores`;
+- [ ] `categories`;
+- [ ] `order_vendors`;
+- [ ] `order_items`;
+- [ ] `carts`;
+- [ ] `deliveries`;
+- [ ] `payments`;
+- [ ] `reviews`;
+- [ ] completar policies de `vendor_profiles`;
+- [ ] `promotion_usages`;
+- [ ] `support_tickets`;
+- [ ] `order_reviews`;
+- [ ] CRUD seguro de produtos do feirante;
+- [ ] mutações de pedido server-side;
+- [ ] revisão administrativa de documentos.
 
-## Pagamentos e financeiro
+## Sistema de gestão
 
-- [x] estados e experiência local;
-- [x] modelo financeiro documentado;
-- [ ] provedor Pix/cartão;
-- [ ] tokenização;
-- [ ] webhook idempotente;
-- [ ] split/ledger;
-- [ ] estorno real;
-- [ ] saque/repasse;
-- [ ] conciliação.
+- [ ] UI administrativa;
+- [ ] ativar/desativar UF;
+- [ ] ativar/desativar feira;
+- [ ] catálogo global de tipo de veículo;
+- [ ] ativar/desativar tipo de veículo;
+- [ ] definir capacidade padrão/máxima por tipo;
+- [ ] suspender/banir cliente;
+- [ ] suspender/banir feirante;
+- [ ] suspender/banir entregador;
+- [ ] aprovar/corrigir documentos;
+- [ ] regras versionadas de taxas;
+- [ ] permissões administrativas;
+- [ ] audit log;
+- [ ] financeiro/admin;
+- [ ] suporte/admin.
+
+## Integrações
+
+- [x] Geolocation API do browser;
+- [x] Nominatim Search;
+- [x] Nominatim Reverse;
+- [x] OSRM público;
+- [x] abrir Google Maps por URL;
+- [ ] provedor de rotas com SLA;
+- [ ] PSP Pix/cartão;
+- [ ] webhooks;
+- [ ] split;
+- [ ] KYC;
+- [ ] Storage;
+- [ ] push;
+- [ ] WhatsApp API;
+- [ ] observabilidade.
 
 ## Qualidade
 
-- [x] TypeScript;
+- [x] 69 testes;
 - [x] ESLint;
+- [x] TypeScript build;
 - [x] Prettier;
-- [x] Vitest/Testing Library;
 - [x] GitHub Actions;
-- [x] cobertura de fluxos internos principais;
-- [ ] E2E em navegador real;
-- [ ] testes em dispositivos reais;
-- [ ] acessibilidade formal;
-- [ ] carga/performance;
-- [ ] chaos/falhas de provedores.
+- [ ] teste dedicado reembolso→carteira;
+- [ ] WhatsApp persistido no pedido;
+- [ ] toggle de ofertas;
+- [ ] conteúdo de documento após reload;
+- [ ] todos os disabled do checkout;
+- [ ] browser E2E;
+- [ ] migration tests;
+- [ ] RLS tests;
+- [ ] concorrência;
+- [ ] acessibilidade formal.
 
-## LGPD e operação
+## Deploy
 
-- [ ] política de privacidade final;
-- [ ] base legal/finalidade por dado;
-- [ ] retenção;
-- [ ] exclusão de conta/dados;
-- [ ] exportação/portabilidade quando aplicável;
-- [ ] controle administrativo auditável;
-- [ ] resposta a incidentes.
+- [x] workflow de qualidade;
+- [ ] workflow de deploy;
+- [ ] hosting configurado no repo;
+- [ ] staging;
+- [ ] produção;
+- [ ] rollback;
+- [ ] smoke pós-deploy.
 
-## Critério para MVP operacional
+## Critério de MVP operacional
 
-O MVP operacional só estará pronto quando um usuário autenticado em backend real puder concluir a compra com preço/estoque validados no servidor, a banca processar o pedido, o entregador concluir a entrega, o pagamento ser confirmado por provedor e os três papéis acompanharem o mesmo pedido sem depender de `localStorage`.
+Não considerar MVP operacional até:
+
+- Auth real;
+- banco como fonte de verdade;
+- estoque transacional;
+- pedidos multi-dispositivo;
+- documentos em Storage;
+- RLS;
+- pagamento real;
+- entrega compartilhada;
+- ledger/repasses;
+- admin mínimo;
+- E2E em browser.

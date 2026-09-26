@@ -1,29 +1,28 @@
 # Modelo de dados e estados — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 após comparação direta entre frontend e migrations.
 
-Este é o documento canônico para nomes de estados e fronteiras entre domínios.
+Este documento não descreve apenas o modelo desejado. Ele separa **implementado no frontend**, **existente no SQL** e **lacuna**.
 
-## Regra fundamental
+Referência detalhada de incompatibilidades: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
-Não usar um único enum para representar pedido, pagamento, banca e entrega. São máquinas diferentes.
+## 1. Papéis
 
-## Pedido global
+| Conceito        | Frontend                    | SQL            |
+| --------------- | --------------------------- | -------------- |
+| cliente         | `customer`                  | `customer`     |
+| feirante        | `feirante`                  | `vendor`       |
+| entregador      | `delivery`                  | `delivery`     |
+| admin           | não existe no login público | `admin`        |
+| gestor de feira | não existe na UI atual      | `fair_manager` |
 
-### Protótipo atual
+Antes de conectar Auth/RLS, definir um nome canônico para feirante. Não deixar `feirante` e `vendor` coexistirem sem mapeamento explícito.
 
-```
-received
-preparing
-ready_for_pickup
-driver_assigned
-collected
-out_for_delivery
-delivered
-cancelled
-```
+## 2. Pedido global
 
-Transição feliz de entrega:
+### Frontend atual
+
+Fonte: `src/domain/orderBridge.ts`.
 
 ```
 received
@@ -35,30 +34,62 @@ received
 → delivered
 ```
 
-Retirada:
+Saída alternativa:
 
 ```
-received
-→ preparing
-→ ready_for_pickup
-→ delivered
+cancelled
 ```
 
-### Backend alvo
+### SQL atual
 
-O backend deve adotar a mesma semântica. Se houver estado de pré-pagamento, ele deve existir antes de `received`, por exemplo:
+`public.order_status`, migration 0001:
 
 ```
-pending_payment → received
+pending_payment
+paid
+accepted
+preparing
+ready_for_pickup
+out_for_delivery
+delivered
+canceled
+refunded
 ```
 
-### Inconsistência existente nas migrations
+Migration 0002 adiciona:
 
-O enum SQL criado em `0001` contém estados antigos e `0002` adiciona `driver_assigned` e `collected`. Há também grafia `canceled` no SQL e `cancelled` no frontend.
+```
+driver_assigned
+collected
+```
 
-Antes de conectar produção, criar migration de normalização. Não mapear silenciosamente.
+### Decisão obrigatória antes do backend real
 
-## Estado da banca dentro do pedido
+O backend deve separar:
+
+- estado operacional do pedido;
+- estado de pagamento.
+
+`paid` e `refunded` não devem continuar como estados operacionais do pedido.
+
+Também é obrigatório normalizar `cancelled` x `canceled`.
+
+## 3. Estado da banca
+
+### Frontend
+
+`VendorOrderStatus` em `vendorModel.ts`:
+
+```
+new
+preparing
+ready_for_pickup
+collected
+delivered
+rejected
+```
+
+No pedido unificado, a participação da banca usa:
 
 ```
 pending
@@ -70,19 +101,21 @@ delivered
 rejected
 ```
 
-Em multi-banca, cada participação precisa de estado próprio.
+### SQL
 
-Regra atual:
+`order_vendors.status` reutiliza `public.order_status`.
 
-- qualquer banca em preparo mantém global `preparing`;
-- todas prontas liberam `ready_for_pickup`;
-- rejeição local leva o protótipo a cancelamento global.
+Isso é incompatível porque o enum SQL não possui:
 
-Produção pode suportar cancelamento parcial, mas precisa de regra financeira/estoque explícita.
+- `pending`;
+- `ready`;
+- `rejected`.
 
-## Pagamento
+Correção: criar enum próprio `order_vendor_status`.
 
-Protótipo atual:
+## 4. Pagamento
+
+Frontend:
 
 ```
 authorized
@@ -91,27 +124,34 @@ failed
 refunded
 ```
 
-Produção provavelmente precisará ampliar para:
+SQL:
 
-```
-pending
-authorized
-captured
-failed
-refund_pending
-refunded
-partially_refunded
-disputed
-chargeback
-```
+- `orders.payment_status text`;
+- `payments.status text`.
 
-Não adicionar esses estados ao enum global do pedido.
+Não há constraint.
 
-## Entrega
+Produção deve criar enum/check próprio e impedir valores arbitrários.
 
-O protótipo deriva parte da entrega pelo status do pedido, mas produção deve ter entidade própria.
+## 5. Entrega
 
-Sugestão:
+O frontend usa o pedido global para refletir logística.
+
+A tabela `deliveries` já possui:
+
+- entregador;
+- veículo;
+- origem/destino geográfico;
+- taxa;
+- distâncias;
+- ETA;
+- timestamps de aceite/coleta/rota/entrega;
+- cancelamento;
+- comprovante.
+
+Mas `deliveries.status` é `text` sem enum/check.
+
+Estado alvo específico da entrega:
 
 ```
 offered
@@ -125,9 +165,20 @@ cancelled
 incident
 ```
 
-Pedido e entrega são sincronizados por ações válidas, não pelo compartilhamento do mesmo enum.
+Esses valores ainda não estão implementados como constraint SQL.
 
-## Aprovação documental
+## 6. Aprovação documental
+
+Frontend de documentos usa:
+
+```
+pending
+under_review
+approved
+correction_required
+```
+
+SQL `onboarding_documents` permite:
 
 ```
 pending
@@ -135,15 +186,27 @@ under_review
 approved
 correction_required
 rejected
-expired
-suspended
 ```
 
-O SQL atual ainda não possui todos os estados futuros.
+O frontend ainda não representa `rejected` de forma completa.
 
-## Repasse
+Também não há enum para:
 
-Recebível:
+- `expired`;
+- `suspended`.
+
+## 7. Recebíveis/repasse
+
+Frontend do entregador:
+
+```
+pending
+available
+withdrawal_requested
+paid
+```
+
+SQL `payouts.status`:
 
 ```
 pending
@@ -151,123 +214,184 @@ available
 requested
 paid
 failed
-blocked
-refunded
 ```
 
-Pagamento do provedor e repasse são objetos diferentes.
+Há divergência direta:
 
-## Entidades centrais
+- frontend: `withdrawal_requested`;
+- SQL: `requested`.
 
-### Pessoa/identidade
+Normalizar antes da integração.
 
-- profile;
-- role;
-- vendor_profile;
-- delivery_profile.
+## 8. Entidades que realmente existem no SQL
 
-### Feira/banca
+### Migration 0001
 
-- fair;
-- fair_vendor_membership;
-- vendor_store;
-- opening_hours.
+- `profiles`
+- `fairs`
+- `vendor_profiles`
+- `fair_vendor_memberships`
+- `vendor_stores`
+- `categories`
+- `products`
+- `addresses`
+- `orders`
+- `order_vendors`
+- `order_items`
+- `carts`
+- `cart_items`
+- `deliveries`
+- `payments`
+- `reviews`
 
-### Catálogo
+### Migration 0002
 
-- category;
-- product;
-- product_image;
-- inventory/reservation;
-- promotion;
-- promotion_usage.
+- `delivery_profiles`
+- `delivery_vehicles`
+- `delivery_preferences`
+- `onboarding_documents`
+- `promotions`
+- `promotion_usages`
+- `order_events`
+- `support_tickets`
+- `order_reviews`
+- `payouts`
+- `wallet_entries`
 
-### Compra
+## 9. Entidades citadas no produto, mas ausentes no SQL
 
-- cart;
-- cart_item;
-- order;
-- order_vendor;
-- order_item;
-- order_event.
+Ainda não existem:
 
-### Logística
+- tabela de imagens de produto;
+- reservas de estoque;
+- ledger contábil;
+- notificações;
+- favoritos;
+- catálogo global de tipos de veículo;
+- estados/UF atendidos;
+- regras versionadas de taxa;
+- suspensões;
+- audit log administrativo.
 
-- delivery;
-- delivery_profile;
-- delivery_vehicle;
-- delivery_preferences.
+Não tratar essas entidades como “já implementadas”.
 
-### Financeiro
+## 10. Eventos do pedido
 
-- payment;
-- ledger entry;
-- payout;
-- wallet entry.
+Tabela atual `order_events` possui:
 
-### Operação
+- `order_id`;
+- `actor_id`;
+- `actor_role`;
+- `event_key`;
+- `label`;
+- `reason`;
+- `details`;
+- `created_at`.
 
-- onboarding_document;
-- support_ticket;
-- review;
-- notification;
-- audit_log.
+Não possui:
 
-## IDs
+- `previous_state`;
+- `next_state`;
+- `correlation_id`.
 
-Produção deve usar IDs estáveis do banco.
+Se a auditoria depender desses campos, criar migration.
 
-Não usar como ID canônico:
+## 11. Avaliações
 
-- nome da banca;
-- e-mail;
-- texto da feira;
-- placa;
-- nome do produto.
+Existem duas tabelas:
 
-No protótipo existem IDs derivados para manter a experiência; não devem ser copiados como arquitetura final.
+- `reviews` na 0001;
+- `order_reviews` na 0002.
 
-## Snapshots
+`order_reviews` é mais próxima do frontend porque suporta autor e alvo por papel.
 
-Pedido deve armazenar snapshot do momento da compra:
+Antes de produção, definir:
+
+- qual tabela é canônica;
+- migration de dados;
+- depreciação da outra.
+
+## 12. Snapshots de pedido
+
+Já existem:
 
 - nome do produto;
 - preço unitário;
-- unidade;
 - quantidade;
-- peso estimado/final;
-- banca;
-- descontos;
-- taxa de entrega;
-- endereço relevante.
+- peso estimado;
+- peso real.
 
-Excluir ou editar produto não pode reescrever pedido antigo.
+Faltam no schema para refletir o frontend atual:
 
-## Eventos
+- unidade comercial em snapshot;
+- nome/identidade da banca em snapshot;
+- nome do cliente em snapshot;
+- endereço textual em snapshot;
+- cidade/região em snapshot;
+- coordenadas do destino em snapshot;
+- consentimento WhatsApp;
+- motivo/detalhes de cancelamento global.
 
-`order_event` deve ser append-only para mudanças críticas.
+## 13. Promoções
 
-Campos mínimos:
+Frontend possui `couponCode`, `payQuantity`, `takeQuantity`.
 
-- id;
-- order_id;
-- event_key;
-- actor_id;
-- actor_role;
-- previous_state;
-- next_state;
-- reason;
-- details;
-- created_at.
+SQL não possui essas colunas.
 
-## Próxima migration necessária
+Sem migration adicional:
 
-Antes da conexão real:
+- cupom não pode ser persistido completamente;
+- Compre X Leve Y não pode ser persistido completamente.
 
-1. separar enums por domínio;
-2. normalizar `cancelled`/ `canceled`;
-3. remover estados antigos que não representam a máquina final;
-4. adicionar constraints de transição onde fizer sentido;
-5. completar RLS;
-6. adicionar audit log;
-7. validar migration em banco descartável.
+## 14. Multi-banca financeiro
+
+`order_vendors` representa N feirantes.
+
+`payments` possui apenas:
+
+- `vendor_amount`;
+- `delivery_amount`;
+- `commission`.
+
+Um único `vendor_amount` não distribui valores entre N feirantes.
+
+Produção precisa de ledger/receivables por recebedor.
+
+## 15. Regra de transição
+
+O backend futuro deve aceitar ações, não UPDATE livre de status.
+
+Exemplo:
+
+```
+accept_vendor_order(order_vendor_id)
+mark_vendor_ready(order_vendor_id)
+assign_driver(delivery_id, driver_id, vehicle_id)
+confirm_collection(delivery_id)
+start_delivery(delivery_id)
+confirm_delivery(delivery_id)
+```
+
+Cada ação valida:
+
+- estado anterior;
+- ator;
+- autorização;
+- pré-condições;
+- idempotência;
+- evento.
+
+## 16. Próxima migration
+
+A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md), principalmente:
+
+1. enum próprio de banca;
+2. normalização de `cancelled/canceled`;
+3. pagamento fora de `order_status`;
+4. campos de promoções;
+5. snapshots faltantes;
+6. ledger multi-banca;
+7. reservas de estoque;
+8. decisão `reviews` x `order_reviews`;
+9. estruturas do painel administrativo;
+10. RLS/policies completas.

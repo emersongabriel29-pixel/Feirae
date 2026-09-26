@@ -1,131 +1,255 @@
 # Integrações — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 com os serviços realmente usados pelo código.
 
-## Princípio
+## 1. Supabase
 
-Toda integração deve ficar atrás de adapter/repository. A UI não deve conhecer detalhes do provedor.
+### O que existe no repositório
 
-## Matriz
+- `.env.example` com:
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+- migrations:
+  - `0001_feirae_core.sql`
+  - `0002_feirae_operations.sql`
 
-| Integração      | Protótipo atual                   | Produção                          |
-| --------------- | --------------------------------- | --------------------------------- |
-| Auth            | autenticação local                | Supabase Auth ou equivalente      |
-| Banco           | localStorage + migrations no repo | Supabase Postgres                 |
-| Arquivos        | data URL/localStorage             | Supabase Storage privado          |
-| Geocodificação  | serviço público de protótipo      | provedor com SLA/termos adequados |
-| Rotas           | OSRM público/protótipo            | provedor de produção              |
-| Mapas           | abertura de mapa                  | provedor definido                 |
-| Pix/cartão      | simulação de estados              | PSP/gateway marketplace           |
-| KYC             | status local                      | serviço/revisão real              |
-| Push            | não integrado                     | FCM/APNs/serviço                  |
-| WhatsApp        | consentimento local               | BSP/API oficial                   |
-| Observabilidade | CI apenas                         | erros/logs/métricas/traces        |
+### O que não existe ainda
 
-## Pagamentos
+- `@supabase/supabase-js` em `package.json`;
+- cliente Supabase;
+- `supabase/config.toml`;
+- Edge Functions;
+- Storage configurado;
+- Auth conectado.
 
-Requisitos mínimos do provedor:
+Conclusão: Supabase ainda não é integração ativa.
+
+## 2. Geolocalização do navegador
+
+`App.tsx` usa:
+
+```
+navigator.geolocation.getCurrentPosition()
+```
+
+Configuração atual:
+
+- `enableHighAccuracy: false`;
+- timeout: 8000 ms;
+- `maximumAge: 300000`.
+
+Usos:
+
+- proximidade de feiras;
+- coordenadas do cliente.
+
+## 3. Nominatim Search
+
+Arquivo: `src/domain/routing.ts`.
+
+Endpoint atual:
+
+```
+https://nominatim.openstreetmap.org/search
+```
+
+Parâmetros usados:
+
+- `format=jsonv2`;
+- `limit=1`;
+- `countrycodes=br`;
+- `q=<endereço>`.
+
+Header:
+
+```
+Accept-Language: pt-BR,pt
+```
+
+Se a chamada falha, retorna `null`.
+
+## 4. Nominatim Reverse
+
+Arquivo: `src/features/customer/CustomerScreens.tsx`.
+
+Endpoint:
+
+```
+https://nominatim.openstreetmap.org/reverse
+```
+
+Usado para tentar preencher endereço a partir de latitude/longitude.
+
+Produção deve revisar política de uso, identificação da aplicação, limites e cache antes de manter Nominatim público.
+
+## 5. OSRM público
+
+Arquivo: `src/domain/routing.ts`.
+
+Endpoint:
+
+```
+https://router.project-osrm.org/route/v1/driving/<lng,lat;lng,lat>
+```
+
+Parâmetros:
+
+- `overview=false`;
+- `steps=false`.
+
+Retorna ao app:
+
+- distância em km;
+- duração em minutos.
+
+O código arredonda:
+
+- distância para uma casa decimal;
+- duração para minuto inteiro, mínimo 1.
+
+Produção não deve depender do servidor público sem SLA.
+
+## 6. Google Maps
+
+Arquivo: `src/App.tsx`.
+
+Não há SDK.
+
+O botão abre URL externa:
+
+```
+https://www.google.com/maps/dir/?api=1&destination=<destino>
+```
+
+em nova aba com `noopener,noreferrer`.
+
+## 7. Preço de frete x rota
+
+Importante: OSRM/Nominatim **não calculam hoje o preço do frete**.
+
+O checkout usa `vendorMetrics.deliveryFee` e escolhe o maior valor entre as bancas do carrinho.
+
+Rota/ETA são usados para logística.
+
+## 8. Pagamento
+
+Não existe PSP/gateway integrado.
+
+Não há:
+
+- SDK de cartão;
+- Pix real;
+- webhook;
+- split;
+- estorno de provedor;
+- payout.
+
+A UI simula estados.
+
+Requisitos do provedor futuro:
 
 - Pix;
 - cartão;
 - tokenização;
-- webhooks;
+- webhook assinado;
 - idempotência;
+- marketplace/recebedores;
 - estorno;
-- recebedores/split ou modelo compatível;
 - conciliação;
-- ambiente sandbox;
-- referência por transação.
+- sandbox.
 
-Nunca guardar CVV.
+## 9. WhatsApp
 
-## Rotas
+Não existe API WhatsApp integrada.
 
-Entradas:
+Existe somente:
 
-- entregador → banca;
-- banca → cliente;
-- múltiplas paradas quando evoluir;
-- peso/veículo/região.
+- consentimento/preferência no checkout;
+- registro no pedido local.
 
-Saídas:
+Não há envio de mensagem.
 
-- distância;
-- duração;
-- rota;
-- restrições quando suportadas.
+## 10. Push
 
-Frete não deve depender de número hard-coded no cliente.
+Não há:
 
-## Geocodificação
+- Firebase Cloud Messaging;
+- APNs;
+- OneSignal;
+- outro provedor.
 
-Precisa suportar:
+Notificações atuais são internas ao app/localStorage.
 
-- endereço → coordenadas;
-- coordenadas → endereço;
-- limites de uso;
-- cache;
-- política de privacidade.
+## 11. KYC
 
-## Documentos/KYC
+Não existe serviço de KYC.
 
-Upload vai para Storage privado.
+Aprovação atual é calculada por status local de documentos.
 
-Processamento pode ter:
+Não há consulta automática de:
 
-- validação automática;
-- extração;
-- verificação de identidade;
-- revisão humana.
+- CPF;
+- CNH;
+- Detran;
+- documento;
+- biometria;
+- selfie.
 
-Não expor documento em URL pública.
+## 12. Storage de documentos
 
-## WhatsApp
+Não existe integração Storage.
 
-Só enviar quando:
+`storedFile.ts` guarda arquivo como Data URL em `localStorage`, com limite de 1.500.000 bytes.
 
-- canal estiver habilitado;
-- houver consentimento/base legal aplicável;
-- template/regra do provedor estiver atendida;
-- usuário puder ajustar preferência quando necessário.
+## 13. Observabilidade
 
-Consentimento no checkout deve ser versionado/auditável na produção.
+Integração atual: nenhuma.
 
-## Push
+Existe CI no GitHub Actions, mas não existem SDKs de:
 
-Eventos importantes:
+- Sentry;
+- Datadog;
+- OpenTelemetry;
+- Logtail;
+- equivalente.
 
-- novo pedido;
-- mudança de preparo;
-- corrida;
-- coleta;
-- rota;
-- entrega;
-- ocorrência;
-- financeiro.
+## 14. Contratos necessários antes de substituir protótipos
 
-Backend deve evitar duplicidade.
+Criar adapters específicos:
 
-## Contrato de adapter
+- `AuthRepository`;
+- `OrderRepository`;
+- `InventoryRepository`;
+- `PaymentGateway`;
+- `RoutingProvider`;
+- `GeocodingProvider`;
+- `DocumentStorage`;
+- `NotificationProvider`.
 
-Cada integração deve expor interface própria e traduzir erro do provedor para erro de domínio.
+O adapter deve preservar a interface de domínio e esconder o SDK externo.
 
-Nunca espalhar SDK do provedor por múltiplas telas.
+## 15. Secrets
 
-## Segredos
+Frontend poderá conter apenas valores publicáveis previstos pelo provedor.
 
-- chaves públicas/publishable podem existir no cliente quando o provedor assim define;
-- service keys, secrets e tokens privilegiados ficam somente no servidor/secret manager;
-- variáveis devem ser separadas por ambiente.
+Nunca colocar no bundle:
 
-## Resiliência
+- Supabase `service_role`;
+- segredo PSP;
+- segredo de webhook;
+- token privado KYC;
+- credencial BSP WhatsApp.
 
-Definir:
+## 16. Falha de provedor
+
+Para cada integração real definir:
 
 - timeout;
-- retry com backoff quando seguro;
+- retry;
 - idempotência;
-- circuit breaker quando aplicável;
-- fallback;
-- fila de reprocessamento;
-- observabilidade.
+- resposta a 429;
+- fila/reprocessamento;
+- logging;
+- fallback seguro.
+
+A UI não deve interpretar “falha de rede” como “pagamento aprovado” ou “entrega concluída”.

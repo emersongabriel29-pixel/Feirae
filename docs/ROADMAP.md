@@ -1,165 +1,154 @@
-# Feiraê — roadmap
+# Roadmap técnico — Feiraê
 
 Atualizado em 26/09/2026.
 
-## Estado atual
+Este roadmap parte dos gaps reais do repositório.
 
-A etapa de **protótipo funcional** está avançada. Os fluxos internos de cliente, feirante e entregador já foram conectados e cobertos por testes.
+## Fase 1 — migration de correção
 
-Concluído no protótipo local:
+Antes de conectar o frontend ao Supabase:
 
-- autenticação local com senha para teste de experiência;
-- conta com alteração de nome/e-mail/senha;
-- catálogo compartilhado;
-- carrinho e checkout;
-- pedido unificado;
-- multi-banca;
-- preparo, peso real, retirada e entrega;
-- estoque reservado/liberado/consumido;
-- promoções e cupons;
-- cancelamento, suporte, reembolso e carteira;
-- avaliações;
-- disponibilidade e veículos do entregador;
-- repasses simulados;
-- auditoria de botões/campos;
-- migrations `0001` e `0002` do Supabase.
+1. criar `order_vendor_status`;
+2. normalizar `cancelled/canceled`;
+3. remover pagamento do enum operacional de pedido;
+4. definir enum/check de pagamento;
+5. normalizar payout `requested`;
+6. adicionar `coupon_code`, `pay_quantity`, `take_quantity`;
+7. adicionar snapshots faltantes do pedido;
+8. decidir `reviews` x `order_reviews`;
+9. criar reserva de estoque;
+10. criar ledger por recebedor.
 
-## Próxima fase real: backend operacional
+Critério de saída:
 
-A próxima fase **não é criar o schema do zero**. O schema base já existe no repositório. A fase agora é conectar e endurecer o backend.
+- migrations executam do zero em banco descartável;
+- testes de constraint passam.
 
-### 1. Supabase por ambiente
+## Fase 2 — RLS
 
-- criar/configurar projetos de desenvolvimento e staging;
-- aplicar e validar migrations;
-- definir estratégia de produção;
-- configurar PostGIS;
-- definir backups e recuperação;
-- impedir uso de dados de produção em desenvolvimento.
+Corrigir antes de expor tabelas.
 
-### 2. Auth e autorização
+Prioridade:
 
-- substituir `localAuth.ts` por Supabase Auth;
-- papéis reais e RLS;
-- recuperação/troca de senha;
-- verificação de e-mail/telefone quando necessária;
-- sessão e revogação;
-- auditoria de mudanças de papel.
+- vendor_stores;
+- vendor_profiles;
+- products CRUD;
+- order_vendors;
+- order_items;
+- carts;
+- deliveries;
+- payments;
+- support_tickets;
+- order_reviews;
+- onboarding review admin.
 
-### 3. Repositórios e adapters
+Critério:
 
-Substituir bridges de `localStorage` por adapters/repositories sem mudar a UX:
+- testes por customer/vendor/delivery/admin.
 
-- marketplace;
-- pedidos/eventos;
-- estoque;
-- carteira/ledger;
-- documentos;
-- veículos;
-- avaliações;
-- suporte.
+## Fase 3 — Auth e repositories
 
-### 4. Catálogo e estoque server-side
+- instalar Supabase JS;
+- conectar Auth;
+- mapear `feirante ↔ vendor`;
+- substituir `localAuth`;
+- criar repositories;
+- migrar perfis/endereço.
 
-- preço e estoque como fonte de verdade no servidor;
+## Fase 4 — catálogo/estoque
+
+- vendor_store ligado corretamente à feira;
+- produto server-side;
+- imagem em Storage;
 - reserva transacional;
-- idempotência;
-- fotos em Storage;
-- soft delete/arquivamento;
-- histórico/snapshots para pedidos antigos.
+- snapshots;
+- soft delete.
 
-### 5. Pedido e máquina de estados
+## Fase 5 — pedido
 
-Implementar no servidor a máquina oficial de [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
-
-- transições validadas;
+- criação server-side;
+- estado global;
 - estado por banca;
-- eventos imutáveis;
-- suporte a multi-banca;
-- cancelamento/ocorrências;
-- retirada e entrega.
+- eventos;
+- cancelamento;
+- retirada;
+- substituição.
 
-### 6. Documentos e aprovação
+## Fase 6 — documentos/admin mínimo
 
-- Storage privado;
-- upload seguro;
-- magic bytes/MIME/tamanho;
-- revisão administrativa;
-- validade/revalidação;
-- KYC quando escolhido;
-- suspensão por documento crítico.
+Criar tabelas:
 
-### 7. Rotas e rastreamento
+- service_regions;
+- vehicle_types;
+- pricing_rules;
+- account_restrictions;
+- admin permissions;
+- admin audit log.
 
-- substituir serviços públicos de protótipo por provedor com SLA;
-- cálculo server-side do frete;
-- política de raio/região;
-- rastreamento em tempo real;
-- privacidade da localização.
+Implementar:
 
-### 8. Pagamentos e financeiro
+- revisão documental;
+- UF;
+- feira;
+- veículo global;
+- suspensões;
+- taxas.
 
-Somente depois de pedido/estoque server-side estáveis:
+## Fase 7 — logística
 
+- delivery server-side;
+- lock/aceite atômico;
+- veículo;
+- raio/região;
+- rota com provedor SLA;
+- stops para multi-banca;
+- tracking.
+
+## Fase 8 — financeiro
+
+Somente após pedido/estoque:
+
+- PSP;
 - Pix/cartão;
-- tokenização;
-- webhooks idempotentes;
-- split;
+- webhook;
 - ledger;
+- split;
 - estorno;
-- carteira com lastro;
-- repasses/saques;
+- payout;
 - conciliação.
 
-### 9. Notificações
+## Fase 9 — notificações
 
-- in-app persistente;
+- in-app backend;
 - push;
-- WhatsApp somente com consentimento e base legal;
+- WhatsApp;
 - preferências por canal;
-- deduplicação/idempotência.
+- consentimento/versionamento.
 
-### 10. Admin e operação
+## Fase 10 — staging
 
-Implementar [ADMIN_MANAGEMENT_SPEC.md](ADMIN_MANAGEMENT_SPEC.md):
+Adicionar:
 
-- feiras;
-- usuários;
-- documentos;
-- suspensões;
-- taxas;
-- pedidos;
-- entregas;
-- financeiro;
-- suporte;
-- auditoria.
-
-## Antes de produção
-
-Obrigatório:
-
-- ambiente staging;
-- testes E2E reais;
+- workflow deploy staging;
+- browser E2E;
+- migration tests;
 - observabilidade;
-- Error Boundary;
-- rate limits;
-- logs/auditoria;
-- política LGPD;
-- termos;
-- backup/restore testado;
-- rollback;
-- revisão de segurança/RLS;
-- testes de pagamento e webhook;
-- testes de acessibilidade.
+- backup;
+- smoke;
+- performance;
+- acessibilidade.
 
-## Pós-MVP
+## Bloqueadores para produção
 
-- fidelidade;
-- recomendações;
-- produtos patrocinados;
-- retirada agendada;
-- recorrência;
-- analytics avançado;
-- gestão completa de feira;
-- otimização de múltiplas paradas;
-- campanhas segmentadas.
+Não publicar operação real enquanto existir qualquer um:
+
+- Auth local;
+- documento em localStorage;
+- preço/estoque confiados ao browser;
+- RLS incompleta;
+- payment simulado;
+- ledger ausente;
+- admin sem auditoria;
+- browser E2E ausente.
+
+Matriz completa: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).

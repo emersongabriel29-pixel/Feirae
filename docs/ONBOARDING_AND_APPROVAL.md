@@ -1,306 +1,250 @@
 # Cadastro, documentos e aprovação — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 com as regras que o código realmente aplica.
 
-## Estado de implementação
+## 1. Conta x aprovação
 
-O protótipo já permite:
+Criar conta não significa estar aprovado.
 
-- cadastro por papel;
-- preenchimento de dados;
-- upload local de documentos;
-- estados localmente simulados de revisão/aprovação;
-- bloqueios de operação baseados em aprovação no fluxo local.
+No protótipo, aprovação é calculada a partir dos documentos locais.
 
-Produção ainda exige:
+Não existe KYC externo nem revisor admin real.
 
-- Auth real;
-- Storage privado;
-- validação de arquivo;
-- revisão administrativa;
-- KYC quando escolhido;
-- revalidação;
-- bloqueio server-side;
-- trilha de auditoria.
+## 2. Feirante — documentos atuais do seed
 
-Os requisitos regulatórios e documentos variam conforme atividade, veículo, feira e regras vigentes. Antes de produção, fontes oficiais devem ser revalidadas e os requisitos devem ser configuráveis, não codificados como verdade universal.
+`initialVendorDocuments`:
 
-## Regra principal
+### Obrigatórios
 
-Criar a conta não significa estar autorizado a vender ou entregar.
+1. `identity`
+   - Documento oficial com foto.
+2. `address`
+   - Comprovante de residência.
+3. `permit`
+   - Permissão/autorização da banca ou box.
 
-Estados de cadastro:
+### Opcional no seed
+
+4. `sanitary`
+   - Licença/registro sanitário.
+
+O código considera o feirante **Aprovado** quando todos os documentos com `required = true` estão `approved`.
+
+## 3. Efeito da aprovação do feirante
+
+`effectiveStoreOpen` exige:
 
 ```
-account_created
-→ documents_pending
-→ under_review
-→ approved
+approvalStatus === "Aprovado"
+AND storeOpen
+AND currentScheduleStatus.open
 ```
 
-Alternativas:
+`syncVendorMarketplace()` recebe:
 
-- correction_required;
-- rejected;
-- suspended;
-- expired_revalidation.
+```
+approved: approvalStatus === "Aprovado"
+```
 
-Enquanto não estiver `approved`:
+Produto publicado no catálogo dinâmico só fica ativo quando:
 
-### Feirante
+```
+input.approved
+AND product.active
+AND product.stock > 0
+```
 
-- pode completar perfil;
-- pode cadastrar rascunho de banca/produtos;
-- não pode publicar/vender;
-- não recebe pedidos reais;
-- não recebe repasses.
+Existe teste que verifica que banca não aprovada não aparece com produtos ativos.
 
-### Entregador
+## 4. Upload do feirante
 
-- pode completar perfil/veículos;
-- não fica online;
-- não aceita corrida;
-- não recebe repasses.
+Ao selecionar arquivo:
 
-## Feirante — documentos do Feiraê
+- `readFileForLocalStorage()`;
+- limite 1,5 MB;
+- arquivo vira Data URL;
+- status muda para `under_review`.
 
-### Identidade básica
+Upload não aprova documento.
 
-Solicitar:
+## 5. Entregador — documentos atuais
 
-- documento oficial com foto;
-- CPF;
-- selfie/verificação de identidade na fase KYC real;
-- data de nascimento;
-- comprovante de endereço;
-- telefone e e-mail verificados.
+Lista:
 
-### Direito de operar na feira
+- `identity`;
+- `address`;
+- `cnh`;
+- `crlv`;
+- `motofrete`.
 
-Campo obrigatório para feira pública:
+## 6. Regra dinâmica do entregador
 
-- feira;
-- box/banca;
-- número/localização;
-- categoria de feirante;
-- número/data do instrumento;
-- upload do **Termo de Permissão de Uso**, cessão/autorização válida ou documento equivalente emitido pelo órgão competente.
+### Sempre obrigatórios
 
-A Lei distrital nº 6.956/2021 estabelece que só pode comercializar em feira pública quem tiver permissão do órgão competente.
+```
+identity
+address
+```
 
-### Pessoa física
+### Se existe veículo motorizado ativo
 
-O cadastro pode ser PF quando admitido pela regra da feira.
+```
+cnh
+crlv
+```
 
-Coletar:
+### Se existe Moto ou Moto com baú ativa
 
-- CPF;
-- identidade;
-- comprovante de residência;
-- instrumento de permissão/autorização;
-- dados de recebimento compatíveis.
+```
+motofrete
+```
 
-### Pessoa jurídica
+Código:
 
-Além dos itens do responsável:
+`requiredDocumentIds` em `DeliveryScreens.tsx`.
 
-- CNPJ;
-- razão social/nome fantasia;
-- CF/DF quando aplicável;
-- documento do representante;
-- prova de representação;
-- dados de recebimento da PJ.
+## 7. Aprovação do entregador
 
-### Evidências usadas em editais oficiais de feiras do DF
+Aprovado quando todo ID em `requiredDocumentIds` possui status `approved`.
 
-Editais/projetos oficiais recentes listam, entre outros:
+Se algum obrigatório:
 
-- ficha de inscrição;
-- foto recente;
-- documento oficial com foto;
-- CPF para PF;
-- CF/DF para PJ;
-- Certidão Negativa de Débitos com a Fazenda do DF;
-- Certidão Negativa de Débitos com a Fazenda Federal;
-- comprovante/declaração de residência;
-- CNDT para PJ;
-- declarações exigidas pelo edital.
+- `correction_required` → Correção necessária;
+- `under_review` → Em análise;
+- caso contrário → Documentação pendente.
 
-No Feiraê, esses documentos devem ser separados em:
+## 8. Efeito operacional
 
-1. **obrigatórios para ativação na plataforma**;
-2. **documentos oficiais da permissão/licitação**, que podem variar por feira/editais.
+```
+availableNow =
+online
+AND scheduleAllowsNow
+AND approvalStatus === "Aprovado"
+```
 
-Não exigir uma certidão só porque apareceu em um edital antigo sem conferir se ela se aplica ao caso atual.
+Sem aprovação, botão de aceitar corrida fica desabilitado por `availableNow = false`.
 
-### Atividade alimentícia
+## 9. Documento do veículo
 
-Quando a atividade exigir, pedir os documentos/licenças sanitárias aplicáveis ao produto/atividade.
+Para tipos que `requiresPlate()` considera motorizados:
 
-O sistema deve ter campos para:
+- placa precisa validar;
+- documento do veículo precisa estar `approved`.
 
-- licença/registro sanitário quando aplicável;
-- validade;
-- órgão emissor;
-- documentos de origem/inspeção para categorias reguladas.
+Atenção: `Outro` atualmente é isento de placa pelo código. Isso deve ser corrigido por configuração de tipo de veículo antes de produção.
 
-A legislação das feiras exige respeito às normas sanitárias e manutenção de registro da procedência dos produtos.
+## 10. O que NÃO é validado hoje
 
-## Entregador — documentação básica
+O código não verifica automaticamente:
 
-Para qualquer entregador:
+- idade mínima;
+- CPF em base oficial;
+- autenticidade de RG/CNH;
+- CNH vencida;
+- tempo de CNH;
+- EAR;
+- curso de motofrete em base oficial;
+- CRLV no Detran;
+- antecedentes/certidões;
+- selfie/biometria;
+- titularidade do veículo.
 
-- documento oficial com foto;
-- CPF;
-- selfie/KYC na fase real;
-- data de nascimento;
-- telefone/e-mail verificados;
-- comprovante de residência;
-- chave Pix/conta de recebimento;
-- aceite de termos;
-- checagens antifraude.
+O documento regulatório pode exigir itens, mas o protótipo hoje só gerencia upload/status.
 
-## Bicicleta / bicicleta cargueira / triciclo não motorizado
+## 11. Status de documento no frontend
 
-Não exigir CNH.
+Feirante/veículo:
 
-Cadastrar:
+```
+pending
+under_review
+approved
+correction_required
+```
 
-- tipo;
-- foto do veículo;
-- capacidade declarada;
-- identificação interna;
-- região de atuação.
+SQL `onboarding_documents` também permite:
 
-Pode haver regras municipais/distritais futuras específicas; manter configuração separada.
+```
+rejected
+```
 
-## Carro, utilitário ou van
+O frontend ainda precisa representar rejeição completa.
 
-Exigir para operação remunerada:
+## 12. Vencimento
 
-- CNH compatível e válida;
-- observação EAR quando aplicável à atividade remunerada;
-- CRLV-e vigente;
-- placa;
-- marca/modelo;
-- titularidade/vínculo com veículo;
-- capacidade cadastrada.
+Campos de UI/modelo possuem `expiresAt`, mas não há rotina server-side que:
 
-O Detran-DF informa que a avaliação psicológica/EAR se aplica quando a pessoa pretende trabalhar profissionalmente com transporte de passageiros ou cargas.
+- verifica vencimento diário;
+- muda status;
+- suspende automaticamente.
 
-## Moto/motoneta — motofrete
+Isso é pendente.
 
-Tratar como categoria mais restritiva.
+## 13. Requisitos regulatórios de motofrete
 
-O Detran-DF informa para motofrete, entre os requisitos/documentos:
+A documentação de produto deve manter requisitos de motofrete como **regra regulatória a validar**, não como funcionalidade já executada.
 
-- idade mínima de 21 anos;
-- CNH categoria A há pelo menos 2 anos;
-- curso especializado de motofrete;
-- CNH com homologação do curso;
-- veículo regularizado para motofrete/categoria aplicável;
-- CRLV-e vigente;
-- comprovante de residência no DF;
-- checagens/certidões previstas no processo de vistoria/autorização.
+Antes de habilitar moto em produção:
 
-A Lei federal nº 12.009/2009 e regulamentação de trânsito estabelecem requisitos específicos ao motociclista profissional.
+- validar requisitos vigentes no Detran-DF/legislação;
+- modelar campos;
+- verificar documentos;
+- criar revalidação.
 
-O Feiraê não deve liberar corridas de moto apenas porque o usuário enviou uma CNH A.
+## 14. Feirante PF/PJ
 
-## Fluxo de revisão
+A tela já coleta vários dados de conta, mas `vendor_profiles` SQL possui hoje apenas:
 
-### 1. Envio
+- id;
+- business_name;
+- description;
+- approved;
+- created_at.
 
-Usuário envia documentos.
+Faltam no schema dados usados pela UI, como:
 
-### 2. Validação automática
-
-Quando houver integração:
-
-- documento legível;
-- validade;
 - CPF/CNPJ;
-- correspondência de nome;
-- duplicidade;
-- fraude básica.
+- data nascimento;
+- telefone;
+- dados bancários;
+- responsável;
+- tipo PF/PJ.
 
-### 3. Revisão
+## 15. Revisão administrativa
 
-Admin vê:
+Ainda não existe painel/admin real.
 
-- dados;
-- documentos;
-- status por item;
-- motivo de pendência.
+A migration `onboarding_documents` possui:
 
-### 4. Correção
+- `reviewed_by`;
+- `reviewed_at`;
 
-Estado:
-`correction_required`
+mas não há policy administrativa completa nas migrations atuais.
 
-Usuário recebe exatamente:
+## 16. Produção
 
-- qual documento;
-- qual problema;
-- como corrigir;
-- prazo quando aplicável.
+Para sair do protótipo:
 
-### 5. Aprovação
+1. Storage privado;
+2. validação real de arquivo;
+3. Auth;
+4. admin/revisor;
+5. policies;
+6. KYC/verificações escolhidas;
+7. vencimento/revalidação;
+8. suspensão auditável.
 
-Estado:
-`approved`
+Fontes oficiais existentes no documento devem ser revalidadas no momento da implementação regulatória.
 
-Só então:
+## 17. Fontes oficiais de referência
 
-- Feirante pode publicar e aceitar pedidos.
-- Entregador pode ficar online e aceitar corridas.
-
-## Revalidação
-
-Documentos com validade precisam de:
-
-- `issued_at`;
-- `expires_at`;
-- alerta antes do vencimento;
-- suspensão automática/configurável quando documento crítico expirar.
-
-Exemplos:
-
-- CNH;
-- CRLV;
-- licença/autorizações específicas;
-- documentos sanitários aplicáveis.
-
-## Suspensão
-
-Motivos possíveis:
-
-- documento expirado;
-- permissão da feira suspensa/cassada;
-- fraude;
-- risco de segurança;
-- ordem administrativa;
-- sanção da plataforma.
-
-Toda suspensão deve ter:
-
-- motivo;
-- autor;
-- timestamp;
-- prazo/condição para retorno;
-- trilha de auditoria.
-
-## Fontes oficiais consultadas
+As regras abaixo são referência regulatória e precisam ser revalidadas quando o backend de aprovação for implementado.
 
 - Lei nº 6.956/2021 — feiras públicas do DF:
   https://www.sinj.df.gov.br/sinj/Norma/410afc4ea07d467a89a433d0fda0e5a1/Lei_6956_2021
-- Projeto/Edital de feira do DF com documentação de habilitação:
-  https://segov.df.gov.br/documents/d/segov/projeto-basico-pdf
-- Edital/Projeto Paranoá — documentação de habilitação:
-  https://segov.df.gov.br/documents/d/segov/xiii-paranoa
-- Detran-DF — curso de formação para motofrete:
-  https://www.detran.df.gov.br/wp-content/uploads/2018/11/EDUCA%C3%87%C3%83O-PDF..pdf
 - Detran-DF — vistoria/autorização de motofrete:
   https://sisman.maestro.detran.df.gov.br/visualizar-carta/pdf/?area=28&layout=true
-- DNIT — requisitos legais de motofrete/mototáxi:
+- DNIT — requisitos de motofrete/mototáxi:
   https://www.gov.br/dnit/pt-br/assuntos/noticias/motofretista-e-mototaxista-o-que-diz-a-lei
+
+O código atual não consulta automaticamente nenhuma dessas fontes.

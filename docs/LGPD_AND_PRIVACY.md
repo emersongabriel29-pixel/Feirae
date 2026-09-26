@@ -1,176 +1,304 @@
 # LGPD e privacidade — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 com inventário baseado nas chaves e campos atuais do protótipo.
 
-Este documento é uma especificação técnica/operacional. A versão pública final deve passar por revisão jurídica antes da produção.
+Este documento descreve os dados realmente mantidos pelo app atual. A política pública final exige revisão jurídica antes de produção.
 
-## Dados tratados pelo produto
+## 1. Onde os dados ficam hoje
 
-### Cliente
+O protótipo usa `localStorage` do navegador.
+
+Não existe backend conectado nem Storage remoto.
+
+Consequências:
+
+- dados ficam no dispositivo/perfil do navegador;
+- podem persistir entre sessões;
+- podem ser removidos ao limpar dados do site;
+- não há política central de retenção;
+- não há exclusão remota multi-dispositivo.
+
+## 2. Chaves de cliente
+
+Entre as chaves atuais:
+
+- `feirae:session`;
+- `feirae:local-auth:v1`;
+- `feirae:account:<email>`;
+- `feirae:addresses:<email>`;
+- `feirae:cards-v3:<email>`;
+- `feirae:favorites:<email>`;
+- `feirae:vendor-favorites:<email>`;
+- `feirae:customer-reviews:<email>`;
+- `feirae:support-general:<email>`;
+- `feirae:support-messages:<email>`;
+- `feirae:whatsapp:<email>`;
+- `feirae:gps:<email>`;
+- `feirae:offers:<email>`;
+- `feirae:order-updates:<email>`.
+
+## 3. Dados de conta do cliente
+
+Campos disponíveis na conta:
 
 - nome;
+- CPF;
+- data de nascimento;
 - e-mail;
 - telefone;
-- CPF quando necessário;
-- data de nascimento quando necessário;
-- endereços;
-- localização/GPS quando autorizado;
-- pedidos;
-- pagamentos por identificadores/tokens;
-- avaliações;
-- suporte;
-- preferências de comunicação.
+- CEP;
+- endereço;
+- número;
+- complemento;
+- cidade;
+- UF.
 
-### Feirante
+CPF e data de nascimento são coletáveis no protótipo, embora ainda não tenham validação/necessidade jurídica final definida.
 
-Além dos dados de conta:
+## 4. Endereços e localização
 
-- CPF/CNPJ;
-- banca/box;
-- documentos;
-- permissões/licenças;
-- dados de recebimento;
-- produtos;
-- pedidos;
-- avaliações.
+Endereços podem conter:
 
-### Entregador
+- destinatário;
+- CEP;
+- logradouro;
+- número;
+- complemento;
+- bairro;
+- cidade;
+- UF;
+- latitude;
+- longitude;
+- endereço principal.
 
-Além dos dados de conta:
+GPS é solicitado apenas quando o usuário aciona a função correspondente/preferência permite.
 
-- CPF;
-- CNH quando aplicável;
-- CRLV/veículo;
-- capacidade;
-- regiões;
-- localização durante operação;
-- corridas;
-- dados de recebimento;
-- ocorrências.
-
-## Princípios
-
-Coletar somente o necessário para finalidade definida.
-
-Cada dado precisa ter:
+Produção precisa definir:
 
 - finalidade;
-- base legal aplicável;
-- acesso;
-- retenção;
-- forma de exclusão/anonimização quando cabível.
+- precisão necessária;
+- tempo de retenção;
+- acesso do entregador;
+- quando parar de rastrear.
 
-## GPS
+## 5. Cartões no protótipo
 
-Localização deve ser:
+Ao salvar cartão, ficam persistidos:
 
-- opcional quando não indispensável;
-- solicitada no contexto da função;
-- usada para finalidade declarada;
-- protegida contra exposição indevida.
+- titular;
+- últimos 4 dígitos;
+- validade;
+- tipo crédito/débito;
+- bandeira.
 
-Para entregador em corrida, a política deve explicar o rastreamento operacional.
+Não ficam persistidos no cartão salvo:
 
-## Documentos
+- número completo;
+- CVV.
 
-Documentos de identidade e veículo são dados de alto risco operacional.
+Durante preenchimento, número e CVV existem temporariamente no estado React até salvar/cancelar.
 
-Produção exige:
+Produção deve usar tokenização do PSP e minimizar também a persistência de validade/titular quando desnecessária.
 
-- Storage privado;
-- acesso restrito;
-- URLs assinadas temporárias;
-- logs de acesso;
-- retenção definida;
-- exclusão conforme política;
-- não replicar arquivo em logs.
+## 6. Pedido
 
-O armazenamento em `localStorage` atual é apenas de protótipo e não é apropriado para documentos reais.
+`orderBridge.ts` pode conter:
 
-## Pagamentos
+- identificador do cliente;
+- nome do cliente;
+- feira;
+- itens;
+- bancas;
+- preços;
+- pesos;
+- endereço/cidade;
+- coordenadas;
+- pagamento;
+- troco;
+- consentimento WhatsApp;
+- eventos;
+- motorista;
+- veículo/placa mascarada;
+- suporte;
+- avaliações;
+- reembolso.
 
-Preferir token/ID do provedor.
+## 7. Feirante
 
-Não armazenar:
-
-- CVV;
-- dados completos de cartão quando não necessários;
-- secrets do PSP.
-
-## WhatsApp e marketing
-
-Separar:
-
-- mensagem operacional necessária ao pedido;
-- marketing/ofertas.
-
-A preferência “Ofertas e novidades” deve governar comunicação promocional.
-
-Consentimento de WhatsApp deve ser registrável/auditável na produção quando for a base escolhida.
-
-## Direitos do titular
-
-O produto deve prever processo para:
-
-- confirmação/acesso;
-- correção;
-- exclusão quando cabível;
-- informação sobre tratamento;
-- revogação de consentimento quando essa for a base;
-- revisão de dados incorretos.
-
-## Retenção
-
-A política final deve definir períodos diferentes para:
+Chaves atuais incluem:
 
 - conta;
-- pedidos/notas/obrigações;
-- documentos de onboarding;
-- localização;
-- logs;
-- suporte;
-- marketing.
-
-Não usar “guardar para sempre” como padrão.
-
-## Exclusão de conta
-
-A exclusão não pode apagar registros que precisem ser preservados por obrigação legal, fraude, auditoria ou disputa. Nesses casos, restringir/anonimizar conforme política aplicável.
-
-## Acesso interno
-
-Princípio do menor privilégio.
-
-Perfis administrativos distintos podem existir para:
-
-- suporte;
+- banca;
+- produtos;
+- estoque/histórico;
+- horários;
+- promoções;
 - documentos;
+- pedidos;
+- avaliações;
+- recebimento;
+- configurações de entrega.
+
+Dados podem incluir:
+
+- CPF/CNPJ;
+- data de nascimento;
+- telefone/e-mail;
+- Pix;
+- banco/agência/conta;
+- box/banca;
+- documentos enviados.
+
+## 8. Entregador
+
+Chaves atuais incluem:
+
+- conta;
+- documentos;
+- veículos;
+- disponibilidade;
+- preferências;
+- corrida;
+- cancelamentos;
+- suporte;
+- ganhos.
+
+Dados podem incluir:
+
+- CPF;
+- data de nascimento;
+- telefone/e-mail;
+- Pix/banco;
+- CNH;
+- categoria CNH;
+- cidade/UF;
+- placa;
+- marca/modelo;
+- documentos;
+- região/raio;
+- localização base;
+- histórico de corrida.
+
+## 9. Arquivos de documentos
+
+`storedFile.ts` armazena:
+
+- nome;
+- MIME declarado;
+- tamanho;
+- Data URL com o conteúdo completo;
+- data de salvamento.
+
+Limite padrão: 1.500.000 bytes por arquivo.
+
+Isso significa que documento real sensível pode ficar serializado dentro do `localStorage`.
+
+O protótipo **não deve ser usado para documentos reais em produção**.
+
+## 10. Retenção atual
+
+Não há TTL.
+
+Na prática, dados permanecem até:
+
+- usuário excluir pelo fluxo específico, quando existe;
+- código sobrescrever;
+- limpeza do localStorage/dados do site;
+- remoção do navegador/app.
+
+Produção precisa definir retenção por classe de dado.
+
+## 11. Classes que exigem retenção própria
+
+Definir separadamente:
+
+- conta;
+- endereço;
+- pedido;
+- documento;
+- localização;
+- suporte;
+- avaliação;
+- marketing;
+- logs;
 - financeiro;
-- operações.
+- auditoria.
 
-## Incidentes
+## 12. WhatsApp e ofertas
 
-Definir:
+Hoje existem preferências locais separadas:
 
-1. identificação;
-2. contenção;
-3. preservação de evidência;
-4. avaliação de impacto;
-5. comunicação interna;
-6. obrigações de comunicação;
-7. correção;
-8. pós-incidente.
+- consentimento WhatsApp no checkout;
+- ofertas/novidades;
+- atualizações de pedido.
 
-## Produção
+Produção deve separar comunicação operacional de marketing e registrar:
 
-Antes do lançamento:
+- finalidade;
+- canal;
+- momento;
+- versão do texto;
+- revogação.
 
-- [ ] política de privacidade;
-- [ ] termos de uso;
-- [ ] inventário de dados;
-- [ ] bases/finalidades validadas;
-- [ ] retenção;
+## 13. Direitos do titular
+
+Backend de produção precisa de processo real para:
+
+- acesso;
+- correção;
+- exportação quando aplicável;
+- exclusão/anonimização quando cabível;
+- revogação de consentimento;
+- oposição quando cabível;
+- confirmação de tratamento.
+
+Hoje não existe serviço central capaz de cumprir isso porque os dados estão no navegador.
+
+## 14. Exclusão de conta
+
+Ainda não existe fluxo completo de exclusão.
+
+Produção precisa distinguir:
+
+- dados apagáveis;
+- dados que devem ser retidos por obrigação/disputa/fraude;
+- dados a anonimizar;
+- documentos;
+- dados financeiros.
+
+## 15. Acesso administrativo
+
+Painel ainda não existe.
+
+Quando existir, acesso deve ser limitado por função:
+
+- suporte;
+- operações;
+- documentos;
+- financeiro.
+
+Toda visualização/alteração sensível deve gerar auditoria quando apropriado.
+
+## 16. Incidente
+
+Antes de produção, definir procedimento específico para:
+
+- vazamento de documentos;
+- exposição de localização;
+- acesso indevido a conta;
+- segredo de provedor;
+- vazamento financeiro.
+
+## 17. Checklist antes de dados reais
+
+- [ ] Auth real;
+- [ ] Storage privado;
+- [ ] inventário de dados revisado;
+- [ ] base legal/finalidade por dado;
+- [ ] política de retenção;
+- [ ] exclusão de conta;
 - [ ] processo de direitos;
-- [ ] DPA/contratos com operadores;
-- [ ] plano de incidente;
+- [ ] consentimentos versionados quando aplicáveis;
+- [ ] contrato com operadores;
+- [ ] resposta a incidente;
 - [ ] revisão jurídica.

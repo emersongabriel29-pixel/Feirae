@@ -2,143 +2,184 @@
 
 Atualizado em 26/09/2026.
 
-## Objetivo
+## Correções já aplicadas
 
-Evitar controles que parecem funcionais, mas não produzem efeito.
+### Login
 
-## Critério obrigatório
+- senha é verificada;
+- senha errada mostra erro;
+- criar conta cria credencial local;
+- trocar e-mail/senha atualiza login local.
 
-Todo botão, card clicável, seletor, toggle ou campo exibido deve:
+Teste direto:
 
-1. executar ação correspondente;
-2. validar entradas;
-3. persistir no momento correto;
-4. refletir em telas relacionadas;
-5. oferecer estado disabled quando indisponível;
-6. evitar “clique que não faz nada”;
-7. não persistir rascunho antes de Salvar quando a interface promete Salvar/Cancelar.
+- `rejects an incorrect password instead of ignoring it`;
+- testes de `localAuth.test.ts`.
 
-## Achados corrigidos
+### Conta do cliente
 
-### Autenticação
+- usa rascunho;
+- Salvar persiste;
+- Descartar reverte;
+- nome/e-mail/senha atualizam identidade.
 
-Corrigido:
+Teste direto:
 
-- senha deixou de ser ignorada;
-- login incorreto retorna erro;
-- cadastro local registra credencial;
-- troca de senha local funciona;
-- e-mail/nome atualizam sessão;
-- senha em texto de implementação antiga é removida.
-
-Limite: mecanismo local é somente protótipo.
-
-### Conta
-
-Cliente, feirante e entregador:
-
-- edição usa rascunho;
-- Salvar aplica;
-- Descartar cancela;
-- e-mail/nome atualizam identidade local;
-- nova senha não fica junto do perfil comum.
+`applies customer name email and password only when the account form is saved`.
 
 ### Banca
 
-- Editar abre rascunho;
+- editar usa draft;
 - Salvar persiste;
 - Cancelar descarta.
 
+Testes:
+
+- `can discard bank edits...`;
+- `opens real bank editing...`.
+
 ### Checkout
 
-Opções indisponíveis ficam `disabled`:
+Opções incompatíveis usam `disabled`:
 
 - entrega;
 - retirada;
 - dinheiro na entrega;
-- cartão na maquininha.
+- cartão na entrega.
 
-### Produto em banca fechada
+Há cobertura de modalidades em testes, mas não há um teste nominal separado para cada estado disabled.
 
-Botão de adicionar fica desabilitado em vez de executar handler vazio.
+### Produto de banca fechada
 
-### Preferências
+Botão de adicionar recebe `disabled`.
 
-- atualizações de pedido controlam badge/notificações;
-- GPS governa solicitação de localização;
-- ofertas governam notificações promocionais;
-- cards compactos alteram layout;
-- WhatsApp é levado ao pedido como consentimento/preferência.
+### Cards compactos
 
-### Ajuda do entregador
+Preferência altera classe:
 
-- campo “Detalhe do atendimento” usa o valor digitado;
-- protocolo persiste;
-- histórico é exibido.
+```
+html.compact-product-cards
+```
+
+Teste direto existente.
+
+### Suporte do entregador
+
+Detalhe digitado é usado no ticket local.
+
+Protocolos persistem em:
+
+`feirae:delivery-help:<email>`.
+
+Teste direto existente.
 
 ### Documentos
+
+Upload de:
 
 - feirante;
 - entregador;
 - veículo.
 
-O protótipo passa a armazenar o conteúdo do arquivo localmente, com limite, e não apenas o nome.
+usa `readFileForLocalStorage()`.
 
-Produção ainda requer Storage privado.
+O arquivo não é só nome: Data URL é persistido.
 
-## Cobertura
+## Upload — validação real atual
 
-A rodada adicionou testes para:
+`storedFile.ts` faz:
 
-- senha incorreta;
-- alteração de nome/e-mail/senha;
-- cards compactos;
-- suporte do entregador;
-- cancelamento de edição da banca;
-- autenticação local.
+- limite 1.500.000 bytes;
+- FileReader;
+- nome;
+- `file.type`;
+- tamanho;
+- Data URL.
 
-A suite total de referência possui 69 testes.
+Não faz:
+
+- magic bytes;
+- validação do conteúdo;
+- antivírus;
+- PDF parsing.
+
+O atributo `accept=".pdf,image/*"` da UI não é controle de segurança.
+
+## Preferências com efeito
+
+### Cards compactos
+
+Efeito comprovado.
+
+### Atualizações de pedido
+
+Usado para badge/notificações.
+
+### Ofertas
+
+Afeta notificações promocionais locais.
+
+Não há teste dedicado do toggle de ofertas.
+
+### GPS
+
+Controla solicitação/uso de localização no fluxo do cliente.
+
+### WhatsApp
+
+Consentimento é mostrado no checkout e enviado ao `confirmOrder()`.
+
+Não há teste dedicado verificando o valor dentro de `UnifiedOrder`.
 
 ## Regras para novos controles
 
-### Botões
+### Botão indisponível
 
-Não usar:
+Usar:
+
+```tsx
+disabled = { condicao };
+```
+
+Não:
 
 ```tsx
 onClick={() => undefined}
 ```
 
-Se indisponível:
+### Formulário com Salvar
 
-```tsx
-disabled;
-```
+Obrigatório:
 
-e explicar o motivo.
-
-### Formulários
-
-Se existe botão Salvar:
-
-- usar draft;
-- não persistir em cada tecla;
-- permitir descartar quando risco de alteração acidental existir.
-
-### Toggle
-
-Não criar preferência que apenas salva boolean sem consumidor funcional. Toda configuração precisa ter efeito documentado.
+- estado draft;
+- Salvar copia draft para persistido;
+- Cancelar/Descartar restaura persistido.
 
 ### Upload
 
-Upload precisa:
+Só considerar “upload concluído” em produção quando o backend devolver referência válida.
 
-- validar;
-- armazenar/enviar;
-- refletir estado;
-- permitir substituição;
-- mostrar falha.
+Selecionar arquivo local não significa aprovação.
 
-### Teste
+## Gaps de teste da auditoria
 
-Novo controle crítico deve ter teste de comportamento, não apenas teste de presença.
+Ainda adicionar:
+
+1. todos os métodos indisponíveis do checkout;
+2. ofertas toggle;
+3. WhatsApp dentro do pedido;
+4. arquivo Data URL persistido após reload;
+5. limite >1,5 MB;
+6. erro de upload;
+7. substituição de documento;
+8. reembolso/carteira completo.
+
+## Critério
+
+Um controle só é “funcional” quando:
+
+- ação executa;
+- estado resultante é visível;
+- persistência é a esperada;
+- outra tela dependente recebe a alteração;
+- teste existe para ação crítica.

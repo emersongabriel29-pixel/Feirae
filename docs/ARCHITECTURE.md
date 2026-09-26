@@ -1,204 +1,269 @@
 # Arquitetura — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 a partir da árvore real de `src/`.
 
-## Visão geral
+## 1. Stack instalada
 
-O Feiraê usa hoje uma arquitetura de **protótipo local com regras de domínio separadas**, preparada para migração incremental ao Supabase.
+Dependências de produção atuais:
 
-```
-React UI
-├─ customer
-├─ vendor
-└─ delivery
-      ↓
-hooks + domain bridges
-      ↓
-localStorage / serviços públicos de protótipo
-```
+- React 19.1.1;
+- React DOM 19.1.1;
+- lucide-react.
 
-Arquitetura alvo:
+Build/test:
 
-```
-React UI
-      ↓
-features / use-cases / repositories
-      ↓
-Supabase Auth + Postgres + Storage + Edge Functions/RPC
-      ↓
-pagamento / rotas / KYC / notificações
-```
+- TypeScript 5.8;
+- Vite 6.2;
+- Vitest 5;
+- Testing Library;
+- ESLint;
+- Prettier;
+- Tailwind CSS Vite plugin.
 
-## Camadas atuais
+Não estão instalados:
 
-### `src/App.tsx`
+- Supabase JS;
+- SDK de mapa;
+- SDK de pagamento;
+- SDK de push;
+- SDK de observabilidade.
+
+## 2. Estrutura real
+
+### Shell
+
+`src/App.tsx`
 
 Responsável por:
 
-- shell;
 - sessão;
-- navegação;
-- composição dos papéis;
-- carrinho e pedido do cliente;
-- coordenação de bridges.
+- navegação entre papéis;
+- carrinho;
+- criação do pedido do cliente;
+- abertura do Google Maps;
+- favoritos;
+- notificações;
+- migração de identidade local;
+- composição das telas.
 
-Não deve concentrar novas regras complexas de domínio.
+### Cliente
 
-### `src/features/customer`
+`src/features/customer/CustomerScreens.tsx`
 
-- feiras;
+Contém:
+
+- home/feiras;
 - catálogo;
-- carrinho/checkout;
-- endereços;
-- pagamentos locais;
-- pedidos/rastreamento;
-- avaliações;
+- banca;
+- carrinho;
+- checkout;
+- pedidos;
+- conta;
+- endereço;
+- pagamentos;
 - suporte;
-- conta/configurações.
+- avaliações;
+- configurações.
 
-### `src/features/vendor`
+### Feirante
+
+`src/features/vendor/VendorScreens.tsx`
+
+Modelo:
+
+`src/features/vendor/vendorModel.ts`.
+
+### Entregador
+
+`src/features/delivery/DeliveryScreens.tsx`.
+
+## 3. Domain atual
+
+Arquivos existentes:
+
+- `fairHours.ts`: agenda verificada/parcial das feiras;
+- `identity.ts`: IDs derivados do protótipo;
+- `inventoryBridge.ts`: reserva/liberação/consumo;
+- `localAuth.ts`: credenciais locais;
+- `marketplace.ts`: peso, veículo e métricas;
+- `marketplaceBridge.ts`: banca/produto/promoção compartilhados;
+- `operations.ts`: utilidades operacionais;
+- `orderBridge.ts`: pedido unificado;
+- `routing.ts`: Nominatim + OSRM;
+- `session.ts`: sessão/papel;
+- `storage.ts`: chave escopada por conta;
+- `storedFile.ts`: arquivos Data URL;
+- `vehicles.ts`: tipos/capacidades/placa;
+- `walletBridge.ts`: carteira local.
+
+## 4. Hooks atuais
+
+- `useAppNavigation.ts`;
+- `useDemoCart.ts`;
+- `useDemoSession.ts`;
+- `useToast.ts`;
+- `useUnifiedOrderRevision.ts`.
+
+## 5. Caminho real de uma compra
+
+### 5.1 Cliente adiciona produto
+
+`CustomerScreens.tsx`
+→ callback de App
+→ `useDemoCart`.
+
+### 5.2 Checkout
+
+`CheckoutPage` calcula:
+
+- subtotal;
+- peso;
+- modalidades permitidas;
+- promoções via `calculateCheckoutPromotions()`;
+- carteira;
+- frete fixture via `vendorMetrics.deliveryFee`.
+
+### 5.3 Confirmar pedido
+
+`App.tsx::confirmOrder()`:
+
+1. gera ID `FE-xxxxxxxx`;
+2. chama `reserveInventory()`;
+3. cria histórico local do cliente;
+4. chama `upsertUnifiedOrder()`;
+5. registra eventos;
+6. consome carteira quando usada;
+7. registra uso de promoção.
+
+### 5.4 Feirante
+
+`VendorScreens.tsx` lê `readUnifiedOrders()`.
+
+A banca:
+
+- aceita;
+- separa;
+- marca item;
+- informa peso real;
+- fica pronta.
+
+Atualizações chamam `patchUnifiedOrder()`.
+
+### 5.5 Liberação logística
+
+`orderBridge.ts` deriva o estado global.
+
+Teste atual confirma que multi-banca só libera quando todas as bancas estão prontas.
+
+### 5.6 Rota
+
+O pedido recebe métricas de rota por `routing.ts` quando disponíveis.
+
+### 5.7 Entregador
+
+`DeliveryScreens.tsx` lê pedidos prontos com rota.
+
+Filtra por:
+
+- raio;
+- região;
+- disponibilidade;
+- agenda;
+- aprovação;
+- capacidade/documento do veículo.
+
+Ao aceitar:
+
+`patchUnifiedOrder(status = driver_assigned)`.
+
+Etapas seguintes atualizam:
+
+- `collected`;
+- `out_for_delivery`;
+- `delivered`.
+
+## 6. Caminho de estoque
+
+`inventoryBridge.ts` usa:
+
+- `feirae:inventory-reservations:v1`;
+- `feirae:marketplace:v2`;
+- `feirae:static-stock-adjustments:v1`;
+- produtos locais do feirante.
+
+Operações:
+
+- `reserveInventory`;
+- `releaseInventory`;
+- `consumeInventory`.
+
+Isso não é transação de banco.
+
+## 7. Marketplace local
+
+`marketplaceBridge.ts` publica no mesmo navegador:
 
 - banca;
-- catálogo/estoque;
-- horários;
+- produtos;
 - promoções;
-- pedidos;
-- preparo;
-- documentos;
-- avaliações;
-- financeiro local.
+- aprovação;
+- aberta/fechada;
+- modalidades de entrega/pagamento.
 
-### `src/features/delivery`
+Storage:
 
-- disponibilidade;
-- regiões/raio;
-- veículos;
-- documentos;
-- ofertas;
-- corrida ativa;
-- coleta/rota/entrega;
-- suporte;
-- avaliações;
-- financeiro local.
+`feirae:marketplace:v2`.
 
-## Bridges de domínio atuais
+## 8. IDs do protótipo
 
-### `orderBridge.ts`
+Alguns IDs são derivados de texto/e-mail para manter consistência local.
 
-Fonte local compartilhada do pedido unificado.
+Produção deve usar UUIDs do banco.
 
-Mantém:
+Não transportar a lógica de ID derivado como identidade canônica server-side.
 
-- pedido;
-- estados por banca;
-- pagamento;
-- eventos;
-- suporte;
-- avaliações;
-- motorista/rota.
+## 9. Banco preparado
 
-### `marketplaceBridge.ts`
+Migrations:
 
-Sincroniza banca/produtos/promoções com a experiência do cliente.
+- 0001 core;
+- 0002 operations.
 
-### `inventoryBridge.ts`
+O app não as consome ainda.
 
-Implementa no protótipo:
+Gaps exatos: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
-- reserva;
-- liberação;
-- consumo de estoque.
+## 10. Arquitetura de substituição
 
-### `walletBridge.ts`
+A migração deve preservar as telas e substituir fontes de dados.
 
-Créditos de reembolso e débitos da carteira local.
+Ordem recomendada:
 
-### `localAuth.ts`
+1. Auth;
+2. perfis;
+3. feira/banca/produtos;
+4. pedidos/eventos;
+5. estoque;
+6. documentos;
+7. entrega;
+8. financeiro;
+9. notificações/admin.
 
-Somente para validar UX de login/cadastro/alteração de credenciais.
+Não fazer reescrita visual junto com a migração de fonte de verdade sem necessidade.
 
-**Não é segurança de produção.**
+## 11. Fronteira obrigatória
 
-### `routing.ts`
+No backend real, o navegador pode pedir uma ação, mas não decidir sozinho:
 
-Geocodificação/rota para protótipo. Provedor real deve substituir essa dependência.
+- preço final;
+- estoque;
+- estado válido;
+- aprovação;
+- valor de repasse;
+- estorno;
+- taxa.
 
-### `storedFile.ts`
+## 12. Rastreabilidade
 
-Permite armazenar documento no navegador para validar upload e edição.
-
-**Produção exige Storage privado.**
-
-## Persistência
-
-Hoje:
-
-- `localStorage`;
-- eventos de sincronização local;
-- fixtures para contas demo.
-
-Problemas inerentes:
-
-- sem consistência multi-dispositivo;
-- sem transação real;
-- sem isolamento de segurança;
-- limite de armazenamento;
-- dados podem ser apagados pelo navegador;
-- concorrência não é confiável.
-
-## Backend planejado
-
-As migrations existentes são:
-
-1. `0001_feirae_core.sql`;
-2. `0002_feirae_operations.sql`.
-
-Elas não significam que o app já está conectado ao Supabase.
-
-## Migração recomendada
-
-Não reescrever a UI. Substituir bridges por interfaces.
-
-Exemplo conceitual:
-
-```ts
-interface OrderRepository {
-  get(id: string): Promise<Order>;
-  create(input: CreateOrder): Promise<Order>;
-  transition(id: string, action: OrderAction): Promise<Order>;
-}
-```
-
-Implementações:
-
-- `LocalOrderRepository` para protótipo;
-- `SupabaseOrderRepository` para staging/produção.
-
-## Fonte de verdade
-
-Produção:
-
-| Domínio            | Fonte de verdade   |
-| ------------------ | ------------------ |
-| sessão             | Auth               |
-| papéis             | Postgres/RLS       |
-| catálogo           | Postgres           |
-| imagens/documentos | Storage            |
-| estoque            | Postgres/transação |
-| pedido             | Postgres           |
-| eventos            | Postgres           |
-| pagamento          | provedor + ledger  |
-| rota               | provedor/cache     |
-| notificações       | backend            |
-| avaliações         | Postgres           |
-
-## Princípios
-
-- UI não decide autorização.
-- Cliente não define preço final.
-- Estoque não é decrementado apenas no browser.
-- Webhook é idempotente.
-- Transição crítica é server-side.
-- IDs não dependem de texto/nome visível.
-- Eventos críticos são auditáveis.
-- Integrações ficam atrás de adapters.
+Mapa por função/chave/tabela:
+[IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).

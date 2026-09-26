@@ -1,116 +1,213 @@
 # Revisão técnica formal — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 após auditoria código ↔ docs ↔ SQL.
 
-## Sumário executivo
+## Estado real
 
-O Feiraê evoluiu de uma demonstração de telas para um **protótipo funcional com fluxos integrados**. Cliente, feirante e entregador compartilham o mesmo pedido local; catálogo, estoque, promoções, entrega, carteira e avaliações possuem bridges próprias; e os módulos de interface estão separados por domínio.
+O Feiraê é um protótipo funcional integrado no mesmo navegador.
 
-A principal dívida técnica agora não é mais “quebrar o App em telas”, e sim **substituir a infraestrutura local por backend real sem perder as regras validadas no protótipo**.
+Pontos fortes atuais:
 
-## Situação atual
-
-### Concluído
-
-- features separadas em `customer`, `vendor` e `delivery`;
-- regras em `src/domain`;
-- `useToast` e hooks dedicados;
+- três papéis;
 - pedido unificado;
-- catálogo compartilhado;
-- estoque local transacional para o protótipo;
-- autenticação local para teste;
-- edição transacional de formulários;
-- documentos locais;
-- wallet/reembolso local;
-- suporte e avaliações;
-- CI completo;
-- migrations Supabase `0001` e `0002`.
+- multi-banca;
+- estoque local;
+- logística;
+- documentos;
+- promoções;
+- avaliações;
+- CI com 69 testes;
+- migrations base.
 
-### Principal limitação
+A dívida principal está na transição para fonte de verdade server-side.
 
-A fonte de verdade ainda é o navegador. Portanto, estado local não oferece garantias de concorrência, autorização, segurança, consistência multi-dispositivo ou durabilidade de produção.
+## P0 — incompatibilidade de estados
 
-## Achados prioritários atuais
+### Problema
 
-| Prioridade | Achado                                                         | Impacto                  | Próxima ação                             |
-| ---------- | -------------------------------------------------------------- | ------------------------ | ---------------------------------------- |
-| P0         | Auth local é apenas mecanismo de protótipo                     | segurança                | migrar para Supabase Auth + RLS          |
-| P0         | Pedido/estoque/ledger ainda não são server-side                | consistência e fraude    | RPC/Edge Functions/transações            |
-| P0         | Pagamento não é real                                           | financeiro               | escolher provedor e implementar webhooks |
-| P0         | Documentos ficam no navegador                                  | privacidade/durabilidade | Storage privado + policies               |
-| P1         | Estados de frontend e enum SQL precisam de uma convenção única | integração               | seguir `DATA_MODEL_AND_STATES.md`        |
-| P1         | Rotas usam serviço de protótipo                                | SLA/termos               | provedor de produção                     |
-| P1         | Não há painel administrativo implementado                      | operação                 | `ADMIN_MANAGEMENT_SPEC.md`               |
-| P1         | Não há observabilidade/telemetria de produção                  | operação                 | monitoramento + incidentes               |
-| P2         | Fixtures ainda convivem com dados locais em contas demo        | clareza                  | separar seed/demo de dados reais         |
-| P2         | E2E atual é Testing Library, não browser E2E                   | regressão                | Playwright/Cypress ou equivalente        |
+`order_vendors.status` usa `public.order_status`.
 
-## Arquitetura alvo
+Frontend de banca precisa de:
 
-A UX atual deve permanecer, mas bridges devem virar adapters.
+- pending;
+- accepted;
+- preparing;
+- ready;
+- collected;
+- delivered;
+- rejected.
 
-```
-UI
-↓
-features/hooks
-↓
-repositories/use-cases
-↓
-Supabase Auth / Postgres / Storage / Edge Functions
-↓
-provedores externos
-```
+Enum SQL não suporta todos.
 
-Transições críticas não devem acontecer diretamente no cliente.
+### Consequência
 
-## Estados e integridade
+Não é possível persistir fielmente o fluxo atual sem gambiarra/mapeamento.
 
-A convenção oficial está em [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
+### Correção
 
-A aplicação deve ter máquinas distintas para:
+Criar enum próprio e migration.
 
-- pedido global;
-- participação da banca;
-- pagamento;
-- entrega;
-- aprovação documental;
-- repasse.
+## P0 — RLS incompleta
 
-Não reutilizar um único enum para domínios diferentes no backend final.
+Sem RLS:
 
-## Testes
+- vendor_stores;
+- categories;
+- order_vendors;
+- order_items;
+- carts;
+- deliveries;
+- payments;
+- reviews.
 
-Referência atual no commit `33fd6b58`:
+Com RLS mas sem policy suficiente:
 
-- 8 arquivos;
-- 69 testes;
-- lint aprovado;
-- build aprovado;
-- Prettier aprovado.
+- vendor_profiles;
+- promotion_usages;
+- support_tickets;
+- order_reviews.
 
-Ainda faltam:
+Isso bloqueia conexão segura do frontend ao schema atual.
 
-- browser E2E;
-- RLS tests;
-- migrations em banco descartável;
-- concorrência de estoque;
-- idempotência de pagamentos;
-- integração com provedores;
-- acessibilidade automatizada/manual.
+## P0 — financeiro multi-banca insuficiente
 
-## Critérios para produção
+`payments.vendor_amount` é único.
 
-Produção exige, no mínimo:
+Um pedido pode ter N bancas.
 
-1. Auth real e autorização;
-2. backend como fonte de verdade;
-3. estoque transacional;
-4. preços server-side;
-5. máquina de estados validada;
-6. Storage privado;
-7. pagamentos/webhooks;
-8. ledger/conciliação;
-9. observabilidade;
-10. LGPD;
-11. backup/rollback;
-12. testes E2E e segurança.
+Falta ledger/receivables por recebedor.
+
+## P0 — estoque não transacional no banco
+
+`inventoryBridge.ts` funciona localmente.
+
+Não existe tabela/mecanismo SQL de reserva.
+
+Risco de produção:
+
+- overselling;
+- corrida de concorrência;
+- inconsistência entre pagamento e estoque.
+
+## P0 — Auth não existe no backend do app
+
+`localAuth.ts` é local.
+
+`@supabase/supabase-js` não está instalado.
+
+Sem Auth/RLS real, não há segurança multiusuário.
+
+## P1 — schema de promoções incompleto
+
+Frontend usa:
+
+- couponCode;
+- payQuantity;
+- takeQuantity.
+
+SQL não possui colunas equivalentes.
+
+Além disso:
+
+- combo é percentual genérico;
+- horario é percentual genérico.
+
+## P1 — snapshots incompletos
+
+Faltam no pedido SQL dados que o frontend já usa:
+
+- WhatsApp consent;
+- cancel reason/details global;
+- endereço/cidade/coordenadas snapshot;
+- nome cliente snapshot;
+- unidade comercial item snapshot.
+
+## P1 — rota multi-banca incompleta
+
+Pedido pode conter várias bancas.
+
+Oferta do entregador agrega nomes, mas não cria stops.
+
+Precisa de tabela/estrutura de paradas se uma corrida realmente coletar em várias bancas.
+
+## P1 — catálogo de veículos hard-coded
+
+`vehicles.ts` define tipos/capacidades no código.
+
+Isso impede o painel administrativo de:
+
+- ativar/desativar tipos;
+- mudar capacidade;
+- adicionar tipo sem deploy.
+
+Criar `vehicle_types`.
+
+## P1 — documentos no localStorage
+
+Arquivo completo é Data URL.
+
+Limite 1,5 MB.
+
+Sem magic bytes/Storage/auditoria.
+
+## P1 — duplicidade de avaliações
+
+Existem:
+
+- reviews;
+- order_reviews.
+
+Escolher uma fonte canônica.
+
+## P1 — sem painel administrativo
+
+Enum tem admin/fair_manager, mas não há:
+
+- UI;
+- suspensões;
+- taxas;
+- RBAC;
+- audit log;
+- gestão de UF;
+- catálogo de veículos.
+
+## P2 — fixtures e dados reais locais coexistem
+
+Contas `@feirae.test` usam seeds.
+
+Antes de staging, separar claramente:
+
+- seed;
+- fixtures;
+- dados persistidos.
+
+## P2 — E2E em jsdom
+
+69 testes são bons para regressão funcional, mas não são browser E2E.
+
+Falta:
+
+- Playwright/Cypress;
+- mobile real;
+- upload;
+- GPS;
+- refresh;
+- integrações.
+
+## Próxima sequência técnica
+
+1. migration de correção de estados/schema;
+2. RLS/policies;
+3. Supabase Auth/client;
+4. repositories/adapters;
+5. estoque transacional;
+6. documentos/Storage;
+7. entrega server-side;
+8. admin mínimo;
+9. pagamento/ledger;
+10. E2E/staging.
+
+Detalhes:
+
+- [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md)
+- [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md)

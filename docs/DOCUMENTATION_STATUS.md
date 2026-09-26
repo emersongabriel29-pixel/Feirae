@@ -1,54 +1,172 @@
-# Auditoria da documentação — Feiraê
+# Status da documentação — segunda auditoria
 
 Atualizado em 26/09/2026.
 
-## Resultado
+## Motivo da segunda auditoria
 
-A documentação foi sincronizada com o estado do código após as auditorias de fluxos e de interface.
+A primeira revisão organizou os documentos, mas deixou trechos genéricos e alguns requisitos descritos como se já estivessem implementados.
 
-## Documentos atualizados nesta rodada
+A segunda auditoria comparou diretamente:
 
-- `README.md`;
-- `FUNCTIONAL_SPEC.md`;
-- `END_TO_END_AUDIT.md`;
-- `ORDER_FULFILLMENT_FLOW.md`;
-- `MONEY_FLOW.md`;
-- `MVP_CHECKLIST.md`;
-- `ONBOARDING_AND_APPROVAL.md`;
-- `PRODUCT_MEASUREMENT_MATRIX.md`;
-- `FAIR_HOURS.md`;
-- `ROADMAP.md`;
-- `TECHNICAL_REVIEW.md`.
+- frontend;
+- domain bridges;
+- tipos;
+- migrations 0001/0002;
+- policies RLS;
+- 69 testes;
+- package.json;
+- workflow de CI.
 
-## Documentos criados
+## Correções feitas nesta rodada
 
-- `docs/README.md`;
-- `ARCHITECTURE.md`;
-- `DATA_MODEL_AND_STATES.md`;
-- `ADMIN_MANAGEMENT_SPEC.md`;
-- `INTEGRATIONS.md`;
-- `SECURITY_AND_AUTH.md`;
-- `LGPD_AND_PRIVACY.md`;
-- `TESTING_QA.md`;
-- `DEPLOYMENT_AND_ENVIRONMENTS.md`;
-- `UI_INTERACTION_AUDIT.md`.
+### Estados
 
-## Correções conceituais
+Documentado exatamente:
 
-- README deixa de descrever o app como demo simples.
-- Roadmap reconhece que migrations já existem.
-- Checklist separa protótipo de produção.
-- Revisão técnica remove tarefas já concluídas.
-- Fluxo de pedido usa estados atuais.
-- Documento canônico separa estado de pedido, banca, pagamento e entrega.
-- Documentação de Supabase esclarece chave pública x segredo.
-- Recursos futuros são identificados como futuros, não como implementados.
-- 69 testes passam a ser a referência documentada.
+- estados do pedido frontend;
+- enum SQL;
+- divergência `cancelled/canceled`;
+- incompatibilidade de `order_vendors.status`;
+- pagamento separado;
+- payout `withdrawal_requested/requested`.
 
-## Pendência técnica documentada
+### Schema
 
-As migrations ainda possuem enum de pedido legado e grafia `canceled` diferente de `cancelled`. Isso está documentado como migration futura obrigatória antes da integração real.
+Criado:
+[SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
-## Manutenção
+Ele registra campos/tabelas que faltam, inclusive:
 
-Mudança funcional relevante deve atualizar docs no mesmo PR.
+- promoções;
+- snapshots;
+- ledger;
+- estoque;
+- imagens;
+- admin;
+- RLS.
+
+### Código
+
+Criado:
+[IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).
+
+Ele aponta:
+
+- arquivo;
+- localStorage key;
+- SQL relacionado;
+- situação atual.
+
+### Produto
+
+Corrigidos exemplos errados de capacidade.
+
+Valores reais:
+
+- bicicleta 10;
+- cargueira 40;
+- moto 12;
+- moto com baú 20;
+- carro 80;
+- pickup 250;
+- van 500.
+
+### Frete
+
+Documentado que o checkout usa `vendorMetrics.deliveryFee`, não distância/peso real.
+
+### Promoções
+
+Marcados como parciais:
+
+- `horario`;
+- `combo`.
+
+Também documentados campos faltantes no SQL:
+
+- `coupon_code`;
+- `pay_quantity`;
+- `take_quantity`.
+
+### Produtos
+
+Categorias e unidades agora correspondem exatamente a `vendorModel.ts`.
+
+Foto foi corrigida para:
+
+- uma foto Data URL;
+- não obrigatória atualmente.
+
+### Segurança
+
+RLS auditada tabela por tabela.
+
+### LGPD
+
+Inventário passou a listar dados e chaves realmente salvos no navegador.
+
+### QA
+
+A documentação agora diferencia:
+
+- teste existente;
+- comportamento implementado sem teste dedicado;
+- integração ausente.
+
+### Admin
+
+Requisito passou a incluir concretamente:
+
+- UF ativa/inativa;
+- feira ativa/inativa;
+- catálogo global de veículos;
+- capacidade máxima por tipo;
+- suspensões;
+- taxas versionadas;
+- RBAC;
+- audit log.
+
+## Documentos novos desta rodada
+
+- `SCHEMA_GAP_MATRIX.md`;
+- `IMPLEMENTATION_TRACEABILITY.md`.
+
+## Documentos reescritos com base no código
+
+- README;
+- docs/README;
+- DATA_MODEL_AND_STATES;
+- SECURITY_AND_AUTH;
+- ADMIN_MANAGEMENT_SPEC;
+- FUNCTIONAL_SPEC;
+- MONEY_FLOW;
+- PRODUCT_MEASUREMENT_MATRIX;
+- INTEGRATIONS;
+- LGPD_AND_PRIVACY;
+- TESTING_QA;
+- ARCHITECTURE;
+- END_TO_END_AUDIT;
+- ORDER_FULFILLMENT_FLOW;
+- ONBOARDING_AND_APPROVAL;
+- MVP_CHECKLIST;
+- DEPLOYMENT_AND_ENVIRONMENTS;
+- TECHNICAL_REVIEW;
+- UI_INTERACTION_AUDIT;
+- ROADMAP;
+- FAIR_HOURS.
+
+## Pendências que são de código/schema, não de documentação
+
+A documentação agora registra, mas não resolve sozinha:
+
+- Supabase não conectado;
+- enum/status incompatível;
+- RLS incompleta;
+- ledger ausente;
+- reserva SQL ausente;
+- promoções SQL incompletas;
+- admin ausente;
+- rota multi-stop ausente;
+- PSP/KYC/Storage ausentes.
+
+Esses itens só podem ser marcados concluídos quando o código correspondente for implementado e testado.
