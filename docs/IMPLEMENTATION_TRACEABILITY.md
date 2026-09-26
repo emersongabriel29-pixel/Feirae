@@ -211,3 +211,27 @@ Contagem real:
 - `utils.test.ts`: 4.
 
 Total: **69**.
+
+
+## Gestão administrativa
+
+| Função | Interface | Persistência | Segurança / ação |
+| --- | --- | --- | --- |
+| Dashboard e listas | `admin/app.js` | tabelas operacionais | RLS + RBAC |
+| Estados/regiões | `admin/modules.js` | `service_states`, `service_regions` | `registrations.manage` |
+| Veículos globais | `admin/modules.js` | `vehicle_type_rules` | `rules.manage` |
+| Frete/taxas | `admin/modules.js` | `delivery_fee_rules`, `platform_fee_rules` | `rules.manage` |
+| Pedidos | detalhe em `admin/app.js` | `orders`, `order_events` | `admin-actions: order_transition` |
+| Entregas | detalhe em `admin/app.js` | `deliveries` | `admin-actions: delivery_*` |
+| Documentos | `admin/app.js` | `onboarding_documents`, Storage | `admin-actions: document_review` |
+| Pagamentos | `admin/app.js` | `payments` | `admin-actions: payment_reconcile` |
+| Suporte | `admin/app.js` | `support_tickets` | `admin-actions: support_update` |
+| Avaliações | `admin/app.js` | `order_reviews` | `admin-actions: review_moderate` |
+| LGPD | `admin/app.js` | `privacy_requests` | `admin-actions: privacy_update` |
+| Restrições | `admin/app.js` | `account_enforcements` | `admin-actions: enforcement_*` |
+| Administradores | `admin/app.js` | `admin_access`, `admin_permissions` | MFA + superadmin + Edge Function |
+| Alertas | `admin/app.js` | `operational_alerts` | `refresh_alerts`, reconhecer/resolver |
+| Integrações | `admin/app.js` | `integration_registry`, `integration_health_events` | `health_check` server-side |
+| Auditoria | `admin/app.js` | `admin_audit_logs` | `audit.view` |
+
+Testes estruturais: `admin/management.test.js`.
