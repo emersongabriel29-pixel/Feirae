@@ -152,8 +152,9 @@ Cobertura exata e lacunas:
 Índice:
 [docs/README.md](docs/README.md).
 
-Documentos de rastreabilidade:
+Design e rastreabilidade:
 
+- [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
 - [IMPLEMENTATION_TRACEABILITY.md](docs/IMPLEMENTATION_TRACEABILITY.md)
 - [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md)
 - [DATA_MODEL_AND_STATES.md](docs/DATA_MODEL_AND_STATES.md)
