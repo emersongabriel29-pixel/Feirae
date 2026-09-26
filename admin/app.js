@@ -329,23 +329,41 @@ async function renderModule(m){
 
 function drawTable(m,rows){
  let html='<section class="panel"><div class="panel-head"><div><h2>'+esc(m.label)+'</h2><p>'+esc(m.desc)+'</p></div><div class="toolbar"><input id="tableSearch" placeholder="Buscar nesta lista">';
+ if(m.bulkField)html+='<button id="bulkEnable" class="secondary">Ativar selecionados</button><button id="bulkDisable" class="secondary">Desativar selecionados</button>';
  if(m.create)html+='<button id="newRecord" class="primary">Novo</button>';
- html+='</div></div><div class="table-wrap"><table><thead><tr>'+m.cols.map((c)=>'<th>'+esc(label(c))+'</th>').join("");
+ html+='</div></div><div class="table-wrap"><table><thead><tr>';
+ if(m.bulkField)html+='<th><input id="selectAllRows" type="checkbox" aria-label="Selecionar todos"></th>';
+ html+=m.cols.map((c)=>'<th>'+esc(label(c))+'</th>').join("");
  if(!m.readonly)html+='<th>Ações</th>';
  html+='</tr></thead><tbody id="tableBody"></tbody></table></div></section>';
  $("#pageContent").innerHTML=html;
  fillRows(m,rows);
  $("#tableSearch").oninput=(e)=>{const t=e.target.value.toLowerCase().trim();fillRows(m,!t?state.rows:state.rows.filter((r)=>JSON.stringify(r).toLowerCase().includes(t)));};
  if(m.create)$("#newRecord").onclick=()=>openEditor(m,null);
+ if(m.bulkField){
+   $("#bulkEnable").onclick=()=>bulkSet(m,true);
+   $("#bulkDisable").onclick=()=>bulkSet(m,false);
+   $("#selectAllRows").onchange=(e)=>{
+     state.selected=new Set(e.target.checked?state.rows.map((r)=>String(r[m.key||"id"])):[]);
+     fillRows(m,state.rows);
+   };
+ }
 }
 
 function fillRows(m,rows){
  const body=$("#tableBody");
- if(!rows.length){body.innerHTML='<tr><td colspan="'+(m.cols.length+1)+'" class="empty">Nenhum registro encontrado.</td></tr>';return;}
+ const extra=m.bulkField?1:0;
+ if(!rows.length){body.innerHTML='<tr><td colspan="'+(m.cols.length+(m.readonly?0:1)+extra)+'" class="empty">Nenhum registro encontrado.</td></tr>';return;}
  body.innerHTML=rows.map((row,i)=>{
-   let line='<tr>'+m.cols.map((c)=>'<td>'+cell(c,row[c])+'</td>').join("");
+   const key=String(row[m.key||"id"]??"");
+   let line='<tr>';
+   if(m.bulkField)line+='<td><input type="checkbox" data-select-row="'+i+'" '+(state.selected.has(key)?"checked":"")+'></td>';
+   line+=m.cols.map((c)=>'<td>'+cell(c,row[c])+'</td>').join("");
    if(!m.readonly){
-     line+='<td><div class="actions"><button data-edit="'+i+'">Editar</button>';
+     line+='<td><div class="actions">';
+     if(m.table==="orders")line+='<button data-order-detail="'+i+'">Detalhes</button>';
+     if(m.table==="deliveries")line+='<button data-delivery-detail="'+i+'">Detalhes</button>';
+     line+='<button data-edit="'+i+'">Editar</button>';
      if(m.documentViewer&&row.file_path)line+='<button data-document="'+i+'">Abrir documento</button>';
      if(m.enforcementTarget&&canModule("enforcements")){
        line+='<button data-suspend="'+i+'">Suspender</button><button data-ban="'+i+'">Banir</button>';
@@ -356,12 +374,32 @@ function fillRows(m,rows){
    }
    return line+'</tr>';
  }).join("");
+ body.querySelectorAll("[data-select-row]").forEach((b)=>b.onchange=()=>{
+   const row=rows[Number(b.dataset.selectRow)],key=String(row[m.key||"id"]);
+   if(b.checked)state.selected.add(key);else state.selected.delete(key);
+ });
+ body.querySelectorAll("[data-order-detail]").forEach((b)=>b.onclick=()=>renderOrderDetail(rows[Number(b.dataset.orderDetail)].id));
+ body.querySelectorAll("[data-delivery-detail]").forEach((b)=>b.onclick=()=>renderDeliveryDetail(rows[Number(b.dataset.deliveryDetail)].id));
  body.querySelectorAll("[data-edit]").forEach((b)=>b.onclick=()=>openEditor(m,rows[Number(b.dataset.edit)]));
  body.querySelectorAll("[data-document]").forEach((b)=>b.onclick=()=>openDocument(rows[Number(b.dataset.document)]));
  body.querySelectorAll("[data-suspend]").forEach((b)=>b.onclick=()=>openEnforcement(rows[Number(b.dataset.suspend)].id,"suspension"));
  body.querySelectorAll("[data-ban]").forEach((b)=>b.onclick=()=>openEnforcement(rows[Number(b.dataset.ban)].id,"ban"));
  body.querySelectorAll("[data-block-delivery]").forEach((b)=>b.onclick=()=>openEnforcement(rows[Number(b.dataset.blockDelivery)].id,"deliveries_block"));
  body.querySelectorAll("[data-delete]").forEach((b)=>b.onclick=()=>removeRow(m,rows[Number(b.dataset.delete)]));
+}
+
+async function bulkSet(m,value){
+ if(!m.bulkField||!state.selected.size){toast("Selecione pelo menos um registro.");return;}
+ const key=m.key||"id";
+ const ids=[...state.selected];
+ let q=state.supabase.from(m.table).update({[m.bulkField]:value});
+ q=ids.length===1?q.eq(key,ids[0]):q.in(key,ids);
+ const r=await q;
+ if(r.error){toast(r.error.message);return;}
+ await audit("bulk_update",m.table,ids.join(","),null,{field:m.bulkField,value,count:ids.length});
+ toast(ids.length+" registros atualizados.");
+ state.selected=new Set();
+ await openModule(state.active);
 }
 
 async function openDocument(row){
