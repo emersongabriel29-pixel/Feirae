@@ -1,77 +1,116 @@
 # Revisão técnica formal — Feiraê
 
+Atualizado em 26/09/2026.
+
 ## Sumário executivo
 
-O Feiraê tem uma proposta de produto clara, boa diferenciação entre cliente, feirante e entregador e uma demonstração navegável consistente. A principal dívida técnica estava na concentração de regras de domínio, persistência, roteamento e composição de telas em `src/App.tsx`, além do CSS global extenso. Esta rodada reduz o acoplamento sem alterar o fluxo demonstrativo: regras de marketplace e sessão agora possuem módulos próprios, com testes unitários dedicados, e tokens/base visuais foram separados do restante da folha de estilos.
+O Feiraê evoluiu de uma demonstração de telas para um **protótipo funcional com fluxos integrados**. Cliente, feirante e entregador compartilham o mesmo pedido local; catálogo, estoque, promoções, entrega, carteira e avaliações possuem bridges próprias; e os módulos de interface estão separados por domínio.
 
-## Achados priorizados
+A principal dívida técnica agora não é mais “quebrar o App em telas”, e sim **substituir a infraestrutura local por backend real sem perder as regras validadas no protótipo**.
 
-| Prioridade | Achado                                                        | Impacto                                                              | Direção recomendada                                                                 |
-| ---------- | ------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| P0         | Autenticação, estoque, pedidos e pagamentos são apenas locais | Risco funcional e de segurança se interpretados como operações reais | Conectar backend e validar tudo no servidor antes de produção                       |
-| P1         | `App.tsx` ainda concentra composição de telas e estado global | Alto custo de manutenção e testes                                    | Próxima etapa: extrair `features/customer`, `features/vendor` e `features/delivery` |
-| P1         | Dados de demonstração são importados diretamente pelas telas  | Dificulta trocar mock por API                                        | Criar interfaces de repositório/adapters e uma camada de query                      |
-| P1         | Roteamento é hash-based e manual                              | Funciona para demo, mas cresce com risco de inconsistência           | Adotar roteador quando houver backend e rotas protegidas                            |
-| P2         | CSS segue grande, embora tokens/base estejam separados        | Ainda há risco de colisão e regressão visual                         | Migrar por domínio para CSS Modules ou camadas de componente                        |
-| P2         | Notificações usam `setTimeout` sem ciclo de vida              | Pode gerar atualização após desmontagem                              | Extrair `useToast` com limpeza de timers                                            |
-| P2         | Testes cobrem fluxos essenciais, mas não todos os erros       | Regressões de UX podem escapar                                       | Adicionar testes de localização, estoque, filtros e falhas de checkout              |
+## Situação atual
 
-## Mudanças realizadas nesta rodada
+### Concluído
 
-- Extração das regras de peso do carrinho, escolha de veículo, métricas de vendedor e resumos de bancas para `src/domain/marketplace.ts`.
-- Extração da validação da sessão, normalização do nome e rota inicial por perfil para `src/domain/session.ts`.
-- Adição de testes unitários para as regras de domínio extraídas.
-- Separação dos tokens, reset e acessibilidade global em `src/styles/tokens.css`.
-- Preservação do pipeline existente de lint, testes, build e Prettier.
+- features separadas em `customer`, `vendor` e `delivery`;
+- regras em `src/domain`;
+- `useToast` e hooks dedicados;
+- pedido unificado;
+- catálogo compartilhado;
+- estoque local transacional para o protótipo;
+- autenticação local para teste;
+- edição transacional de formulários;
+- documentos locais;
+- wallet/reembolso local;
+- suporte e avaliações;
+- CI completo;
+- migrations Supabase `0001` e `0002`.
 
-## Revisão de código — comentários formais
+### Principal limitação
 
-### `src/App.tsx`
+A fonte de verdade ainda é o navegador. Portanto, estado local não oferece garantias de concorrência, autorização, segurança, consistência multi-dispositivo ou durabilidade de produção.
 
-**Comentário P1:** o componente raiz ainda coordena estado de sessão, carrinho, favoritos, pedidos, localização, hash routing e renderização de todos os perfis. A extração desta rodada reduz regras puras, mas o próximo PR deve mover cada fluxo para uma feature independente e deixar `App` apenas como shell e composição.
+## Achados prioritários atuais
 
-**Comentário P1:** a operação de checkout continua sendo explicitamente demonstrativa. Nenhum preço, estoque, permissão ou pagamento deve ser considerado confiável no cliente quando o Supabase entrar.
+| Prioridade | Achado                                                         | Impacto                  | Próxima ação                             |
+| ---------- | -------------------------------------------------------------- | ------------------------ | ---------------------------------------- |
+| P0         | Auth local é apenas mecanismo de protótipo                     | segurança                | migrar para Supabase Auth + RLS          |
+| P0         | Pedido/estoque/ledger ainda não são server-side                | consistência e fraude    | RPC/Edge Functions/transações            |
+| P0         | Pagamento não é real                                           | financeiro               | escolher provedor e implementar webhooks |
+| P0         | Documentos ficam no navegador                                  | privacidade/durabilidade | Storage privado + policies               |
+| P1         | Estados de frontend e enum SQL precisam de uma convenção única | integração               | seguir `DATA_MODEL_AND_STATES.md`        |
+| P1         | Rotas usam serviço de protótipo                                | SLA/termos               | provedor de produção                     |
+| P1         | Não há painel administrativo implementado                      | operação                 | `ADMIN_MANAGEMENT_SPEC.md`               |
+| P1         | Não há observabilidade/telemetria de produção                  | operação                 | monitoramento + incidentes               |
+| P2         | Fixtures ainda convivem com dados locais em contas demo        | clareza                  | separar seed/demo de dados reais         |
+| P2         | E2E atual é Testing Library, não browser E2E                   | regressão                | Playwright/Cypress ou equivalente        |
 
-**Comentário P2:** ações de localização e abertura de mapas precisam continuar sendo consentidas e tratadas como falíveis. O fallback regional atual é adequado para a demo.
+## Arquitetura alvo
 
-### `src/styles.css`
+A UX atual deve permanecer, mas bridges devem virar adapters.
 
-**Comentário P2:** a separação de tokens/base é um primeiro passo reversível. A migração restante deve acontecer por domínio visual, mantendo classes públicas estáveis durante cada PR para reduzir risco.
+```
+UI
+↓
+features/hooks
+↓
+repositories/use-cases
+↓
+Supabase Auth / Postgres / Storage / Edge Functions
+↓
+provedores externos
+```
 
-### Testes
+Transições críticas não devem acontecer diretamente no cliente.
 
-**Comentário P1:** os fluxos de login, carrinho, checkout, troca de perfil e operações de entrega têm valor alto e devem permanecer como testes de comportamento. As regras puras extraídas agora têm testes mais rápidos e isolados.
+## Estados e integridade
 
-## Critérios para considerar o MVP pronto
+A convenção oficial está em [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
 
-O MVP só deve ser promovido quando houver autenticação real, autorização por papel, persistência server-side, estoque transacional, cálculo de preço no servidor, histórico de pedidos, tratamento de falhas e observabilidade mínima. A experiência atual deve continuar identificada como demo até esses critérios serem atendidos.
+A aplicação deve ter máquinas distintas para:
 
-## Auditoria funcional do fluxo Feirante/Entregador — 25/09/2026
+- pedido global;
+- participação da banca;
+- pagamento;
+- entrega;
+- aprovação documental;
+- repasse.
 
-### P0 — financeiro sem fluxo de liquidação definido
+Não reutilizar um único enum para domínios diferentes no backend final.
 
-A interface mostra valores a receber, mas ainda faltava definir como o dinheiro chega ao feirante e ao entregador. O modelo adotado está documentado em `MONEY_FLOW.md`: pagamento passa por provedor de marketplace, valores ficam pendentes até a conclusão aplicável do pedido/entrega, depois ficam disponíveis para repasse/saque. Frete grátis patrocinado pelo feirante é descontado do recebível do feirante; o entregador continua recebendo sua remuneração integral.
+## Testes
 
-### P0 — pedido não pode ser apenas uma lista de status
+Referência atual no commit `33fd6b58`:
 
-O fluxo precisa de notificação de novo pedido, aceite/recusa do feirante, preparo por item, confirmação de peso quando variável, pronto para coleta, oferta da corrida, aceite do entregador, coleta, rota e entrega. O feirante não marca “saiu para entrega”; essa transição pertence ao entregador. Ver `ORDER_FULFILLMENT_FLOW.md`.
+- 8 arquivos;
+- 69 testes;
+- lint aprovado;
+- build aprovado;
+- Prettier aprovado.
 
-### P0 — cadastro de produtos insuficiente
+Ainda faltam:
 
-O produto precisa permitir foto, edição real, categoria, unidade de venda, preço por unidade/kg/volume/comprimento, estoque e peso logístico. O botão de edição não pode alterar preço implicitamente. Ver `PRODUCT_MEASUREMENT_MATRIX.md`.
+- browser E2E;
+- RLS tests;
+- migrations em banco descartável;
+- concorrência de estoque;
+- idempotência de pagamentos;
+- integração com provedores;
+- acessibilidade automatizada/manual.
 
-### P1 — banca ainda precisa de edição real
+## Critérios para produção
 
-“Minha banca” deve permitir editar nome, logo, capa, feira, corredor/box, referência, categorias e visualizar o perfil como cliente. Hoje parte dessas ações ainda é demonstrativa.
+Produção exige, no mínimo:
 
-### P1 — horários devem vir da feira correta
-
-O horário padrão não pode ser hard-coded. Cada feira deve possuir fonte, verificação e agenda própria. A pesquisa oficial inicial está em `FAIR_HOURS.md`; horários não confirmados devem aparecer como “a confirmar”.
-
-### P1 — promoções precisam incluir frete grátis patrocinado
-
-A campanha do feirante deve poder definir “Frete grátis”, registrando que o feirante assume o custo da entrega. O repasse ao entregador não depende de transferência manual do feirante; sai da composição financeira do pedido.
-
-### P0 — aprovação documental antes de operar
-
-Criar conta não libera operação. Feirante e entregador devem passar por estados de documentação/revisão/aprovação. Requisitos e fontes oficiais estão em `ONBOARDING_AND_APPROVAL.md`. Um perfil não aprovado não pode publicar, receber pedido, ficar online, aceitar corrida ou receber repasse.
+1. Auth real e autorização;
+2. backend como fonte de verdade;
+3. estoque transacional;
+4. preços server-side;
+5. máquina de estados validada;
+6. Storage privado;
+7. pagamentos/webhooks;
+8. ledger/conciliação;
+9. observabilidade;
+10. LGPD;
+11. backup/rollback;
+12. testes E2E e segurança.

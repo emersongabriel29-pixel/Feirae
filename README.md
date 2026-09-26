@@ -2,82 +2,153 @@
 
 **A feira do seu jeito.**
 
-Marketplace das feiras do Distrito Federal, com alimentos, artesanato, moda, plantas, utilidades e outros produtos.
+Marketplace de feiras com experiências separadas para **Cliente**, **Feirante** e **Entregador**.
 
-## Estado atual
+## Estado atual — 26/09/2026
 
-O frontend funciona como uma demonstração navegável e responsiva. A entrada oferece três acessos — cliente, feirante e entregador — e abre uma experiência específica para o perfil escolhido. A troca de perfil só acontece depois de sair. Carrinho, favoritos, endereços, preferências, sessão demonstrativa e pedidos são salvos no navegador com `localStorage`. As telas possuem URLs compartilháveis com hash e respeitam a navegação voltar/avançar do navegador.
+O Feiraê está em **protótipo funcional avançado**, não em produção. Os principais fluxos internos estão conectados e testados, mas a fonte de verdade operacional ainda é local ao navegador.
 
-O Supabase ficou deliberadamente para a próxima fase. Portanto, autenticação, permissões, estoque, pedidos, pagamentos e dados administrativos ainda não devem ser tratados como operações reais.
+Hoje o protótipo já possui:
 
-## GPS e localização
-
-- “Usar minha localização” via Geolocation API.
-- GPS opcional: se o cliente negar, pode informar endereço/região manualmente.
-- Feiras ordenadas por proximidade.
-- Distância cliente → feira.
-- Botão para abrir rota no mapa.
-- Latitude/longitude para feiras e pontos de venda.
-- Endereço de entrega como destino.
-- Arquitetura preparada para rastreamento de entregador em tempo real.
-- Geolocalização tratada como dado privado e usada com consentimento.
-
-## Produto
-
-- múltiplas feiras do DF;
-- múltiplos feirantes por feira;
-- loja digital de cada feirante;
-- alimentos e produtos não alimentícios;
+- login/cadastro local com senha para validação da experiência;
+- alteração local de nome, e-mail e senha;
+- cliente, feirante e entregador com experiências próprias;
+- catálogo compartilhado entre banca e cliente;
+- carrinho, checkout, pedidos e histórico;
+- pedido unificado entre cliente, bancas e entregador;
+- compra multi-banca com estado individual por banca;
 - entrega e retirada;
-- carrinho “Minha Feira”;
-- pedidos e acompanhamento;
-- compra de vários feirantes em um checkout, com divisão interna por vendedor;
-- avaliações, favoritos e notificações;
-- experiências separadas para cliente, feirante e entregador;
-- operações demonstrativas de estoque, produtos, loja, promoções e pedidos do feirante;
-- fluxo demonstrativo de aceite, coleta, rota e conclusão da entrega;
-- painel administrativo futuro, com acesso próprio;
-- futuro painel de gestão da feira.
+- estoque reservado, liberado e consumido pelo fluxo local;
+- peso estimado e peso real para logística;
+- veículos, capacidade, região, raio e disponibilidade do entregador;
+- promoções, cupons, frete grátis e limites de uso;
+- cancelamento, suporte, reembolso local e carteira;
+- avaliações cruzadas;
+- notificações baseadas em eventos do pedido;
+- documentos de feirante/entregador armazenados localmente no protótipo;
+- migrations do Supabase preparadas para o backend real.
 
-## Arquitetura de dados
+A persistência do protótipo usa `localStorage` e bridges em `src/domain`. Isso **não substitui autenticação, banco, storage, pagamentos ou autorização de produção**.
 
-Prever latitude/longitude em feiras, pontos de venda e endereços. Para consultas por distância/raio, usar PostGIS no Supabase.
+## Produção x protótipo
 
-Tabelas previstas:
-profiles, vendor_profiles, delivery_profiles, fairs, fair_vendor_memberships, vendor_stores, categories, products, product_images, inventory, addresses, carts, cart_items, orders, order_items, order_vendors, payments, deliveries, reviews, favorites, notifications, promotions, audit_logs.
+### Funciona no protótipo
+
+Fluxos de interface, regras locais, transições operacionais, persistência local, validações de formulário, catálogo compartilhado, estoque local, carteira/reembolso local, corrida e repasses simulados.
+
+### Ainda depende de integração/backend real
+
+- Supabase Auth e autorização por papel;
+- aplicação das migrations em ambiente real;
+- Storage para documentos e fotos;
+- Pix/cartão com provedor, tokenização e webhooks;
+- split, ledger, saque e conciliação;
+- KYC/aprovação documental;
+- roteamento/geocodificação com SLA de produção;
+- rastreamento em tempo real;
+- push/WhatsApp;
+- antifraude, chargeback e observabilidade.
+
+## Arquitetura atual
+
+- React 19 + TypeScript + Vite.
+- `src/App.tsx`: shell e orquestração.
+- `src/features/customer`: cliente.
+- `src/features/vendor`: feirante.
+- `src/features/delivery`: entregador.
+- `src/components`: componentes reutilizáveis.
+- `src/hooks`: sessão, estado e observação de eventos.
+- `src/domain`: regras e bridges locais de pedido, marketplace, estoque, carteira, autenticação e rotas.
+- `supabase/migrations`: schema de backend planejado/implementado em SQL.
+
+Detalhes: [Arquitetura](docs/ARCHITECTURE.md).
+
+## Máquina de estados
+
+A referência oficial de estados está em [Modelo de dados e estados](docs/DATA_MODEL_AND_STATES.md).
+
+No pedido unificado do protótipo:
+
+```
+received
+→ preparing
+→ ready_for_pickup
+→ driver_assigned
+→ collected
+→ out_for_delivery
+→ delivered
+```
+
+Saída alternativa: `cancelled`.
+
+Pagamento e estado por banca são máquinas separadas e não devem ser confundidos com o status global do pedido.
+
+## Supabase
+
+O repositório contém:
+
+- `supabase/migrations/0001_feirae_core.sql`
+- `supabase/migrations/0002_feirae_operations.sql`
+
+Essas migrations **preparam** o backend, mas a aplicação atual ainda não usa o Supabase como fonte de verdade.
 
 ## Segurança
 
-- RLS no Supabase.
-- Nunca confiar em preço enviado pelo cliente.
-- Validar estoque e propriedade do vendedor no servidor.
-- Mutações financeiras server-side.
-- Webhooks idempotentes.
-- Logs de auditoria.
-- Localização somente com consentimento.
+O login local existe somente para testar o fluxo. O digest local de senha não é um mecanismo de autenticação de produção.
+
+Produção deve usar:
+
+- Auth real;
+- RLS;
+- segredos apenas no servidor;
+- preço/estoque/pagamento validados server-side;
+- mutações críticas idempotentes;
+- trilha de auditoria;
+- storage privado para documentos.
+
+Veja [Segurança e autenticação](docs/SECURITY_AND_AUTH.md).
 
 ## Qualidade
 
-- TypeScript em modo estrito.
-- ESLint e Prettier.
-- Testes com Vitest e Testing Library.
-- Build e testes automáticos no GitHub Actions.
-- Navegação acessível por teclado e suporte a redução de movimento.
+Pipeline atual:
 
-## Organização do código
+```bash
+npm ci
+npm run check
+npm run format:check
+```
 
-O `App.tsx` funciona como shell/orquestrador. As telas foram separadas por domínio em `src/features/customer`, `src/features/vendor` e `src/features/delivery`; componentes reutilizáveis ficam em `src/components`; sessão, navegação, carrinho e feedback em `src/hooks`; e regras puras em `src/domain`. Os estilos também estão separados por domínio, preservando a tecnologia atual.
+No commit `33fd6b58`, o GitHub Actions aprovou:
 
-## Documentação de produto
+- 8 arquivos de teste;
+- 69 testes;
+- ESLint;
+- TypeScript/build;
+- Prettier.
 
-- [Revisão técnica](docs/TECHNICAL_REVIEW.md)
-- [Checklist do MVP](docs/MVP_CHECKLIST.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Fluxo financeiro e repasses](docs/MONEY_FLOW.md)
+Veja [Testes e QA](docs/TESTING_QA.md).
+
+## Documentação
+
+Índice completo: [docs/README.md](docs/README.md).
+
+Documentos centrais:
+
+- [Status da documentação](docs/DOCUMENTATION_STATUS.md)
+- [Especificação funcional](docs/FUNCTIONAL_SPEC.md)
+- [Arquitetura](docs/ARCHITECTURE.md)
+- [Modelo de dados e estados](docs/DATA_MODEL_AND_STATES.md)
+- [Auditoria end-to-end](docs/END_TO_END_AUDIT.md)
+- [Auditoria de botões e edição](docs/UI_INTERACTION_AUDIT.md)
 - [Fluxo de pedido e entrega](docs/ORDER_FULFILLMENT_FLOW.md)
-- [Produtos, unidades e métricas](docs/PRODUCT_MEASUREMENT_MATRIX.md)
-- [Cadastro, documentos e aprovação](docs/ONBOARDING_AND_APPROVAL.md)
-- [Horários das feiras](docs/FAIR_HOURS.md)
+- [Fluxo financeiro](docs/MONEY_FLOW.md)
+- [Cadastro e aprovação](docs/ONBOARDING_AND_APPROVAL.md)
+- [Integrações](docs/INTEGRATIONS.md)
+- [Segurança e autenticação](docs/SECURITY_AND_AUTH.md)
+- [LGPD e privacidade](docs/LGPD_AND_PRIVACY.md)
+- [Administração](docs/ADMIN_MANAGEMENT_SPEC.md)
+- [Deploy e ambientes](docs/DEPLOYMENT_AND_ENVIRONMENTS.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ## Desenvolvimento
 
@@ -92,7 +163,3 @@ Validação completa:
 npm run check
 npm run format:check
 ```
-
-Consulte [docs/ROADMAP.md](docs/ROADMAP.md) para a ordem das próximas fases.
-
-O Feiraê permanece separado das regras de negócio do Velvet-VIP.

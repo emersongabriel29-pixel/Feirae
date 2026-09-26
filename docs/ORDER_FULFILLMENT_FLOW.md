@@ -1,290 +1,228 @@
 # Fluxo de pedido e entrega — Feiraê
 
+Atualizado em 26/09/2026.
+
+Este documento usa os **nomes oficiais do pedido unificado do protótipo**. O mapeamento para SQL/backend está em [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
+
 ## Regra principal
 
-Feirante e entregador não devem controlar a mesma etapa.
+Cada ator controla somente sua etapa:
 
-- **Feirante** controla aceite e preparo.
-- **Entregador** controla aceite da corrida, coleta, rota e entrega.
-- **Cliente** acompanha e confirma/contesta quando necessário.
-- **Backend** valida transições e registra eventos.
+- Cliente: compra, cancelamento permitido, decisões de substituição, suporte e avaliação.
+- Feirante: aceitar/recusar, separar, informar peso real e marcar pronto.
+- Entregador: aceitar corrida, coleta, rota e entrega.
+- Backend futuro: validar transições, estoque, pagamento e eventos.
 
-Não permitir voltar livremente de um estado avançado para um estado anterior.
+## Estado global oficial do pedido
 
-## Fluxo completo
+```
+received
+→ preparing
+→ ready_for_pickup
+→ driver_assigned
+→ collected
+→ out_for_delivery
+→ delivered
+```
 
-### 1. Pagamento aprovado
+Saída alternativa antes da conclusão:
 
-Estado do pedido:
-`paid_waiting_vendor`
+```
+cancelled
+```
 
-Ações:
+Não usar neste domínio `paid_waiting_vendor`, `delivery_offered`, `driver_accepted`, `ready_for_customer` ou `picked_up` como estados globais oficiais. Conceitos de pagamento, oferta da corrida e retirada são representados por campos/eventos/máquinas próprias.
 
-- gerar pedido;
-- registrar itens/preços/peso estimado;
-- notificar o feirante imediatamente;
-- mostrar contador/SLA configurável de resposta;
-- cliente vê “Aguardando confirmação da banca”.
+## 1. Pedido recebido — `received`
 
-Notificações:
+Pré-condições do protótipo:
 
-- push/in-app para feirante;
-- badge de novo pedido;
-- opcionalmente som/vibração no app quando suportado.
+- checkout válido;
+- estoque reservado;
+- pagamento `authorized` ou `due_on_delivery`;
+- uma ou mais bancas vinculadas.
 
-### 2. Feirante aceita ou recusa
+Por banca, estado inicial:
 
-#### Aceitar
+`pending`.
 
-Ação: **Aceitar pedido**
+Cliente vê: **Pedido recebido**.
 
-Novo estado:
-`preparing`
+## 2. Banca aceita/prepara — `preparing`
 
-Registrar:
+Estados possíveis da banca:
 
-- usuário;
-- timestamp;
-- previsão de preparo;
-- observação opcional.
+```
+pending
+→ accepted
+→ preparing
+→ ready
+```
 
-Cliente recebe:
-“Banca confirmou seu pedido.”
+A primeira banca que começa não libera logística se houver outras bancas pendentes.
 
-#### Recusar
+Se uma banca rejeitar, o fluxo local atual leva o pedido a `cancelled`. Backend futuro pode evoluir para cancelamento parcial por `order_vendor`.
 
-Exigir motivo:
+Durante preparo:
 
+- marcar item separado;
+- informar peso real;
 - item indisponível;
-- banca fechada;
-- erro de estoque;
-- impossibilidade operacional;
-- outro.
+- propor substituição;
+- observações.
 
-O sistema:
+O peso real substitui o peso estimado para compatibilidade logística.
 
-- cancela ou recalcula apenas a parcela afetada;
-- inicia estorno quando aplicável;
-- notifica cliente;
-- registra auditoria.
+## 3. Todas as bancas prontas — `ready_for_pickup`
 
-## 3. Preparo
+O pedido global só chega aqui quando todas as bancas necessárias estão `ready`.
 
-O feirante deve ver cada item e conseguir:
+### Entrega
 
-- marcar separado/conferido;
-- confirmar quantidade;
-- informar peso final, quando variável;
-- marcar indisponível;
-- iniciar fluxo de substituição;
-- adicionar observação;
-- confirmar embalagem.
+Fica elegível para entregadores compatíveis.
 
-Quando todos os itens estiverem prontos:
+### Retirada
 
-Ação:
-**Marcar pronto para coleta**
+Fica pronto para o cliente buscar, sem gerar corrida.
 
-Estado:
-`ready_for_pickup`
+## 4. Entregador atribuído — `driver_assigned`
 
-O feirante **não marca “saiu para entrega”**. Essa etapa pertence ao entregador.
-
-## 4. Oferta da corrida
-
-No MVP, a corrida entra na fila de entregadores quando o pedido está pronto para coleta.
-
-Cada oferta deve informar antes do aceite:
-
-- origem/feira/banca;
-- região de destino aproximada;
-- distância estimada;
-- peso;
-- volume;
-- veículo/capacidade compatível;
-- remuneração;
-- quantidade de paradas;
-- observações de carga.
-
-Somente entregadores:
-
-- aprovados;
-- online;
-- dentro da área;
-- com veículo ativo;
-- com capacidade suficiente
-
-podem aceitar.
-
-## 5. Entregador aceita
-
-Estado da entrega:
-`accepted`
-
-Pedido pode exibir:
-“Entregador a caminho da banca.”
-
-Notificar:
-
-- cliente;
-- feirante.
+A corrida foi aceita.
 
 Registrar:
 
 - entregador;
 - veículo;
+- placa mascarada quando aplicável;
+- distância/ETA quando disponíveis;
 - valor da corrida;
-- timestamp.
+- timestamp/evento.
 
-## 6. Chegada e coleta
+O pedido não volta à fila pública enquanto estiver atribuído.
 
-Ação do entregador:
-**Cheguei à banca**
+## 5. Coleta — `collected`
 
-Depois:
-**Confirmar coleta**
+O entregador confirma coleta.
 
-A coleta deve ser confirmada pelo fluxo definido, por exemplo:
+A partir daqui:
 
-- PIN;
-- QR;
-- confirmação cruzada feirante + entregador;
-- outro mecanismo do backend.
+- cliente não usa cancelamento simples;
+- problemas viram ocorrência/suporte;
+- estoque reservado já não deve ser devolvido por cancelamento comum.
 
-Após coleta:
+Confirmação forte de coleta (PIN/QR/dupla confirmação) é futura integração de backend.
 
-Estado:
-`collected`
-
-O pedido não pode ser cancelado pelo fluxo simples.
-
-## 7. Em rota
-
-Ação do entregador:
-**Iniciar entrega**
-
-Estado:
-`out_for_delivery`
+## 6. Em rota — `out_for_delivery`
 
 Cliente vê:
 
-- “Seu pedido está a caminho”;
-- previsão de chegada;
-- mapa/rastreamento quando integração estiver disponível;
+- entregador;
+- veículo;
+- previsão;
+- distância;
+- mapa quando provedor permitir;
 - suporte.
 
-O feirante vê:
-“Coletado pelo entregador.”
+## 7. Entregue — `delivered`
 
-## 8. Entrega
+Ao confirmar entrega:
 
-Ação:
-**Confirmar entrega**
+- encerrar corrida;
+- pagamento na entrega passa para autorizado no protótipo;
+- estoque é consumido definitivamente;
+- avaliações são liberadas;
+- recebíveis locais podem ficar disponíveis.
 
-Estado:
-`delivered`
+## Retirada
 
-Evidência futura:
+Retirada utiliza o mesmo estado global até `ready_for_pickup` e depois termina em `delivered` quando a banca confirma a retirada.
 
-- PIN do cliente;
-- foto autorizada quando aplicável;
-- geolocalização;
-- assinatura/QR;
-- confirmação do cliente.
+```
+received
+→ preparing
+→ ready_for_pickup
+→ delivered
+```
 
-Após conclusão:
+`fulfillment = pickup` diferencia o fluxo da entrega.
 
-- liberar recebível do entregador conforme regra financeira;
-- liberar recebível do feirante conforme regra financeira;
-- permitir avaliações;
-- encerrar rastreamento.
+## Cancelamento — `cancelled`
 
-## Retirada pelo cliente
+Antes da coleta:
 
-Fluxo separado:
+- registrar ator, motivo, detalhes e data/hora;
+- liberar estoque reservado;
+- se pagamento local estava autorizado, registrar `refunded` e crédito/reembolso;
+- notificar participantes.
 
-`paid_waiting_vendor → preparing → ready_for_customer → picked_up`
+Depois da coleta:
 
-Não criar corrida.
+- abrir suporte/ocorrência;
+- não transformar automaticamente em cancelamento simples.
 
-A retirada deve ter confirmação de entrega/retirada para liberar o financeiro.
+## Substituição
 
-## Notificações obrigatórias
+Quando um item fica indisponível:
 
-### Feirante
+1. banca marca indisponível e informa proposta;
+2. evento é registrado;
+3. cliente aceita ou recusa;
+4. aceite atualiza item/evento;
+5. recusa pode levar a cancelamento/suporte conforme fase.
 
-- novo pedido;
-- pagamento aprovado;
-- pedido próximo do SLA de aceite;
-- entregador atribuído;
-- entregador chegou;
-- coleta confirmada;
-- cancelamento/ocorrência;
-- repasse liberado.
+## Multi-banca
 
-### Entregador
+Cada `vendor` possui estado próprio.
 
-- nova corrida compatível;
-- corrida aceita;
-- pedido pronto;
-- alteração/cancelamento antes da coleta;
-- pagamento/repasse liberado;
-- ocorrência/suporte.
+O estado global é derivado:
+
+- qualquer banca em preparo → `preparing`;
+- todas prontas → `ready_for_pickup`;
+- após logística avançar, status global não regride por alteração tardia de banca.
+
+## Pagamento
+
+Pagamento é máquina separada:
+
+- `authorized`;
+- `due_on_delivery`;
+- `failed`;
+- `refunded`.
+
+Não misturar esses valores com o status global do pedido.
+
+## Eventos
+
+Toda transição relevante deve gerar evento com:
+
+- chave;
+- rótulo;
+- data/hora;
+- ator;
+- motivo/detalhes quando aplicável.
+
+Produção deve guardar eventos server-side e preferencialmente imutáveis.
+
+## Notificações
 
 ### Cliente
 
-- pagamento aprovado;
-- pedido aceito;
-- preparo iniciado;
-- pronto;
-- entregador atribuído;
-- coletado;
-- em rota;
-- entregue;
-- cancelamento/estorno;
-- pedido de avaliação.
+Pagamento, aceite/preparo, pronto, entregador atribuído, coletado, rota, entregue, cancelamento/reembolso, substituição e avaliação.
 
-## Máquina de estados resumida
+### Feirante
 
-```
-created
-  ↓
-payment_pending
-  ↓
-paid_waiting_vendor
-  ├─→ rejected → refund_pending → refunded
-  ↓
-preparing
-  ├─→ issue/substitution
-  ↓
-ready_for_pickup
-  ↓
-delivery_offered
-  ↓
-driver_accepted
-  ↓
-collected
-  ↓
-out_for_delivery
-  ↓
-delivered
-```
+Novo pedido, pagamento, mudanças do cliente, entregador atribuído/coleta, ocorrência e repasse.
 
-Retirada:
+### Entregador
 
-```
-preparing
-  ↓
-ready_for_customer
-  ↓
-picked_up
-```
+Nova corrida compatível, aceite, mudança/cancelamento pré-coleta, suporte e financeiro.
 
 ## Regras de integridade
 
-- nenhuma tela pode alterar status financeiro diretamente;
-- transições precisam ser validadas server-side na fase real;
-- cada mudança gera `order_event`;
-- guardar ator, estado anterior, novo estado, data/hora e motivo;
-- estados não podem ser pulados sem uma ação administrativa auditada;
-- itens, valor e peso usados no pedido devem ser snapshot do momento da compra.
+- status não deve voltar livremente;
+- nenhuma tela controla etapa de outro papel;
+- estoque/preço/peso do pedido usam snapshot;
+- multi-banca não libera logística cedo;
+- um pedido já atribuído não volta à fila;
+- dinheiro e estoque serão mutações server-side na produção;
+- transições críticas devem ser idempotentes.

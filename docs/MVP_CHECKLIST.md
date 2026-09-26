@@ -1,53 +1,123 @@
 # Checklist de MVP — Feiraê
 
-## Fase 0 — Definição e fundação
+Atualizado em 26/09/2026.
 
-- [ ] Confirmar escopo do MVP: cliente compra, feirante gerencia catálogo/estoque e entregador aceita uma entrega.
-- [ ] Unificar o branding entre “Feiraê” e “Feirae” no produto, repositório e domínio.
-- [ ] Definir métricas de sucesso: conversão para checkout, pedidos concluídos, tempo de preparação e taxa de entrega.
-- [ ] Manter o modo demonstração claramente identificado em ambientes locais e de apresentação.
+Legenda:
 
-## Fase 1 — Identidade e dados
+- [x] concluído no protótipo local;
+- [ ] pendente para backend/produção;
+- [~] parcialmente implementado.
 
-- [ ] Configurar Supabase por ambiente, sem credenciais no frontend.
-- [ ] Criar tabelas de perfis, vendedores, feiras, produtos, inventário e endereços.
-- [ ] Ativar RLS e políticas por papel.
-- [ ] Substituir `src/data.ts` por adapters de repositório com estados de loading, vazio e erro.
-- [ ] Validar payloads com schemas compartilhados antes de persistir.
+## Protótipo funcional
 
-## Fase 2 — Compra
+- [x] três papéis: cliente, feirante e entregador;
+- [x] login/cadastro local com validação de senha;
+- [x] edição local de nome/e-mail/senha;
+- [x] catálogo e banca compartilhados;
+- [x] carrinho/checkout;
+- [x] pedido unificado;
+- [x] multi-banca;
+- [x] estoque local reservado/liberado/consumido;
+- [x] preparo e peso real;
+- [x] retirada completa;
+- [x] entrega completa;
+- [x] veículos/capacidade/raio/região/disponibilidade;
+- [x] promoções e cupons;
+- [x] cancelamento/suporte;
+- [x] reembolso/carteira local;
+- [x] avaliações;
+- [x] notificações baseadas em eventos;
+- [x] repasses simulados;
+- [x] documentos armazenados localmente no protótipo;
+- [x] auditoria de botões e campos;
+- [x] 69 testes passando no commit de referência `33fd6b58`.
 
-- [ ] Persistir carrinho por usuário autenticado.
-- [ ] Recalcular preço, disponibilidade, taxa e divisão por vendedor no servidor.
-- [ ] Reservar/decrementar estoque de forma transacional.
-- [ ] Implementar checkout idempotente e estados de pedido.
-- [ ] Integrar pagamento somente após definir webhooks idempotentes e reconciliação.
+## Banco e infraestrutura
 
-## Fase 3 — Operações
+- [x] migration core `0001_feirae_core.sql`;
+- [x] migration operacional `0002_feirae_operations.sql`;
+- [ ] aplicar migrations em ambientes reais;
+- [ ] estratégia dev/staging/prod;
+- [ ] backup/restore;
+- [ ] observabilidade;
+- [ ] Error Boundary e recuperação.
 
-- [ ] Exigir aprovação documental antes de liberar venda/entrega.
-- [ ] Permitir ao feirante criar e editar banca de verdade.
-- [ ] Permitir ao feirante cadastrar produto com foto, categoria, unidade, preço, estoque e peso logístico.
-- [ ] Permitir editar produtos existentes sem atalhos implícitos de preço.
-- [ ] Implementar aceite/recusa do pedido pelo feirante e preparo item a item.
-- [ ] Notificar feirante sobre novo pedido e mudanças relevantes.
-- [ ] Usar o horário da feira vinculada, com fonte/verificação própria.
-- [ ] Implementar “Pronto para coleta” como última etapa controlada pelo feirante.
-- [ ] Permitir ao entregador aceitar apenas entrega compatível com veículo/região/documentação.
-- [ ] Entregador controla chegada, coleta, início de rota e entrega.
-- [ ] Registrar eventos de auditoria para todas as mudanças críticas.
-- [ ] Notificar cliente, feirante e entregador nas transições definidas em ORDER_FULFILLMENT_FLOW.md.
-- [ ] Implementar saldo pendente/disponível e repasse conforme MONEY_FLOW.md.
+## Autenticação e segurança
 
-## Fase 4 — Qualidade e operação
+- [~] autenticação local do protótipo;
+- [ ] Supabase Auth;
+- [ ] recuperação real de senha;
+- [ ] RLS completa e testada por papel;
+- [ ] rate limit;
+- [ ] sessões/revogação;
+- [ ] secrets somente server-side;
+- [ ] pentest/revisão de segurança antes de produção.
 
-- [ ] Adicionar Error Boundary e tela de recuperação.
-- [ ] Configurar monitoramento de erros e métricas de frontend.
-- [ ] Cobrir filtros, localização negada, estoque esgotado, checkout inválido e navegação voltar/avançar.
-- [ ] Executar testes de acessibilidade em teclado e leitor de tela.
-- [ ] Adicionar testes end-to-end para compra feliz e falhas principais.
-- [ ] Definir backup, retenção, privacidade e exclusão de conta.
+## Catálogo e estoque real
 
-## Critério de aceite
+- [x] comportamento local de produto/estoque;
+- [ ] repository/adapters no Supabase;
+- [ ] Storage para imagens;
+- [ ] reserva de estoque transacional server-side;
+- [ ] preço recalculado no servidor;
+- [ ] soft delete/histórico;
+- [ ] concorrência/idempotência testadas.
 
-O MVP estará pronto quando uma pessoa autenticada puder comprar um item real, com estoque e preço verificados server-side, o feirante puder processar o pedido, o entregador puder aceitar e concluir a entrega e o cliente puder acompanhar o estado sem depender de `localStorage` ou dados mockados.
+## Pedidos e entrega real
+
+- [x] fluxo completo no protótipo;
+- [ ] máquina de estados server-side;
+- [ ] eventos imutáveis no banco;
+- [ ] cálculo real de rota;
+- [ ] rastreamento;
+- [ ] comprovante de coleta/entrega;
+- [ ] notifications server-side.
+
+## Documentos e aprovação
+
+- [x] formulário/upload local para validar UX;
+- [ ] Storage privado;
+- [ ] revisão administrativa;
+- [ ] KYC/verificação;
+- [ ] revalidação por vencimento;
+- [ ] bloqueio server-side por aprovação.
+
+## Pagamentos e financeiro
+
+- [x] estados e experiência local;
+- [x] modelo financeiro documentado;
+- [ ] provedor Pix/cartão;
+- [ ] tokenização;
+- [ ] webhook idempotente;
+- [ ] split/ledger;
+- [ ] estorno real;
+- [ ] saque/repasse;
+- [ ] conciliação.
+
+## Qualidade
+
+- [x] TypeScript;
+- [x] ESLint;
+- [x] Prettier;
+- [x] Vitest/Testing Library;
+- [x] GitHub Actions;
+- [x] cobertura de fluxos internos principais;
+- [ ] E2E em navegador real;
+- [ ] testes em dispositivos reais;
+- [ ] acessibilidade formal;
+- [ ] carga/performance;
+- [ ] chaos/falhas de provedores.
+
+## LGPD e operação
+
+- [ ] política de privacidade final;
+- [ ] base legal/finalidade por dado;
+- [ ] retenção;
+- [ ] exclusão de conta/dados;
+- [ ] exportação/portabilidade quando aplicável;
+- [ ] controle administrativo auditável;
+- [ ] resposta a incidentes.
+
+## Critério para MVP operacional
+
+O MVP operacional só estará pronto quando um usuário autenticado em backend real puder concluir a compra com preço/estoque validados no servidor, a banca processar o pedido, o entregador concluir a entrega, o pagamento ser confirmado por provedor e os três papéis acompanharem o mesmo pedido sem depender de `localStorage`.

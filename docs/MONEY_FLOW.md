@@ -1,5 +1,29 @@
 # Fluxo financeiro — Feiraê
 
+## Estado de implementação
+
+O fluxo financeiro deste documento é **arquitetura alvo de produção**.
+
+No protótipo atual existem:
+
+- estados locais de pagamento;
+- reembolso local;
+- carteira local;
+- saldos/repasse simulados para banca e entregador.
+
+Ainda não existem:
+
+- cobrança real;
+- webhook;
+- split;
+- ledger com lastro;
+- saque/repasse bancário;
+- conciliação.
+
+Portanto, valores mostrados no protótipo não devem ser tratados como movimentação financeira real.
+
+Estados oficiais e separação entre pedido/pagamento/repasse: [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
+
 ## Decisão de arquitetura
 
 O Feiraê não deve receber dinheiro do cliente em uma conta própria para depois repassar manualmente a feirantes e entregadores.

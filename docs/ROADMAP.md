@@ -1,65 +1,165 @@
-# Feiraê — roadmap de implementação
+# Feiraê — roadmap
 
-## ✅ Frontend demonstrativo
+Atualizado em 26/09/2026.
 
-- Navegação cliente em desktop e mobile.
-- Busca, categorias, feiras, lojas e catálogo.
-- GPS opcional e ordenação por distância.
-- Carrinho, checkout e pedidos demonstrativos persistidos localmente.
-- Favoritos, endereços, preferências e suporte local.
-- Entrada demonstrativa com escolha entre cliente, feirante e entregador.
-- Experiências separadas por perfil, sem troca de papel dentro do aplicativo.
-- Cabeçalho móvel compacto, rotas compartilháveis e identificação da sessão demonstrativa.
-- Operação local demonstrativa para feirante e ciclo completo de entrega demonstrativa.
-- Acessibilidade básica, lint, formatação, testes e CI.
+## Estado atual
 
-## 🔴 Próxima fase: Supabase e MVP operacional
+A etapa de **protótipo funcional** está avançada. Os fluxos internos de cliente, feirante e entregador já foram conectados e cobertos por testes.
 
-1. Supabase + banco: usuários, feiras, feirantes, lojas, produtos, categorias, estoque, pedidos, itens, endereços, entregas e avaliações.
-2. Autenticação: validar o acesso escolhido no login, cadastro, recuperação de senha, perfis e permissões.
-3. Catálogo real: produto, foto, preço, unidade, estoque, disponibilidade e promoções.
-4. Feiras reais: endereço, GPS, dias/horários e feirantes participantes.
-5. Carrinho persistente: banco, validação server-side de estoque e preço.
-6. Pedidos: criação, histórico, status e cancelamento.
-7. Painel do feirante: pedidos, produtos, estoque, loja, feira, vendas, financeiro, avaliações e configurações.
-8. Checkout: endereço, entrega/retirada, taxa, resumo e pagamento.
-9. Entrega: entregador, disponibilidade, aceite, coleta, rota, status, comprovante, taxa e ganhos.
-10. Pagamento: Pix/cartão, confirmação, webhook idempotente, reembolso e divisão financeira.
+Concluído no protótipo local:
 
-## 🟠 Multi-feirante
+- autenticação local com senha para teste de experiência;
+- conta com alteração de nome/e-mail/senha;
+- catálogo compartilhado;
+- carrinho e checkout;
+- pedido unificado;
+- multi-banca;
+- preparo, peso real, retirada e entrega;
+- estoque reservado/liberado/consumido;
+- promoções e cupons;
+- cancelamento, suporte, reembolso e carteira;
+- avaliações;
+- disponibilidade e veículos do entregador;
+- repasses simulados;
+- auditoria de botões/campos;
+- migrations `0001` e `0002` do Supabase.
 
-Um cliente pode comprar de vários feirantes em uma única experiência. O pedido principal é dividido em `order_vendors`, com status e subtotal por vendedor. Estoque, preço, comissão e repasses devem ser calculados e validados no servidor.
+## Próxima fase real: backend operacional
 
-## 🛵 Entregas
+A próxima fase **não é criar o schema do zero**. O schema base já existe no repositório. A fase agora é conectar e endurecer o backend.
 
-Fluxo: pending → assigned → accepted → collecting → collected → out_for_delivery → delivered.
-Inclui cadastro/aprovação, disponibilidade, aceite, coleta, rota, localização, comprovante, ganhos e histórico.
+### 1. Supabase por ambiente
 
-## 💰 Pagamentos
+- criar/configurar projetos de desenvolvimento e staging;
+- aplicar e validar migrations;
+- definir estratégia de produção;
+- configurar PostGIS;
+- definir backups e recuperação;
+- impedir uso de dados de produção em desenvolvimento.
 
-Integrar pagamento real somente depois do modelo de pedidos estar estável. O fluxo financeiro alvo está em [MONEY_FLOW.md](MONEY_FLOW.md): provedor de marketplace, ledger, saldo pendente/disponível, split entre feirante/plataforma/entregador, saque/repasse e frete grátis patrocinado.
+### 2. Auth e autorização
 
-## ✅ Especificações que devem orientar a implementação
+- substituir `localAuth.ts` por Supabase Auth;
+- papéis reais e RLS;
+- recuperação/troca de senha;
+- verificação de e-mail/telefone quando necessária;
+- sessão e revogação;
+- auditoria de mudanças de papel.
 
-- [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — aceite, preparo, coleta, rota, entrega e notificações.
-- [PRODUCT_MEASUREMENT_MATRIX.md](PRODUCT_MEASUREMENT_MATRIX.md) — unidade, peso, preço e fotos por categoria.
-- [ONBOARDING_AND_APPROVAL.md](ONBOARDING_AND_APPROVAL.md) — documentação e aprovação antes de operar.
-- [FAIR_HOURS.md](FAIR_HOURS.md) — agenda individual das feiras e fontes oficiais.
+### 3. Repositórios e adapters
 
-## 🧑‍🌾 Painel do feirante
+Substituir bridges de `localStorage` por adapters/repositories sem mudar a UX:
 
-Pedidos · Produtos · Estoque · Minha loja · Minha feira · Vendas · Financeiro · Avaliações · Configurações.
+- marketplace;
+- pedidos/eventos;
+- estoque;
+- carteira/ledger;
+- documentos;
+- veículos;
+- avaliações;
+- suporte.
 
-## 🛠️ Painel administrativo
+### 4. Catálogo e estoque server-side
 
-Feiras · feirantes · categorias · pedidos · entregas · usuários · cancelamentos · financeiro · denúncias/moderação · relatórios.
+- preço e estoque como fonte de verdade no servidor;
+- reserva transacional;
+- idempotência;
+- fotos em Storage;
+- soft delete/arquivamento;
+- histórico/snapshots para pedidos antigos.
 
-O administrador terá autenticação e endereço próprios; não será uma quarta opção no login público do aplicativo.
+### 5. Pedido e máquina de estados
 
-## 🟢 Pós-MVP
+Implementar no servidor a máquina oficial de [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
 
-Avaliações avançadas, favoritos, notificações, cupons, ofertas, produtos patrocinados, assinatura para feirantes, fidelidade, recomendações, mapa das feiras, retirada agendada, recorrência, chat e analytics.
+- transições validadas;
+- estado por banca;
+- eventos imutáveis;
+- suporte a multi-banca;
+- cancelamento/ocorrências;
+- retirada e entrega.
 
-## Ordem a partir daqui
+### 6. Documentos e aprovação
 
-Supabase seguro → Auth e papéis → Feiras/feirantes → Produtos/estoque → Carrinho no servidor → Pedidos transacionais → Painel feirante real → Entrega → Pagamento real.
+- Storage privado;
+- upload seguro;
+- magic bytes/MIME/tamanho;
+- revisão administrativa;
+- validade/revalidação;
+- KYC quando escolhido;
+- suspensão por documento crítico.
+
+### 7. Rotas e rastreamento
+
+- substituir serviços públicos de protótipo por provedor com SLA;
+- cálculo server-side do frete;
+- política de raio/região;
+- rastreamento em tempo real;
+- privacidade da localização.
+
+### 8. Pagamentos e financeiro
+
+Somente depois de pedido/estoque server-side estáveis:
+
+- Pix/cartão;
+- tokenização;
+- webhooks idempotentes;
+- split;
+- ledger;
+- estorno;
+- carteira com lastro;
+- repasses/saques;
+- conciliação.
+
+### 9. Notificações
+
+- in-app persistente;
+- push;
+- WhatsApp somente com consentimento e base legal;
+- preferências por canal;
+- deduplicação/idempotência.
+
+### 10. Admin e operação
+
+Implementar [ADMIN_MANAGEMENT_SPEC.md](ADMIN_MANAGEMENT_SPEC.md):
+
+- feiras;
+- usuários;
+- documentos;
+- suspensões;
+- taxas;
+- pedidos;
+- entregas;
+- financeiro;
+- suporte;
+- auditoria.
+
+## Antes de produção
+
+Obrigatório:
+
+- ambiente staging;
+- testes E2E reais;
+- observabilidade;
+- Error Boundary;
+- rate limits;
+- logs/auditoria;
+- política LGPD;
+- termos;
+- backup/restore testado;
+- rollback;
+- revisão de segurança/RLS;
+- testes de pagamento e webhook;
+- testes de acessibilidade.
+
+## Pós-MVP
+
+- fidelidade;
+- recomendações;
+- produtos patrocinados;
+- retirada agendada;
+- recorrência;
+- analytics avançado;
+- gestão completa de feira;
+- otimização de múltiplas paradas;
+- campanhas segmentadas.

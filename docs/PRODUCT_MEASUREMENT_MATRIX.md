@@ -1,5 +1,35 @@
 # Produtos, unidades e métricas — Feiraê
 
+Atualizado em 26/09/2026.
+
+## Status de implementação
+
+Este documento mistura regras já usadas e modelo de catálogo futuro.
+
+Já usado no protótipo:
+
+- nome;
+- categoria;
+- preço;
+- unidade;
+- estoque;
+- peso logístico;
+- disponibilidade;
+- banca/feira;
+- peso real durante preparo.
+
+Ainda é alvo de produção/evolução:
+
+- galeria com múltiplas fotos;
+- reordenação de fotos;
+- variações;
+- origem estruturada;
+- incrementos por modelo de venda;
+- campos específicos por categoria;
+- validações sanitárias/metrológicas automatizadas.
+
+Nada nesta matriz deve ser interpretado como campo já presente apenas porque está especificado aqui.
+
 ## Problema que este documento resolve
 
 “Preço” sozinho não basta.

@@ -92,6 +92,36 @@ O frontend fecha os ciclos para validação funcional, mas produção exige serv
 
 A migration `supabase/migrations/0002_feirae_operations.sql` prepara as entidades necessárias para levar esses fluxos ao backend. As transições financeiras, estoque, aprovação documental e liquidação devem ser executadas no servidor com idempotência.
 
+## Auditoria posterior de botões e edição
+
+Depois da auditoria de fluxos, foi executada uma segunda auditoria sobre controles de interface.
+
+Foram corrigidos:
+
+- senha ignorada no login;
+- atualização local de e-mail/nome/senha;
+- formulários que persistiam enquanto o usuário digitava;
+- edição da banca sem cancelar;
+- botões indisponíveis que aceitavam clique sem efeito;
+- preferências sem consumidor funcional;
+- detalhe de suporte do entregador ignorado;
+- protocolos não persistidos;
+- uploads que guardavam apenas o nome do arquivo.
+
+Referência: [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md).
+
+## Validação atual
+
+No commit de referência `33fd6b58`:
+
+- 8 arquivos de teste;
+- 69 testes aprovados;
+- ESLint aprovado;
+- TypeScript/build aprovado;
+- Prettier aprovado.
+
+Esses testes validam o protótipo local; não substituem E2E em navegador, RLS, banco, pagamentos ou integrações.
+
 ## Critérios de regressão
 
 O CI deve falhar se qualquer um destes pontos quebrar:

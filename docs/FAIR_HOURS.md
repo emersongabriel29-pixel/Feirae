@@ -1,5 +1,15 @@
 # Horários das feiras do DF — base do Feiraê
 
+Atualizado em 26/09/2026.
+
+## Relação com o código
+
+O documento é a referência de dados/fonte. O protótipo usa `src/domain/fairHours.ts` para a parcela de horários confirmados/revalidáveis.
+
+Feiras sem entrada específica continuam com **Horário a confirmar**.
+
+Antes de alimentar produção, linhas marcadas **OFICIAL / REVALIDAR** ou **PENDENTE** devem passar por nova conferência da fonte competente.
+
 ## Regra de uso no aplicativo
 
 O horário da feira não deve ser inventado nem reutilizado de outra feira.
