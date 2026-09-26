@@ -28,4 +28,8 @@ export default tseslint.config(
     files: ["**/*.{test,spec}.{ts,tsx}", "vitest.config.ts"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: { globals: globals.node },
+  },
 );
