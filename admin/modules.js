@@ -10,29 +10,11 @@ export const navGroups=[
   ["Sistema",[["settings","Configurações"],["features","Recursos"],["integrations","Integrações"],["integration_health","Saúde das integrações"],["admins","Administradores"],["privacy","LGPD"],["permissions","Permissões"],["audit","Auditoria"]]]
 ];
 
-const roles=["customer","vendor","delivery","admin","fair_manager"];
-const orderStatus=["pending_payment","paid","accepted","preparing","ready_for_pickup","driver_assigned","collected","out_for_delivery","delivered","canceled","refunded"];
-const docStatus=["pending","under_review","approved","correction_required","rejected"];
-const payoutStatus=["pending","available","requested","paid","failed"];
-const permissionOptions=[
-  "operations.manage",
-  "documents.review",
-  "accounts.enforce",
-  "registrations.manage",
-  "rules.manage",
-  "finance.manage",
-  "communications.manage",
-  "settings.manage",
-  "permissions.manage",
-  "audit.view",
-  "reports.view"
-];
-
 export const modules={
   fairs:{label:"Feiras",table:"fairs",desc:"Ative, pause e edite as feiras exibidas no Feiraê. Estado e cidade permitem controlar expansão por UF.",create:true,bulkField:"is_active",cols:["name","state","city","address","is_active","opening_hours"],fields:[f("name","Nome"),f("description","Descrição","textarea"),f("state","UF"),f("city","Cidade"),f("address","Endereço"),f("is_active","Ativa","checkbox"),f("opening_hours","Horários","json")]},
   users:{label:"Usuários",table:"profiles",desc:"Perfis e acesso. O papel é exibido para auditoria, mas mudanças de função administrativa exigem procedimento protegido.",create:false,del:false,audit:true,enforcementTarget:true,profileDetail:"customer",cols:["id","full_name","phone","role","created_at"],fields:[f("full_name","Nome"),f("phone","Telefone")]},
-  vendors:{label:"Feirantes",table:"vendor_profiles",desc:"Aprovação e dados operacionais dos feirantes. Suspensões ficam registradas sem apagar o cadastro.",create:false,del:false,audit:true,enforcementTarget:true,profileDetail:"vendor",cols:["id","business_name","approved","description","created_at"],fields:[f("business_name","Nome da banca"),f("description","Descrição","textarea"),f("approved","Aprovado","checkbox")]},
-  drivers:{label:"Entregadores",table:"delivery_profiles",desc:"Aprovação e dados operacionais do entregador. Você pode suspender, bloquear entregas ou banir sem excluir o histórico.",create:false,del:false,audit:true,enforcementTarget:true,profileDetail:"delivery",cols:["id","approved","city","state","receiving_method","updated_at"],fields:[f("approved","Aprovado","checkbox"),f("city","Cidade"),f("state","UF"),f("receiving_method","Forma de recebimento")]},
+  vendors:{label:"Feirantes",table:"vendor_profiles",desc:"Aprovação e dados operacionais dos feirantes. A aprovação valida documentos obrigatórios no backend.",create:false,del:false,audit:true,enforcementTarget:true,profileDetail:"vendor",approvalKind:"vendor",cols:["id","business_name","approved","description","created_at"],fields:[f("business_name","Nome da banca"),f("description","Descrição","textarea")]},
+  drivers:{label:"Entregadores",table:"delivery_profiles",desc:"Aprovação e dados operacionais do entregador. A aprovação considera documentos e tipos de veículo ativos.",create:false,del:false,audit:true,enforcementTarget:true,profileDetail:"delivery",approvalKind:"delivery",cols:["id","approved","city","state","receiving_method","updated_at"],fields:[f("city","Cidade"),f("state","UF"),f("receiving_method","Forma de recebimento")]},
   documents:{label:"Aprovações",table:"onboarding_documents",desc:"Abra o arquivo enviado e revise por ação segura do backend.",create:false,del:false,documentViewer:true,secureAction:"document_review",cols:["profile_id","document_type","file_path","status","expires_at","correction_reason","reviewed_by","reviewed_at","updated_at"],fields:[]},
   products:{label:"Produtos",table:"products",desc:"Catálogo consolidado; a gestão pode corrigir ou pausar.",create:false,del:false,audit:true,bulkField:"available",cols:["name","price","promotion_price","stock","unit","available"],fields:[f("name","Produto"),f("price","Preço","number"),f("promotion_price","Preço promocional","number"),f("stock","Estoque","number"),f("unit","Unidade"),f("available","Disponível","checkbox")]},
   categories:{label:"Categorias",table:"categories",desc:"Categorias usadas no catálogo.",create:true,del:false,bulkField:"active",cols:["name","active"],fields:[f("name","Nome"),f("active","Ativa","checkbox")]},
