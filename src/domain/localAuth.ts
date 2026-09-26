@@ -84,8 +84,10 @@ export function authenticateLocalAccount(input: {
     return { ok: true as const, account: existing, isNewAccount: false };
   }
 
-  const demoAccount = email.endsWith("@feirae.test") && password === "123456";
-  if (demoAccount) {
+  if (email.endsWith("@feirae.test")) {
+    if (password !== "123456") {
+      return { ok: false as const, message: "E-mail ou senha incorretos." };
+    }
     const account: LocalAccount = {
       email,
       role: input.role,
