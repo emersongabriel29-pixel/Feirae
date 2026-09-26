@@ -132,16 +132,16 @@ Fonte: `src/domain/vehicles.ts`.
 
 Capacidades padrão atuais:
 
-| Tipo | kg |
-| --- | ---: |
-| Bicicleta | 10 |
-| Bicicleta cargueira/triciclo | 40 |
-| Moto | 12 |
-| Moto com baú | 20 |
-| Carro | 80 |
-| Utilitário/Pickup | 250 |
-| Van | 500 |
-| Outro | 10 |
+| Tipo                         |  kg |
+| ---------------------------- | --: |
+| Bicicleta                    |  10 |
+| Bicicleta cargueira/triciclo |  40 |
+| Moto                         |  12 |
+| Moto com baú                 |  20 |
+| Carro                        |  80 |
+| Utilitário/Pickup            | 250 |
+| Van                          | 500 |
+| Outro                        |  10 |
 
 Compatibilidade atual do entregador:
 

@@ -138,7 +138,7 @@ Não há teste dedicado verificando o valor dentro de `UnifiedOrder`.
 Usar:
 
 ```tsx
-disabled={condicao}
+disabled = { condicao };
 ```
 
 Não:

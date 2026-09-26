@@ -63,46 +63,60 @@ Essas tabelas não devem ser expostas diretamente ao cliente antes de políticas
 ### RLS habilitada e com policies existentes
 
 `profiles`:
+
 - usuário gerencia o próprio perfil.
 
 `fairs`:
+
 - leitura pública de feiras ativas.
 
 `products`:
+
 - leitura pública de produtos disponíveis.
 
 `addresses`:
+
 - usuário gerencia os próprios endereços.
 
 `orders`:
+
 - cliente possui SELECT dos próprios pedidos.
 
 `cart_items`:
+
 - usuário gerencia itens do próprio carrinho.
 
 `delivery_profiles`:
+
 - entregador gerencia próprio perfil.
 
 `delivery_vehicles`:
+
 - entregador gerencia próprios veículos.
 
 `delivery_preferences`:
+
 - entregador gerencia próprias preferências.
 
 `onboarding_documents`:
+
 - usuário vê, envia e atualiza documentos próprios pendentes.
 
 `promotions`:
+
 - público lê promoções ativas;
 - feirante gerencia promoções próprias.
 
 `order_events`:
+
 - participantes leem eventos.
 
 `wallet_entries`:
+
 - cliente lê próprios lançamentos.
 
 `payouts`:
+
 - usuário lê próprios repasses.
 
 ### RLS habilitada, mas sem policy funcional suficiente na migration

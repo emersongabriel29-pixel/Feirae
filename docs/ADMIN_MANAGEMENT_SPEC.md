@@ -70,16 +70,16 @@ Isto é diferente de editar o veículo particular de um entregador.
 
 Hoje os tipos estão hard-coded em `src/domain/vehicles.ts`:
 
-| Tipo | Capacidade padrão atual |
-| --- | ---: |
-| Bicicleta | 10 kg |
-| Bicicleta cargueira/triciclo | 40 kg |
-| Moto | 12 kg |
-| Moto com baú | 20 kg |
-| Carro | 80 kg |
-| Utilitário/Pickup | 250 kg |
-| Van | 500 kg |
-| Outro | 10 kg |
+| Tipo                         | Capacidade padrão atual |
+| ---------------------------- | ----------------------: |
+| Bicicleta                    |                   10 kg |
+| Bicicleta cargueira/triciclo |                   40 kg |
+| Moto                         |                   12 kg |
+| Moto com baú                 |                   20 kg |
+| Carro                        |                   80 kg |
+| Utilitário/Pickup            |                  250 kg |
+| Van                          |                  500 kg |
+| Outro                        |                   10 kg |
 
 A gestão deve mover isso para tabela, por exemplo `vehicle_types`:
 
@@ -367,15 +367,15 @@ O enum atual `admin/fair_manager` é insuficiente para menor privilégio.
 
 RBAC mínimo:
 
-| Permissão | Suporte | Operações | Documentos | Financeiro | Superadmin |
-| --- | --- | --- | --- | --- | --- |
-| ver pedidos | sim | sim | limitado | sim | sim |
-| responder ticket | sim | sim | não | não | sim |
-| aprovar documento | não | não | sim | não | sim |
-| suspender conta | limitado | sim | por documento | não | sim |
-| alterar taxa | não | não | não | sim | sim |
-| repasse/ajuste | não | não | não | sim | sim |
-| gerenciar admin | não | não | não | não | sim |
+| Permissão         | Suporte  | Operações | Documentos    | Financeiro | Superadmin |
+| ----------------- | -------- | --------- | ------------- | ---------- | ---------- |
+| ver pedidos       | sim      | sim       | limitado      | sim        | sim        |
+| responder ticket  | sim      | sim       | não           | não        | sim        |
+| aprovar documento | não      | não       | sim           | não        | sim        |
+| suspender conta   | limitado | sim       | por documento | não        | sim        |
+| alterar taxa      | não      | não       | não           | sim        | sim        |
+| repasse/ajuste    | não      | não       | não           | sim        | sim        |
+| gerenciar admin   | não      | não       | não           | não        | sim        |
 
 ## 17. Auditoria
 

@@ -6,9 +6,9 @@ Este documento registra somente divergências concretas entre o código atual e 
 
 ## 1. Papéis
 
-| Camada | Valor |
-| --- | --- |
-| frontend | `customer`, `feirante`, `delivery` |
+| Camada              | Valor                                                     |
+| ------------------- | --------------------------------------------------------- |
+| frontend            | `customer`, `feirante`, `delivery`                        |
 | enum SQL `app_role` | `customer`, `vendor`, `delivery`, `admin`, `fair_manager` |
 
 Pendência: definir um único nome canônico para o papel do feirante. Hoje `feirante` e `vendor` coexistem.

@@ -99,16 +99,16 @@ O preço do frete **não é calculado pelo OSRM**. O checkout usa `vendorMetrics
 
 Fonte: `src/domain/vehicles.ts`.
 
-| Tipo | Capacidade padrão |
-| --- | ---: |
-| Bicicleta | 10 kg |
-| Bicicleta cargueira/triciclo | 40 kg |
-| Moto | 12 kg |
-| Moto com baú | 20 kg |
-| Carro | 80 kg |
-| Utilitário/Pickup | 250 kg |
-| Van | 500 kg |
-| Outro | 10 kg |
+| Tipo                         | Capacidade padrão |
+| ---------------------------- | ----------------: |
+| Bicicleta                    |             10 kg |
+| Bicicleta cargueira/triciclo |             40 kg |
+| Moto                         |             12 kg |
+| Moto com baú                 |             20 kg |
+| Carro                        |             80 kg |
+| Utilitário/Pickup            |            250 kg |
+| Van                          |            500 kg |
+| Outro                        |             10 kg |
 
 ## Supabase
 

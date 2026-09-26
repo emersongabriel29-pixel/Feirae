@@ -8,13 +8,13 @@ Referência detalhada de incompatibilidades: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_M
 
 ## 1. Papéis
 
-| Conceito | Frontend | SQL |
-| --- | --- | --- |
-| cliente | `customer` | `customer` |
-| feirante | `feirante` | `vendor` |
-| entregador | `delivery` | `delivery` |
-| admin | não existe no login público | `admin` |
-| gestor de feira | não existe na UI atual | `fair_manager` |
+| Conceito        | Frontend                    | SQL            |
+| --------------- | --------------------------- | -------------- |
+| cliente         | `customer`                  | `customer`     |
+| feirante        | `feirante`                  | `vendor`       |
+| entregador      | `delivery`                  | `delivery`     |
+| admin           | não existe no login público | `admin`        |
+| gestor de feira | não existe na UI atual      | `fair_manager` |
 
 Antes de conectar Auth/RLS, definir um nome canônico para feirante. Não deixar `feirante` e `vendor` coexistirem sem mapeamento explícito.
 

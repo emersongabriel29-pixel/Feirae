@@ -236,7 +236,6 @@ Para sair do protótipo:
 
 Fontes oficiais existentes no documento devem ser revalidadas no momento da implementação regulatória.
 
-
 ## 17. Fontes oficiais de referência
 
 As regras abaixo são referência regulatória e precisam ser revalidadas quando o backend de aprovação for implementado.

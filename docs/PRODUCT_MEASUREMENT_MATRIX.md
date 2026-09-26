@@ -231,21 +231,21 @@ Esses modelos são evolução futura e exigem schema/UI.
 
 A tabela abaixo é requisito futuro, não estado atual.
 
-| Categoria atual | Campo futuro útil | Existe hoje? |
-| --- | --- | --- |
-| Frutas | variedade/maturação/origem | não |
-| Verduras e legumes | variedade/origem | não |
-| Folhas e ervas | peso médio por maço | não |
-| Ovos | unidades/classificação | apenas texto livre |
-| Carnes e aves | corte/conservação/inspeção | não |
-| Pescados e frutos do mar | espécie/apresentação/conservação | não |
-| Laticínios | validade/conservação | não |
-| Caseiros | ingredientes/alergênicos/validade | não |
-| Bebidas | volume/tipo/conservação | apenas unidade/texto |
-| Plantas | espécie/tamanho vaso | não |
-| Confecções | tamanho/cor/material | não |
-| Calçados | numeração/cor | não |
-| Eletrônicos | marca/modelo/condição/garantia | não |
+| Categoria atual          | Campo futuro útil                 | Existe hoje?         |
+| ------------------------ | --------------------------------- | -------------------- |
+| Frutas                   | variedade/maturação/origem        | não                  |
+| Verduras e legumes       | variedade/origem                  | não                  |
+| Folhas e ervas           | peso médio por maço               | não                  |
+| Ovos                     | unidades/classificação            | apenas texto livre   |
+| Carnes e aves            | corte/conservação/inspeção        | não                  |
+| Pescados e frutos do mar | espécie/apresentação/conservação  | não                  |
+| Laticínios               | validade/conservação              | não                  |
+| Caseiros                 | ingredientes/alergênicos/validade | não                  |
+| Bebidas                  | volume/tipo/conservação           | apenas unidade/texto |
+| Plantas                  | espécie/tamanho vaso              | não                  |
+| Confecções               | tamanho/cor/material              | não                  |
+| Calçados                 | numeração/cor                     | não                  |
+| Eletrônicos              | marca/modelo/condição/garantia    | não                  |
 
 ## 13. Estoque
 
