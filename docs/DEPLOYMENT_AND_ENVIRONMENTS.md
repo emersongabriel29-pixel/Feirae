@@ -1,138 +1,213 @@
 # Deploy e ambientes — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 com base no repositório atual.
 
-## Estado atual
+## 1. O que existe hoje
 
-O GitHub Actions valida código, mas **merge em `main` não significa automaticamente deploy em produção**.
+### Workflow
 
-Não há neste documento uma infraestrutura de hosting presumida. Deve ser configurada e verificada explicitamente.
+Existe somente:
 
-## Ambientes
+`.github/workflows/quality.yml`.
 
-### Local
+Ele valida código.
 
-- fixtures/dados demo permitidos;
-- autenticação local permitida;
-- serviços de protótipo permitidos;
-- não usar dados pessoais reais sensíveis.
+### Arquivos de hosting
 
-### Development
+Não existem no repositório atual:
 
-Objetivo: integração contínua.
+- `vercel.json`;
+- `netlify.toml`;
+- `firebase.json`;
+- Dockerfile;
+- docker-compose;
+- `fly.toml`;
+- config Render/Railway.
 
-- Supabase dev próprio;
+### Supabase CLI/config
+
+Não existe:
+
+- `supabase/config.toml`.
+
+### Edge Functions
+
+Não existe diretório de Edge Functions.
+
+Conclusão: o repositório não contém um pipeline explícito de deploy.
+
+## 2. .env.example atual
+
+Contém:
+
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+Mas o app ainda não possui cliente Supabase instalado.
+
+Essas variáveis não são usadas como backend ativo hoje.
+
+## 3. Merge em main
+
+Merge em `main` significa apenas que o código/documentação entrou na branch principal.
+
+Não significa, por si só:
+
+- deploy;
+- atualização do Google AI Studio;
+- atualização de hosting;
+- produção.
+
+## 4. Ambiente local atual
+
+```bash
+npm ci
+npm run dev
+```
+
+Dados:
+
+- localStorage;
+- fixtures;
+- serviços públicos de rota/geocoding.
+
+Não usar documentos reais sensíveis.
+
+## 5. Ambiente de desenvolvimento futuro
+
+Precisa de:
+
+- projeto Supabase dev;
+- Auth;
+- banco;
+- Storage;
+- migrations;
 - dados sintéticos;
-- migrations aplicadas automaticamente/por pipeline controlado;
-- PSP sandbox.
+- PSP sandbox;
+- provedor de rota configurado.
 
-### Staging
+## 6. Staging
 
-Deve reproduzir produção:
+Staging deve ser separado de produção.
 
-- Auth real;
+Obrigatório antes de produção:
+
+- schema igual ao alvo;
+- migrations testadas;
 - RLS;
 - Storage;
-- Edge Functions;
-- integrações sandbox/homologação;
-- E2E;
-- validação de migrations.
+- funções server-side;
+- PSP sandbox/homologação;
+- browser E2E;
+- observabilidade;
+- dados fictícios.
 
-### Produção
+## 7. Produção
+
+Somente após staging aprovado:
 
 - projeto Supabase separado;
-- secrets separados;
-- domínio/hosting final;
+- secrets próprios;
+- hosting definido;
+- domínio;
+- PSP produção;
 - observabilidade;
-- backups;
-- rollback;
-- dados reais.
+- backup;
+- recovery;
+- rollback.
 
-## Variáveis
+## 8. Migrations existentes
 
-Classificar:
+- 0001 core;
+- 0002 operations.
 
-### Públicas/publishable
+Não aplicar cegamente em produção porque há gaps conhecidos:
 
-Podem ser expostas ao browser somente se o provedor as projetou para isso.
+- enum de pedido;
+- order_vendor status;
+- RLS incompleta;
+- promoções incompletas;
+- ledger ausente;
+- snapshots incompletos.
 
-Exemplo: URL pública do Supabase e chave publishable/anon com RLS correta.
+Ver [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
-### Secrets
+## 9. Ordem correta antes do primeiro deploy backend
 
-Nunca no frontend:
+1. criar migration de correção;
+2. testar migrations em banco descartável;
+3. criar Supabase dev;
+4. conectar frontend;
+5. testar RLS;
+6. criar Storage;
+7. testar staging;
+8. adicionar E2E;
+9. configurar hosting/deploy;
+10. só então produção.
 
-- service role;
-- secret do PSP;
-- webhook signing secret;
-- credenciais administrativas;
-- tokens privados de KYC.
-
-## Migrations
-
-Regras:
-
-1. migration é versionada;
-2. não editar migration já aplicada em produção;
-3. criar nova migration;
-4. testar em banco descartável;
-5. testar staging;
-6. backup/rollback quando mudança destrutiva;
-7. registrar resultado.
-
-As migrations atuais são preparação e ainda precisam de normalização de estados antes da produção.
-
-## Deploy frontend
-
-Pipeline alvo:
+## 10. Pipeline alvo
 
 ```
 PR
-→ Quality
+→ quality
 → merge main
-→ build artifact
+→ build
 → deploy staging
-→ E2E/smoke
+→ migration check
+→ E2E
+→ smoke
 → aprovação
-→ deploy produção
-→ smoke/monitoramento
+→ produção
+→ smoke
+→ monitoramento
 ```
 
-## Edge Functions/backend
+## 11. Segredos
 
-Deploy separado e versionado.
+Publicáveis quando apropriado:
 
-Evitar dependência de “última versão do frontend” sem compatibilidade.
+- URL Supabase;
+- anon/publishable key.
 
-## Rollback
+Secrets:
 
-Definir:
+- service_role;
+- PSP secret;
+- webhook secret;
+- KYC token privado;
+- WhatsApp/BSP secret.
 
-- rollback de frontend;
-- rollback/forward fix de function;
-- estratégia para migration irreversível;
-- feature flags para integrações.
+Secrets não podem usar prefixo Vite que os exponha ao bundle.
 
-## Seed/demo
+## 12. Rollback
 
-Fixtures não devem aparecer em produção.
+Antes do primeiro deploy real, documentar e testar:
 
-Contas `@feirae.test` são exclusivas para demo/teste.
+### Frontend
 
-## Checklist antes de publicar
+- voltar para artifact/commit anterior.
 
-- [ ] CI verde;
-- [ ] migration validada;
-- [ ] secrets corretos;
-- [ ] ambiente correto;
-- [ ] E2E;
-- [ ] smoke;
-- [ ] RLS;
-- [ ] backups;
-- [ ] observabilidade;
-- [ ] sem fixtures/demo;
-- [ ] documentação atualizada.
+### Function
 
-## Regra operacional
+- versionar;
+- rollback independente.
 
-Nunca afirmar “está em produção” apenas porque houve merge em `main`. Confirmar o deployment do ambiente correspondente.
+### Migration
+
+- preferir forward fix;
+- backup antes de destrutiva;
+- nunca editar migration já aplicada.
+
+## 13. Critério para afirmar “está publicado”
+
+Só afirmar após verificar:
+
+- ambiente;
+- commit implantado;
+- URL;
+- status do deploy;
+- smoke.
+
+Merge sozinho não é evidência.
