@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { navGroups, modules } from "./modules.js";
 
 const CONFIG_KEY="feirae:management:supabase";
