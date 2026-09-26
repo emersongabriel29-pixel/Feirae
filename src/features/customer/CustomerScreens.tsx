@@ -104,14 +104,14 @@ export function HomePage({
         <SectionHeading eyebrow="Atalhos" title="O que você quer fazer?" />
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <QuickAction
-            icon="🧺"
+            icon={<MapPin size={22} />}
             title="Feiras próximas"
             text="Estado, cidade e feira"
             onClick={() => onFair(fairs[0].name)}
           />
-          <QuickAction icon="🏪" title="Bancas" text="Escolher feirantes" onClick={onVendors} />
-          <QuickAction icon="🛵" title="Meu pedido" text="Acompanhar a entrega" onClick={onTracking} />
-          <QuickAction icon="✨" title="Promoções" text="Ofertas do dia" onClick={() => onTab("products")} />
+          <QuickAction icon={<Store size={22} />} title="Bancas" text="Escolher feirantes" onClick={onVendors} />
+          <QuickAction icon={<Truck size={22} />} title="Meu pedido" text="Acompanhar a entrega" onClick={onTracking} />
+          <QuickAction icon={<Star size={22} />} title="Promoções" text="Ofertas do dia" onClick={() => onTab("products")} />
         </div>
       </section>
       <section>
