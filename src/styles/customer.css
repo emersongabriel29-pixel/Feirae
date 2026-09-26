@@ -450,16 +450,16 @@
 }
 .product-art[data-category="Queijos"],
 .product-art[data-category="Padaria"] {
-  background: radial-gradient(circle at 60% 35%, var(--fe-surface) df3, #faefbf 78%);
+  background: radial-gradient(circle at 60% 35%, #fffdf3, #faefbf 78%);
 }
 .product-art[data-category="Doces"],
 .product-art[data-category="Comidas prontas"] {
-  background: radial-gradient(circle at 60% 35%, var(--fe-surface) 8f1, #f7dcc4 78%);
+  background: radial-gradient(circle at 60% 35%, #fff8f1, #f7dcc4 78%);
 }
 .product-art[data-category="Artesanato"],
 .product-art[data-category="Moda"],
 .product-art[data-category="Presentes"] {
-  background: radial-gradient(circle at 60% 35%, var(--fe-surface) 8fb, #efd9e7 78%);
+  background: radial-gradient(circle at 60% 35%, #fff8fb, #efd9e7 78%);
 }
 .product-art[data-category="Casa"] {
   background: radial-gradient(circle at 60% 35%, #f7fcff, #d8eaf0 78%);
