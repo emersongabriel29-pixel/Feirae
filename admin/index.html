@@ -45,9 +45,30 @@
         <label>E-mail<input id="email" type="email" autocomplete="email" required></label>
         <label>Senha<input id="password" type="password" autocomplete="current-password" required></label>
         <button type="submit" class="primary">Entrar</button>
-        <button id="changeConnection" type="button" class="ghost">Alterar conexão</button>
+
       </form>
       <div id="loginError" class="error-box hidden"></div>
+    </section>
+  </div>
+
+  <div id="mfaView" class="auth-shell hidden">
+    <section class="auth-card">
+      <div class="brand-row">
+        <div class="brand-mark">F</div>
+        <div><strong>Feiraê Gestão</strong><span>Verificação em duas etapas</span></div>
+      </div>
+      <h1>Confirme seu acesso</h1>
+      <p id="mfaInstructions">Use o código do seu aplicativo autenticador.</p>
+      <div id="mfaEnrollment" class="hidden">
+        <img id="mfaQr" class="mfa-qr" alt="QR Code para configurar autenticação em duas etapas">
+        <div class="mfa-secret"><span>Chave manual</span><code id="mfaSecret"></code></div>
+      </div>
+      <form id="mfaForm" class="stack">
+        <label>Código de 6 dígitos<input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required></label>
+        <button type="submit" class="primary">Verificar</button>
+        <button id="mfaCancel" type="button" class="ghost">Sair</button>
+      </form>
+      <div id="mfaError" class="error-box hidden"></div>
     </section>
   </div>
 
