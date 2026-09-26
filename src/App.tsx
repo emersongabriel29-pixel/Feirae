@@ -4,7 +4,7 @@ import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
 import { filterProducts, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
-import { CartDrawer, Header, LoginPage, MobileNavigation, RoleDashboard } from "./components/AppComponents";
+import { CartDrawer, Header, LoginPage, MobileNavigation } from "./components/AppComponents";
 import {
   AccountPage,
   AddressesPage,
@@ -145,7 +145,6 @@ export default function App() {
     openVendor,
     resetForRole,
     resetForLogout,
-    openRoleRoot,
   } = useAppNavigation(role, () => setCartOpen(false));
 
   const visibleProducts = useMemo(() => {
@@ -579,11 +578,14 @@ export default function App() {
             )}
           </main>
         )}
-        {role !== "customer" && screen === "main" && (
-          <RoleDashboard
-            role={role}
-            newAccount={Boolean(session?.isNewAccount)}
-            onOpen={() => openScreen(role === "feirante" ? "feiranteOps" : "deliveryOps")}
+        {role === "feirante" && screen === "main" && session && (
+          <FeiranteOperations session={session} onAccountUpdate={updateAccountIdentity} />
+        )}
+        {role === "delivery" && screen === "main" && session && (
+          <DeliveryOperations
+            session={session}
+            onMap={(destination) => openMap(destination ?? "-15.621,-47.657")}
+            onAccountUpdate={updateAccountIdentity}
           />
         )}
         {screen === "fair" && (
@@ -668,17 +670,12 @@ export default function App() {
         {screen === "ratings" && <RatingsPage orders={orders} onBack={() => openCustomerTab("profile")} />}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
-        {screen === "feiranteOps" && session && (
-          <FeiranteOperations
-            session={session}
-            onBack={() => openRoleRoot("feirante")}
-            onAccountUpdate={updateAccountIdentity}
-          />
+        {role === "feirante" && screen === "feiranteOps" && session && (
+          <FeiranteOperations session={session} onAccountUpdate={updateAccountIdentity} />
         )}
-        {screen === "deliveryOps" && session && (
+        {role === "delivery" && screen === "deliveryOps" && session && (
           <DeliveryOperations
             session={session}
-            onBack={() => openRoleRoot("delivery")}
             onMap={(destination) => openMap(destination ?? "-15.621,-47.657")}
             onAccountUpdate={updateAccountIdentity}
           />
