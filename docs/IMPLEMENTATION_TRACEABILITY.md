@@ -223,14 +223,13 @@ Total: **76**.
 - `DeliveryTracking`: pedido entregue deixa de exibir ETA zero e passa a mostrar horário de entrega + ajuda pós-entrega;
 - `FairCard`: configuração ausente é apresentada ao cliente como indisponibilidade, sem instrução administrativa “a configurar”.
 
-
 ## Central operacional e notificações — 26/09/2026
 
 - `VendorScreens.tsx`: pedidos novos/em andamento aparecem diretamente na Central; botão abre o pedido sem exigir navegação pelo card de módulo;
 - `DeliveryScreens.tsx`: corridas compatíveis e corrida ativa aparecem diretamente na Central;
 - `AppComponents.tsx::FeiraeNotificationCard`: card de permissão/estado com identidade Feiraê;
 - `feiraeNotifications.ts`: permissão e disparo local/browser com título `Feiraê • ...`, ícone e `tag`;
-- `main.tsx`: registra `public/feirae-sw.js`; 
+- `main.tsx`: registra `public/feirae-sw.js`;
 - `public/feirae-sw.js`: recebe `push`, chama `showNotification()` e trata clique;
 - `App.test.tsx`: cobre pedidos do feirante e corridas do entregador no painel principal.
 
