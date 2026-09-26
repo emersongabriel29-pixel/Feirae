@@ -256,19 +256,19 @@ export function Header(props: HeaderProps) {
           </button>
           {props.role === "customer" && (
             <nav className="ml-3 hidden items-center gap-1 lg:flex" aria-label="Navegação principal">
-              {(["home", "fairs", "products", "orders"] as CustomerTab[]).map((item) => (
+              {(["fairs", "products", "orders", "profile"] as CustomerTab[]).map((item) => (
                 <button
                   key={item}
                   onClick={() => props.onTab(item)}
                   className={props.tab === item ? "desktop-nav active" : "desktop-nav"}
                 >
-                  {item === "home"
-                    ? "Início"
-                    : item === "fairs"
-                      ? "Feiras"
-                      : item === "products"
-                        ? "Produtos"
-                        : "Pedidos"}
+                  {item === "fairs"
+                    ? "Feiras"
+                    : item === "products"
+                      ? "Produtos"
+                      : item === "orders"
+                        ? "Pedidos"
+                        : "Perfil"}
                 </button>
               ))}
             </nav>
@@ -730,7 +730,7 @@ export function QuickAction({
   text,
   onClick,
 }: {
-  icon: string;
+  icon: ReactNode;
   title: string;
   text: string;
   onClick: () => void;
