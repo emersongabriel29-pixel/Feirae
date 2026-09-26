@@ -413,7 +413,6 @@ A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GA
 9. estruturas do painel administrativo;
 10. RLS/policies completas.
 
-
 ## Runtime configuration da Gestão
 
 A migration `0003_management_console.sql` adiciona configuração operacional persistida para Estados, Regiões, Veículos, Frete, Taxas, Pagamentos, Cancelamentos, Documentos, Feature Flags, Conteúdo, Integrações, Alertas, Restrições, RBAC e Auditoria.

@@ -272,7 +272,6 @@ Staging só pode ser considerado backend-integrado quando:
 
 Matriz completa de gaps: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
-
 ## 12. Regras adicionais da Gestão
 
 - O browser não possui permissão genérica de UPDATE para pagamentos/repasses/pedidos/entregas.
@@ -281,7 +280,6 @@ Matriz completa de gaps: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 - O bucket `onboarding-documents` é privado e limitado a PDF/JPEG/PNG e 5 MB.
 - `document-upload` valida conteúdo por magic bytes e tamanho; antivírus/antimalware permanece como camada adicional recomendada antes de produção.
 - Health checks usam URLs HTTPS definidas em variáveis server-side; o navegador nunca recebe esses endpoints secretos quando houver proxy interno.
-
 
 ## 13. Configuração do painel administrativo
 

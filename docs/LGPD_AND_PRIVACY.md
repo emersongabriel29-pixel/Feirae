@@ -310,7 +310,6 @@ Antes de produção, definir procedimento específico para:
 - [ ] resposta a incidente;
 - [ ] revisão jurídica.
 
-
 ## 18. Documentos na Gestão
 
 A migration administrativa cria/configura bucket privado `onboarding-documents` com limite de 5 MB e MIME permitido para PDF/JPEG/PNG. Admin autorizado abre arquivos por URL assinada temporária.

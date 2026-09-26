@@ -58,8 +58,7 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await authClient.auth.getUser(token);
   if (userError || !userData.user) return json({ error: "unauthorized" }, 401);
 
-  const { data: aalData, error: aalError } =
-    await authClient.auth.mfa.getAuthenticatorAssuranceLevel(token);
+  const { data: aalData, error: aalError } = await authClient.auth.mfa.getAuthenticatorAssuranceLevel(token);
   if (aalError || aalData?.currentLevel !== "aal2") {
     return json({ error: "mfa_required" }, 403);
   }
@@ -80,8 +79,7 @@ Deno.serve(async (req) => {
   };
   const requestId = req.headers.get("x-request-id")?.trim() || crypto.randomUUID();
 
-  const has = (permission: string) =>
-    ctx.isSuperadmin || ctx.permissions.has(permission);
+  const has = (permission: string) => ctx.isSuperadmin || ctx.permissions.has(permission);
 
   const requirePermission = (permission: string) => {
     if (!has(permission)) throw new ResponseError("forbidden", 403);
@@ -250,7 +248,8 @@ Deno.serve(async (req) => {
           .eq("profile_role", profileKind)
           .eq("required", true)
           .eq("active", true);
-        if (requirementsError) throw new ResponseError("requirements_load_failed", 400, requirementsError.message);
+        if (requirementsError)
+          throw new ResponseError("requirements_load_failed", 400, requirementsError.message);
 
         let activeVehicleTypes: string[] = [];
         if (profileKind === "delivery") {
@@ -278,7 +277,9 @@ Deno.serve(async (req) => {
         const today = new Date().toISOString().slice(0, 10);
         const approvedTypes = new Set(
           (documents ?? [])
-            .filter((row) => row.status === "approved" && (!row.expires_at || String(row.expires_at) >= today))
+            .filter(
+              (row) => row.status === "approved" && (!row.expires_at || String(row.expires_at) >= today),
+            )
             .map((row) => String(row.document_type)),
         );
         const missing = [...requiredTypes].filter((type) => !approvedTypes.has(type));
@@ -345,7 +346,11 @@ Deno.serve(async (req) => {
       const reviewId = String(body.review_id ?? "");
       const visible = Boolean(body.visible);
       const reason = String(body.reason ?? "").trim() || null;
-      const { data: before, error } = await adminDb.from("order_reviews").select("*").eq("id", reviewId).single();
+      const { data: before, error } = await adminDb
+        .from("order_reviews")
+        .select("*")
+        .eq("id", reviewId)
+        .single();
       if (error || !before) throw new ResponseError("review_not_found", 404);
       const { data: updated, error: updateError } = await adminDb
         .from("order_reviews")
@@ -370,7 +375,11 @@ Deno.serve(async (req) => {
       if (!["open", "in_review", "completed", "rejected"].includes(status)) {
         throw new ResponseError("invalid_privacy_status", 400);
       }
-      const { data: before, error } = await adminDb.from("privacy_requests").select("*").eq("id", requestId).single();
+      const { data: before, error } = await adminDb
+        .from("privacy_requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
       if (error || !before) throw new ResponseError("privacy_request_not_found", 404);
       const resolved = ["completed", "rejected"].includes(status);
       const { data: updated, error: updateError } = await adminDb
@@ -392,17 +401,23 @@ Deno.serve(async (req) => {
     if (action === "support_update") {
       requirePermission("operations.manage");
       const ticketId = String(body.ticket_id ?? "");
-      const { data: before, error } = await adminDb.from("support_tickets").select("*").eq("id", ticketId).single();
+      const { data: before, error } = await adminDb
+        .from("support_tickets")
+        .select("*")
+        .eq("id", ticketId)
+        .single();
       if (error || !before) throw new ResponseError("support_ticket_not_found", 404);
       const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (body.priority !== undefined) {
         const priority = String(body.priority);
-        if (!["normal", "urgent"].includes(priority)) throw new ResponseError("invalid_support_priority", 400);
+        if (!["normal", "urgent"].includes(priority))
+          throw new ResponseError("invalid_support_priority", 400);
         patch.priority = priority;
       }
       if (body.status !== undefined) {
         const status = String(body.status);
-        if (!["open", "resolved", "closed"].includes(status)) throw new ResponseError("invalid_support_status", 400);
+        if (!["open", "resolved", "closed"].includes(status))
+          throw new ResponseError("invalid_support_status", 400);
         patch.status = status;
         if (["resolved", "closed"].includes(status)) {
           patch.resolved_at = new Date().toISOString();
@@ -434,7 +449,8 @@ Deno.serve(async (req) => {
         throw new ResponseError("invalid_enforcement_type", 400);
       }
       if (!reason) throw new ResponseError("enforcement_reason_required", 400);
-      if (actionType === "suspension" && !body.ends_at) throw new ResponseError("enforcement_end_required", 400);
+      if (actionType === "suspension" && !body.ends_at)
+        throw new ResponseError("enforcement_end_required", 400);
       const payload = {
         profile_id: profileId,
         action_type: actionType,
@@ -444,7 +460,11 @@ Deno.serve(async (req) => {
         ends_at: body.ends_at || null,
         created_by: ctx.id,
       };
-      const { data: inserted, error } = await adminDb.from("account_enforcements").insert(payload).select().single();
+      const { data: inserted, error } = await adminDb
+        .from("account_enforcements")
+        .insert(payload)
+        .select()
+        .single();
       if (error) throw new ResponseError("enforcement_create_failed", 400, error.message);
       await audit("enforcement_create", "account_enforcements", inserted.id, null, inserted);
       return json({ data: inserted });
@@ -480,12 +500,23 @@ Deno.serve(async (req) => {
       const profileId = String(body.profile_id ?? "");
       const { data: before, error } = await adminDb.from("profiles").select("*").eq("id", profileId).single();
       if (error || !before) throw new ResponseError("profile_not_found", 404);
-      const { error: roleError } = await adminDb.from("profiles").update({ role: "admin" }).eq("id", profileId);
+      const { error: roleError } = await adminDb
+        .from("profiles")
+        .update({ role: "admin" })
+        .eq("id", profileId);
       if (roleError) throw new ResponseError("admin_promote_failed", 400, roleError.message);
-      const { error: accessError } = await adminDb.from("admin_access").upsert(
-        { profile_id: profileId, active: true, is_superadmin: false, updated_by: ctx.id, updated_at: new Date().toISOString() },
-        { onConflict: "profile_id" },
-      );
+      const { error: accessError } = await adminDb
+        .from("admin_access")
+        .upsert(
+          {
+            profile_id: profileId,
+            active: true,
+            is_superadmin: false,
+            updated_by: ctx.id,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "profile_id" },
+        );
       if (accessError) throw new ResponseError("admin_access_failed", 400, accessError.message);
       await audit("admin_promote", "profiles", profileId, before, { ...before, role: "admin" });
       return json({ ok: true });
@@ -494,7 +525,11 @@ Deno.serve(async (req) => {
     if (action === "admin_access_update") {
       requirePermission("permissions.manage");
       const profileId = String(body.profile_id ?? "");
-      const { data: before } = await adminDb.from("admin_access").select("*").eq("profile_id", profileId).maybeSingle();
+      const { data: before } = await adminDb
+        .from("admin_access")
+        .select("*")
+        .eq("profile_id", profileId)
+        .maybeSingle();
       if (!before) throw new ResponseError("admin_access_not_found", 404);
       const patch: Record<string, unknown> = {
         updated_by: ctx.id,
@@ -551,13 +586,21 @@ Deno.serve(async (req) => {
       if (permissions.some((permission) => !allowedPermissions.has(permission))) {
         throw new ResponseError("invalid_permission", 400);
       }
-      const { data: before } = await adminDb.from("admin_permissions").select("*").eq("profile_id", profileId);
-      const { error: deleteError } = await adminDb.from("admin_permissions").delete().eq("profile_id", profileId);
+      const { data: before } = await adminDb
+        .from("admin_permissions")
+        .select("*")
+        .eq("profile_id", profileId);
+      const { error: deleteError } = await adminDb
+        .from("admin_permissions")
+        .delete()
+        .eq("profile_id", profileId);
       if (deleteError) throw new ResponseError("permission_delete_failed", 400, deleteError.message);
       if (permissions.length) {
-        const { error: insertError } = await adminDb.from("admin_permissions").insert(
-          permissions.map((permission) => ({ profile_id: profileId, permission, granted_by: ctx.id })),
-        );
+        const { error: insertError } = await adminDb
+          .from("admin_permissions")
+          .insert(
+            permissions.map((permission) => ({ profile_id: profileId, permission, granted_by: ctx.id })),
+          );
         if (insertError) throw new ResponseError("permission_insert_failed", 400, insertError.message);
       }
       await audit("permissions_replace", "admin_permissions", profileId, before, { permissions });
@@ -629,7 +672,11 @@ Deno.serve(async (req) => {
     if (action === "alert_acknowledge" || action === "alert_resolve") {
       requirePermission("operations.manage");
       const alertId = String(body.alert_id ?? "");
-      const { data: before, error } = await adminDb.from("operational_alerts").select("*").eq("id", alertId).single();
+      const { data: before, error } = await adminDb
+        .from("operational_alerts")
+        .select("*")
+        .eq("id", alertId)
+        .single();
       if (error || !before) throw new ResponseError("alert_not_found", 404);
       const now = new Date().toISOString();
       const patch =
@@ -652,7 +699,11 @@ Deno.serve(async (req) => {
       const settingsResult = await adminDb
         .from("platform_settings")
         .select("key,value")
-        .in("key", ["alerts.order_stale_minutes", "alerts.delivery_stale_minutes", "alerts.document_expiry_days"]);
+        .in("key", [
+          "alerts.order_stale_minutes",
+          "alerts.delivery_stale_minutes",
+          "alerts.document_expiry_days",
+        ]);
       const settings = Object.fromEntries(
         (settingsResult.data ?? []).map((row) => [row.key, Number(row.value)]),
       );
@@ -685,27 +736,85 @@ Deno.serve(async (req) => {
           .select("id,order_id,status,failure_reason")
           .in("status", ["failed", "error", "declined"]),
         adminDb.from("payouts").select("id,profile_id,status").eq("status", "failed"),
-        adminDb.from("integration_registry").select("key,label,status").eq("enabled", true).neq("status", "ok"),
+        adminDb
+          .from("integration_registry")
+          .select("key,label,status")
+          .eq("enabled", true)
+          .neq("status", "ok"),
       ]);
 
       const candidates: Array<Record<string, unknown>> = [];
       for (const row of orders.data ?? []) {
-        candidates.push(alertRow("order_stale", "warning", "orders", row.id, "Pedido sem atualização", `Pedido ${row.id} parado além do limite.`));
+        candidates.push(
+          alertRow(
+            "order_stale",
+            "warning",
+            "orders",
+            row.id,
+            "Pedido sem atualização",
+            `Pedido ${row.id} parado além do limite.`,
+          ),
+        );
       }
       for (const row of deliveries.data ?? []) {
-        candidates.push(alertRow("delivery_stale", "critical", "deliveries", row.id, "Entrega sem atualização", `Entrega ${row.id} parada além do limite.`));
+        candidates.push(
+          alertRow(
+            "delivery_stale",
+            "critical",
+            "deliveries",
+            row.id,
+            "Entrega sem atualização",
+            `Entrega ${row.id} parada além do limite.`,
+          ),
+        );
       }
       for (const row of documents.data ?? []) {
-        candidates.push(alertRow("document_expiry", "warning", "onboarding_documents", row.id, "Documento vencendo", `${row.document_type} do perfil ${row.profile_id} exige atenção.`));
+        candidates.push(
+          alertRow(
+            "document_expiry",
+            "warning",
+            "onboarding_documents",
+            row.id,
+            "Documento vencendo",
+            `${row.document_type} do perfil ${row.profile_id} exige atenção.`,
+          ),
+        );
       }
       for (const row of payments.data ?? []) {
-        candidates.push(alertRow("payment_failure", "critical", "payments", row.id, "Falha de pagamento", row.failure_reason || `Pagamento do pedido ${row.order_id} falhou.`));
+        candidates.push(
+          alertRow(
+            "payment_failure",
+            "critical",
+            "payments",
+            row.id,
+            "Falha de pagamento",
+            row.failure_reason || `Pagamento do pedido ${row.order_id} falhou.`,
+          ),
+        );
       }
       for (const row of payouts.data ?? []) {
-        candidates.push(alertRow("payout_failure", "critical", "payouts", row.id, "Falha de repasse", `Repasse ${row.id} falhou.`));
+        candidates.push(
+          alertRow(
+            "payout_failure",
+            "critical",
+            "payouts",
+            row.id,
+            "Falha de repasse",
+            `Repasse ${row.id} falhou.`,
+          ),
+        );
       }
       for (const row of integrations.data ?? []) {
-        candidates.push(alertRow("integration_failure", "critical", "integration_registry", row.key, `Integração: ${row.label}`, `Status atual: ${row.status}.`));
+        candidates.push(
+          alertRow(
+            "integration_failure",
+            "critical",
+            "integration_registry",
+            row.key,
+            `Integração: ${row.label}`,
+            `Status atual: ${row.status}.`,
+          ),
+        );
       }
 
       const activeKeys = new Set<string>();

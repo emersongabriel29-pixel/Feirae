@@ -52,10 +52,12 @@ A migration transforma administradores já existentes no momento da aplicação 
 ## Módulos
 
 ### Visão geral
+
 - Dashboard;
 - Relatórios.
 
 ### Operação
+
 - Alertas persistentes;
 - Pedidos;
 - Entregas;
@@ -64,6 +66,7 @@ A migration transforma administradores já existentes no momento da aplicação 
 - Suspensões/bloqueios.
 
 ### Cadastros
+
 - Estados;
 - Feiras;
 - Bancas/Boxes;
@@ -75,6 +78,7 @@ A migration transforma administradores já existentes no momento da aplicação 
 - Regiões.
 
 ### Regras
+
 - Veículos permitidos;
 - Frete;
 - Taxas;
@@ -83,6 +87,7 @@ A migration transforma administradores já existentes no momento da aplicação 
 - Documentos exigidos.
 
 ### Financeiro/comercial
+
 - Financeiro;
 - Pagamentos;
 - Promoções;
@@ -90,11 +95,13 @@ A migration transforma administradores já existentes no momento da aplicação 
 - Avaliações.
 
 ### Comunicação
+
 - Conteúdo;
 - Avisos;
 - Templates de mensagens.
 
 ### Sistema
+
 - Configurações;
 - Feature flags;
 - Integrações;

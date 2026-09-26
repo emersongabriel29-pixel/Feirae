@@ -266,7 +266,6 @@ Só afirmar após verificar:
 
 Merge sozinho não é evidência.
 
-
 ## 14. Deploy da Área de Gestão
 
 `/admin` é um artefato web separado do app público.

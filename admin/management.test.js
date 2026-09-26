@@ -25,7 +25,7 @@ describe("Feiraê Gestão hardening", () => {
 
   it("uses server-side pagination instead of the old 300 row cap", () => {
     expect(app).toContain(".range(from,to)");
-    expect(app).not.toContain(".select(\"*\").limit(300)");
+    expect(app).not.toContain('.select("*").limit(300)');
     expect(app).toContain("Buscar no banco");
   });
 
@@ -47,7 +47,9 @@ describe("Feiraê Gestão hardening", () => {
       "account_enforcements",
       "privacy_requests",
     ]) {
-      expect(migration).toContain(`revoke insert, update, delete on table public.${table} from authenticated`);
+      expect(migration).toContain(
+        `revoke insert, update, delete on table public.${table} from authenticated`,
+      );
     }
   });
 
@@ -86,7 +88,9 @@ describe("Feiraê Gestão hardening", () => {
   it("prevents browser bypass of role, approval and audit protections", () => {
     expect(migration).toContain("Profile role changes must use a trusted server-side action.");
     expect(migration).toContain("Operational approval must use a trusted administrative action.");
-    expect(migration).toContain("revoke insert, update, delete on table public.admin_audit_logs from authenticated");
+    expect(migration).toContain(
+      "revoke insert, update, delete on table public.admin_audit_logs from authenticated",
+    );
   });
 
   it("validates document content server-side and keeps JWT verification enabled", () => {

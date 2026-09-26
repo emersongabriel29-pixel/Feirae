@@ -578,7 +578,6 @@ A primeira camada dessa migração já existe em `src/domain/runtimeConfig.ts`: 
 
 Ainda permanecem fora dessa primeira camada regras que precisam de backend/autenticação compartilhada, como sanções por usuário, cálculo autoritativo de frete/taxas, ledger, estoque transacional e demais operações sensíveis.
 
-
 ## Endurecimento após nova auditoria
 
 A nova auditoria da Gestão corrigiu os seguintes pontos:

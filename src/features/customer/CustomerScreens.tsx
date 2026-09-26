@@ -197,8 +197,7 @@ export function FairsPage({
   const effectiveSelectedState = availableStates.some((state) => state.code === selectedState)
     ? selectedState
     : (availableStates[0]?.code ?? "");
-  const effectiveSelectedRegion =
-    effectiveSelectedState === selectedState ? selectedRegion : "";
+  const effectiveSelectedRegion = effectiveSelectedState === selectedState ? selectedRegion : "";
 
   const officialItems = fairItems.filter((fair) => fair.source !== "demo");
   const stateItems = effectiveSelectedState
@@ -669,7 +668,8 @@ export function VendorsPage({
   vendorFavorites: string[];
   onVendorFavorite: (name: string) => void;
 }) {
-  const fair = fairItems.find((item) => item.name === fairName) ?? fairs.find((item) => item.name === fairName);
+  const fair =
+    fairItems.find((item) => item.name === fairName) ?? fairs.find((item) => item.name === fairName);
   const liveProducts = marketplaceProducts(products);
   const fairProducts = liveProducts.filter((product) => product.fair === fairName);
   const vendors = vendorSummaries(fairProducts, vendorMetrics);
@@ -1658,9 +1658,9 @@ export function Checkout({
                       ? "Nenhum meio de pagamento está habilitado para este pedido."
                       : cardPayment && !selectedCardId
                         ? "Selecione um cartão salvo antes de confirmar."
-                      : cashPayment && needsChange && !changeValid
-                        ? "Informe um valor de troco igual ou maior que o total."
-                        : "Cadastre um endereço para entrega antes de confirmar."}
+                        : cashPayment && needsChange && !changeValid
+                          ? "Informe um valor de troco igual ou maior que o total."
+                          : "Cadastre um endereço para entrega antes de confirmar."}
             </small>
           )}
         </aside>

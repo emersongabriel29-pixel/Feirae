@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
 
   const file = form.get("file");
   const documentType = String(form.get("document_type") ?? "").trim();
-  if (!(file instanceof File) || !documentType) return json({ error: "file_and_document_type_required" }, 400);
+  if (!(file instanceof File) || !documentType)
+    return json({ error: "file_and_document_type_required" }, 400);
   if (file.size <= 0 || file.size > maxBytes) return json({ error: "invalid_file_size" }, 413);
 
   const rule = allowed[file.type];
@@ -69,13 +70,11 @@ Deno.serve(async (req) => {
     .maybeSingle();
   const path = `${userId}/${crypto.randomUUID()}.${rule.extension}`;
 
-  const { error: uploadError } = await adminDb.storage
-    .from("onboarding-documents")
-    .upload(path, bytes, {
-      contentType: file.type,
-      cacheControl: "3600",
-      upsert: false,
-    });
+  const { error: uploadError } = await adminDb.storage.from("onboarding-documents").upload(path, bytes, {
+    contentType: file.type,
+    cacheControl: "3600",
+    upsert: false,
+  });
   if (uploadError) return json({ error: "storage_upload_failed", detail: uploadError.message }, 400);
 
   const { data: documentRow, error: documentError } = await adminDb

@@ -532,9 +532,7 @@ export function DeliveryOperations({
         }))
     : [];
   const deliveries = [...sharedDeliveries, ...fixtureDeliveries];
-  const activeVehicles = vehicles.filter(
-    (vehicle) => vehicle.active && isVehicleTypeActive(vehicle.type),
-  );
+  const activeVehicles = vehicles.filter((vehicle) => vehicle.active && isVehicleTypeActive(vehicle.type));
   const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
   const hasMoto = activeVehicles.some(
     (vehicle) => vehicle.type === "Moto" || vehicle.type === "Moto com baú",
