@@ -254,3 +254,10 @@ Em pull requests, o CI verifica automaticamente regras mínimas:
 - workflow/config de deploy exige atualização de documentação de deploy.
 
 A automação é uma barreira mínima. A matriz de impacto deste documento continua sendo obrigatória mesmo quando o script não consegue inferir semanticamente todo o impacto.
+
+
+## Estado da aplicação desta governança
+
+A governança é aplicada pelo template de PR e pela etapa `Verify project synchronization` do workflow `Quality`.
+
+A regra automática não substitui revisão humana: ela verifica presença mínima de testes/documentação no diff, enquanto a matriz acima define quais áreas precisam ser revisadas semanticamente.
