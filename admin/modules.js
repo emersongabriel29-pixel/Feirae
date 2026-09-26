@@ -15,7 +15,6 @@ const orderStatus=["pending_payment","paid","accepted","preparing","ready_for_pi
 const docStatus=["pending","under_review","approved","correction_required","rejected"];
 const payoutStatus=["pending","available","requested","paid","failed"];
 const permissionOptions=[
-  "*",
   "operations.manage",
   "documents.review",
   "accounts.enforce",
