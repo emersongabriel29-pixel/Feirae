@@ -625,6 +625,23 @@ function openSupportUpdate(row){
  $("#modal").classList.remove("hidden");
 }
 
+async function toggleProfileApproval(m,row){
+ const next=!row.approved;
+ const message=next
+   ?"Aprovar somente se todos os documentos obrigatórios estiverem válidos?"
+   :"Revogar a aprovação operacional deste cadastro?";
+ if(!confirm(message))return;
+ try{
+   await invokeAdminAction("profile_approval",{
+     profile_id:row.id,
+     profile_kind:m.approvalKind,
+     approved:next
+   });
+   toast(next?"Cadastro aprovado.":"Aprovação revogada.");
+   await openModule(m.approvalKind==="vendor"?"vendors":"drivers");
+ }catch(e){toast(e.message||String(e));}
+}
+
 async function togglePaymentReconcile(row){
  try{
    await invokeAdminAction("payment_reconcile",{payment_id:row.id,reconciled:!row.reconciled});
@@ -1177,6 +1194,7 @@ function fillRows(m,rows){
      if(m.table==="orders")line+='<button data-order-detail="'+i+'">Detalhes</button>';
      if(m.table==="deliveries")line+='<button data-delivery-detail="'+i+'">Detalhes</button>';
      if(m.profileDetail)line+='<button data-profile-detail="'+i+'">Visão 360°</button>';
+     if(m.approvalKind)line+='<button data-profile-approval="'+i+'">'+(row.approved?"Revogar aprovação":"Aprovar")+'</button>';
      if(m.secureAction==="document_review")line+='<button data-document-review="'+i+'">Revisar</button>';
      if(m.secureAction==="support_update")line+='<button data-support-update="'+i+'">Atender</button>';
      if(m.secureAction==="payment_reconcile")line+='<button data-payment-reconcile="'+i+'">'+(row.reconciled?"Desconciliar":"Conciliar")+'</button>';
@@ -1201,6 +1219,7 @@ function fillRows(m,rows){
  body.querySelectorAll("[data-order-detail]").forEach((b)=>b.onclick=()=>renderOrderDetail(rows[Number(b.dataset.orderDetail)].id));
  body.querySelectorAll("[data-delivery-detail]").forEach((b)=>b.onclick=()=>renderDeliveryDetail(rows[Number(b.dataset.deliveryDetail)].id));
  body.querySelectorAll("[data-profile-detail]").forEach((b)=>b.onclick=()=>renderProfile360(m.profileDetail,rows[Number(b.dataset.profileDetail)]));
+ body.querySelectorAll("[data-profile-approval]").forEach((b)=>b.onclick=()=>toggleProfileApproval(m,rows[Number(b.dataset.profileApproval)]));
  body.querySelectorAll("[data-document-review]").forEach((b)=>b.onclick=()=>openDocumentReview(rows[Number(b.dataset.documentReview)]));
  body.querySelectorAll("[data-support-update]").forEach((b)=>b.onclick=()=>openSupportUpdate(rows[Number(b.dataset.supportUpdate)]));
  body.querySelectorAll("[data-payment-reconcile]").forEach((b)=>b.onclick=()=>togglePaymentReconcile(rows[Number(b.dataset.paymentReconcile)]));
