@@ -1,3 +1,5 @@
+import type { StoredFile } from "../../domain/storedFile";
+
 export type VendorProduct = {
   id: number;
   name: string;
@@ -117,6 +119,7 @@ export type VendorDocument = {
   required: boolean;
   status: VendorDocumentStatus;
   fileName: string;
+  file?: StoredFile;
   expiresAt: string;
   correctionReason: string;
 };
