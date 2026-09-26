@@ -2088,7 +2088,7 @@ export function DeliveryOperations({
                     />
                   </label>
                   {accountError && (
-                    <p className="operation-footnote" role="alert">
+                    <p className="inline-error" role="alert">
                       {accountError}
                     </p>
                   )}
