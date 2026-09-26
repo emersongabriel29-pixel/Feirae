@@ -145,6 +145,7 @@ export default function App() {
     openVendor,
     resetForRole,
     resetForLogout,
+    openRoleRoot,
   } = useAppNavigation(role, () => setCartOpen(false));
 
   const visibleProducts = useMemo(() => {
