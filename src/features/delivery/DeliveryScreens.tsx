@@ -930,7 +930,9 @@ export function DeliveryOperations({
             {active === "Painel" ? (
               <>
                 <div className="delivery-hero">
-                  <span aria-hidden="true"><Bike /></span>
+                  <span aria-hidden="true">
+                    <Bike />
+                  </span>
                   <div>
                     <b>Rotas com capacidade compatível</b>
                     <p>O Feiraê só oferece corridas dentro do peso/volume aceito pelo veículo cadastrado.</p>

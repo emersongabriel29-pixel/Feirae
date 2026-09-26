@@ -218,7 +218,6 @@ Uma release deve registrar:
 
 O número 69 é referência do protótipo atual, não selo de produção.
 
-
 ## 12. QA visual após auditoria de design
 
 A auditoria de 26/09/2026 alterou layout e navegação sem adicionar framework de browser E2E.

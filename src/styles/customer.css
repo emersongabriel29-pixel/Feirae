@@ -1195,7 +1195,6 @@ html.compact-product-cards .product-card .stock {
   font-size: 0.64rem;
 }
 
-
 /* Product and order mobile polish */
 .add-button,
 .favorite-button {
@@ -1227,7 +1226,6 @@ html.compact-product-cards .product-card .stock {
   background: var(--fe-danger-soft);
   color: var(--fe-danger);
 }
-
 
 /* Marketplace imagery */
 .product-art {
