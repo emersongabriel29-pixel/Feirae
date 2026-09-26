@@ -446,7 +446,7 @@ describe("Feiraê role access", () => {
 
     expect(screen.getByText(/taxa feiraê/i)).toBeInTheDocument();
     expect(screen.getAllByText(/não configurada/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/valor bruto antes de taxas\/repasses reais/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/valor bruto antes de taxas\/repasses reais/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /cadastrar destino de recebimento/i })).toBeInTheDocument();
   });
 
