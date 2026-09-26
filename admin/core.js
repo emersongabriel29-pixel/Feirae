@@ -13,7 +13,12 @@ export const ORDER_TRANSITIONS={
 };
 
 export function safeSearchTerm(value){
-  return String(value||"").trim().replace(/[,*()]/g," ").replace(/\s+/g," ").slice(0,120);
+  return String(value||"")
+    .trim()
+    .replace(/[,*()]/g," ")
+    .replace(/\s+/g," ")
+    .trim()
+    .slice(0,120);
 }
 
 export function isUuid(value){
