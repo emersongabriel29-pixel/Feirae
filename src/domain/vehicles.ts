@@ -1,3 +1,5 @@
+import type { StoredFile } from "./storedFile";
+
 export const vehicleCapacityDefaults = {
   Bicicleta: 10,
   "Bicicleta cargueira/triciclo": 40,
@@ -19,6 +21,7 @@ export type DeliveryVehicle = {
   plate: string;
   active: boolean;
   documentFileName?: string;
+  documentFile?: StoredFile;
   documentStatus?: "pending" | "under_review" | "approved" | "correction_required";
 };
 
