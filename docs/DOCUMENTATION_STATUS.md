@@ -185,3 +185,8 @@ Foram adicionados:
 - etapa de CI para pull requests.
 
 A regra passa a ser: toda mudança avalia impacto em código, testes, documentação, banco, segurança, integrações, LGPD, admin e deploy. Itens afetados devem ser alterados no mesmo PR.
+
+
+### Ajuste incidental detectado pelo novo gate
+
+A ativação do gate também expôs um import não utilizado de `Home` em `AppComponents.tsx`. O import foi removido e o teste de navegação do cliente foi reforçado no mesmo PR, seguindo a própria regra de sincronização.
