@@ -346,7 +346,7 @@ Migration `0003_management_console.sql` fecha os gaps administrativos principais
 - `notification_templates`;
 - `system_announcements`.
 
-Também adiciona MFA/AAL2 para acesso administrativo e ações server-side em `supabase/functions/admin-actions/index.ts`.
+Também adiciona MFA/AAL2 para acesso administrativo, ações críticas em `supabase/functions/admin-actions/index.ts` e upload autenticado com validação de magic bytes em `supabase/functions/document-upload/index.ts`.
 
 Pendência restante: o app principal ainda usa valores locais/hard-coded em vários fluxos e precisa consumir essas tabelas como runtime configuration para que a Gestão vire a fonte operacional efetiva.
 
