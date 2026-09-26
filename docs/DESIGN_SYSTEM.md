@@ -215,7 +215,6 @@ Toda mudança de:
 
 deve atualizar este documento e os testes correspondentes quando houver mudança funcional.
 
-
 ## Ajustes móveis da auditoria em vídeo — 26/09/2026
 
 ### Navegação inferior
