@@ -239,3 +239,17 @@ A navegação usa cinco colunas iguais no mobile.
 ### Estados de estoque
 
 Ao atingir o limite de estoque, o controle `+` do carrinho deve ficar visual e semanticamente desabilitado, com texto “Limite de estoque atingido”.
+
+
+## Pagamentos — hierarquia de texto
+
+Nos cards de métodos de pagamento, o nome do método deve ficar em uma linha própria e a explicação deve aparecer abaixo.
+
+Exemplo visual:
+
+```
+Pix
+QR Code e copia e cola são gerados no checkout.
+```
+
+Não colocar título e descrição corridos na mesma linha. A mesma regra vale para cartão, dinheiro e pagamento na entrega.
