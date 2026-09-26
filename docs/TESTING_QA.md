@@ -29,18 +29,18 @@ npm run build
 
 ## 2. Contagem atual
 
-| Arquivo                                | Testes |
-| -------------------------------------- | -----: |
-| `src/App.test.tsx`                     |     50 |
-| `src/domain/orderBridge.test.ts`       |      5 |
+| Arquivo                                  | Testes |
+| ---------------------------------------- | -----: |
+| `src/App.test.tsx`                       |     50 |
+| `src/domain/orderBridge.test.ts`         |      5 |
 | `src/domain/feiraeNotifications.test.ts` |      5 |
-| `src/domain/marketplaceBridge.test.ts` |      4 |
-| `src/domain/inventoryBridge.test.ts`   |      3 |
-| `src/domain/localAuth.test.ts`         |      4 |
-| `src/domain/marketplace.test.ts`       |      4 |
-| `src/domain/session.test.ts`           |      3 |
-| `src/utils.test.ts`                    |      4 |
-| **Total**                              | **82** |
+| `src/domain/marketplaceBridge.test.ts`   |      4 |
+| `src/domain/inventoryBridge.test.ts`     |      3 |
+| `src/domain/localAuth.test.ts`           |      4 |
+| `src/domain/marketplace.test.ts`         |      4 |
+| `src/domain/session.test.ts`             |      3 |
+| `src/utils.test.ts`                      |      4 |
+| **Total**                                | **82** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
