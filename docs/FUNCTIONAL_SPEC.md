@@ -1,6 +1,6 @@
 # Especificação funcional consolidada — Feiraê
 
-Atualizado em 25/09/2026.
+Atualizado em 26/09/2026.
 
 ## Princípio central
 
@@ -15,6 +15,54 @@ Feira → Banca → Produto → Carrinho → Peso → Endereço → Frete → Pa
 ```
 
 Cada mudança de estado deve registrar data/hora e, quando aplicável, ator e motivo.
+
+## Estado atual do protótipo
+
+Esta especificação descreve tanto comportamento já implementado quanto requisitos de produção.
+
+Já funciona localmente:
+
+- login/cadastro local com senha;
+- edição de nome/e-mail/senha;
+- pedido unificado;
+- catálogo compartilhado;
+- multi-banca;
+- estoque;
+- retirada/entrega;
+- promoções;
+- avaliações;
+- suporte;
+- carteira/reembolso;
+- documentos locais;
+- preferências.
+
+Ainda exige backend/integração:
+
+- Auth real;
+- RLS;
+- pagamentos;
+- Storage privado;
+- KYC;
+- roteamento/rastreamento de produção;
+- push/WhatsApp;
+- split/repasse real.
+
+Estados canônicos: [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
+
+## Contas, formulários e edição
+
+Quando a interface exibir **Salvar**, o formulário deve trabalhar com rascunho e persistir somente ao salvar. Quando houver risco de alteração acidental, oferecer **Descartar/Cancelar**.
+
+Regras:
+
+- senha nunca deve ser ignorada pelo fluxo de login;
+- senha não deve ser armazenada junto do perfil comum;
+- alteração de e-mail deve atualizar a identidade e referências relacionadas;
+- opção indisponível deve estar desabilitada, não receber clique vazio;
+- toggle de configuração precisa produzir efeito observável;
+- upload precisa armazenar/enviar o arquivo, não apenas mostrar o nome.
+
+A auditoria específica está em [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md).
 
 ## Cliente
 
