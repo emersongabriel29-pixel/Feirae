@@ -19,6 +19,25 @@
   --fe-ink: #172019;
   --fe-muted: #617069;
   --fe-border: #dfe5df;
+  --fe-surface: #ffffff;
+  --fe-surface-soft: #f3f6f3;
+  --fe-text-soft: #53615a;
+  --fe-success: #176b3a;
+  --fe-success-soft: #eaf5ed;
+  --fe-warning: #8a5a00;
+  --fe-warning-soft: #fff4d6;
+  --fe-danger: #9a3f3f;
+  --fe-danger-soft: #fff0f0;
+  --fe-info: #27628a;
+  --fe-info-soft: #edf6fb;
+  --fe-radius-sm: 0.75rem;
+  --fe-radius-md: 1rem;
+  --fe-radius-lg: 1.35rem;
+  --fe-radius-xl: 1.6rem;
+  --fe-shadow-sm: 0 5px 16px rgba(28, 42, 32, 0.04);
+  --fe-shadow-card: 0 10px 24px rgba(30, 45, 34, 0.055);
+  --fe-shadow-raised: 0 18px 36px rgba(30, 45, 34, 0.09);
+  --fe-touch: 2.75rem;
 }
 
 * {
