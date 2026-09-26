@@ -240,7 +240,6 @@ A navegação usa cinco colunas iguais no mobile.
 
 Ao atingir o limite de estoque, o controle `+` do carrinho deve ficar visual e semanticamente desabilitado, com texto “Limite de estoque atingido”.
 
-
 ## Pagamentos — hierarquia de texto
 
 Nos cards de métodos de pagamento, o nome do método deve ficar em uma linha própria e a explicação deve aparecer abaixo.
