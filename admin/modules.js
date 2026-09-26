@@ -1,7 +1,7 @@
 const f=(key,label,type="text",options=null)=>({key,label,type,options});
 
 export const navGroups=[
-  ["Visão geral",[["dashboard","Visão geral"]]],
+  ["Visão geral",[["dashboard","Visão geral"],["reports","Relatórios"]]],
   ["Operação",[["orders","Pedidos"],["delivery_jobs","Entregas"],["support","Suporte"],["documents","Aprovações"],["enforcements","Suspensões e bloqueios"]]],
   ["Cadastros",[["states","Estados"],["fairs","Feiras"],["users","Usuários"],["vendors","Feirantes"],["drivers","Entregadores"],["products","Produtos"],["categories","Categorias"],["regions","Regiões"]]],
   ["Regras do negócio",[["vehicle_rules","Veículos"],["delivery_fees","Frete"],["platform_fees","Taxas"],["payment_methods","Pagamentos"],["cancellation_reasons","Cancelamentos"],["onboarding_requirements","Documentos exigidos"]]],
@@ -25,7 +25,8 @@ const permissionOptions=[
   "communications.manage",
   "settings.manage",
   "permissions.manage",
-  "audit.view"
+  "audit.view",
+  "reports.view"
 ];
 
 export const modules={
