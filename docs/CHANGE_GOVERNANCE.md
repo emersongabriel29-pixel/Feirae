@@ -249,7 +249,8 @@ O repositório possui `scripts/check-change-sync.mjs`.
 Em pull requests, o CI verifica automaticamente regras mínimas:
 
 - mudança em código/config/schema exige documentação no mesmo PR;
-- mudança de comportamento em `src/` exige teste no mesmo PR;
+- mudança semântica de comportamento em `src/` exige teste no mesmo PR;
+- alteração somente de formatação/espaços em `src/` não exige teste novo, mas continua sujeita à revisão/documentação do PR;
 - migration exige atualização de documentação de schema/estado;
 - workflow/config de deploy exige atualização de documentação de deploy.
 
