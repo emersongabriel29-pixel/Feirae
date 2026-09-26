@@ -70,13 +70,26 @@ Editar sem código:
 
 Novas configurações podem ser adicionadas por linha em `platform_settings`.
 
-### 3. Feiras
+### 3. Estados e feiras
+
+Estados:
+
+- lista das 27 UFs;
+- ativar/desativar o Feiraê por estado;
+- liberar/bloquear pedidos por estado;
+- liberar/bloquear cadastro de feirantes;
+- liberar/bloquear entregas;
+- definir ordem de exibição.
+
+O Distrito Federal inicia ativo para refletir a fase atual; os demais estados ficam preparados para expansão sem mudança de código.
+
+Feiras:
 
 - criar feira;
-- editar nome, endereço e descrição;
-- ativar/desativar;
+- editar nome, UF, cidade, endereço e descrição;
+- ativar/desativar individualmente;
 - editar horários;
-- posteriormente vincular gestor da feira e regras locais.
+- manter a feira desativada sem apagar histórico.
 
 ### 4. Regiões de operação
 
@@ -98,17 +111,21 @@ Novas configurações podem ser adicionadas por linha em `platform_settings`.
 - consultar pedidos e ocorrências;
 - acompanhar repasses.
 
-### 6. Entregadores
+### 6. Entregadores e controle de acesso
 
 - consultar cadastro;
 - aprovar/reprovar operação;
 - revisar documentos;
-- consultar veículos;
-- consultar capacidade;
+- consultar veículos cadastrados pelo entregador;
 - acompanhar disponibilidade;
-- acompanhar corridas;
-- acompanhar avaliações;
-- acompanhar repasses.
+- acompanhar corridas, avaliações e repasses;
+- suspender por período;
+- banir sem prazo;
+- bloquear somente entregas;
+- registrar motivo, início, fim e histórico;
+- revogar punição sem apagar o registro.
+
+A mesma estrutura de bloqueio pode ser aplicada a Cliente e Feirante com escopos de pedidos, vendas ou conta inteira.
 
 ### 7. Documentos e onboarding
 
@@ -128,21 +145,29 @@ Operação:
 - correção solicitada;
 - rejeitado;
 - motivo da correção;
-- validade.
+- validade;
+- abrir o arquivo enviado diretamente na Gestão;
+- gerar URL temporária de acesso para bucket privado;
+- manter documentos fora de URLs públicas permanentes.
 
-### 8. Veículos
+### 8. Veículos permitidos
 
-Parâmetros sem código:
+Esta área representa o **catálogo global de modalidades aceitas pelo Feiraê**, e não o veículo particular de um entregador.
 
-- tipos de veículo;
-- capacidade padrão;
-- exigência de placa;
-- exigência de documento;
-- exigência de CNH;
-- ativo/inativo;
-- ordem.
+A Gestão pode:
 
-Os valores atuais de bicicleta, moto, carro, pickup e van passam a ter uma fonte de configuração própria.
+- adicionar um tipo novo, como patinete;
+- editar o nome da modalidade;
+- definir o peso máximo permitido;
+- ativar/desativar sem excluir;
+- definir exigência de placa;
+- definir exigência de documento;
+- definir exigência de CNH;
+- alterar a ordem.
+
+Exemplo: Patinete = 5 kg e inativo. Se ativado futuramente, passa a poder ser oferecido no cadastro e na logística quando o app estiver consumindo `vehicle_type_rules`.
+
+O cadastro particular do entregador continua em `delivery_vehicles` e referencia conceitualmente uma modalidade permitida.
 
 ### 9. Pedidos
 
@@ -346,17 +371,20 @@ Não armazenar:
 - responsável;
 - resolução.
 
-### 25. Administração e auditoria
+### 25. Administração, permissões e auditoria
 
 - autenticação obrigatória;
 - somente `role=admin`;
-- futura granularidade por `admin_permissions`;
-- log de alterações;
-- antes/depois;
+- permissões granulares persistidas em `admin_permissions`;
+- permissões aplicadas na interface **e nas políticas RLS**;
+- acesso total para o primeiro admin enquanto ele não possui regras explícitas;
+- permissões para operação, documentos, punições, cadastros, regras, financeiro, comunicação, configurações e auditoria;
+- proteção contra autoatribuição de papel `admin`/`fair_manager`;
+- log de alterações com antes/depois;
 - administrador responsável;
-- entidade;
-- registro;
-- data/hora.
+- entidade, registro e data/hora.
+
+A Gestão não trata permissão apenas como esconder botões: chamadas diretas à Data API continuam limitadas pelo banco.
 
 ## O que deve permanecer fora do painel
 
@@ -380,13 +408,14 @@ Para cumprir a meta “mudar configuração sem mexer no código”, o app final
 
 Prioridade de migração:
 
-1. `vehicle_type_rules`;
-2. `service_regions`;
-3. `payment_method_rules`;
-4. `cancellation_reasons`;
-5. `feature_flags`;
-6. `platform_settings`;
-7. `content_blocks`;
-8. regras de frete/taxas no backend.
+1. `service_states` e `service_regions`;
+2. `vehicle_type_rules`;
+3. `account_enforcements`;
+4. `payment_method_rules`;
+5. `cancellation_reasons`;
+6. `feature_flags`;
+7. `platform_settings`;
+8. `content_blocks`;
+9. regras de frete/taxas no backend.
 
 Até essa migração do frontend/backend ser concluída, o painel pode salvar corretamente as configurações, mas telas ainda baseadas em dados locais não refletirão todas as mudanças.
