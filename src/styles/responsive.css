@@ -28,7 +28,7 @@
 }
 @media (min-width: 768px) {
   .customer-tools {
-    grid-template-columns: minmax(260px, 1fr) auto;
+    grid-template-columns: 1fr;
   }
   .mobile-nav {
     display: none;
@@ -42,10 +42,11 @@
     padding: 0.9rem;
   }
   .customer-tools {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 1fr;
   }
   .context-toggle {
     display: flex;
+    width: 100%;
     min-width: 3rem;
     align-items: center;
     justify-content: center;
@@ -59,7 +60,8 @@
   .context-toggle > span {
     display: grid;
     min-width: 0;
-    max-width: 9.5rem;
+    max-width: none;
+    flex: 1;
     text-align: left;
   }
   .context-toggle > span b,
@@ -222,6 +224,6 @@
     grid-template-columns: 1fr;
   }
   .context-toggle > span {
-    max-width: 7rem;
+    max-width: none;
   }
 }
