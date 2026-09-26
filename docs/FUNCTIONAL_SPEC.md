@@ -514,7 +514,6 @@ Regra:
 
 Veja [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).
 
-
 ## 21. Navegação e cabeçalho do cliente
 
 - navegação móvel: **Início, Feiras, Produtos, Pedidos e Perfil**;
