@@ -50,7 +50,11 @@ import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
-import { authenticateLocalAccount, updateLocalAccount } from "./domain/localAuth";
+import {
+  authenticateLocalAccount,
+  scrubLegacyPlaintextPasswords,
+  updateLocalAccount,
+} from "./domain/localAuth";
 
 export default function App() {
   const { session, role, startSession, updateSession, clearSession } = useDemoSession();
@@ -112,6 +116,10 @@ export default function App() {
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast, notify } = useToast();
   const unifiedOrderRevision = useUnifiedOrderRevision();
+
+  useEffect(() => {
+    scrubLegacyPlaintextPasswords();
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("compact-product-cards", compactCards);
