@@ -215,7 +215,6 @@ Documento de regra visual:
 
 A suite atual usa jsdom. Portanto essas correções de layout ainda precisam de regressão visual em browser real para 320, 360, 390/412, 768, 1024, 1280 e 1440 px.
 
-
 ## Correções da auditoria em vídeo — 26/09/2026 17:35
 
 Implementado nesta rodada:
