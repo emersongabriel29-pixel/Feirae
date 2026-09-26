@@ -413,6 +413,132 @@ Não armazenar:
 
 A Gestão não trata permissão apenas como esconder botões: chamadas diretas à Data API continuam limitadas pelo banco.
 
+## Complementos operacionais concluídos
+
+### Detalhe completo de pedido
+
+A lista de pedidos abre uma visão operacional com:
+
+- cliente;
+- endereço;
+- itens e pesos;
+- bancas participantes;
+- status e valores;
+- entrega relacionada;
+- pagamentos;
+- linha do tempo;
+- tickets de suporte;
+- avaliações.
+
+### Detalhe completo de entrega
+
+A lista de entregas abre:
+
+- pedido relacionado;
+- entregador;
+- veículo utilizado;
+- quilometragem até a banca;
+- quilometragem banca → cliente;
+- distância total;
+- ETA;
+- fonte da rota;
+- valor da entrega;
+- aceite, coleta, saída para entrega e conclusão;
+- cancelamento;
+- timeline;
+- avaliações.
+
+### Bancas e boxes
+
+A Gestão permite selecionar Feira e Feirante pelo nome e administrar:
+
+- código do box;
+- nome da banca/box;
+- horários próprios;
+- observações;
+- ativo/inativo.
+
+O vínculo mantém histórico e não exige digitação manual de UUID.
+
+### Pagamentos e conciliação financeira
+
+A área financeira exibe:
+
+- valor bruto recebido;
+- taxa do provedor;
+- receita Feiraê;
+- valor do feirante;
+- remuneração do entregador;
+- reembolsos;
+- diferença ainda não conciliada;
+- repasses pagos;
+- conciliação por transação.
+
+Pagamentos podem ser marcados como conciliados com administrador e data registrados. Confirmação real de cobrança, estorno e liquidação continuam server-side.
+
+### Central de alertas
+
+Alertas derivados dos dados operacionais:
+
+- pedido sem atualização;
+- entrega sem atualização;
+- documento vencido ou próximo da validade;
+- pagamento com falha;
+- repasse com falha;
+- integração ativa com problema.
+
+Os limites de tempo e antecedência documental ficam em `platform_settings`.
+
+### Administradores
+
+- listar administradores;
+- promover um usuário existente selecionando pelo nome;
+- ativar/desativar acesso administrativo;
+- bloquear login quando o acesso estiver desativado;
+- configurar permissões por administrador;
+- impedir autoatribuição indevida de papel administrativo;
+- impedir que o administrador desative o próprio acesso na sessão atual.
+
+A criação da conta do Supabase Auth continua fora do navegador administrativo porque requer contexto seguro.
+
+### Saúde das integrações
+
+- situação atual;
+- ambiente;
+- habilitada/desabilitada;
+- último estado;
+- mensagem de saúde;
+- latência;
+- histórico das verificações.
+
+Resultados de checks externos são registrados em `integration_health_events`. Testes que exigem credenciais permanecem em backend/Edge Function; segredos não são levados ao browser.
+
+### Ações em lote
+
+Cadastros compatíveis podem ser ativados/desativados em lote, incluindo:
+
+- feiras;
+- estados;
+- regiões;
+- categorias;
+- produtos;
+- tipos de veículos;
+- meios de pagamento.
+
+A ação é registrada na auditoria.
+
+### Auditoria avançada
+
+Filtros por:
+
+- administrador;
+- entidade;
+- ação;
+- data inicial;
+- data final.
+
+O resultado mostra antes/depois da alteração quando disponível.
+
 ## O que deve permanecer fora do painel
 
 Mesmo com a gestão pronta, alguns itens continuam exigindo código/infraestrutura:
