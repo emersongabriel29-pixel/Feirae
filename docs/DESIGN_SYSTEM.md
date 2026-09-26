@@ -306,7 +306,6 @@ Entregador:
 
 A Central do Feirante não exibe mais um card redundante chamado **Painel**. No Entregador, a antiga área “Painel” passa a se chamar **Disponibilidade**, pois sua função real é ligar/pausar novas corridas.
 
-
 ## Mensagem principal da entrada
 
 A tela de entrada preserva o slogan **A feira do seu jeito**.
