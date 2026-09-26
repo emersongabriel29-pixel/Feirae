@@ -33,6 +33,12 @@ Antes da integração real, corrigir schema conforme:
 
 ## 3. Criação
 
+Antes de `App.tsx::confirmOrder()`, o checkout aplica estas regras:
+
+- entrega exige endereço antes de confirmar;
+- sem endereço, frete fica como **A calcular** e não entra no total;
+- retirada não exige endereço de entrega e usa frete zero.
+
 `App.tsx::confirmOrder()`:
 
 1. gera ID;
@@ -270,3 +276,13 @@ Criar ações server-side idempotentes para:
 - cancelar.
 
 Cada função valida estado anterior + ator + pré-condições.
+
+
+## 19. Apresentação pós-entrega
+
+Quando o pedido está `delivered`, a tela do cliente:
+
+- não mostra `0 min` como se fosse duração real;
+- identifica a distância como rota registrada;
+- mostra o horário do evento `delivered`, quando disponível;
+- apresenta “Ajuda pós-entrega” em vez de um indicador operacional de suporte/ETA.
