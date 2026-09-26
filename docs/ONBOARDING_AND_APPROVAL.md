@@ -35,6 +35,7 @@ O código considera o feirante **Aprovado** quando todos os documentos com `requ
 Somente contas explícitas de demonstração (`@feirae.test`) podem iniciar com documentos seed aprovados. Qualquer conta real/local sem documentação persistida inicia os documentos obrigatórios como `pending`.
 
 A ausência da chave local de documentos nunca pode transformar falta de documentação em aprovação implícita.
+
 ## 3. Efeito da aprovação do feirante
 
 `effectiveStoreOpen` exige:
