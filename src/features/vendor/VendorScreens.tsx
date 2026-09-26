@@ -179,7 +179,7 @@ export function FeiranteOperations({
   onAccountUpdate,
 }: {
   session: DemoSession;
-  onBack: () => void;
+  onBack?: () => void;
   onAccountUpdate: (name: string, email: string, newPassword?: string) => string | null;
 }) {
   const unifiedOrderRevision = useUnifiedOrderRevision();
