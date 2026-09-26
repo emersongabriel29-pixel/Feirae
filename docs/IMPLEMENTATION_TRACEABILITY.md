@@ -72,7 +72,10 @@ Ele publica para o cliente:
 - entrega/retirada;
 - pagamento na entrega;
 - promoções;
-- produtos.
+- produtos;
+- foto do produto quando `photoDataUrl` foi cadastrada.
+
+A foto do produto é publicada como `imageDataUrl` no objeto de catálogo e renderizada pelo Cliente quando existe.
 
 Não é banco multiusuário; sincroniza apenas o navegador atual.
 
