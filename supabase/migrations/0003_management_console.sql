@@ -1109,11 +1109,10 @@ to authenticated
 using ((select private.feirae_admin_has('communications.manage')))
 with check ((select private.feirae_admin_has('communications.manage')));
 
-create policy "admins manage privacy requests"
-on public.privacy_requests for all
+create policy "admins view privacy requests"
+on public.privacy_requests for select
 to authenticated
-using ((select private.feirae_admin_has('settings.manage')))
-with check ((select private.feirae_admin_has('settings.manage')));
+using ((select private.feirae_admin_has('settings.manage')));
 
 create policy "users read own enforcement history"
 on public.account_enforcements for select
@@ -1322,6 +1321,7 @@ revoke update, delete on table public.order_reviews from authenticated;
 revoke insert, update, delete on table public.admin_access from authenticated;
 revoke insert, update, delete on table public.admin_permissions from authenticated;
 revoke insert, update, delete on table public.account_enforcements from authenticated;
+revoke insert, update, delete on table public.privacy_requests from authenticated;
 
 -- Automatic audit trail for management/configuration tables.
 create or replace function private.log_feirae_admin_change()
