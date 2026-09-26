@@ -413,7 +413,7 @@ as $function$
         select 1
         from public.admin_permissions ap
         where ap.profile_id = (select auth.uid())
-          and ap.permission in ('*', required_permission)
+          and ap.permission = required_permission
       )
     );
 $function$;
