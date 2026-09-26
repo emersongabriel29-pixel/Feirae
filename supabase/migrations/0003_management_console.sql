@@ -536,6 +536,16 @@ grant select on table public.categories to anon, authenticated;
 grant insert, update, delete on table public.categories to authenticated;
 grant select, insert, update, delete on table public.deliveries to authenticated;
 
+-- Reporting reads. RLS below decides which rows an administrator may see.
+grant select on table
+  public.profiles,
+  public.orders,
+  public.payouts,
+  public.support_tickets,
+  public.onboarding_documents,
+  public.order_reviews
+to authenticated;
+
 -- RLS for management data.
 alter table public.categories enable row level security;
 alter table public.deliveries enable row level security;
@@ -597,6 +607,46 @@ on public.deliveries for all
 to authenticated
 using ((select private.feirae_admin_has('operations.manage')))
 with check ((select private.feirae_admin_has('operations.manage')));
+
+create policy "admins view profiles in reports"
+on public.profiles for select
+to authenticated
+using ((select private.feirae_admin_has('reports.view')));
+
+create policy "admins view orders in reports"
+on public.orders for select
+to authenticated
+using ((select private.feirae_admin_has('reports.view')));
+
+create policy "admins view deliveries in reports"
+on public.deliveries for select
+to authenticated
+using ((select private.feirae_admin_has('reports.view')));
+
+create policy "admins view payouts in reports"
+on public.payouts for select
+to authenticated
+using ((select private.feirae_admin_has('reports.view')));
+
+create policy "admins view support in reports"
+on public.support_tickets for select
+to authenticated
+using ((select private.feirae_admin_has('reports.view')));
+
+create policy "admins view document metadata in reports"
+on public.onboarding_documents for select
+to authenticated
+using ((select private.feirae_admin_has('reports.view')));
+
+create policy "admins view reviews in reports"
+on public.order_reviews for select
+to authenticated
+using ((select private.feirae_admin_has('reports.view')));
+
+create policy "admins view enforcements in reports"
+on public.account_enforcements for select
+to authenticated
+using ((select private.feirae_admin_has('reports.view')));
 
 create policy "public read public settings"
 on public.platform_settings for select
