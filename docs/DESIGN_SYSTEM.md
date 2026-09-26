@@ -305,3 +305,17 @@ Entregador:
 4. Aprovação.
 
 A Central do Feirante não exibe mais um card redundante chamado **Painel**. No Entregador, a antiga área “Painel” passa a se chamar **Disponibilidade**, pois sua função real é ligar/pausar novas corridas.
+
+## Mensagem principal da entrada
+
+A tela de entrada preserva o slogan **A feira do seu jeito**.
+
+A mensagem de propósito abaixo do slogan é:
+
+**Da banca até você.**
+
+Texto de apoio:
+
+**Compre de feirantes locais, gerencie sua banca ou faça entregas. Tudo pelo Feiraê.**
+
+“Um aplicativo. Três experiências.” não é mais o título principal da tela de entrada. O objetivo é explicar o propósito do Feiraê antes de descrever sua estrutura interna.

@@ -245,3 +245,10 @@ Limite: o repositório ainda não possui backend que persista `PushSubscription`
 - `responsive.css`: cadastro mobile reduz a área promocional;
 - `App.test.tsx`: cobre limpeza de erro, onboarding prioritário e ausência/renomeação do card;
 - `localAuth.test.ts`: cobre mensagem de acesso vinculado ao papel correto.
+
+## Mensagem de marca na entrada — 26/09/2026
+
+- `AppComponents.tsx::LoginPage`: mantém **A feira do seu jeito** como slogan e troca o título estrutural por **Da banca até você.**;
+- texto de apoio passa a explicar as três frentes do produto: comprar, gerenciar banca e fazer entregas;
+- `App.test.tsx`: valida slogan, novo título e mensagem de propósito;
+- `DESIGN_SYSTEM.md` e `FUNCTIONAL_SPEC.md`: registram a mensagem oficial da entrada.

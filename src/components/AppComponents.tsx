@@ -102,12 +102,8 @@ export function LoginPage({
         </div>
         <div>
           <span className="eyebrow light">A feira do seu jeito</span>
-          <h1>
-            Um aplicativo.
-            <br />
-            Três experiências.
-          </h1>
-          <p>Cada pessoa acessa apenas as ferramentas necessárias para sua rotina.</p>
+          <h1>Da banca até você.</h1>
+          <p>Compre de feirantes locais, gerencie sua banca ou faça entregas. Tudo pelo Feiraê.</p>
         </div>
         <div className="login-benefits">
           <span>Produtos locais</span>
