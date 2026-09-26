@@ -76,9 +76,13 @@ O peso real é propagado para os itens do pedido compartilhado.
 
 ## 6. Multi-banca
 
-Regra implementada/testada:
+Regras implementadas/testadas:
 
-- pedido não vira `ready_for_pickup` até todas as bancas necessárias estarem prontas.
+- pedido não vira `ready_for_pickup` até todas as bancas necessárias estarem prontas;
+- em **retirada multi-banca**, a confirmação de uma banca marca somente aquela participação como `delivered`;
+- o pedido global permanece `ready_for_pickup` enquanto existir banca pronta ainda não retirada;
+- o pedido global só vira `delivered` quando todas as bancas da retirada estiverem `delivered`;
+- a reserva de estoque só é consumida no encerramento global da retirada.
 
 Limitação:
 
@@ -106,7 +110,7 @@ pedido pode aparecer na lista do entregador se:
 
 ### Pickup
 
-cliente espera retirada e o fluxo pode terminar diretamente em `delivered` após confirmação da banca.
+Cliente espera retirada. Em pedido de uma única banca, a confirmação dessa banca conclui o pedido. Em pedido multi-banca, cada banca confirma sua própria entrega e o pedido global só termina após a última confirmação.
 
 ## 8. Oferta ao entregador
 
@@ -118,6 +122,8 @@ cliente espera retirada e o fluxo pode terminar diretamente em `delivered` após
 - `out_for_delivery`;
 
 e com `order.route`.
+
+Fixtures `FE-1024…FE-1027` são exclusivas de contas de demonstração (`@feirae.test`). Contas reais/novas recebem somente pedidos derivados do pedido compartilhado.
 
 Oferta inclui:
 
@@ -221,6 +227,8 @@ Após coleta:
 
 - não usa cancelamento simples;
 - abre suporte.
+
+Se um pedido atribuído for cancelado, concluído ou reatribuído por outro ator, o entregador limpa o identificador e a etapa local da corrida para não ficar bloqueado para novas ofertas.
 
 ## 15. Estoque
 
