@@ -477,6 +477,16 @@ describe("Feiraê role access", () => {
     expect(screen.getByLabelText(/chave pix/i)).toBeInTheDocument();
   });
 
+  it("shows incoming vendor orders on the main operational panel", () => {
+    render(<App />);
+    loginAs("feirante");
+
+    expect(screen.getByRole("heading", { name: /pedidos no painel principal/i })).toBeInTheDocument();
+    expect(screen.getByText(/FE-1027 · Dona Marta/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /abrir pedido/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/notificações do feiraê/i)).toBeInTheDocument();
+  });
+
   it("keeps the vendor order flow sequential and hands delivery stages to the driver", () => {
     render(<App />);
     loginAs("feirante");
@@ -607,6 +617,16 @@ describe("Feiraê role access", () => {
     render(<App />);
     loginAs("entregador");
     expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
+  });
+
+  it("shows compatible delivery offers on the main panel without opening another module", () => {
+    render(<App />);
+    loginAs("entregador");
+
+    expect(screen.getByRole("heading", { name: /corridas no painel principal/i })).toBeInTheDocument();
+    expect(screen.getByText("FE-1024")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /aceitar/i }).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/notificações do feiraê/i)).toBeInTheDocument();
   });
 
   it("does not expose demo delivery offers to a newly created real account", () => {
