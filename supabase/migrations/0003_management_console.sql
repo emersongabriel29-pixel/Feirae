@@ -457,6 +457,62 @@ create trigger feirae_protect_profile_role
 before insert or update of role on public.profiles
 for each row execute function private.protect_profile_role();
 
+create or replace function private.protect_operational_approval()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $function$
+begin
+  -- Browser sessions cannot approve/revoke operational approval directly.
+  -- Trusted server-side actions run without auth.uid() and may change it.
+  if (select auth.uid()) is not null
+     and new.approved is distinct from old.approved then
+    raise exception 'Operational approval must use a trusted administrative action.';
+  end if;
+  return new;
+end;
+$function$;
+
+revoke all on function private.protect_operational_approval() from public, anon, authenticated;
+
+drop trigger if exists feirae_protect_vendor_approval on public.vendor_profiles;
+create trigger feirae_protect_vendor_approval
+before update of approved on public.vendor_profiles
+for each row execute function private.protect_operational_approval();
+
+drop trigger if exists feirae_protect_delivery_approval on public.delivery_profiles;
+create trigger feirae_protect_delivery_approval
+before update of approved on public.delivery_profiles
+for each row execute function private.protect_operational_approval();
+
+create or replace function private.protect_document_review_fields()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $function$
+begin
+  if (select auth.uid()) is not null
+     and (
+       new.status is distinct from old.status
+       or new.reviewed_by is distinct from old.reviewed_by
+       or new.reviewed_at is distinct from old.reviewed_at
+       or new.correction_reason is distinct from old.correction_reason
+     ) then
+    raise exception 'Document review fields must use a trusted administrative action.';
+  end if;
+  return new;
+end;
+$function$;
+
+revoke all on function private.protect_document_review_fields() from public, anon, authenticated;
+
+drop trigger if exists feirae_protect_document_review_fields on public.onboarding_documents;
+create trigger feirae_protect_document_review_fields
+before update on public.onboarding_documents
+for each row execute function private.protect_document_review_fields();
+
 create table if not exists public.admin_audit_logs (
   id bigint generated always as identity primary key,
   admin_id uuid references public.profiles(id) on delete set null,
