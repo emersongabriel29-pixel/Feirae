@@ -1,120 +1,91 @@
 # Produtos, unidades e métricas — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 contra `vendorModel.ts`, `products` SQL e `saveProduct()`.
 
-## Status de implementação
+## 1. Campos implementados hoje
 
-Este documento mistura regras já usadas e modelo de catálogo futuro.
+`VendorProduct` possui:
 
-Já usado no protótipo:
+- `id`;
+- `name`;
+- `category`;
+- `description`;
+- `stock`;
+- `minStock`;
+- `active`;
+- `price`;
+- `saleUnit`;
+- `packageSize`;
+- `weightKg`;
+- `photoDataUrl`;
+- `photoName`.
 
-- nome;
-- categoria;
-- preço;
-- unidade;
-- estoque;
-- peso logístico;
-- disponibilidade;
-- banca/feira;
-- peso real durante preparo.
+## 2. Validação real ao salvar
 
-Ainda é alvo de produção/evolução:
+`saveProduct()` exige:
 
-- galeria com múltiplas fotos;
-- reordenação de fotos;
-- variações;
-- origem estruturada;
-- incrementos por modelo de venda;
-- campos específicos por categoria;
-- validações sanitárias/metrológicas automatizadas.
+- nome não vazio;
+- preço > 0;
+- peso logístico > 0.
 
-Nada nesta matriz deve ser interpretado como campo já presente apenas porque está especificado aqui.
+Não exige hoje:
 
-## Problema que este documento resolve
-
-“Preço” sozinho não basta.
-
-O sistema precisa saber **como o produto é vendido**, **qual quantidade o cliente está comprando** e **quanto isso representa para o cálculo da entrega**.
-
-Todo produto deve ter:
-
-- nome;
-- categoria;
-- foto principal;
-- fotos adicionais opcionais;
+- foto;
 - descrição;
-- modelo de venda;
-- unidade comercial;
-- preço por unidade comercial;
-- quantidade mínima;
-- incremento;
-- estoque;
-- peso real/estimado para logística;
-- volume;
-- disponibilidade;
-- origem/feirante;
-- informações específicas da categoria.
+- estoque > 0;
+- origem;
+- validade;
+- código sanitário;
+- variação.
 
-## Modelos de preço
+Se estoque = 0:
 
-### fixed_unit
+- produto é salvo;
+- `active` é forçado para false;
+- UI o trata como esgotado.
 
-Preço fechado por unidade.
+## 3. Categorias disponíveis na UI atual
 
-Exemplos:
+Exatamente as opções de `productCategories`:
 
-- 1 abacaxi;
-- 1 vaso;
-- 1 camiseta;
-- 1 cesta pronta.
+1. Frutas
+2. Verduras e legumes
+3. Folhas e ervas
+4. Cereais e grãos
+5. Ovos
+6. Carnes e aves
+7. Pescados e frutos do mar
+8. Laticínios
+9. Doces e produtos caseiros
+10. Pães e panificados
+11. Refeições e lanches
+12. Bebidas
+13. Flores
+14. Plantas
+15. Artesanato
+16. Confecções
+17. Calçados
+18. Bolsas e acessórios
+19. Bijuterias
+20. Ferramentas
+21. Utensílios domésticos
+22. Eletrônicos
+23. Bazar e papelaria
+24. Tecidos e armarinho
+25. Produtos agropecuários
+26. Outros
 
-### fixed_package
+Não estão disponíveis hoje como categoria própria:
 
-Preço fechado por embalagem/pacote com conteúdo conhecido.
+- Temperos e raízes;
+- Artigos religiosos;
+- Serviços permitidos.
 
-Exemplos:
+Se forem desejadas, precisam ser adicionadas ao código/schema/admin.
 
-- bandeja de 500 g;
-- saco de 5 kg;
-- dúzia de ovos;
-- garrafa de 1 L.
+## 4. Unidades disponíveis na UI atual
 
-### weight
-
-Preço por massa.
-
-Exemplos:
-
-- R$/kg;
-- R$/100 g.
-
-Para o MVP, produtos de peso variável podem ser oferecidos em frações/pacotes predefinidos para evitar diferença financeira depois do pagamento.
-
-### volume
-
-Preço por volume.
-
-Exemplos:
-
-- R$/L;
-- R$/500 ml.
-
-### length
-
-Preço por comprimento.
-
-Exemplos:
-
-- tecido por metro;
-- mangueira por metro.
-
-### service
-
-Preço por serviço.
-
-Usar somente em feiras/boxes cuja atividade permitida inclua serviço.
-
-## Unidades permitidas
+Exatamente `productSaleUnits`:
 
 - kg;
 - g;
@@ -132,145 +103,184 @@ Usar somente em feiras/boxes cuja atividade permitida inclua serviço.
 - L;
 - ml;
 - m;
-- vaso;
-- serviço.
+- vaso.
 
-A UI deve mostrar de forma explícita, por exemplo:
+`serviço` não existe hoje na lista.
 
-- R$ 8,90 / kg
-- R$ 6,00 / maço
-- R$ 18,00 / dúzia
-- R$ 25,00 / bandeja 500 g
+## 5. Foto
 
-## Matriz por categoria
+O frontend atual suporta **uma foto** por produto:
 
-| Categoria                 | Unidade principal sugerida | Alternativas          | Campos adicionais obrigatórios/sugeridos                                  |
-| ------------------------- | -------------------------- | --------------------- | ------------------------------------------------------------------------- |
-| Frutas                    | kg ou un                   | bandeja, caixa, cesta | variedade, origem, maturação opcional, peso logístico                     |
-| Verduras e legumes        | kg ou un                   | maço, bandeja, pacote | variedade, origem, peso logístico                                         |
-| Folhas e ervas            | maço ou un                 | pacote, g             | variedade, peso por maço                                                  |
-| Cereais e grãos           | kg                         | g, pacote, saco       | peso líquido, origem/marca quando aplicável                               |
-| Temperos e raízes         | kg ou g                    | maço, pacote          | peso líquido                                                              |
-| Ovos                      | dúzia                      | bandeja, un           | quantidade de unidades, classificação quando aplicável                    |
-| Carnes e aves             | kg                         | g, pacote             | corte, conservação, peso, origem/inspeção aplicável                       |
-| Pescados e frutos do mar  | kg                         | g, bandeja            | espécie, apresentação, conservação, peso líquido/drenado quando aplicável |
-| Laticínios                | kg ou un                   | g, ml, L, pacote      | peso/volume, conservação, validade                                        |
-| Doces e produtos caseiros | un ou kg                   | g, pote, pacote       | peso/volume, validade, ingredientes/alergênicos quando aplicável          |
-| Pães e panificados        | un ou kg                   | pacote, bandeja       | quantidade/peso, validade                                                 |
-| Refeições/lanches         | un ou porção               | combo                 | composição, tamanho, alergênicos quando aplicável                         |
-| Bebidas                   | L ou ml                    | un, garrafa           | volume, tipo, conservação                                                 |
-| Flores                    | un ou maço                 | vaso, buquê           | espécie, tamanho opcional                                                 |
-| Plantas                   | vaso ou un                 | kit                   | espécie, tamanho do vaso/planta, peso aproximado                          |
-| Artesanato                | un                         | kit, par              | material, dimensões, peso                                                 |
-| Confecções                | un                         | kit                   | tamanho, cor, material                                                    |
-| Calçados                  | par                        | un                    | numeração, cor/material                                                   |
-| Bolsas e acessórios       | un                         | kit                   | dimensões, material, peso                                                 |
-| Bijuterias                | un                         | par, kit              | material, tamanho                                                         |
-| Artigos religiosos        | un                         | kit                   | material/dimensões                                                        |
-| Ferramentas               | un                         | kit                   | marca/modelo, dimensões, peso                                             |
-| Utensílios domésticos     | un                         | kit, conjunto         | material, dimensões, peso                                                 |
-| Eletrônicos               | un                         | kit                   | marca, modelo, condição, garantia quando aplicável                        |
-| Bazar/papelaria           | un                         | pacote, kit           | marca/modelo quando aplicável                                             |
-| Tecidos/armarinho         | m                          | un, rolo, pacote      | largura, composição, comprimento                                          |
-| Produtos agropecuários    | kg ou un                   | saco, pacote          | tipo, peso/volume, regras específicas                                     |
-| Serviços permitidos       | serviço                    | —                     | descrição, duração/preço, atividade autorizada                            |
+- `photoDataUrl`;
+- `photoName`.
 
-## Peso comercial x peso logístico
+Não suporta hoje:
 
-São conceitos diferentes.
+- galeria;
+- múltiplas fotos;
+- reordenação;
+- imagem principal entre várias.
 
-Exemplo:
+Foto não é obrigatória para salvar/publicar.
 
-Produto:
+## 6. SQL atual
 
-- venda: 1 cesta;
-- preço: R$ 60/cesta;
-- peso logístico: 8 kg.
+Tabela `products` possui:
 
-Mesmo quando a venda é por unidade, o Feiraê precisa de `weightKg` para selecionar veículo.
+- vendor_id;
+- store_id;
+- category_id;
+- name;
+- description;
+- price;
+- unit;
+- stock;
+- available;
+- promotion_price;
+- min_stock;
+- weight_kg;
+- archived_at;
+- timestamps.
 
-## Produtos de peso variável
+Não possui:
 
-Fluxo recomendado:
+- `package_size`;
+- foto/path;
+- volume;
+- variações;
+- origem;
+- validade;
+- atributos por categoria.
 
-1. cliente escolhe quantidade aproximada;
-2. sistema mostra preço estimado;
-3. feirante pesa;
-4. peso final é registrado;
-5. diferença financeira só pode ser aplicada com mecanismo de autorização do pagamento.
+## 7. Gap de foto
 
-Para o MVP sem integração avançada de pagamento, preferir:
+Não existe tabela `product_images`.
+
+Produção precisa definir, por exemplo:
+
+- product_id;
+- storage_path;
+- position;
+- is_primary;
+- alt_text;
+- created_at.
+
+## 8. Peso comercial x peso logístico
+
+O campo atual `weightKg` é peso logístico por unidade comercial.
+
+Exemplo atual:
+
+```
+Cesta de frutas
+saleUnit = cesta
+packageSize = 1 cesta
+weightKg = 4
+```
+
+Ao comprar 3:
+
+```
+peso estimado = 4 × 3 = 12 kg
+```
+
+Esse peso entra na compatibilidade de veículo.
+
+## 9. Peso real no preparo
+
+Pedido por banca permite atualizar `actualWeightKg`.
+
+`orderBridge` propaga o peso real para o item do pedido.
+
+Depois disso, logística soma `order.items.weightKg`.
+
+## 10. Produto por peso variável
+
+O frontend atual ainda não possui mecanismo de autorização adicional de cobrança depois da pesagem.
+
+Portanto, antes de PSP com autorização incremental, o catálogo deve preferir apresentações previsíveis, por exemplo:
 
 - 250 g;
 - 500 g;
 - 1 kg;
-- 2 kg;
-- pacotes fechados.
+- bandeja;
+- pacote.
 
-Isso evita cobrança adicional posterior.
+Não documentar ajuste financeiro pós-pesagem como implementado.
 
-## Fotos
+## 11. Modelo de preço
 
-Cadastro de produto deve permitir:
+Hoje existe essencialmente:
 
-- pelo menos 1 foto principal antes de publicar;
-- múltiplas fotos adicionais;
-- reordenar;
-- remover/substituir;
-- preview antes de salvar.
+```
+preço por saleUnit
+```
 
-Na fase real:
+Não existem campos estruturados de:
 
-- validar tipo MIME/magic bytes;
-- limitar tamanho;
-- gerar thumbnails;
-- remover metadados desnecessários;
-- moderar conteúdo quando necessário.
+- `fixed_unit`;
+- `fixed_package`;
+- `weight`;
+- `volume`;
+- `length`;
+- `service`.
 
-## Edição
+Esses modelos são evolução futura e exigem schema/UI.
 
-Produto existente deve permitir editar:
+## 12. Matriz de evolução por categoria
 
-- nome;
-- fotos;
-- descrição;
-- categoria;
-- preço;
-- unidade;
-- peso;
-- estoque;
-- disponibilidade;
-- variações;
-- origem;
-- dados específicos da categoria.
+A tabela abaixo é requisito futuro, não estado atual.
 
-Mudança de preço não deve ser “+ R$ 1”. Deve abrir edição explícita.
+| Categoria atual | Campo futuro útil | Existe hoje? |
+| --- | --- | --- |
+| Frutas | variedade/maturação/origem | não |
+| Verduras e legumes | variedade/origem | não |
+| Folhas e ervas | peso médio por maço | não |
+| Ovos | unidades/classificação | apenas texto livre |
+| Carnes e aves | corte/conservação/inspeção | não |
+| Pescados e frutos do mar | espécie/apresentação/conservação | não |
+| Laticínios | validade/conservação | não |
+| Caseiros | ingredientes/alergênicos/validade | não |
+| Bebidas | volume/tipo/conservação | apenas unidade/texto |
+| Plantas | espécie/tamanho vaso | não |
+| Confecções | tamanho/cor/material | não |
+| Calçados | numeração/cor | não |
+| Eletrônicos | marca/modelo/condição/garantia | não |
 
-## Estoque
+## 13. Estoque
 
-Unidade do estoque acompanha o modelo de venda:
+Hoje:
 
-- produto por unidade: estoque em unidades;
-- pacote fechado: estoque em pacotes;
-- produto por peso: estoque em kg/g;
-- serviço: capacidade/agenda, não estoque físico.
+- número único em `stock`;
+- ajuste local;
+- `minStock`;
+- zero desativa produto.
 
-## Metrologia e conformidade
+Não existe:
 
-Para produtos pré-embalados, a indicação quantitativa deve refletir a natureza do produto:
+- lote;
+- validade por lote;
+- reserva SQL;
+- inventário por unidade/depósito;
+- histórico server-side.
 
-- sólidos/granulados/gel: massa;
-- líquidos: volume;
-- semissólidos: massa ou volume;
-- vendidos por quantidade: número de unidades;
-- vendidos por comprimento: unidade de comprimento.
+## 14. Status do produto
 
-Alimentos vendidos a peso exigem balança apropriada e apresentação de peso/preço conforme regras do Inmetro.
+Frontend distingue na prática:
+
+- ativo/com estoque: à venda;
+- ativo=false com estoque > 0: pausado;
+- estoque = 0: esgotado.
+
+SQL possui `available` e `archived_at`, mas essa semântica ainda precisa ser alinhada ao frontend.
+
+## 15. Requisitos metrológicos
+
+As regras do Inmetro continuam sendo referência para produtos pré-medidos/vendidos a peso, mas o Feiraê atual **não valida automaticamente** conformidade metrológica.
 
 Fontes:
 
-- Inmetro — Produtos Pré-embalados:
-  https://www.gov.br/inmetro/pt-br/assuntos/metrologia-legal/produtos-pre-embalados
-- Inmetro — alimentos a peso/tara:
-  https://www.gov.br/inmetro/pt-br/acesso-a-informacao/perguntas-frequentes/metrologia-legal/pre-medidos/qual-a-portaria-das-regras-para-comercializacao-de-alimentos-a-peso-tara
-- Lei distrital nº 6.956/2021: feirante deve manter preço exposto, procedência dos produtos e balança aferida quando aplicável.
+- https://www.gov.br/inmetro/pt-br/assuntos/metrologia-legal/produtos-pre-embalados
+- https://www.gov.br/inmetro/pt-br/acesso-a-informacao/perguntas-frequentes/metrologia-legal/pre-medidos/qual-a-portaria-das-regras-para-comercializacao-de-alimentos-a-peso-tara
+
+Antes de produção, os campos regulatórios devem ser definidos por categoria real vendida, não por uma matriz genérica fixa.
