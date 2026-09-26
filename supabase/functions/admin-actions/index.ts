@@ -617,11 +617,36 @@ Deno.serve(async (req) => {
 
       const activeKeys = new Set<string>();
       for (const candidate of candidates) {
-        activeKeys.add(String(candidate.alert_key));
-        await adminDb.from("operational_alerts").upsert(
-          { ...candidate, status: "open", last_seen_at: new Date().toISOString() },
-          { onConflict: "alert_key" },
-        );
+        const key = String(candidate.alert_key);
+        activeKeys.add(key);
+        const { data: current } = await adminDb
+          .from("operational_alerts")
+          .select("*")
+          .eq("alert_key", key)
+          .maybeSingle();
+
+        if (!current) {
+          await adminDb.from("operational_alerts").insert({ ...candidate, status: "open" });
+          continue;
+        }
+
+        const reappeared = current.status === "resolved";
+        await adminDb
+          .from("operational_alerts")
+          .update({
+            title: candidate.title,
+            message: candidate.message,
+            severity: candidate.severity,
+            metadata: candidate.metadata ?? current.metadata,
+            last_seen_at: new Date().toISOString(),
+            status: reappeared ? "open" : current.status,
+            detected_at: reappeared ? new Date().toISOString() : current.detected_at,
+            acknowledged_by: reappeared ? null : current.acknowledged_by,
+            acknowledged_at: reappeared ? null : current.acknowledged_at,
+            resolved_by: reappeared ? null : current.resolved_by,
+            resolved_at: reappeared ? null : current.resolved_at,
+          })
+          .eq("id", current.id);
       }
 
       const { data: existing } = await adminDb
