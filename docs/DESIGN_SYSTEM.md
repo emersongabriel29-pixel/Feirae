@@ -213,3 +213,29 @@ Toda mudança de:
 - padrão de cor/spacing/radius;
 
 deve atualizar este documento e os testes correspondentes quando houver mudança funcional.
+
+
+## Ajustes móveis da auditoria em vídeo — 26/09/2026
+
+### Navegação inferior
+
+Ordem canônica do cliente:
+
+1. **Início** — ícone de casa;
+2. **Feiras**;
+3. **Produtos**;
+4. **Pedidos**;
+5. **Perfil**.
+
+A navegação usa cinco colunas iguais no mobile.
+
+### Cabeçalho de descoberta
+
+- busca sempre ocupa a primeira linha inteira;
+- feira/localização ficam abaixo da busca, nunca lado a lado com ela;
+- no mobile, o resumo de feira/localização ocupa 100% da largura e expande os controles de contexto;
+- busca e localização são ferramentas de descoberta e não aparecem em Pedidos, Perfil, checkout, rastreamento ou telas operacionais.
+
+### Estados de estoque
+
+Ao atingir o limite de estoque, o controle `+` do carrinho deve ficar visual e semanticamente desabilitado, com texto “Limite de estoque atingido”.
