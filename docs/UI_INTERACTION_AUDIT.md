@@ -234,3 +234,16 @@ Já estava correto no vídeo e foi preservado:
 - área “Feiras em destaque” dentro de Feiras.
 
 A trava administrativa de ativação/publicação da feira depende do painel de gestão runtime, que ainda não está implementado; a regra obrigatória foi registrada em `ADMIN_MANAGEMENT_SPEC.md`.
+
+
+## Polimento após vídeo — autenticação e onboarding
+
+- alternar entre **Entrar** e **Criar conta** limpa mensagens de erro anteriores;
+- trocar Cliente/Feirante/Entregador também limpa o erro anterior;
+- editar o e-mail remove a mensagem antiga antes de nova tentativa;
+- conflito de perfil informa qual tipo de acesso já pertence ao e-mail;
+- cadastro mobile reduz a área promocional para trazer os campos para cima;
+- Feirante com cadastro pendente recebe bloco prioritário **Complete seu cadastro para vender**;
+- Entregador com cadastro pendente recebe bloco prioritário **Complete seu cadastro para entregar**;
+- card **Painel** foi removido da Central do Feirante;
+- no Entregador, **Painel** foi renomeado para **Disponibilidade**.
