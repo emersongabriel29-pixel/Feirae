@@ -443,23 +443,15 @@ export function DeliveryOperations({
   ];
   const sharedOrders = readUnifiedOrders();
   void unifiedOrderRevision;
-
-  useEffect(() => {
-    if (!accepted) return;
-    const sharedAcceptedOrder = readUnifiedOrders().find((order) => order.id === accepted);
-    if (!sharedAcceptedOrder) return;
-
-    const stillAssignedToThisDriver =
-      ["driver_assigned", "collected", "out_for_delivery"].includes(sharedAcceptedOrder.status) &&
-      sharedAcceptedOrder.driver?.driverKey === session.email;
-
-    if (!stillAssignedToThisDriver) {
-      setAccepted(null);
-      setStage(0);
-      setCancelReason("");
-      setCancelDetails("");
-    }
-  }, [accepted, session.email, setAccepted, setStage, unifiedOrderRevision]);
+  const acceptedSharedOrder = accepted
+    ? sharedOrders.find((order) => order.id === accepted)
+    : undefined;
+  const acceptedSharedOrderIsActive =
+    acceptedSharedOrder &&
+    ["driver_assigned", "collected", "out_for_delivery"].includes(acceptedSharedOrder.status) &&
+    acceptedSharedOrder.driver?.driverKey === session.email;
+  const effectiveAccepted =
+    acceptedSharedOrder && !acceptedSharedOrderIsActive ? null : accepted;
 
   const deliveredReviewOrders = sharedOrders.filter(
     (order) =>
@@ -547,7 +539,9 @@ export function DeliveryOperations({
     deliveryLedger
       .filter((entry) => entry.status === "pending")
       .reduce((sum, entry) => sum + entry.amount, 0) +
-    (accepted ? (deliveries.find((delivery) => delivery.id === accepted)?.feeAmount ?? 0) : 0);
+    (effectiveAccepted
+      ? (deliveries.find((delivery) => delivery.id === effectiveAccepted)?.feeAmount ?? 0)
+      : 0);
   const availableAmount = deliveryLedger
     .filter((entry) => entry.status === "available")
     .reduce((sum, entry) => sum + entry.amount, 0);
@@ -597,7 +591,7 @@ export function DeliveryOperations({
   const deliveryStages = ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Confirmar entrega"];
   const activeDelivery = deliveries.find(
     (delivery) =>
-      delivery.id === accepted ||
+      delivery.id === effectiveAccepted ||
       (delivery.assignedDriverKey === session.email && delivery.available === false),
   );
   const activeDeliveryVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
@@ -825,14 +819,14 @@ export function DeliveryOperations({
           </div>
         </div>
       )}
-      {visibleDeliveries.filter((delivery) => delivery.id !== accepted).length === 0 ? (
+      {visibleDeliveries.filter((delivery) => delivery.id !== effectiveAccepted).length === 0 ? (
         <Empty
           title="Nenhuma corrida dentro dos seus filtros"
           text="Aumente o raio, altere as regiões ou aguarde uma nova corrida."
         />
       ) : (
         visibleDeliveries
-          .filter((delivery) => delivery.id !== accepted)
+          .filter((delivery) => delivery.id !== effectiveAccepted)
           .map((delivery) => {
             const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
             return (
@@ -862,11 +856,13 @@ export function DeliveryOperations({
                   </small>
                 </div>
                 <button
-                  disabled={!availableNow || accepted !== null || !compatibleVehicle}
+                  disabled={!availableNow || effectiveAccepted !== null || !compatibleVehicle}
                   onClick={() => {
                     if (!compatibleVehicle || !availableNow) return;
                     setAccepted(delivery.id);
                     setStage(0);
+                    setCancelReason("");
+                    setCancelDetails("");
                     patchUnifiedOrder(
                       delivery.id,
                       {
