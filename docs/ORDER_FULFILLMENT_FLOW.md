@@ -277,7 +277,6 @@ Criar ações server-side idempotentes para:
 
 Cada função valida estado anterior + ator + pré-condições.
 
-
 ## 19. Apresentação pós-entrega
 
 Quando o pedido está `delivered`, a tela do cliente:
