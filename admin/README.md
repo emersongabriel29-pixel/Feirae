@@ -41,10 +41,11 @@ Antes de abrir a Gestão em um ambiente real:
 1. aplique `0001_feirae_core.sql`;
 2. aplique `0002_feirae_operations.sql`;
 3. aplique `0003_management_console.sql`;
-4. publique a Edge Function `admin-actions`;
-5. configure uma conta inicial `admin` em ambiente seguro;
-6. garanta que ela possua linha ativa em `admin_access`;
-7. configure MFA no primeiro acesso.
+4. publique as Edge Functions `admin-actions` e `document-upload`;
+5. publique `admin/config.json` com URL e chave publishable/anon do ambiente;
+6. configure uma conta inicial `admin` em ambiente seguro;
+7. garanta que ela possua linha ativa em `admin_access`;
+8. configure MFA no primeiro acesso.
 
 A migration transforma administradores já existentes no momento da aplicação em superadmins explícitos para evitar lockout inicial.
 
@@ -129,11 +130,11 @@ O bucket `onboarding-documents` é privado e a migration define:
 - leitura administrativa autorizada;
 - URL temporária para visualização.
 
-Ainda é necessária validação server-side de conteúdo real/magic bytes e antivírus antes de produção.
+`document-upload` valida tamanho, MIME permitido e magic bytes de PDF/JPEG/PNG antes do Storage. Antivírus/antimalware continua sendo uma camada adicional recomendada para produção.
 
 ## Testes
 
-`admin/management.test.js` verifica os principais guardrails estruturais da Gestão.
+`admin/management.test.js` verifica os guardrails estruturais e `admin/core.test.js` cobre permissão, busca e transições de pedido.
 
 O CI do repositório também executa lint, testes, build, sincronização de documentação e Prettier.
 
@@ -143,7 +144,7 @@ O código da Gestão pode ser publicado separadamente do bundle React, mas **nã
 
 - usar o Supabase correto do Feiraê;
 - migration 0003 estar aplicada;
-- `admin-actions` estar publicada;
+- `admin-actions` e `document-upload` estarem publicadas;
 - RLS/RBAC/MFA serem testados em staging;
 - advisors do Supabase serem revisados;
 - smoke/E2E administrativos passarem.
