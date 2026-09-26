@@ -30,7 +30,7 @@ import {
   readStoreByIdentity,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
-import { type RuntimeServiceState } from "../../domain/runtimeConfig";
+import type { RuntimePaymentMethod, RuntimeServiceState } from "../../domain/runtimeConfig";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
   appendReview,
@@ -1225,12 +1225,16 @@ export function Checkout({
   items,
   cart,
   subtotal,
+  paymentMethods,
+  runtimeManaged,
   onBack,
   onConfirm,
 }: {
   items: Product[];
   cart: Record<number, number>;
   subtotal: number;
+  paymentMethods: RuntimePaymentMethod[];
+  runtimeManaged: boolean;
   onBack: () => void;
   onConfirm: (
     total: number,
@@ -1303,16 +1307,30 @@ export function Checkout({
   const availableWallet = walletBalance(currentAccountKey());
   const walletUsed = useWallet ? Math.min(availableWallet, beforeWallet) : 0;
   const total = Math.max(0, beforeWallet - walletUsed);
-  const cardPayment = payment === "Cartão";
-  const cashPayment = payment === "Dinheiro na entrega";
+  const customerRuntimeMethods = paymentMethods.filter((method) => method.active && method.customer_enabled);
+  const runtimeAllows = (type: string) =>
+    !runtimeManaged || customerRuntimeMethods.some((method) => method.method_type === type);
+  const pixEnabled = runtimeAllows("pix");
+  const cardEnabled = runtimeAllows("credit_card") || runtimeAllows("debit_card");
+  const cashEnabled = runtimeAllows("cash") && cashOnDeliveryAllowed;
+  const cardOnDeliveryEnabled = runtimeAllows("card_on_delivery") && cardOnDeliveryAllowed;
+  const walletEnabled = runtimeAllows("wallet");
+  const availablePayments = [
+    pixEnabled ? "Pix" : null,
+    cardEnabled ? "Cartão" : null,
+    fulfillment === "delivery" && cashEnabled ? "Dinheiro na entrega" : null,
+    fulfillment === "delivery" && cardOnDeliveryEnabled ? "Cartão na entrega" : null,
+  ].filter((value): value is string => Boolean(value));
+  const effectivePayment = availablePayments.includes(payment) ? payment : (availablePayments[0] ?? "");
+  const cardPayment = effectivePayment === "Cartão";
+  const cashPayment = effectivePayment === "Dinheiro na entrega";
   const parsedChangeFor = Number(changeFor.replace(/[^0-9,.-]/g, "").replace(",", "."));
   const changeValid =
     !cashPayment || !needsChange || (Number.isFinite(parsedChangeFor) && parsedChangeFor >= total);
   const canConfirm =
+    Boolean(effectivePayment) &&
     storesOpen &&
     (fulfillment === "pickup" ? pickupAllowed : Boolean(defaultAddress) && deliveryAllowed) &&
-    (payment !== "Dinheiro na entrega" || cashOnDeliveryAllowed) &&
-    (payment !== "Cartão na entrega" || cardOnDeliveryAllowed) &&
     (!cardPayment || Boolean(selectedCardId)) &&
     changeValid;
 
@@ -1390,43 +1408,58 @@ export function Checkout({
           <Step title={fulfillment === "delivery" ? "3. Pagamento" : "2. Pagamento"}>
             <p className="operation-footnote">Pagar agora</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              <Choice
-                active={payment === "Pix"}
-                onClick={() => setPayment("Pix")}
-                icon={<Wallet />}
-                title="Pix"
-                text="Pagamento confirmado pelo fluxo de checkout"
-              />
-              <Choice
-                active={payment === "Cartão"}
-                onClick={() => setPayment("Cartão")}
-                icon={<CreditCard />}
-                title="Cartão"
-                text="Crédito ou débito salvo"
-              />
+              {pixEnabled && (
+                <Choice
+                  active={effectivePayment === "Pix"}
+                  onClick={() => setPayment("Pix")}
+                  icon={<Wallet />}
+                  title="Pix"
+                  text="Pagamento confirmado pelo fluxo de checkout"
+                />
+              )}
+              {cardEnabled && (
+                <Choice
+                  active={effectivePayment === "Cartão"}
+                  onClick={() => setPayment("Cartão")}
+                  icon={<CreditCard />}
+                  title="Cartão"
+                  text="Crédito ou débito salvo"
+                />
+              )}
             </div>
-            {fulfillment === "delivery" && (
+            {fulfillment === "delivery" && (cashEnabled || cardOnDeliveryEnabled) && (
               <>
                 <p className="operation-footnote">Pagar na entrega</p>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <Choice
-                    active={payment === "Dinheiro na entrega"}
-                    onClick={() => setPayment("Dinheiro na entrega")}
-                    disabled={!cashOnDeliveryAllowed}
-                    icon={<Wallet />}
-                    title="Dinheiro"
-                    text={cashOnDeliveryAllowed ? "Pagamento ao receber" : "Não aceito por uma das bancas"}
-                  />
-                  <Choice
-                    active={payment === "Cartão na entrega"}
-                    onClick={() => setPayment("Cartão na entrega")}
-                    disabled={!cardOnDeliveryAllowed}
-                    icon={<CreditCard />}
-                    title="Cartão na maquininha"
-                    text={cardOnDeliveryAllowed ? "Pagamento ao receber" : "Não aceito por uma das bancas"}
-                  />
+                  {cashEnabled && (
+                    <Choice
+                      active={effectivePayment === "Dinheiro na entrega"}
+                      onClick={() => setPayment("Dinheiro na entrega")}
+                      icon={<Wallet />}
+                      title="Dinheiro"
+                      text="Pagamento ao receber"
+                    />
+                  )}
+                  {cardOnDeliveryEnabled && (
+                    <Choice
+                      active={effectivePayment === "Cartão na entrega"}
+                      onClick={() => setPayment("Cartão na entrega")}
+                      icon={<CreditCard />}
+                      title="Cartão na maquininha"
+                      text="Pagamento ao receber"
+                    />
+                  )}
                 </div>
               </>
+            )}
+            {!availablePayments.length && (
+              <div className="region-strip">
+                <Wallet size={18} />
+                <div>
+                  <b>Nenhum meio de pagamento disponível</b>
+                  <p>A Gestão precisa ativar um meio de pagamento para clientes.</p>
+                </div>
+              </div>
             )}
 
             {cardPayment && (
@@ -1480,7 +1513,7 @@ export function Checkout({
             )}
           </div>
 
-          {availableWallet > 0 && (
+          {availableWallet > 0 && walletEnabled && (
             <div className="form-card compact">
               <Toggle
                 label="Usar saldo da carteira"
@@ -1574,7 +1607,7 @@ export function Checkout({
             )}
             <p>
               <span>Pagamento</span>
-              <b>{payment}</b>
+              <b>{effectivePayment || "Indisponível"}</b>
             </p>
             <p>
               <span>WhatsApp</span>
@@ -1590,7 +1623,7 @@ export function Checkout({
             onClick={() =>
               onConfirm(total, {
                 fulfillment,
-                paymentMethod: payment,
+                paymentMethod: effectivePayment,
                 fairName,
                 customerCity: defaultAddress?.city,
                 customerAddress: defaultAddress?.details,
@@ -1621,8 +1654,10 @@ export function Checkout({
                   ? "Uma das bancas não aceita entrega."
                   : !pickupAllowed && fulfillment === "pickup"
                     ? "Uma das bancas não aceita retirada."
-                    : cardPayment && !selectedCardId
-                      ? "Selecione um cartão salvo antes de confirmar."
+                    : !effectivePayment
+                      ? "Nenhum meio de pagamento está habilitado para este pedido."
+                      : cardPayment && !selectedCardId
+                        ? "Selecione um cartão salvo antes de confirmar."
                       : cashPayment && needsChange && !changeValid
                         ? "Informe um valor de troco igual ou maior que o total."
                         : "Cadastre um endereço para entrega antes de confirmar."}
