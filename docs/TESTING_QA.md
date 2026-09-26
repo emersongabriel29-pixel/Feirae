@@ -13,8 +13,11 @@ Executa:
 ```bash
 npm ci
 npm run check
+npm run check:sync   # somente em pull_request, com BASE_SHA/HEAD_SHA
 npm run format:check
 ```
+
+`check:sync` não mede cobertura. Ele verifica uma regra mínima de manutenção: mudanças de comportamento em `src/` devem vir com teste alterado e mudanças de código/config/schema devem vir com documentação revisada.
 
 `npm run check` executa:
 
