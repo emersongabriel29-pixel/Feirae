@@ -441,13 +441,14 @@ export function FeiranteOperations({
     .slice(0, 3);
 
   useEffect(() => {
-    const currentIds = new Set(newOrders.map((order) => order.id));
+    const currentNewOrders = orders.filter((order) => order.status === "new");
+    const currentIds = new Set(currentNewOrders.map((order) => order.id));
     if (seenNewOrderIds.current === null) {
       seenNewOrderIds.current = currentIds;
       return;
     }
 
-    const incoming = newOrders.filter((order) => !seenNewOrderIds.current?.has(order.id));
+    const incoming = currentNewOrders.filter((order) => !seenNewOrderIds.current?.has(order.id));
     incoming.forEach((order) => {
       void showFeiraeNotification({
         title: "Novo pedido",
