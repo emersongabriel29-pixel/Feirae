@@ -24,6 +24,13 @@ Usar:
 
 Um documento de requisito não é prova de implementação.
 
+## Governança de mudanças
+
+- [CHANGE_GOVERNANCE.md](CHANGE_GOVERNANCE.md) — regra obrigatória para código, testes, docs, schema, segurança, LGPD, integrações, admin e deploy avançarem juntos.
+- [../CONTRIBUTING.md](../CONTRIBUTING.md) — regras para contribuições.
+- `.github/pull_request_template.md` — checklist obrigatório de impacto.
+- `scripts/check-change-sync.mjs` — barreira automática do CI.
+
 ## Rastreabilidade
 
 - [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md) — função → arquivo → chave local → tabela SQL.
