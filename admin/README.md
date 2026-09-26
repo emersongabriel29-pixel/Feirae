@@ -1,85 +1,151 @@
 # Feiraê Gestão
 
-Painel administrativo web independente do aplicativo principal.
+Painel administrativo separado do aplicativo usado por Cliente, Feirante e Entregador.
 
-## Objetivo
+## Segurança
 
-Permitir que a operação altere cadastros, regras comerciais e parâmetros do Feiraê sem editar código nem fazer deploy para mudanças rotineiras.
+A Gestão exige:
 
-O painel usa:
+1. Supabase Auth;
+2. `profiles.role = 'admin'`;
+3. `admin_access.active = true`;
+4. MFA/TOTP com sessão `aal2`;
+5. permissão explícita por módulo ou `is_superadmin = true`.
 
-- HTML/CSS/JavaScript próprios em `/admin`;
-- Supabase Auth para login;
-- chave `anon/public` no navegador;
-- Row Level Security para exigir `profiles.role = 'admin'`;
-- tabelas de configuração criadas pela migration `0003_management_console.sql`;
-- trilha de auditoria para mudanças administrativas.
+Não existe fallback “sem permissões = acesso total” e não existe permissão coringa `*`.
 
-**Nunca coloque a service role, chaves privadas de pagamento, tokens do WhatsApp, Maps ou outros segredos no navegador.**
+Ações críticas não são CRUD livre no navegador. Elas passam por:
 
-## Como abrir
+`supabase/functions/admin-actions/index.ts`
 
-Sirva a pasta `admin` em um servidor HTTP estático. Na primeira abertura o painel pede:
+Entre elas:
 
-1. Project URL do Supabase;
-2. chave anon/public;
-3. login de uma conta existente com papel `admin`.
+- transição de pedido;
+- intervenção em entrega;
+- conciliação;
+- revisão documental;
+- moderação de avaliação;
+- LGPD;
+- suporte;
+- suspensões/bloqueios;
+- gestão de administradores;
+- alertas;
+- health checks.
 
-A conexão fica salva apenas no navegador utilizado.
+A `service_role` e demais segredos nunca devem ir para o navegador.
 
-## Bootstrap do primeiro administrador
+## Bootstrap
 
-Depois de criar a conta no Supabase Auth e o registro correspondente em `public.profiles`, defina o papel como `admin` uma única vez pelo ambiente seguro do Supabase.
+Antes de abrir a Gestão em um ambiente real:
 
-Depois disso, a gestão de papéis pode ser feita pelo próprio painel, com auditoria.
+1. aplique `0001_feirae_core.sql`;
+2. aplique `0002_feirae_operations.sql`;
+3. aplique `0003_management_console.sql`;
+4. publique a Edge Function `admin-actions`;
+5. configure uma conta inicial `admin` em ambiente seguro;
+6. garanta que ela possua linha ativa em `admin_access`;
+7. configure MFA no primeiro acesso.
+
+A migration transforma administradores já existentes no momento da aplicação em superadmins explícitos para evitar lockout inicial.
 
 ## Módulos
 
-- Visão geral e indicadores;
-- Central de alertas operacionais;
-- Pedidos com detalhe completo;
-- Entregas com detalhe completo;
-- Bancas/boxes por feira e feirante;
-- Pagamentos e conciliação financeira;
-- Gestão de administradores e acessos;
-- Saúde e histórico de integrações;
-- Ações em lote;
-- Auditoria avançada;
-- Relatórios por período com KPIs, CSV e impressão/PDF;
+### Visão geral
+- Dashboard;
+- Relatórios.
+
+### Operação
+- Alertas persistentes;
 - Pedidos;
 - Entregas;
 - Suporte;
-- Aprovação documental com abertura segura do arquivo;
-- Estados e cobertura por UF;
+- Aprovações;
+- Suspensões/bloqueios.
+
+### Cadastros
+- Estados;
 - Feiras;
+- Bancas/Boxes;
 - Usuários;
 - Feirantes;
 - Entregadores;
-- Suspensões, banimentos e bloqueios;
 - Produtos;
 - Categorias;
-- Regiões de atendimento;
-- Catálogo global de veículos permitidos, status e peso máximo;
-- Regras de frete;
-- Taxas da plataforma;
+- Regiões.
+
+### Regras
+- Veículos permitidos;
+- Frete;
+- Taxas;
 - Meios de pagamento;
-- Motivos de cancelamento;
-- Documentos exigidos no onboarding;
+- Cancelamentos;
+- Documentos exigidos.
+
+### Financeiro/comercial
+- Financeiro;
+- Pagamentos;
 - Promoções;
 - Repasses;
-- Moderação de avaliações;
+- Avaliações.
+
+### Comunicação
 - Conteúdo;
 - Avisos;
-- Templates de mensagens;
+- Templates de mensagens.
+
+### Sistema
+- Configurações;
 - Feature flags;
-- Configurações gerais;
-- Registro/status de integrações;
+- Integrações;
+- Saúde das integrações;
+- Administradores;
 - LGPD;
-- Permissões administrativas granulares;
+- Permissões;
 - Auditoria.
 
-## Repositório
+## Funcionalidades de operação
 
-A pasta `admin` não depende do bundle React do app. Ela já pode ser publicada como site separado.
+- data/hora no formato `26/09/2026 - 08:55`;
+- paginação server-side;
+- busca no banco;
+- seletores amigáveis em lugar de UUID/código quando aplicável;
+- visão 360° de Cliente, Feirante e Entregador;
+- pedidos/entregas detalhados;
+- conciliação segura;
+- alertas com reconhecer/resolver;
+- health check server-side;
+- auditoria imutável para o navegador;
+- login/logout administrativo auditado;
+- CSV e impressão/PDF;
+- ações em lote para configurações compatíveis.
 
-Na fase de produção é recomendável mover a pasta para um repositório próprio, por exemplo `Feirae-Gestao`, mantendo o mesmo Supabase. Isso separa deploy e permissões sem duplicar o banco ou as regras.
+## Documentos
+
+O bucket `onboarding-documents` é privado e a migration define:
+
+- limite de 5 MB;
+- PDF/JPEG/PNG;
+- pasta do próprio usuário;
+- leitura administrativa autorizada;
+- URL temporária para visualização.
+
+Ainda é necessária validação server-side de conteúdo real/magic bytes e antivírus antes de produção.
+
+## Testes
+
+`admin/management.test.js` verifica os principais guardrails estruturais da Gestão.
+
+O CI do repositório também executa lint, testes, build, sincronização de documentação e Prettier.
+
+## Produção
+
+O código da Gestão pode ser publicado separadamente do bundle React, mas **não deve ser considerado ativo** até:
+
+- usar o Supabase correto do Feiraê;
+- migration 0003 estar aplicada;
+- `admin-actions` estar publicada;
+- RLS/RBAC/MFA serem testados em staging;
+- advisors do Supabase serem revisados;
+- smoke/E2E administrativos passarem.
+
+O único projeto Supabase conectado durante esta implementação não foi identificado com segurança como Feiraê; por isso nenhuma alteração foi aplicada em banco real.
