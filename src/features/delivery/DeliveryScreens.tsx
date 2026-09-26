@@ -143,6 +143,11 @@ export function DeliveryOperations({
       state: "DF",
     },
   );
+  const [deliveryAccountDraft, setDeliveryAccountDraft] = useState({
+    ...deliveryAccount,
+    newPassword: "",
+  });
+  const [accountError, setAccountError] = useState("");
   const [vehicles, setVehicles] = usePersistentState<DeliveryVehicle[]>(
     `feirae:delivery-vehicles:${session.email}`,
     seedDemoData
