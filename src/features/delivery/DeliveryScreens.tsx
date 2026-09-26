@@ -2146,7 +2146,17 @@ export function DeliveryOperations({
                           )}
                         </div>
                         <div className="item-actions">
-                          <span className="document-status">
+                          <span
+                            className={`document-status ${
+                              document.status === "approved"
+                                ? "status-approved"
+                                : document.status === "under_review"
+                                  ? "status-review"
+                                  : document.status === "correction_required"
+                                    ? "status-error"
+                                    : ""
+                            }`}
+                          >
                             {document.status === "approved"
                               ? "Aprovado"
                               : document.status === "under_review"
