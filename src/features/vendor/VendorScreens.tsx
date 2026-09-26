@@ -173,7 +173,15 @@ function promotionStatus(promotion: VendorPromotion) {
   return "Ativa";
 }
 
-export function FeiranteOperations({ session, onBack }: { session: DemoSession; onBack: () => void }) {
+export function FeiranteOperations({
+  session,
+  onBack,
+  onAccountUpdate,
+}: {
+  session: DemoSession;
+  onBack: () => void;
+  onAccountUpdate: (name: string, email: string, newPassword?: string) => string | null;
+}) {
   const unifiedOrderRevision = useUnifiedOrderRevision();
   const [active, setActive] = useState("Central");
   const seedDemoData = session.email.endsWith("@feirae.test") && !session.isNewAccount;
@@ -248,12 +256,18 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
     agency: "",
     accountNumber: "",
   });
+  const [vendorAccountDraft, setVendorAccountDraft] = useState({
+    ...vendorAccount,
+    newPassword: "",
+  });
+  const [accountError, setAccountError] = useState("");
 
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("Item indisponível");
   const [productEditorId, setProductEditorId] = useState<number | "new" | null>(null);
   const [productDraft, setProductDraft] = useState<VendorProduct>(emptyProduct());
   const [bankEditing, setBankEditing] = useState(false);
+  const [bankDraft, setBankDraft] = useState<VendorBankProfile>({ ...bankProfile });
   const [bankPreview, setBankPreview] = useState(false);
   const [promotionEditorOpen, setPromotionEditorOpen] = useState(false);
   const [promotionEditingId, setPromotionEditingId] = useState<string | null>(null);
