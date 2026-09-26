@@ -393,8 +393,8 @@ describe("Feiraê customer flow", () => {
     loginAs("cliente");
     fireEvent.click(screen.getByRole("button", { name: /abrir notificações/i }));
 
-    expect(screen.getByText(/fe-1024 · a caminho do cliente/i)).toBeInTheDocument();
-    expect(screen.getByText(/fe-1019 · entregue/i)).toBeInTheDocument();
+    expect(screen.getByText(/fe-1024 · saiu para entrega/i)).toBeInTheDocument();
+    expect(screen.getByText(/fe-1019 · pedido chegou/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/notificações do feiraê/i)).toBeInTheDocument();
     expect(screen.queryByText(/novo desconto na feira/i)).not.toBeInTheDocument();
   });
