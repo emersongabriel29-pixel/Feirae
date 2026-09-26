@@ -35,17 +35,20 @@ Não existem no repositório atual:
 
 ### Supabase CLI/config
 
-Não existe:
+Existe:
 
 - `supabase/config.toml`.
 
+Ele mantém `verify_jwt = true` para as funções administrativas/publicadas.
+
 ### Edge Functions
 
-Existe:
+Existem:
 
-- `supabase/functions/admin-actions/index.ts`.
+- `supabase/functions/admin-actions/index.ts`;
+- `supabase/functions/document-upload/index.ts`.
 
-Ela executa ações administrativas críticas, valida MFA/AAL2, RBAC e auditoria.
+`admin-actions` executa ações administrativas críticas e valida MFA/AAL2, RBAC e auditoria. `document-upload` valida documentos autenticados antes do Storage.
 
 Conclusão: o repositório continua sem pipeline automático de deploy, mas agora possui artefato server-side que precisa ser publicado no Supabase do Feiraê.
 
@@ -187,15 +190,16 @@ Ver [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 1. identificar/criar o projeto Supabase correto do Feiraê;
 2. testar 0001 → 0002 → 0003 em banco descartável;
 3. aplicar no ambiente dev/staging;
-4. publicar `admin-actions`;
+4. publicar `admin-actions` e `document-upload`;
 5. configurar MFA do Auth;
 6. configurar Storage privado;
 7. configurar health URLs server-side;
-8. testar RLS/RBAC por papel;
-9. publicar a Gestão separadamente;
-10. conectar o app principal ao backend/runtime configuration;
-11. adicionar E2E/smoke;
-12. só então produção.
+8. publicar `admin/config.json` do ambiente;
+9. testar RLS/RBAC por papel;
+10. publicar a Gestão separadamente;
+11. conectar o app principal ao backend/runtime configuration;
+12. adicionar E2E/smoke;
+13. só então produção.
 
 ## 10. Pipeline alvo
 
@@ -272,10 +276,11 @@ Antes de produção:
 - usar URL/chave pública do Supabase correto;
 - não expor `service_role`;
 - aplicar migration 0003;
-- publicar `admin-actions`;
+- publicar `admin-actions` e `document-upload`;
+- publicar `admin/config.json` com a URL/chave pública do ambiente;
 - validar login + MFA;
 - validar permissões de um admin comum e de um superadmin;
 - validar que o browser recebe `permission denied` ao tentar mutações críticas diretamente;
 - executar smoke de pedidos, documentos, conciliação, alertas e auditoria.
 
-A configuração manual da URL/chave pública existe apenas para bootstrap de ambiente; em produção a conexão deve ser provisionada no deploy e não tratada como segredo.
+A configuração manual da URL/chave pública é aceita somente em localhost. Em produção, a conexão é lida de `admin/config.json`, provisionado pelo deploy. A chave publishable/anon não é segredo, mas o ambiente deve ser fixo para evitar apontamento arbitrário de banco.
