@@ -49,6 +49,12 @@ export function requiresPlate(type: DeliveryVehicleType) {
   return !["Bicicleta", "Bicicleta cargueira/triciclo", "Outro"].includes(type);
 }
 
+export function isVehicleTypeActive(type: DeliveryVehicleType) {
+  const runtime = runtimeVehicleRules();
+  if (!runtime.length) return type in vehicleCapacityDefaults;
+  return runtime.some((rule) => rule.display_name === type && rule.active);
+}
+
 export function normalizePlate(value: string) {
   return value
     .toUpperCase()
