@@ -8,7 +8,7 @@ Marketplace de feiras com três experiências: Cliente, Feirante e Entregador.
 
 O código atual é um **protótipo funcional integrado no mesmo navegador**.
 
-Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC, push ou backend de produção.
+Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou backend de produção. Há service worker e notificações locais/browser com marca Feiraê, mas o Web Push remoto com o app totalmente fechado ainda depende de backend e assinatura persistida.
 
 ### Stack instalada
 
@@ -51,7 +51,8 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC, push
 - promoções;
 - documentos;
 - aprovação local;
-- pedidos;
+- pedidos, inclusive no painel principal;
+- alertas locais/browser de novo pedido com identidade Feiraê;
 - peso real;
 - avaliações;
 - recebíveis simulados.
@@ -64,6 +65,8 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC, push
 - capacidade;
 - disponibilidade;
 - agenda/raio/região;
+- corridas compatíveis no painel principal;
+- alertas locais/browser de nova corrida com identidade Feiraê;
 - corrida;
 - coleta;
 - rota;
@@ -132,9 +135,9 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 
 Suite atual:
 
-- 47 testes em `App.test.tsx`;
+- 49 testes em `App.test.tsx`;
 - 27 testes de domínio/utilidades;
-- **74 testes no total**.
+- **76 testes no total**.
 
 CI:
 
@@ -159,6 +162,7 @@ Design e rastreabilidade:
 - [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md)
 - [DATA_MODEL_AND_STATES.md](docs/DATA_MODEL_AND_STATES.md)
 - [FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md)
+- [NOTIFICATIONS.md](docs/NOTIFICATIONS.md)
 
 Admin:
 
