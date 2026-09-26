@@ -465,6 +465,41 @@ export function ModuleHeader({
   );
 }
 
+export function FeiraeNotificationCard({
+  permission,
+  message,
+  onEnable,
+}: {
+  permission: "default" | "denied" | "granted" | "unsupported";
+  message: string;
+  onEnable: () => void;
+}) {
+  const statusText =
+    permission === "granted"
+      ? "Notificações do Feiraê estão ativas neste dispositivo."
+      : permission === "denied"
+        ? "As notificações estão bloqueadas nas permissões do navegador."
+        : permission === "unsupported"
+          ? "Este navegador não oferece notificações do sistema."
+          : "Ative para receber alertas do Feiraê quando houver uma nova movimentação.";
+
+  return (
+    <section className="feirae-notification-card" aria-label="Notificações do Feiraê">
+      <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+      <div>
+        <span>Feiraê</span>
+        <b>{message}</b>
+        <small>{statusText}</small>
+      </div>
+      {permission === "default" && (
+        <button type="button" onClick={onEnable}>
+          <Bell size={16} /> Ativar notificações
+        </button>
+      )}
+    </section>
+  );
+}
+
 export function OperationsMenu({
   modules,
   details,
