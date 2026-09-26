@@ -12,7 +12,7 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $function$
   select
     (select auth.uid()) is not null
     and exists (
@@ -21,7 +21,7 @@ as $
       where p.id = (select auth.uid())
         and p.role = 'admin'
     );
-$;
+$function$;
 
 revoke all on function private.is_feirae_admin() from public, anon, authenticated;
 grant execute on function private.is_feirae_admin() to authenticated;
@@ -281,7 +281,7 @@ returns trigger
 language plpgsql
 security invoker
 set search_path = ''
-as $
+as $function$
 begin
   new.updated_at := now();
   if new.status = 'revoked' and old.status is distinct from 'revoked' then
@@ -293,7 +293,7 @@ begin
   end if;
   return new;
 end;
-$;
+$function$;
 
 revoke all on function private.stamp_account_enforcement() from public, anon, authenticated;
 
@@ -331,7 +331,7 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $function$
   select
     (select auth.uid()) is not null
     and exists (
@@ -348,7 +348,7 @@ as $
       ),
       true
     );
-$;
+$function$;
 
 revoke all on function private.is_feirae_admin() from public, anon, authenticated;
 grant execute on function private.is_feirae_admin() to authenticated;
@@ -368,7 +368,7 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $function$
   select
     (select private.is_feirae_admin())
     and (
@@ -382,7 +382,7 @@ as $
           and ap.permission in ('*', required_permission)
       )
     );
-$;
+$function$;
 
 revoke all on function private.feirae_admin_has(text) from public, anon, authenticated;
 grant execute on function private.feirae_admin_has(text) to authenticated;
@@ -392,7 +392,7 @@ returns trigger
 language plpgsql
 security invoker
 set search_path = ''
-as $
+as $function$
 begin
   if tg_op = 'INSERT' then
     if new.role in ('admin','fair_manager')
@@ -406,7 +406,7 @@ begin
   end if;
   return new;
 end;
-$;
+$function$;
 
 revoke all on function private.protect_profile_role() from public, anon, authenticated;
 
@@ -1099,6 +1099,12 @@ on public.profiles for all
 to authenticated
 using ((select private.feirae_admin_has('registrations.manage')))
 with check ((select private.feirae_admin_has('registrations.manage')));
+
+create policy "permission admins may promote profiles"
+on public.profiles for update
+to authenticated
+using ((select private.feirae_admin_has('permissions.manage')))
+with check ((select private.feirae_admin_has('permissions.manage')));
 
 create policy "admins manage fairs"
 on public.fairs for all
