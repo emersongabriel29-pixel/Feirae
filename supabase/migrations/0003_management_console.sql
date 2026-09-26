@@ -52,7 +52,7 @@ create table if not exists public.service_regions (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
   name text not null,
-  state text not null default 'DF',
+  state text not null default 'DF' references public.service_states(code),
   city text,
   customer_orders_enabled boolean not null default true,
   vendor_registration_enabled boolean not null default true,
@@ -231,6 +231,10 @@ create table if not exists public.privacy_requests (
   resolved_at timestamptz
 );
 
+alter table public.fairs
+  add column if not exists state text not null default 'DF' references public.service_states(code),
+  add column if not exists city text;
+
 create table if not exists public.account_enforcements (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
@@ -259,6 +263,59 @@ create table if not exists public.admin_permissions (
   created_at timestamptz not null default now(),
   unique(profile_id, permission)
 );
+
+create or replace function private.feirae_admin_has(required_permission text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select
+    (select private.is_feirae_admin())
+    and (
+      not exists (
+        select 1 from public.admin_permissions ap
+        where ap.profile_id = (select auth.uid())
+      )
+      or exists (
+        select 1 from public.admin_permissions ap
+        where ap.profile_id = (select auth.uid())
+          and ap.permission in ('*', required_permission)
+      )
+    );
+$;
+
+revoke all on function private.feirae_admin_has(text) from public, anon, authenticated;
+grant execute on function private.feirae_admin_has(text) to authenticated;
+
+create or replace function private.protect_profile_role()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $
+begin
+  if tg_op = 'INSERT' then
+    if new.role in ('admin','fair_manager')
+       and (select auth.uid()) is not null
+       and not (select private.feirae_admin_has('permissions.manage')) then
+      raise exception 'Administrative roles cannot be self-assigned.';
+    end if;
+  elsif new.role is distinct from old.role
+        and not (select private.feirae_admin_has('permissions.manage')) then
+    raise exception 'Only an authorized administrator can change profile roles.';
+  end if;
+  return new;
+end;
+$;
+
+revoke all on function private.protect_profile_role() from public, anon, authenticated;
+
+drop trigger if exists feirae_protect_profile_role on public.profiles;
+create trigger feirae_protect_profile_role
+before insert or update of role on public.profiles
+for each row execute function private.protect_profile_role();
 
 create table if not exists public.admin_audit_logs (
   id bigint generated always as identity primary key,
@@ -529,92 +586,92 @@ using (
 create policy "admins manage platform settings"
 on public.platform_settings for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('settings.manage')))
+with check ((select private.feirae_admin_has('settings.manage')));
 
 create policy "admins manage service states"
 on public.service_states for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage service regions"
 on public.service_regions for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage vehicle rules"
 on public.vehicle_type_rules for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('rules.manage')))
+with check ((select private.feirae_admin_has('rules.manage')));
 
 create policy "admins manage delivery fee rules"
 on public.delivery_fee_rules for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('rules.manage')))
+with check ((select private.feirae_admin_has('rules.manage')));
 
 create policy "admins manage platform fee rules"
 on public.platform_fee_rules for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('rules.manage')))
+with check ((select private.feirae_admin_has('rules.manage')));
 
 create policy "admins manage cancellation reasons"
 on public.cancellation_reasons for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('rules.manage')))
+with check ((select private.feirae_admin_has('rules.manage')));
 
 create policy "admins manage payment methods"
 on public.payment_method_rules for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('rules.manage')))
+with check ((select private.feirae_admin_has('rules.manage')));
 
 create policy "admins manage onboarding requirements"
 on public.onboarding_requirements for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('rules.manage')))
+with check ((select private.feirae_admin_has('rules.manage')));
 
 create policy "admins manage feature flags"
 on public.feature_flags for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('settings.manage')))
+with check ((select private.feirae_admin_has('settings.manage')));
 
 create policy "admins manage content blocks"
 on public.content_blocks for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('communications.manage')))
+with check ((select private.feirae_admin_has('communications.manage')));
 
 create policy "admins manage notification templates"
 on public.notification_templates for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('communications.manage')))
+with check ((select private.feirae_admin_has('communications.manage')));
 
 create policy "admins manage integration registry"
 on public.integration_registry for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('settings.manage')))
+with check ((select private.feirae_admin_has('settings.manage')));
 
 create policy "admins manage announcements"
 on public.system_announcements for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('communications.manage')))
+with check ((select private.feirae_admin_has('communications.manage')));
 
 create policy "admins manage privacy requests"
 on public.privacy_requests for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('settings.manage')))
+with check ((select private.feirae_admin_has('settings.manage')));
 
 create policy "users read own enforcement history"
 on public.account_enforcements for select
@@ -624,19 +681,27 @@ using ((select auth.uid()) = profile_id);
 create policy "admins manage enforcements"
 on public.account_enforcements for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('accounts.enforce')))
+with check ((select private.feirae_admin_has('accounts.enforce')));
+
+create policy "admins read own permission set"
+on public.admin_permissions for select
+to authenticated
+using (
+  profile_id = (select auth.uid())
+  and (select private.is_feirae_admin())
+);
 
 create policy "admins manage permissions"
 on public.admin_permissions for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('permissions.manage')))
+with check ((select private.feirae_admin_has('permissions.manage')));
 
 create policy "admins read audit logs"
 on public.admin_audit_logs for select
 to authenticated
-using ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('audit.view')));
 
 create policy "admins write audit logs"
 on public.admin_audit_logs for insert
@@ -651,105 +716,105 @@ on storage.objects for select
 to authenticated
 using (
   bucket_id = 'onboarding-documents'
-  and (select private.is_feirae_admin())
+  and (select private.feirae_admin_has('documents.review'))
 );
 
 -- Admin access to operational entities that already use RLS.
 create policy "admins manage profiles"
 on public.profiles for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage fairs"
 on public.fairs for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage vendors"
 on public.vendor_profiles for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage products"
 on public.products for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage orders"
 on public.orders for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('operations.manage')))
+with check ((select private.feirae_admin_has('operations.manage')));
 
 create policy "admins manage delivery profiles"
 on public.delivery_profiles for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage delivery vehicles"
 on public.delivery_vehicles for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage delivery preferences"
 on public.delivery_preferences for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
 
 create policy "admins manage onboarding documents"
 on public.onboarding_documents for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('documents.review')))
+with check ((select private.feirae_admin_has('documents.review')));
 
 create policy "admins manage promotions"
 on public.promotions for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('finance.manage')))
+with check ((select private.feirae_admin_has('finance.manage')));
 
 create policy "admins manage promotion usages"
 on public.promotion_usages for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('finance.manage')))
+with check ((select private.feirae_admin_has('finance.manage')));
 
 create policy "admins manage order events"
 on public.order_events for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('operations.manage')))
+with check ((select private.feirae_admin_has('operations.manage')));
 
 create policy "admins manage support tickets"
 on public.support_tickets for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('operations.manage')))
+with check ((select private.feirae_admin_has('operations.manage')));
 
 create policy "admins manage order reviews"
 on public.order_reviews for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('finance.manage')))
+with check ((select private.feirae_admin_has('finance.manage')));
 
 create policy "admins manage payouts"
 on public.payouts for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('finance.manage')))
+with check ((select private.feirae_admin_has('finance.manage')));
 
 create policy "admins manage wallet entries"
 on public.wallet_entries for all
 to authenticated
-using ((select private.is_feirae_admin()))
-with check ((select private.is_feirae_admin()));
+using ((select private.feirae_admin_has('finance.manage')))
+with check ((select private.feirae_admin_has('finance.manage')));
 
 -- Automatic audit trail for management/configuration tables.
 create or replace function private.log_feirae_admin_change()
