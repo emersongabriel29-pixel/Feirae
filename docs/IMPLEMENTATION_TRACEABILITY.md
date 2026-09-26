@@ -213,6 +213,17 @@ Contagem real:
 Total: **69**.
 
 
+## Runtime configuration consumida pelo app público
+
+| Regra da Gestão | Adapter no app | Efeito atual |
+| --- | --- | --- |
+| Estados/UF | `src/domain/runtimeConfig.ts` | lista somente UFs ativas e habilitadas para pedidos |
+| Feiras | `src/domain/runtimeConfig.ts` + `App.tsx` | substitui a lista fallback quando o Supabase está configurado |
+| Tipos/capacidade de veículo | `runtimeConfig.ts` + `vehicles.ts` | cadastro/logística usam tipos ativos e capacidade configurada |
+| Meios de pagamento | `runtimeConfig.ts` + `CustomerScreens.tsx` | checkout mostra somente métodos ativos para cliente |
+
+Configurações sensíveis que dependem de identidade/autoridade server-side continuam fora desse adapter público.
+
 ## Gestão administrativa
 
 | Função | Interface | Persistência | Segurança / ação |
