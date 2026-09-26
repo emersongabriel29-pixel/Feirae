@@ -315,4 +315,4 @@ Antes de produção, definir procedimento específico para:
 
 A migration administrativa cria/configura bucket privado `onboarding-documents` com limite de 5 MB e MIME permitido para PDF/JPEG/PNG. Admin autorizado abre arquivos por URL assinada temporária.
 
-Ainda é obrigatório adicionar validação server-side de magic bytes/conteúdo e política operacional de retenção antes de receber documentos reais em produção.
+`supabase/functions/document-upload/index.ts` valida tamanho, MIME e magic bytes antes de gravar o arquivo. A política operacional de retenção e uma camada adicional de antimalware ainda precisam ser definidas antes de receber documentos reais em produção.
