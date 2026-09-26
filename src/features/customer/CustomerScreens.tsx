@@ -30,11 +30,7 @@ import {
   readStoreByIdentity,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
-import {
-  getRuntimeConfiguration,
-  runtimePaymentMethods,
-  type RuntimeServiceState,
-} from "../../domain/runtimeConfig";
+import { type RuntimeServiceState } from "../../domain/runtimeConfig";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
   appendReview,
@@ -198,25 +194,24 @@ export function FairsPage({
   const [selectedState, setSelectedState] = useState(availableStates[0]?.code ?? "");
   const [selectedRegion, setSelectedRegion] = useState("");
 
-  useEffect(() => {
-    if (!availableStates.some((state) => state.code === selectedState)) {
-      setSelectedState(availableStates[0]?.code ?? "");
-      setSelectedRegion("");
-    }
-  }, [availableStates, selectedState]);
+  const effectiveSelectedState = availableStates.some((state) => state.code === selectedState)
+    ? selectedState
+    : (availableStates[0]?.code ?? "");
+  const effectiveSelectedRegion =
+    effectiveSelectedState === selectedState ? selectedRegion : "";
 
   const officialItems = fairItems.filter((fair) => fair.source !== "demo");
-  const stateItems = selectedState
-    ? officialItems.filter((fair) => (fair.state ?? "DF") === selectedState)
+  const stateItems = effectiveSelectedState
+    ? officialItems.filter((fair) => (fair.state ?? "DF") === effectiveSelectedState)
     : [];
   const regions = Array.from(new Set(stateItems.map((fair) => fair.place))).sort((a, b) =>
     a.localeCompare(b, "pt-BR"),
   );
-  const filteredItems = selectedRegion
-    ? stateItems.filter((fair) => fair.place === selectedRegion)
+  const filteredItems = effectiveSelectedRegion
+    ? stateItems.filter((fair) => fair.place === effectiveSelectedRegion)
     : stateItems;
   const selectedStateLabel =
-    availableStates.find((state) => state.code === selectedState)?.name ?? "Estado";
+    availableStates.find((state) => state.code === effectiveSelectedState)?.name ?? "Estado";
   const featuredItems = filteredItems.slice(0, 3);
   const otherItems = filteredItems.slice(3);
 
@@ -230,7 +225,7 @@ export function FairsPage({
         <label>
           Estado
           <select
-            value={selectedState}
+            value={effectiveSelectedState}
             aria-label="Estado"
             disabled={availableStates.length <= 1}
             onChange={(event) => {
@@ -248,7 +243,7 @@ export function FairsPage({
         <label>
           Cidade/região
           <select
-            value={selectedRegion}
+            value={effectiveSelectedRegion}
             onChange={(event) => setSelectedRegion(event.target.value)}
             aria-label="Cidade/região"
           >
