@@ -302,6 +302,14 @@ async function saveEditor(){
  if(!state.editing)return;
  const {m,row,isNew}=state.editing;let payload;
  try{payload=readPayload();}catch{toast("JSON inválido");return;}
+ if(m.table==="account_enforcements"&&payload.action_type==="suspension"&&!payload.ends_at){
+   toast("Informe até quando a suspensão ficará ativa.");
+   return;
+ }
+ if(m.table==="account_enforcements"&&payload.ends_at&&payload.starts_at&&new Date(payload.ends_at)<=new Date(payload.starts_at)){
+   toast("A data final precisa ser posterior ao início.");
+   return;
+ }
  $("#saveEdit").disabled=true;
  const key=m.key||"id";
  let r;
