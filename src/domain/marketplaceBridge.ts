@@ -127,6 +127,7 @@ export function syncVendorMarketplace(input: {
     price: number;
     saleUnit: string;
     weightKg: number;
+    photoDataUrl?: string;
   }>;
 }) {
   const current = readMarketplace();
@@ -162,6 +163,7 @@ export function syncVendorMarketplace(input: {
     price: product.price,
     category: product.category,
     emoji: "🧺",
+    imageDataUrl: product.photoDataUrl || undefined,
     stock: product.stock,
     unit: product.saleUnit,
     weightKg: product.weightKg,
