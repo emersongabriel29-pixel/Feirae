@@ -443,15 +443,12 @@ export function DeliveryOperations({
   ];
   const sharedOrders = readUnifiedOrders();
   void unifiedOrderRevision;
-  const acceptedSharedOrder = accepted
-    ? sharedOrders.find((order) => order.id === accepted)
-    : undefined;
+  const acceptedSharedOrder = accepted ? sharedOrders.find((order) => order.id === accepted) : undefined;
   const acceptedSharedOrderIsActive =
     acceptedSharedOrder &&
     ["driver_assigned", "collected", "out_for_delivery"].includes(acceptedSharedOrder.status) &&
     acceptedSharedOrder.driver?.driverKey === session.email;
-  const effectiveAccepted =
-    acceptedSharedOrder && !acceptedSharedOrderIsActive ? null : accepted;
+  const effectiveAccepted = acceptedSharedOrder && !acceptedSharedOrderIsActive ? null : accepted;
 
   const deliveredReviewOrders = sharedOrders.filter(
     (order) =>
