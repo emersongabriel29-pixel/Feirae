@@ -454,9 +454,7 @@ export function FeiranteOperations({
           order.items.some((item) => item.vendor === bankProfile.name)),
     );
     const currentKeys = new Set(
-      relevantOrders.flatMap((order) =>
-        order.events.map((event) => `${order.id}:${event.key}:${event.at}`),
-      ),
+      relevantOrders.flatMap((order) => order.events.map((event) => `${order.id}:${event.key}:${event.at}`)),
     );
 
     if (seenVendorNotificationKeys.current === null) {
@@ -1550,11 +1548,7 @@ export function FeiranteOperations({
                 </div>
                 {!vendorUnifiedOrders.some((order) =>
                   order.events.some((event) => orderEventNotification("feirante", order, event)),
-                ) && (
-                  <p className="operation-footnote">
-                    As movimentações dos seus pedidos aparecerão aqui.
-                  </p>
-                )}
+                ) && <p className="operation-footnote">As movimentações dos seus pedidos aparecerão aqui.</p>}
               </>
             ) : active === "Minha banca" ? (
               <>
