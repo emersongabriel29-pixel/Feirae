@@ -1194,3 +1194,36 @@ html.compact-product-cards .product-card h3 {
 html.compact-product-cards .product-card .stock {
   font-size: 0.64rem;
 }
+
+
+/* Product and order mobile polish */
+.add-button,
+.favorite-button {
+  width: var(--fe-touch);
+  height: var(--fe-touch);
+}
+.category-list button,
+.module-tabs button {
+  min-height: var(--fe-touch);
+}
+.order-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.8rem;
+}
+.order-status.status-success {
+  background: var(--fe-success-soft);
+  color: var(--fe-success);
+}
+.order-status.status-progress {
+  background: var(--fe-info-soft);
+  color: var(--fe-info);
+}
+.order-status.status-warning {
+  background: var(--fe-warning-soft);
+  color: var(--fe-warning);
+}
+.order-status.status-danger {
+  background: var(--fe-danger-soft);
+  color: var(--fe-danger);
+}
