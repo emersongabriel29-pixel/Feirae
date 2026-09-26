@@ -2,115 +2,141 @@
 
 **A feira do seu jeito.**
 
-Marketplace de feiras com experiências separadas para **Cliente**, **Feirante** e **Entregador**.
+Marketplace de feiras com três experiências: Cliente, Feirante e Entregador.
 
-## Estado atual — 26/09/2026
+## Estado real do repositório — 26/09/2026
 
-O Feiraê está em **protótipo funcional avançado**, não em produção. Os principais fluxos internos estão conectados e testados, mas a fonte de verdade operacional ainda é local ao navegador.
+O código atual é um **protótipo funcional integrado no mesmo navegador**.
 
-Hoje o protótipo já possui:
+Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC, push ou backend de produção.
 
-- login/cadastro local com senha para validação da experiência;
-- alteração local de nome, e-mail e senha;
-- cliente, feirante e entregador com experiências próprias;
-- catálogo compartilhado entre banca e cliente;
-- carrinho, checkout, pedidos e histórico;
-- pedido unificado entre cliente, bancas e entregador;
-- compra multi-banca com estado individual por banca;
-- entrega e retirada;
-- estoque reservado, liberado e consumido pelo fluxo local;
-- peso estimado e peso real para logística;
-- veículos, capacidade, região, raio e disponibilidade do entregador;
-- promoções, cupons, frete grátis e limites de uso;
-- cancelamento, suporte, reembolso local e carteira;
-- avaliações cruzadas;
-- notificações baseadas em eventos do pedido;
-- documentos de feirante/entregador armazenados localmente no protótipo;
-- migrations do Supabase preparadas para o backend real.
+### Stack instalada
 
-A persistência do protótipo usa `localStorage` e bridges em `src/domain`. Isso **não substitui autenticação, banco, storage, pagamentos ou autorização de produção**.
+- React 19;
+- TypeScript;
+- Vite;
+- Vitest/Testing Library;
+- ESLint;
+- Prettier;
+- Tailwind plugin;
+- lucide-react.
 
-## Produção x protótipo
+`@supabase/supabase-js` não está instalado.
 
-### Funciona no protótipo
+## O que funciona localmente
 
-Fluxos de interface, regras locais, transições operacionais, persistência local, validações de formulário, catálogo compartilhado, estoque local, carteira/reembolso local, corrida e repasses simulados.
+### Cliente
 
-### Ainda depende de integração/backend real
+- login/cadastro local;
+- conta;
+- endereço/GPS;
+- feiras/bancas;
+- catálogo;
+- favoritos;
+- carrinho;
+- checkout;
+- pagamento local;
+- retirada;
+- entrega;
+- pedidos;
+- suporte;
+- avaliações;
+- carteira/reembolso local.
 
-- Supabase Auth e autorização por papel;
-- aplicação das migrations em ambiente real;
-- Storage para documentos e fotos;
-- Pix/cartão com provedor, tokenização e webhooks;
-- split, ledger, saque e conciliação;
-- KYC/aprovação documental;
-- roteamento/geocodificação com SLA de produção;
-- rastreamento em tempo real;
-- push/WhatsApp;
-- antifraude, chargeback e observabilidade.
+### Feirante
 
-## Arquitetura atual
+- conta e banca;
+- produto/estoque;
+- horários;
+- promoções;
+- documentos;
+- aprovação local;
+- pedidos;
+- peso real;
+- avaliações;
+- recebíveis simulados.
 
-- React 19 + TypeScript + Vite.
-- `src/App.tsx`: shell e orquestração.
-- `src/features/customer`: cliente.
-- `src/features/vendor`: feirante.
-- `src/features/delivery`: entregador.
-- `src/components`: componentes reutilizáveis.
-- `src/hooks`: sessão, estado e observação de eventos.
-- `src/domain`: regras e bridges locais de pedido, marketplace, estoque, carteira, autenticação e rotas.
-- `supabase/migrations`: schema de backend planejado/implementado em SQL.
+### Entregador
 
-Detalhes: [Arquitetura](docs/ARCHITECTURE.md).
+- conta;
+- documentos;
+- veículos;
+- capacidade;
+- disponibilidade;
+- agenda/raio/região;
+- corrida;
+- coleta;
+- rota;
+- entrega;
+- suporte;
+- avaliações;
+- ganhos simulados.
 
-## Máquina de estados
+## Fonte de verdade atual
 
-A referência oficial de estados está em [Modelo de dados e estados](docs/DATA_MODEL_AND_STATES.md).
+Persistência principal:
 
-No pedido unificado do protótipo:
+- `localStorage`;
+- `src/domain/orderBridge.ts`;
+- `marketplaceBridge.ts`;
+- `inventoryBridge.ts`;
+- `walletBridge.ts`;
+- `localAuth.ts`.
 
-```
-received
-→ preparing
-→ ready_for_pickup
-→ driver_assigned
-→ collected
-→ out_for_delivery
-→ delivered
-```
+Isso significa que o protótipo não prova sincronização entre aparelhos diferentes.
 
-Saída alternativa: `cancelled`.
+## Rotas atuais
 
-Pagamento e estado por banca são máquinas separadas e não devem ser confundidos com o status global do pedido.
+- browser Geolocation API;
+- Nominatim Search;
+- Nominatim Reverse;
+- OSRM público;
+- Google Maps aberto por URL.
+
+O preço do frete **não é calculado pelo OSRM**. O checkout usa `vendorMetrics.deliveryFee` como valor local de fallback.
+
+## Veículos atuais
+
+Fonte: `src/domain/vehicles.ts`.
+
+| Tipo | Capacidade padrão |
+| --- | ---: |
+| Bicicleta | 10 kg |
+| Bicicleta cargueira/triciclo | 40 kg |
+| Moto | 12 kg |
+| Moto com baú | 20 kg |
+| Carro | 80 kg |
+| Utilitário/Pickup | 250 kg |
+| Van | 500 kg |
+| Outro | 10 kg |
 
 ## Supabase
 
-O repositório contém:
+Existem:
 
-- `supabase/migrations/0001_feirae_core.sql`
-- `supabase/migrations/0002_feirae_operations.sql`
+- `.env.example`;
+- `supabase/migrations/0001_feirae_core.sql`;
+- `supabase/migrations/0002_feirae_operations.sql`.
 
-Essas migrations **preparam** o backend, mas a aplicação atual ainda não usa o Supabase como fonte de verdade.
+Não existem ainda:
 
-## Segurança
+- cliente Supabase;
+- `supabase/config.toml`;
+- Edge Functions;
+- Storage conectado;
+- Auth conectado.
 
-O login local existe somente para testar o fluxo. O digest local de senha não é um mecanismo de autenticação de produção.
+As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md).
 
-Produção deve usar:
+## Testes
 
-- Auth real;
-- RLS;
-- segredos apenas no servidor;
-- preço/estoque/pagamento validados server-side;
-- mutações críticas idempotentes;
-- trilha de auditoria;
-- storage privado para documentos.
+Suite atual:
 
-Veja [Segurança e autenticação](docs/SECURITY_AND_AUTH.md).
+- 43 testes em `App.test.tsx`;
+- 26 testes de domínio/utilidades;
+- **69 testes no total**.
 
-## Qualidade
-
-Pipeline atual:
+CI:
 
 ```bash
 npm ci
@@ -118,37 +144,31 @@ npm run check
 npm run format:check
 ```
 
-No commit `33fd6b58`, o GitHub Actions aprovou:
-
-- 8 arquivos de teste;
-- 69 testes;
-- ESLint;
-- TypeScript/build;
-- Prettier.
-
-Veja [Testes e QA](docs/TESTING_QA.md).
+Cobertura exata e lacunas:
+[TESTING_QA.md](docs/TESTING_QA.md).
 
 ## Documentação
 
-Índice completo: [docs/README.md](docs/README.md).
+Índice:
+[docs/README.md](docs/README.md).
 
-Documentos centrais:
+Documentos de rastreabilidade:
 
-- [Status da documentação](docs/DOCUMENTATION_STATUS.md)
-- [Especificação funcional](docs/FUNCTIONAL_SPEC.md)
-- [Arquitetura](docs/ARCHITECTURE.md)
-- [Modelo de dados e estados](docs/DATA_MODEL_AND_STATES.md)
-- [Auditoria end-to-end](docs/END_TO_END_AUDIT.md)
-- [Auditoria de botões e edição](docs/UI_INTERACTION_AUDIT.md)
-- [Fluxo de pedido e entrega](docs/ORDER_FULFILLMENT_FLOW.md)
-- [Fluxo financeiro](docs/MONEY_FLOW.md)
-- [Cadastro e aprovação](docs/ONBOARDING_AND_APPROVAL.md)
-- [Integrações](docs/INTEGRATIONS.md)
-- [Segurança e autenticação](docs/SECURITY_AND_AUTH.md)
-- [LGPD e privacidade](docs/LGPD_AND_PRIVACY.md)
-- [Administração](docs/ADMIN_MANAGEMENT_SPEC.md)
-- [Deploy e ambientes](docs/DEPLOYMENT_AND_ENVIRONMENTS.md)
-- [Roadmap](docs/ROADMAP.md)
+- [IMPLEMENTATION_TRACEABILITY.md](docs/IMPLEMENTATION_TRACEABILITY.md)
+- [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md)
+- [DATA_MODEL_AND_STATES.md](docs/DATA_MODEL_AND_STATES.md)
+- [FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md)
+
+Admin:
+
+- [ADMIN_MANAGEMENT_SPEC.md](docs/ADMIN_MANAGEMENT_SPEC.md)
+
+Produção:
+
+- [SECURITY_AND_AUTH.md](docs/SECURITY_AND_AUTH.md)
+- [LGPD_AND_PRIVACY.md](docs/LGPD_AND_PRIVACY.md)
+- [INTEGRATIONS.md](docs/INTEGRATIONS.md)
+- [DEPLOYMENT_AND_ENVIRONMENTS.md](docs/DEPLOYMENT_AND_ENVIRONMENTS.md)
 
 ## Desenvolvimento
 
@@ -157,9 +177,15 @@ npm ci
 npm run dev
 ```
 
-Validação completa:
+Validação:
 
 ```bash
 npm run check
 npm run format:check
 ```
+
+## Regra de verdade documental
+
+Para afirmar **o que existe hoje**, verificar código + testes + migrations.
+
+Os documentos definem contratos, decisões e lacunas, mas não podem transformar requisito futuro em funcionalidade existente.
