@@ -428,12 +428,16 @@ security invoker
 set search_path = ''
 as $function$
 begin
+  if new.role = 'fair_manager' then
+    raise exception 'The fair_manager role is reserved and disabled until scoped fair management is implemented.';
+  end if;
+
   if (select auth.uid()) is null then
     return new;
   end if;
 
   if tg_op = 'INSERT' then
-    if new.role in ('admin','fair_manager')
+    if new.role = 'admin'
        and (select auth.uid()) is not null
        and not (select private.feirae_admin_has('permissions.manage')) then
       raise exception 'Administrative roles cannot be self-assigned.';
