@@ -167,6 +167,24 @@
     min-height: 190px;
     padding: 1.25rem 1.25rem 1.4rem;
   }
+  .auth-mode-signup .login-showcase {
+    min-height: 132px;
+    justify-content: flex-start;
+    gap: 0.55rem;
+    padding: 1rem 1.25rem;
+  }
+  .auth-mode-signup .login-showcase .eyebrow.light,
+  .auth-mode-signup .login-showcase p {
+    display: none;
+  }
+  .auth-mode-signup .login-showcase h1 {
+    margin-top: 0.25rem;
+    font-size: clamp(1.45rem, 7vw, 1.9rem);
+    line-height: 1.05;
+  }
+  .auth-mode-signup .login-showcase h1 br {
+    display: none;
+  }
   .login-showcase h1 {
     margin-top: 0.6rem;
     font-size: clamp(2rem, 10vw, 2.8rem);
