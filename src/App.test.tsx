@@ -94,6 +94,11 @@ describe("Feiraê customer flow", () => {
 
   it("allows showing and hiding the password", () => {
     render(<App />);
+    expect(screen.getByText(/a feira do seu jeito/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /da banca até você/i })).toBeInTheDocument();
+    expect(
+      screen.getByText(/compre de feirantes locais, gerencie sua banca ou faça entregas/i),
+    ).toBeInTheDocument();
     const password = screen.getByPlaceholderText(/digite sua senha/i);
     expect(password).toHaveAttribute("type", "password");
     fireEvent.click(screen.getByRole("button", { name: /mostrar senha/i }));
