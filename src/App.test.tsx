@@ -629,9 +629,7 @@ describe("Feiraê role access", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /criar conta como feirante/i }));
 
-    expect(
-      screen.getByRole("heading", { name: /complete seu cadastro para vender/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /complete seu cadastro para vender/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /completar minha banca/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /sair/i }));
@@ -683,9 +681,7 @@ describe("Feiraê role access", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /criar conta como entregador/i }));
 
-    expect(
-      screen.getByRole("heading", { name: /complete seu cadastro para entregar/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /complete seu cadastro para entregar/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /completar minha conta/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
