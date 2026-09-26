@@ -1,4 +1,4 @@
-/* global document, window, localStorage, sessionStorage, setTimeout, clearTimeout, setInterval, confirm, CSS, console, Blob, URL */
+/* global document, window, localStorage, sessionStorage, setTimeout, clearTimeout, setInterval, confirm, CSS, console, Blob, URL, fetch */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { navGroups, modules } from "./modules.js";
 import { ORDER_TRANSITIONS, safeSearchTerm, isUuid, canAccessPermission } from "./core.js";
@@ -12,6 +12,7 @@ const state={
 };
 
 const permissionByModule={
+  dashboard:"reports.view",reports:"reports.view",
   alerts:"operations.manage",orders:"operations.manage",delivery_jobs:"operations.manage",support:"operations.manage",
   documents:"documents.review",enforcements:"accounts.enforce",
   states:"registrations.manage",fairs:"registrations.manage",stalls:"registrations.manage",users:"registrations.manage",vendors:"registrations.manage",
@@ -21,7 +22,7 @@ const permissionByModule={
   finance:"finance.manage",payments:"finance.manage",promotions:"finance.manage",payouts:"finance.manage",reviews:"finance.manage",
   content:"communications.manage",announcements:"communications.manage",notifications:"communications.manage",
   settings:"settings.manage",features:"settings.manage",integrations:"settings.manage",integration_health:"settings.manage",privacy:"settings.manage",
-  admins:"permissions.manage",permissions:"permissions.manage",audit:"audit.view",reports:"reports.view"
+  admins:"permissions.manage",permissions:"permissions.manage",audit:"audit.view"
 };
 function canModule(id){
   return canAccessPermission(
@@ -240,7 +241,13 @@ async function acceptSession(session){
  $("#adminIdentity").textContent=(r.data.full_name||session.user.email)+(state.isSuperadmin?" · Superadmin":"");
  show("appView");
  await auditAdminSessionStart();
- await openModule("dashboard");
+ const firstAllowed=navGroups.flatMap((group)=>group[1]).find((item)=>canModule(item[0]));
+ if(firstAllowed)await openModule(firstAllowed[0]);
+ else{
+   $("#pageTitle").textContent="Sem permissões";
+   $("#breadcrumb").textContent="Feiraê Gestão";
+   $("#pageContent").innerHTML='<div class="notice"><b>Seu acesso administrativo está ativo, mas nenhuma área foi liberada.</b><br>Solicite a um superadmin as permissões necessárias.</div>';
+ }
  return "ready";
 }
 
