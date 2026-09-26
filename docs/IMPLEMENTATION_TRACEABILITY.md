@@ -235,7 +235,6 @@ Total: **77**.
 
 Limite: o repositório ainda não possui backend que persista `PushSubscription` e envie Web Push remoto. Logo, receber notificação com o app totalmente fechado ainda não é comprovado ponta a ponta.
 
-
 ## Polimento de autenticação e onboarding — 26/09/2026
 
 - `AppComponents.tsx::LoginPage`: limpa erro ao mudar modo, papel ou editar campos e marca `auth-mode-signup` para layout mobile compacto;
