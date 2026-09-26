@@ -278,3 +278,31 @@ Exemplos de título do sistema:
 - `Feiraê • Nova corrida`.
 
 No mobile, o card de permissão empilha o botão abaixo do conteúdo para preservar leitura e alvo de toque.
+
+
+## Login/cadastro — polimento da auditoria em vídeo
+
+- erros de autenticação não permanecem ao trocar entre **Entrar** e **Criar conta**;
+- trocar o tipo de acesso ou editar o e-mail também limpa o erro anterior;
+- no mobile, **Criar conta** usa apresentação compacta para os campos aparecerem mais cedo;
+- a mensagem de conflito de perfil deve dizer qual acesso já está vinculado ao e-mail.
+
+## Onboarding operacional prioritário
+
+Quando Feirante ou Entregador ainda não está aprovado, a Central mostra **Complete seu cadastro** antes dos atalhos secundários.
+
+Feirante:
+
+1. Conta;
+2. Banca;
+3. Documentos;
+4. Aprovação.
+
+Entregador:
+
+1. Conta;
+2. Veículo;
+3. Documentos;
+4. Aprovação.
+
+A Central do Feirante não exibe mais um card redundante chamado **Painel**. No Entregador, a antiga área “Painel” passa a se chamar **Disponibilidade**, pois sua função real é ligar/pausar novas corridas.
