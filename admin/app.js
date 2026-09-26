@@ -1,3 +1,4 @@
+/* global document, window, localStorage, setTimeout, clearTimeout, setInterval, confirm, CSS */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { navGroups, modules } from "./modules.js";
 
