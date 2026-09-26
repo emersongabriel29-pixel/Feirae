@@ -165,12 +165,11 @@ export default function App() {
     openRoleRoot,
   } = useAppNavigation(role, () => setCartOpen(false));
 
-  const configuredFairs = useMemo(() => mergeRuntimeFairs(fairs), [runtimeRevision]);
-  const serviceStates = useMemo(() => runtimeStates(), [runtimeRevision]);
-  const runtimeManaged = useMemo(
-    () => getRuntimeConfiguration().source === "supabase",
-    [runtimeRevision],
-  );
+  // runtimeRevision força o rerender quando a configuração da Gestão muda.
+  void runtimeRevision;
+  const configuredFairs = mergeRuntimeFairs(fairs);
+  const serviceStates = runtimeStates();
+  const runtimeManaged = getRuntimeConfiguration().source === "supabase";
 
   useEffect(() => {
     if (!configuredFairs.length) return;
