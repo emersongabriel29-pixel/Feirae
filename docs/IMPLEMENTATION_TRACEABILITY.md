@@ -254,7 +254,6 @@ Limite: o repositório ainda não possui backend que persista `PushSubscription`
 - `App.test.tsx`: valida slogan, novo título e mensagem de propósito;
 - `DESIGN_SYSTEM.md` e `FUNCTIONAL_SPEC.md`: registram a mensagem oficial da entrada.
 
-
 ## Notificações por papel — 26/09/2026
 
 - `feiraeNotifications.ts`: centraliza textos e filtros de eventos para Cliente, Feirante e Entregador;
