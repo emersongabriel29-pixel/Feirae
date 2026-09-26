@@ -255,6 +255,32 @@ create table if not exists public.account_enforcements (
 create index if not exists account_enforcements_profile_active_idx
   on public.account_enforcements(profile_id, status, starts_at, ends_at);
 
+create or replace function private.stamp_account_enforcement()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $
+begin
+  new.updated_at := now();
+  if new.status = 'revoked' and old.status is distinct from 'revoked' then
+    new.revoked_by := (select auth.uid());
+    new.revoked_at := now();
+  elsif new.status <> 'revoked' then
+    new.revoked_by := null;
+    new.revoked_at := null;
+  end if;
+  return new;
+end;
+$;
+
+revoke all on function private.stamp_account_enforcement() from public, anon, authenticated;
+
+drop trigger if exists feirae_stamp_account_enforcement on public.account_enforcements;
+create trigger feirae_stamp_account_enforcement
+before update on public.account_enforcements
+for each row execute function private.stamp_account_enforcement();
+
 create table if not exists public.admin_permissions (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
