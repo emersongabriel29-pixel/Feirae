@@ -1018,9 +1018,11 @@ async function saveAdminPermissions(){
 }
 
 async function renderAuditAdvanced(){
+ const admins=await state.supabase.from("profiles").select("id,full_name").eq("role","admin").order("full_name");
+ const adminOptions=(admins.data||[]).map((x)=>'<option value="'+esc(x.id)+'">'+esc(x.full_name||x.id)+'</option>').join("");
  $("#pageContent").innerHTML=
  '<section class="panel"><div class="panel-head"><div><h2>Auditoria</h2><p>Filtre alterações por administrador, entidade, ação e período.</p></div></div><div class="report-filters">'+
- '<label>Administrador<input id="auditAdmin" placeholder="UUID"></label><label>Entidade<input id="auditEntity" placeholder="orders, fairs…"></label>'+
+ '<label>Administrador<select id="auditAdmin"><option value="">Todos</option>'+adminOptions+'</select></label><label>Entidade<input id="auditEntity" placeholder="orders, fairs…"></label>'+
  '<label>Ação<input id="auditAction" placeholder="update, insert…"></label><label>De<input id="auditFrom" type="date"></label><label>Até<input id="auditTo" type="date"></label>'+
  '<div class="report-actions"><button id="runAudit" class="primary">Filtrar</button></div></div></section><div id="auditResult"></div>';
  $("#runAudit").onclick=loadAuditAdvanced;
@@ -1207,9 +1209,28 @@ async function openDocument(row){
  else window.open(signed.data.signedUrl,"_blank","noopener,noreferrer");
 }
 
-function openEditor(m,row,forceCreate=false){
+async function loadEditorOptions(m){
+ const options={};
+ const needsState=m.fields?.some((field)=>field.key==="state");
+ const needsRegion=m.fields?.some((field)=>field.key==="region_id");
+ const needsVehicle=m.fields?.some((field)=>["vehicle_code","vehicle_type"].includes(field.key));
+ const jobs=[];
+ if(needsState)jobs.push(state.supabase.from("service_states").select("code,name").order("sort_order").then((r)=>{if(!r.error)options.state=(r.data||[]).map((x)=>({value:x.code,label:x.code+" · "+x.name}));}));
+ if(needsRegion)jobs.push(state.supabase.from("service_regions").select("id,name,state,city").eq("active",true).order("name").then((r)=>{if(!r.error)options.region_id=(r.data||[]).map((x)=>({value:x.id,label:x.name+" · "+(x.city||x.state)}));}));
+ if(needsVehicle)jobs.push(state.supabase.from("vehicle_type_rules").select("code,display_name").eq("active",true).order("sort_order").then((r)=>{
+   if(!r.error){
+     const rows=(r.data||[]).map((x)=>({value:x.code,label:x.display_name}));
+     options.vehicle_code=rows;options.vehicle_type=rows;
+   }
+ }));
+ await Promise.all(jobs);
+ return options;
+}
+
+async function openEditor(m,row,forceCreate=false){
  const isNew=forceCreate||!row;
  state.editing={m,row,isNew};
+ state.editorOptions=await loadEditorOptions(m);
  $("#modalTitle").textContent=isNew?"Novo em "+m.label:"Editar "+m.label;
  $("#editorForm").innerHTML=m.fields.map((field)=>renderField(field,row?.[field.key])).join("");
  $("#modal").classList.remove("hidden");
@@ -1217,6 +1238,12 @@ function openEditor(m,row,forceCreate=false){
 
 function renderField(field,v){
  const id="f-"+field.key;
+ const dynamic=state.editorOptions?.[field.key];
+ if(dynamic){
+   return '<label>'+esc(field.label)+'<select id="'+id+'" data-field="'+field.key+'" data-type="select"><option value="">Selecione</option>'+
+     dynamic.map((o)=>'<option value="'+esc(o.value)+'" '+(String(v??"")===String(o.value)?"selected":"")+'>'+esc(o.label)+'</option>').join("")+
+     '</select></label>';
+ }
  if(field.type==="checkbox")return '<label class="check-row"><input id="'+id+'" data-field="'+field.key+'" type="checkbox" '+(v?"checked":"")+'><span>'+esc(field.label)+'</span></label>';
  if(field.type==="select"){
    return '<label>'+esc(field.label)+'<select id="'+id+'" data-field="'+field.key+'" data-type="select"><option value="">Selecione</option>'+
