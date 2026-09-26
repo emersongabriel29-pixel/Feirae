@@ -113,6 +113,22 @@ Isso é incompatível porque o enum SQL não possui:
 
 Correção: criar enum próprio `order_vendor_status`.
 
+### Derivação global em retirada multi-banca
+
+Para `fulfillment = pickup`:
+
+```
+todas as bancas ready
+→ order ready_for_pickup
+
+uma ou mais bancas delivered + demais ready
+→ order continua ready_for_pickup
+
+todas as bancas delivered
+→ order delivered
+```
+
+Uma banca não pode encerrar sozinha o pedido global de retirada quando existem outras bancas pendentes.
 ## 4. Pagamento
 
 Frontend:
