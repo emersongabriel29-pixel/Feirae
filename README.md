@@ -152,9 +152,8 @@ Cobertura exata e lacunas:
 Índice:
 [docs/README.md](docs/README.md).
 
-Design e rastreabilidade:
+Documentos de rastreabilidade:
 
-- [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
 - [IMPLEMENTATION_TRACEABILITY.md](docs/IMPLEMENTATION_TRACEABILITY.md)
 - [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md)
 - [DATA_MODEL_AND_STATES.md](docs/DATA_MODEL_AND_STATES.md)
@@ -170,6 +169,26 @@ Produção:
 - [LGPD_AND_PRIVACY.md](docs/LGPD_AND_PRIVACY.md)
 - [INTEGRATIONS.md](docs/INTEGRATIONS.md)
 - [DEPLOYMENT_AND_ENVIRONMENTS.md](docs/DEPLOYMENT_AND_ENVIRONMENTS.md)
+
+## Regra para qualquer atualização
+
+Toda mudança futura segue [Governança de mudanças](docs/CHANGE_GOVERNANCE.md).
+
+O projeto deve avançar em conjunto:
+
+- código;
+- testes;
+- documentação;
+- schema;
+- segurança;
+- integrações;
+- LGPD;
+- gestão;
+- deploy.
+
+O PR template exige a revisão desses impactos e o CI executa `npm run check:sync`.
+
+Veja também [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Desenvolvimento
 
