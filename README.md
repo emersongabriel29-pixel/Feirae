@@ -39,6 +39,7 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou ba
 - retirada;
 - entrega;
 - pedidos;
+- notificações locais/browser por etapa do pedido e promoções;
 - suporte;
 - avaliações;
 - carteira/reembolso local.
@@ -52,7 +53,7 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou ba
 - documentos;
 - aprovação local;
 - pedidos, inclusive no painel principal;
-- alertas locais/browser de novo pedido com identidade Feiraê;
+- notificações locais/browser de novo pedido, pagamento, coleta, entrega e cancelamento com identidade Feiraê;
 - peso real;
 - avaliações;
 - recebíveis simulados.
@@ -66,7 +67,7 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou ba
 - disponibilidade;
 - agenda/raio/região;
 - corridas compatíveis no painel principal;
-- alertas locais/browser de nova corrida com identidade Feiraê;
+- notificações locais/browser de nova corrida, rota, coleta, chegada, entrega e cancelamento com identidade Feiraê;
 - corrida;
 - coleta;
 - rota;
@@ -136,8 +137,8 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 Suite atual:
 
 - 50 testes em `App.test.tsx`;
-- 27 testes de domínio/utilidades;
-- **77 testes no total**.
+- 32 testes de domínio/utilidades;
+- **82 testes no total**.
 
 CI:
 
