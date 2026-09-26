@@ -15,7 +15,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (min-width: 960px) {
+@media (min-width: 1024px) {
   .hero {
     padding-right: 340px;
   }
@@ -57,7 +57,21 @@
     color: var(--fe-green-dark);
   }
   .context-toggle > span {
-    display: none;
+    display: grid;
+    min-width: 0;
+    max-width: 9.5rem;
+    text-align: left;
+  }
+  .context-toggle > span b,
+  .context-toggle > span small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .context-toggle > span small {
+    margin-top: 0.1rem;
+    color: var(--fe-muted);
+    font-size: 0.68rem;
   }
   .context-toggle > svg:last-child {
     transition: rotate 0.2s ease;
@@ -80,7 +94,7 @@
     justify-content: flex-start;
   }
   .hero {
-    min-height: 430px;
+    min-height: 340px;
   }
   .hero h1 {
     font-size: 2.65rem;
@@ -99,7 +113,7 @@
     display: none;
   }
 }
-@media (min-width: 960px) {
+@media (min-width: 1024px) {
   .login-page {
     grid-template-columns: minmax(420px, 0.9fr) minmax(540px, 1.1fr);
   }
@@ -143,5 +157,72 @@
     scroll-behavior: auto !important;
     transition: none !important;
     animation: none !important;
+  }
+}
+
+
+@media (max-width: 767px) {
+  .login-showcase {
+    min-height: 190px;
+    padding: 1.25rem 1.25rem 1.4rem;
+  }
+  .login-showcase h1 {
+    margin-top: 0.6rem;
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+  .login-showcase p {
+    margin-top: 0.65rem;
+    line-height: 1.45;
+  }
+  .login-benefits {
+    display: none;
+  }
+  .login-content {
+    padding: 1.25rem;
+  }
+  .role-options > button {
+    min-height: 68px;
+  }
+  .operation-metrics strong,
+  .module-kpi-strip strong {
+    font-size: clamp(0.9rem, 4vw, 1.05rem);
+  }
+  .operation-metrics span,
+  .module-kpi-strip span {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 479px) {
+  .product-card .market-meta.compact,
+  .product-card .product-meta,
+  .product-card .stock {
+    display: none;
+  }
+  .product-card .p-4 {
+    padding: 0.85rem;
+  }
+  .product-card h3 {
+    font-size: 0.95rem;
+  }
+  .order-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .order-card > div:last-child {
+    justify-items: start;
+    text-align: left;
+  }
+  .order-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 340px) {
+  .grid.grid-cols-2:has(.choice) {
+    grid-template-columns: 1fr;
+  }
+  .context-toggle > span {
+    max-width: 7rem;
   }
 }
