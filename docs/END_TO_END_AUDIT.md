@@ -18,29 +18,27 @@ Legenda desta rodada:
 - 🔌 **Depende de integração** — precisa de serviço externo/backend transacional;
 - 🚧 **Não implementado** — o fluxo exigido ainda não existe no app atual.
 
-| ID | Jornada auditada | Resultado após esta rodada | Evidência/limite concreto |
-| --- | --- | --- | --- |
-| A1-01 | Cliente: criar conta → entrar → navegar → comprar | ⚠️ Parcial | Funciona no mesmo navegador com `localAuth/localStorage`; não há Auth/backend compartilhado. |
-| A1-02 | Cliente: checkout → retirada em uma banca → conclusão | ✅ OK no protótipo | Há teste direto de checkout → feirante → retirada → `delivered`. |
-| A1-03 | Cliente: retirada multi-banca | ✅ Corrigido | Antes, uma única banca podia encerrar o pedido global. Agora o pedido só vira `delivered` quando todas as bancas confirmarem a retirada. |
-| A1-04 | Cliente: entrega → banca → entregador → entrega concluída | ⚠️ Parcial | As etapas locais existem, mas não há backend entre dispositivos nem um browser-E2E único cobrindo os três atores. |
-| A1-05 | Cliente: cancelar antes da coleta | ⚠️ Parcial | Libera estoque e registra reembolso local; PSP/estorno real não existe. O lock local do entregador após cancelamento externo foi corrigido. |
-| A1-06 | Cliente: problema após a coleta → suporte | ⚠️ Parcial | Abre ticket no pedido; não existe back-office operacional para assumir e resolver o ticket. |
-| A1-07 | Feirante: criar conta → documentos → aprovação → vender | 🚧 Não fecha | Upload chega a `under_review`, mas não existe revisor/admin funcional para concluir aprovação de uma conta real. |
-| A1-08 | Feirante real sem documentos persistidos | ✅ Corrigido | Conta real não recebe mais documentos seed aprovados; somente conta de demonstração pode usar seed aprovado. |
-| A1-09 | Multi-banca: todas prontas → liberar logística | ✅ OK no protótipo | `orderBridge` só libera `ready_for_pickup` quando todas as bancas necessárias estão prontas. |
-| A1-10 | Multi-banca: uma banca rejeita | ⚠️ Parcial | Política atual é tudo-ou-nada: uma rejeição cancela o pedido global e o reembolso é global. Não existe cancelamento parcial por banca. |
-| A1-11 | Entregador: criar conta → documentos → aprovação → ficar online | 🚧 Não fecha | Documentação pode ser enviada, porém não existe revisão administrativa funcional para aprovar conta real. |
-| A1-12 | Entregador: oferta → aceitar → coletar → entregar | ✅ OK no protótipo demo | Sequência local existe e é testada; aceite atômico entre dispositivos ainda não existe. |
-| A1-13 | Entregador real: lista de corridas | ✅ Corrigido | Fixtures `FE-1024…FE-1027` deixaram de aparecer para contas reais/novas; ficam restritas a contas demo. |
-| A1-14 | Cancelamento/reatribuição de corrida | ✅ Corrigido localmente | Se o pedido foi cancelado, concluído ou deixou de estar atribuído ao motorista, o lock local obsoleto deixa de bloquear novas ofertas. |
-| A1-15 | Rota/ETA | 🔌 Depende de integração | Nominatim/OSRM públicos calculam geocodificação/rota. Sem rota, a oferta real não é liberada ao entregador. |
-| A1-16 | Rota de pedido multi-banca | 🚧 Não implementado | Ainda não existem múltiplos stops entre bancas; a rota é resumida para uma origem → cliente. |
-| A1-17 | Pix/cartão/estorno/conciliação | 🔌 Depende de integração | Estados financeiros são simulados; não existe PSP, webhook ou conciliação. |
-| A1-18 | Repasse feirante/entregador | 🔌 Depende de integração | Estados locais existem, mas não movimentam dinheiro. |
-| A1-19 | Avaliação ao final da jornada | ⚠️ Parcial | Há avaliação entre papéis, porém há caminhos de UI com escopos diferentes; a auditoria específica nº 30 deverá uniformizar o contrato. |
-| A1-20 | Gestão/Admin: revisão, suspensão, taxas e operação | 🚧 Não implementado | Há especificação e papéis SQL, mas não há painel/admin funcional conectado ao app. |
-| A1-21 | Operação em dispositivos diferentes | 🚧 Não implementado | A fonte de verdade atual é `localStorage`; os três atores não compartilham estado real entre aparelhos. |
+- **A1-01 — Cliente: criar conta → entrar → navegar → comprar — ⚠️ Parcial.** Funciona no mesmo navegador com `localAuth/localStorage`; não há Auth/backend compartilhado.
+- **A1-02 — Cliente: checkout → retirada em uma banca → conclusão — ✅ OK no protótipo.** Há teste direto de checkout → feirante → retirada → `delivered`.
+- **A1-03 — Cliente: retirada multi-banca — ✅ Corrigido.** Uma única banca não encerra mais o pedido global; `delivered` só ocorre após todas confirmarem.
+- **A1-04 — Cliente: entrega → banca → entregador → conclusão — ⚠️ Parcial.** As etapas locais existem, mas não há backend entre dispositivos nem browser-E2E único cobrindo os três atores.
+- **A1-05 — Cliente: cancelar antes da coleta — ⚠️ Parcial.** Libera estoque e registra reembolso local; PSP/estorno real não existe. O lock obsoleto do entregador deixou de bloquear novas ofertas.
+- **A1-06 — Cliente: problema após a coleta → suporte — ⚠️ Parcial.** Abre ticket no pedido, porém não existe back-office operacional para assumir e resolver o ticket.
+- **A1-07 — Feirante: criar conta → documentos → aprovação → vender — 🚧 Não fecha.** Upload chega a `under_review`, mas não existe revisor/admin funcional para concluir aprovação de conta real.
+- **A1-08 — Feirante real sem documentos persistidos — ✅ Corrigido.** Conta real não recebe mais documentos seed aprovados; somente conta de demonstração pode usar seed aprovado.
+- **A1-09 — Multi-banca: todas prontas → liberar logística — ✅ OK no protótipo.** `orderBridge` só libera `ready_for_pickup` quando todas as bancas necessárias estão prontas.
+- **A1-10 — Multi-banca: uma banca rejeita — ⚠️ Parcial.** A política atual é tudo-ou-nada: uma rejeição cancela o pedido global; não existe cancelamento parcial por banca.
+- **A1-11 — Entregador: criar conta → documentos → aprovação → ficar online — 🚧 Não fecha.** Documentação pode ser enviada, porém não existe revisão administrativa funcional para aprovar conta real.
+- **A1-12 — Entregador: oferta → aceitar → coletar → entregar — ✅ OK no protótipo demo.** Sequência local existe e é testada; aceite atômico entre dispositivos ainda não existe.
+- **A1-13 — Entregador real: lista de corridas — ✅ Corrigido.** Fixtures `FE-1024…FE-1027` deixaram de aparecer para contas reais/novas.
+- **A1-14 — Cancelamento/reatribuição de corrida — ✅ Corrigido localmente.** Pedido cancelado, concluído ou reatribuído deixa de manter um lock obsoleto bloqueando novas ofertas.
+- **A1-15 — Rota/ETA — 🔌 Depende de integração.** Nominatim/OSRM públicos calculam geocodificação/rota; sem rota, a oferta real não é liberada.
+- **A1-16 — Rota de pedido multi-banca — 🚧 Não implementado.** Não existem múltiplos stops entre bancas; a rota continua resumida para uma origem → cliente.
+- **A1-17 — Pix/cartão/estorno/conciliação — 🔌 Depende de integração.** Estados financeiros são simulados; não existe PSP, webhook ou conciliação.
+- **A1-18 — Repasse feirante/entregador — 🔌 Depende de integração.** Estados locais existem, mas não movimentam dinheiro.
+- **A1-19 — Avaliação ao final da jornada — ⚠️ Parcial.** Há avaliação entre papéis, porém caminhos de UI têm escopos diferentes; a auditoria nº 30 deverá uniformizar o contrato.
+- **A1-20 — Gestão/Admin: revisão, suspensão, taxas e operação — 🚧 Não implementado.** Há especificação e papéis SQL, mas não há painel/admin funcional conectado ao app.
+- **A1-21 — Operação em dispositivos diferentes — 🚧 Não implementado.** A fonte de verdade atual é `localStorage`; os três atores não compartilham estado real entre aparelhos.
 
 ### Correções aplicadas nesta auditoria
 
