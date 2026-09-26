@@ -1,379 +1,506 @@
 # Especificação funcional consolidada — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 após nova auditoria contra o código atual.
 
-## Princípio central
+## 1. Regra central
 
-Carrinho, checkout, pagamento, pedido, banca, logística, rastreamento, avaliações e financeiro devem operar sobre o mesmo pedido e o mesmo identificador. Nenhuma tela deve criar um estado paralelo para representar a mesma compra.
+Uma compra deve manter o mesmo identificador do checkout à conclusão.
 
-Fluxo principal:
+Fluxo atual do protótipo:
 
 ```
-Feira → Banca → Produto → Carrinho → Peso → Endereço → Frete → Pagamento
-→ Pedido → Confirmação da banca → Separação → Pronto para coleta
-→ Oferta ao entregador → Coleta → Rota → Entrega → Avaliações → Repasse
+Feira
+→ Banca
+→ Produto
+→ Carrinho
+→ Endereço ou retirada
+→ Pagamento local
+→ Pedido unificado
+→ Banca prepara
+→ Pronto para coleta
+→ Entregador aceita ou cliente retira
+→ Coleta/retirada
+→ Entrega/conclusão
+→ Avaliações
+→ Recebível local
 ```
 
-Cada mudança de estado deve registrar data/hora e, quando aplicável, ator e motivo.
+Fonte do pedido compartilhado: `src/domain/orderBridge.ts`.
 
-## Estado atual do protótipo
+## 2. O que existe de verdade hoje
 
-Esta especificação descreve tanto comportamento já implementado quanto requisitos de produção.
+### Cliente
 
-Já funciona localmente:
+Implementado em `src/features/customer/CustomerScreens.tsx` e `src/App.tsx`:
 
-- login/cadastro local com senha;
-- edição de nome/e-mail/senha;
-- pedido unificado;
-- catálogo compartilhado;
-- multi-banca;
-- estoque;
-- retirada/entrega;
+- cadastro/login local;
+- conta;
+- endereços;
+- GPS;
+- feira;
+- banca;
+- catálogo;
+- favoritos;
+- carrinho;
+- checkout;
+- pagamento agora/na entrega;
+- cartão local;
+- Pix demonstrativo;
+- dinheiro/troco;
 - promoções;
-- avaliações;
+- carteira local;
+- pedidos;
+- rastreamento por estados;
+- cancelamento;
 - suporte;
-- carteira/reembolso;
-- documentos locais;
-- preferências.
+- avaliações;
+- comprar novamente;
+- preferências;
+- consentimento WhatsApp no pedido.
 
-Ainda exige backend/integração:
+### Feirante
 
-- Auth real;
-- RLS;
-- pagamentos;
-- Storage privado;
-- KYC;
-- roteamento/rastreamento de produção;
-- push/WhatsApp;
-- split/repasse real.
+Implementado em `src/features/vendor/VendorScreens.tsx`:
 
-Estados canônicos: [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
+- conta;
+- banca;
+- produtos;
+- estoque;
+- horários;
+- promoções;
+- entrega/retirada;
+- pagamento na entrega;
+- pedidos;
+- separação;
+- peso real;
+- documentos;
+- avaliações;
+- financeiro local.
 
-## Contas, formulários e edição
+### Entregador
 
-Quando a interface exibir **Salvar**, o formulário deve trabalhar com rascunho e persistir somente ao salvar. Quando houver risco de alteração acidental, oferecer **Descartar/Cancelar**.
+Implementado em `src/features/delivery/DeliveryScreens.tsx`:
 
-Regras:
+- conta;
+- documentos;
+- veículos;
+- capacidade;
+- disponibilidade;
+- agenda;
+- raio;
+- regiões;
+- ofertas;
+- corrida ativa;
+- coleta;
+- rota;
+- entrega;
+- cancelamento;
+- suporte;
+- avaliações;
+- financeiro local.
 
-- senha nunca deve ser ignorada pelo fluxo de login;
-- senha não deve ser armazenada junto do perfil comum;
-- alteração de e-mail deve atualizar a identidade e referências relacionadas;
-- opção indisponível deve estar desabilitada, não receber clique vazio;
-- toggle de configuração precisa produzir efeito observável;
-- upload precisa armazenar/enviar o arquivo, não apenas mostrar o nome.
+## 3. Limite do protótipo
 
-A auditoria específica está em [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md).
+A aplicação ainda não usa Supabase como fonte de verdade.
 
-## Cliente
+Persistência real atual:
 
-### Endereços
+- `localStorage`;
+- bridges em `src/domain`;
+- fixtures de demonstração.
 
-- Permitir endereço manual.
-- Permitir “Usar minha localização atual”.
-- O GPS fornece latitude/longitude.
-- Quando o serviço de geocodificação reversa responder, preencher CEP, rua/quadra, bairro/setor, cidade e UF.
-- Número, complemento e referência permanecem editáveis.
-- Endereços podem ser editados, excluídos e marcados como principal.
+Consequência: duas pessoas em aparelhos diferentes não compartilham estado real.
 
-### Carrinho
+## 4. Cliente — carrinho
 
-Exibir:
+O carrinho exibe:
 
 - itens;
 - quantidade;
-- peso estimado;
-- subtotal.
+- subtotal;
+- peso estimado.
 
-Não exibir “veículo indicado”. O cliente não escolhe nem precisa conhecer a classe de veículo usada na distribuição da corrida.
+Regra implementada:
 
-Uma sacola não deve misturar produtos de feiras diferentes sem um fluxo explícito para isso.
+- não misturar produtos de feiras diferentes.
 
-### Peso e veículo
+O código não mostra “veículo indicado” para o cliente.
 
-Peso é uma restrição de compatibilidade, não uma recomendação.
+## 5. Peso e capacidade de veículo
 
-Regra:
+Fonte: `src/domain/vehicles.ts`.
+
+Capacidades padrão atuais:
+
+| Tipo | kg |
+| --- | ---: |
+| Bicicleta | 10 |
+| Bicicleta cargueira/triciclo | 40 |
+| Moto | 12 |
+| Moto com baú | 20 |
+| Carro | 80 |
+| Utilitário/Pickup | 250 |
+| Van | 500 |
+| Outro | 10 |
+
+Compatibilidade atual do entregador:
 
 ```
-veículo pode receber a corrida se:
-veículo.ativo
-E veículo.documentação_válida_quando_exigida
-E veículo.capacidade_kg >= pedido.peso_total_kg
+vehicle.active
+AND vehicle.capacityKg >= orderWeight
+AND vehicleReady(vehicle)
 ```
 
-Exemplo:
+`vehicleReady` exige documento aprovado + placa válida somente quando `requiresPlate(type)` retorna true.
 
-- pedido 10 kg;
-- bicicleta 15 kg: compatível;
-- moto 25 kg: compatível;
-- carro 100 kg: compatível.
+Comportamento atual importante:
 
-Pedido 100 kg:
+- Bicicleta: não exige placa;
+- Bicicleta cargueira/triciclo: não exige placa;
+- `Outro`: **também não exige placa atualmente**.
 
-- bicicleta 15 kg: incompatível;
-- moto 25 kg: incompatível;
-- carro 150 kg: compatível.
+A isenção de `Outro` é comportamento técnico atual e precisa ser revista antes de produção.
 
-## Pagamentos
+## 6. Placa
 
-Separar o momento do pagamento da forma de pagamento.
+`isValidBrazilianPlate()` aceita sete caracteres no padrão:
+
+```
+AAA0A00
+```
+
+e também permite o quinto caractere numérico, cobrindo a placa antiga após normalização.
+
+## 7. Endereço e GPS
+
+Cliente pode:
+
+- cadastrar endereço manual;
+- usar localização atual;
+- editar número/complemento.
+
+Serviços usados hoje:
+
+- Geolocation API do navegador;
+- Nominatim reverse em `CustomerScreens.tsx`;
+- Nominatim search em `routing.ts`.
+
+Se GPS falha no fluxo principal, o app mantém região de fallback exibida.
+
+## 8. Pagamentos atuais
 
 ### Pagar agora
 
+UI oferece:
+
 - Pix;
-- cartão de crédito;
-- cartão de débito.
+- cartão.
+
+O protótipo muda o pedido para pagamento localmente autorizado. Não existe cobrança real.
 
 ### Pagar na entrega
 
+Pode oferecer:
+
 - dinheiro;
-- cartão na maquininha, quando disponível na operação.
+- cartão na maquininha.
 
-Para dinheiro:
+Disponibilidade depende das configurações das bancas no carrinho.
 
-- perguntar se precisa de troco;
-- se sim, solicitar “Troco para quanto?”.
+### Dinheiro
 
-Para cartões:
+Se selecionado:
 
-- exibir bandeira;
-- nunca armazenar CVV;
-- na integração real, usar token do provedor em vez do número completo.
+- pergunta se precisa de troco;
+- registra `changeFor`.
 
-## Frete e taxas
+### Cartão salvo no protótipo
 
-O preço da entrega deve ser calculado a partir de dados da rota e da carga. A arquitetura deve receber do provedor de rotas:
+Persistido:
 
-- distância do entregador até a banca;
-- distância da banca até o cliente;
-- distância total;
-- tempo estimado;
-- eventuais pedágios/regras de área quando aplicável.
+- titular;
+- últimos 4 dígitos;
+- validade;
+- crédito/débito;
+- bandeira.
 
-A regra comercial final deve ser configurável e não espalhada pelas telas. O modelo previsto é:
+Não persistido:
 
-```
-frete_calculado =
-  tarifa_base
-  + componente_distância
-  + componente_peso/volume
-  + adicionais_operacionais
-```
+- número completo;
+- CVV.
 
-Depois são aplicados subsídios/descontos:
+Produção deve usar tokenização do PSP.
 
-```
-frete_cliente = max(0, frete_calculado - subsidio_feirante - subsidio_plataforma)
-```
+## 9. Frete — comportamento real atual
 
-A remuneração do entregador é calculada separadamente do valor promocional mostrado ao cliente. “Frete grátis” não significa corrida sem remuneração.
+O checkout **não calcula o preço do frete pela rota**.
 
-No checkout, apresentar quando houver subsídio:
+Código atual em `CustomerScreens.tsx`:
 
-- Frete calculado;
-- Desconto/subsídio;
-- Você paga de entrega;
-- Total.
+1. obtém as bancas do carrinho;
+2. lê `vendorMetrics.deliveryFee`;
+3. pega o maior valor entre as bancas;
+4. chama esse valor de `fallbackDeliveryFee`;
+5. define `calculatedDeliveryFee = fallbackDeliveryFee` para entrega;
+6. aplica subsídio/promoção.
 
-As tarifas comerciais definitivas ainda devem ser definidas antes da integração do provedor. Até lá, valores de desenvolvimento não devem virar regra hard-coded de produção.
+Portanto, hoje:
 
-## Entregador
+- peso filtra veículo;
+- rota calcula distância/ETA para logística;
+- peso **não** altera preço;
+- distância real **não** altera preço;
+- frete exibido vem de métrica fixture/local.
 
-### Disponibilidade
+Produção precisa substituir esse cálculo por regra server-side configurável.
 
-O entregador controla:
+## 10. Promoções — comportamento atual
 
-- disponível/indisponível;
-- agenda automática opcional;
-- horário de início/fim;
-- raio máximo;
-- distância preferida;
-- regiões;
-- veículos ativos.
+Tipos existentes no frontend:
 
-A agenda pode atravessar a meia-noite.
+- `percentual`;
+- `valorFixo`;
+- `compreLeve`;
+- `produtoCategoria`;
+- `freteGratis`;
+- `combo`;
+- `horario`;
+- `cupom`.
 
-Uma corrida só pode aparecer/ser aceita se:
-
-- cadastro do entregador estiver aprovado;
-- entregador estiver disponível;
-- horário automático permitir;
-- corrida estiver dentro do raio;
-- destino estiver nas regiões configuradas, quando houver filtro;
-- existir veículo ativo e compatível com o peso;
-- documentação do veículo estiver aprovada quando exigida.
-
-### Oferta da corrida
-
-Antes de aceitar, mostrar:
-
-- pedido;
-- feira;
-- banca;
-- região;
-- distância até a banca;
-- distância banca → cliente;
-- distância total;
-- previsão em minutos;
-- peso total;
-- quantidade/resumo dos itens;
-- remuneração;
-- veículo compatível disponível.
-
-### Veículos
-
-Permitir:
-
-- cadastrar;
-- editar;
-- excluir;
-- ativar/desativar;
-- alterar capacidade.
-
-Veículos com placa exigem:
-
-- placa brasileira válida no padrão antigo ou Mercosul;
-- documento do veículo;
-- estado de validação do documento.
-
-Bicicletas não exigem placa/documento de veículo.
-
-## Feirante
-
-### Produtos
-
-Estados distintos:
-
-- À venda;
-- Pausado pelo feirante;
-- Estoque esgotado.
-
-Estoque zero não deve ser descrito simplesmente como “Pausado”.
-
-Permitir:
-
-- cadastrar;
-- editar;
-- pausar/reativar;
-- ajustar estoque;
-- excluir do catálogo.
-
-Pedidos antigos preservam seus snapshots mesmo se um produto sair do catálogo.
-
-### Promoções
-
-Tipos previstos:
+### Implementados com semântica específica
 
 - percentual;
 - valor fixo;
-- compre X leve Y;
-- desconto por produto/categoria;
+- produto/categoria;
 - frete grátis;
-- oferta por horário;
 - cupom;
-- combo.
+- Compre X Leve Y.
 
-Campos:
+### Parcialmente implementados
 
-- nome;
-- regra;
-- valor/percentual quando aplicável;
-- produto/categoria alvo;
-- pedido mínimo;
-- limite de usos;
-- início;
-- fim.
+`combo` e `horario` entram hoje na mesma regra percentual do subtotal-alvo.
 
-Estados:
+Isso significa:
 
-- Agendada;
-- Ativa;
-- Encerrada.
+- `horario` não verifica janela de horário como regra específica;
+- `combo` não monta composição de produtos/preço próprio.
 
-Permitir editar, encerrar/reativar e excluir.
+Não documentar esses dois como completos.
 
-### Horários
+### Gap SQL
 
-“Usar horário padrão da feira” e “Definir meu próprio horário” são escolhas mutuamente exclusivas.
+A tabela `promotions` não possui:
 
-Horário que fecha depois da meia-noite pertence ao dia seguinte. Exemplo:
+- `coupon_code`;
+- `pay_quantity`;
+- `take_quantity`.
+
+## 11. Horário da banca
+
+O feirante escolhe:
+
+- horário oficial da feira;
+- horário próprio.
+
+Agenda própria suporta fechamento depois da meia-noite.
+
+Exemplo atual:
 
 ```
 Segunda 19:00 → 02:00
 ```
 
-significa abertura segunda às 19h e fechamento terça às 02h.
+é interpretado como fechamento na terça.
 
-Exibir estado operacional:
+Para Feira do Produtor de Planaltina, seed atual usa Segunda e Quinta 19:00–02:00.
 
-- Aberta agora;
-- Fecha às HH:MM;
-- Fechada;
-- Abre [dia] às HH:MM;
-- Em pausa / volta às HH:MM.
+## 12. Publicação da banca
 
-## Cancelamentos
+`VendorScreens.tsx` calcula `approvalStatus`.
 
-Sempre registrar:
+A banca só é sincronizada no marketplace local como aprovada quando todos os documentos obrigatórios estão `approved`.
 
-- pedido/corrida;
+Documentos obrigatórios seed do feirante:
+
+- documento oficial com foto;
+- comprovante de residência;
+- permissão/autorização da banca.
+
+Licença sanitária está marcada como opcional no seed e depende da atividade.
+
+## 13. Produto
+
+`VendorProduct` possui atualmente:
+
+- id;
+- nome;
+- categoria;
+- descrição;
+- estoque;
+- estoque mínimo;
+- ativo;
+- preço;
+- unidade;
+- tamanho/apresentação;
+- peso logístico;
+- uma foto Data URL;
+- nome do arquivo da foto.
+
+`saveProduct()` exige somente:
+
+- nome;
+- preço > 0;
+- peso logístico > 0.
+
+Foto **não é obrigatória hoje**.
+
+Se estoque = 0, o produto é salvo como inativo/esgotado.
+
+## 14. Multi-banca
+
+Pedido unificado mantém uma lista de bancas e seus estados.
+
+Regra local testada:
+
+- logística só libera quando todas as bancas estão prontas.
+
+Limitação atual de rota:
+
+- a corrida agrega nomes de várias bancas;
+- o modelo de rota ainda usa uma origem de feira/banca e destino do cliente;
+- **não existe otimização de múltiplas paradas entre bancas**.
+
+Produção precisa modelar stops.
+
+## 15. Entregador — aprovação real do protótipo
+
+Sempre obrigatórios:
+
+- identidade;
+- comprovante de residência.
+
+Se houver veículo motorizado ativo:
+
+- CNH;
+- CRLV.
+
+Se houver Moto/Moto com baú ativa:
+
+- motofrete.
+
+O código não valida automaticamente:
+
+- idade;
+- tempo de CNH;
+- EAR;
+- autenticidade;
+- consulta Detran;
+- certidões.
+
+## 16. Entregador — filtros de corrida
+
+Uma corrida visível precisa:
+
+- estar disponível;
+- estar dentro de `radiusKm`;
+- estar em região permitida, se configurada.
+
+Para aceitar também precisa:
+
+- `online = true`;
+- agenda permitir;
+- cadastro aprovado;
+- não existir outra corrida ativa;
+- existir veículo ativo compatível/documentado.
+
+Ordenação prioriza:
+
+1. corridas dentro de `preferredDistanceKm`;
+2. menor distância total.
+
+## 17. Pedido e estados
+
+Referência canônica: [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
+
+Frontend global:
+
+```
+received
+preparing
+ready_for_pickup
+driver_assigned
+collected
+out_for_delivery
+delivered
+cancelled
+```
+
+O SQL atual ainda não está totalmente compatível. Ver [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
+
+## 18. Cancelamento
+
+Antes da coleta:
+
 - ator;
 - motivo;
+- detalhe;
 - data/hora;
-- descrição adicional quando necessária.
+- evento;
+- liberação de estoque;
+- reembolso local quando aplicável.
 
-Quando o motivo for “Outro”, a descrição é obrigatória.
+Depois da coleta:
 
-Antes da coleta, cliente pode usar cancelamento simples de acordo com a política. Depois da coleta, abrir ocorrência/suporte em vez de apagar o fluxo.
+- cliente não usa cancelamento simples;
+- abre suporte/ocorrência.
 
-## Rastreamento
+## 19. Estoque
 
-Estados apresentados ao cliente:
+`inventoryBridge.ts` implementa localmente:
 
-1. Pedido recebido
-2. Confirmado pela banca
-3. Em separação
-4. Pronto para coleta
-5. Entregador a caminho da banca
-6. Pedido coletado
-7. A caminho do cliente
-8. Entregue
+- reserva;
+- rejeição por quantidade insuficiente;
+- liberação;
+- consumo.
 
-Depois que houver entregador atribuído, exibir:
+Não existe tabela SQL de reserva de estoque.
+
+## 20. Rastreamento
+
+Cliente vê estados derivados dos eventos do pedido.
+
+Após entregador atribuído, o pedido pode conter:
 
 - nome;
 - veículo;
-- placa parcialmente mascarada quando aplicável;
-- distância;
-- previsão;
-- suporte;
-- mapa/rastreamento quando o provedor estiver integrado.
+- placa mascarada;
+- ETA;
+- distância.
 
-## Favoritos e destaques
+Rastreamento GPS em tempo real ainda não existe.
 
-Favoritos:
+## 21. Documentos
 
-- produtos;
-- bancas/lojas.
+`storedFile.ts`:
 
-Destaques da feira devem permitir adicionar o produto ao carrinho diretamente.
+- limite: 1.500.000 bytes;
+- leitura Data URL;
+- armazena nome/type/tamanho/data.
 
-## Persistência e backend
+Não existe validação por magic bytes nem Storage remoto.
 
-No protótipo atual, parte dos fluxos usa persistência local para validação da experiência. Na implantação real:
+## 22. Critério de interface
 
-- banco/backend é a fonte de verdade;
-- transições de pedido são validadas no servidor;
-- pagamento e repasse vêm do provedor;
-- roteamento fornece distância/tempo;
-- cada transição gera evento auditável;
-- valores financeiros não são confiados ao frontend.
+Auditoria atual: [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md).
 
-## Critério de aceite de interface
+Regra:
 
-Todo botão, card clicável, seletor, toggle ou campo exibido deve:
+- controle disponível deve agir;
+- controle indisponível deve estar `disabled`;
+- formulário com Salvar deve usar rascunho;
+- upload não pode fingir aprovação;
+- preferência deve ter consumidor funcional.
 
-1. executar uma ação;
-2. persistir a alteração apropriada;
-3. refletir a mudança nas telas relacionadas;
-4. não exibir texto interno de desenvolvimento ao usuário final.
+## 23. Mapeamento direto para código
+
+Veja [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).
