@@ -468,6 +468,68 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === "health_check") {
+      requirePermission("settings.manage");
+      const integrationKey = String(body.integration_key ?? "");
+      const envByKey: Record<string, string> = {
+        maps: "MAPS_HEALTH_URL",
+        payments: "PAYMENTS_HEALTH_URL",
+        whatsapp: "WHATSAPP_HEALTH_URL",
+        push: "PUSH_HEALTH_URL",
+      };
+      const envName = envByKey[integrationKey];
+      if (!envName) throw new ResponseError("unsupported_integration", 400);
+
+      const url = Deno.env.get(envName);
+      const started = Date.now();
+      let status: "ok" | "error" | "not_configured" = "not_configured";
+      let message = `Variável ${envName} não configurada.`;
+
+      if (url) {
+        try {
+          const parsed = new URL(url);
+          if (parsed.protocol !== "https:") throw new Error("health_url_must_use_https");
+          const response = await fetch(parsed, {
+            method: "GET",
+            redirect: "error",
+            signal: AbortSignal.timeout(8000),
+          });
+          status = response.ok ? "ok" : "error";
+          message = `HTTP ${response.status}`;
+        } catch (error) {
+          status = "error";
+          message = error instanceof Error ? error.message : "health_check_failed";
+        }
+      }
+
+      const responseMs = Date.now() - started;
+      const { error: eventError } = await adminDb.from("integration_health_events").insert({
+        integration_key: integrationKey,
+        status,
+        message,
+        response_ms: responseMs,
+        metadata: { source: "admin-actions", env: envName },
+      });
+      if (eventError) throw new ResponseError("health_event_failed", 400, eventError.message);
+
+      await adminDb
+        .from("integration_registry")
+        .update({
+          status,
+          last_checked_at: new Date().toISOString(),
+          updated_by: ctx.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("key", integrationKey);
+
+      await audit("health_check", "integration_registry", integrationKey, null, {
+        status,
+        message,
+        response_ms: responseMs,
+      });
+      return json({ data: { status, message, response_ms: responseMs } });
+    }
+
     if (action === "alert_acknowledge" || action === "alert_resolve") {
       requirePermission("operations.manage");
       const alertId = String(body.alert_id ?? "");
