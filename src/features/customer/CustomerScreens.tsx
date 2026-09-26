@@ -2273,7 +2273,7 @@ export function AccountPage({
           <small>A senha não é salva junto com os dados do perfil.</small>
         </label>
         {formError && (
-          <p className="operation-footnote" role="alert">
+          <p className="inline-error" role="alert">
             {formError}
           </p>
         )}
