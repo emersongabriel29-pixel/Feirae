@@ -70,7 +70,7 @@ const labels={
  public_readable:"Público",area:"Área",title:"Título",audience:"Público",severity:"Tipo",channel:"Canal",title_template:"Título",
  provider:"Provedor",environment:"Ambiente",last_checked_at:"Última verificação",request_type:"Solicitação",resolved_at:"Resolvido",
  admin_id:"Admin",action:"Ação",entity:"Entidade",entity_id:"Registro",code:"Código",file_path:"Arquivo",
- action_type:"Ação",reason:"Motivo",ends_at:"Até",sort_order:"Ordem",permission:"Permissão",
+ action_type:"Ação",reason:"Motivo",sort_order:"Ordem",permission:"Permissão",
  stall_code:"Box",stall_name:"Banca / box",fair_id:"Feira",vendor_id:"Feirante",method:"Método",
  provider_fee:"Taxa provedor",platform_amount:"Feiraê",vendor_amount:"Feirante",delivery_amount:"Entregador",
  refunded_amount:"Reembolsado",reconciled:"Conciliado",total_distance_km:"Km",eta_minutes:"Minutos"
@@ -148,7 +148,9 @@ async function getConfig(){
      const config=await response.json();
      if(config?.url&&config?.anonKey)return config;
    }
- }catch{}
+ }catch{
+   // config.json é opcional apenas no desenvolvimento local.
+ }
  if(isLocalAdmin){
    try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||"null");}catch{return null;}
  }
