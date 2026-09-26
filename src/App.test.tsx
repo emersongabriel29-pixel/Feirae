@@ -537,10 +537,10 @@ describe("Feiraê role access", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens the delivery experience selected at login", () => {
+  it("opens the current delivery central selected at login", () => {
     render(<App />);
     loginAs("entregador");
-    expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Central do entregador" })).toBeInTheDocument();
   });
 
   it("lets the delivery person complete all delivery stages", () => {
