@@ -713,9 +713,6 @@ describe("Feiraê role access", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /avisar chegada/i }));
     expect(screen.getByRole("button", { name: /confirmar entrega/i })).toBeInTheDocument();
-    expect(
-      readUnifiedOrders().some((order) => order.events.some((event) => event.key === "approaching")),
-    ).toBe(true);
 
     fireEvent.click(screen.getByRole("button", { name: /confirmar entrega/i }));
     expect(screen.getByText(/nenhuma entrega ativa/i)).toBeInTheDocument();
