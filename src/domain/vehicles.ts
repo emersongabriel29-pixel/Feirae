@@ -1,5 +1,5 @@
 import type { StoredFile } from "./storedFile";
-import { runtimeVehicleRules } from "./runtimeConfig";
+import { getRuntimeConfiguration, runtimeVehicleRules } from "./runtimeConfig";
 
 export const vehicleCapacityDefaults = {
   Bicicleta: 10,
@@ -28,7 +28,7 @@ export type DeliveryVehicle = {
 
 export function getVehicleTypeOptions(): DeliveryVehicleType[] {
   const runtime = runtimeVehicleRules();
-  return runtime.length
+  return getRuntimeConfiguration().source === "supabase"
     ? runtime.map((rule) => rule.display_name)
     : (Object.keys(vehicleCapacityDefaults) as DeliveryVehicleType[]);
 }
@@ -51,7 +51,7 @@ export function requiresPlate(type: DeliveryVehicleType) {
 
 export function isVehicleTypeActive(type: DeliveryVehicleType) {
   const runtime = runtimeVehicleRules();
-  if (!runtime.length) return type in vehicleCapacityDefaults;
+  if (getRuntimeConfiguration().source !== "supabase") return type in vehicleCapacityDefaults;
   return runtime.some((rule) => rule.display_name === type && rule.active);
 }
 
