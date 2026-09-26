@@ -810,6 +810,17 @@ to authenticated
 using ((select private.feirae_admin_has('finance.manage')))
 with check ((select private.feirae_admin_has('finance.manage')));
 
+create policy "admins read own access state"
+on public.admin_access for select
+to authenticated
+using (
+  profile_id = (select auth.uid())
+  and exists (
+    select 1 from public.profiles p
+    where p.id = (select auth.uid()) and p.role = 'admin'
+  )
+);
+
 create policy "admins manage admin access"
 on public.admin_access for all
 to authenticated
