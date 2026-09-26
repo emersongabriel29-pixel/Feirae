@@ -1,5 +1,9 @@
 export const vendorModuleDetails: Record<string, { text: string; badge: string }> = {
   Pedidos: { text: "Acompanhar pedidos, preparar, cancelar e marcar coleta.", badge: "3 novos" },
+  Notificações: {
+    text: "Avisos de pedido, pagamento, coleta, entrega, cancelamento e suporte.",
+    badge: "Avisos",
+  },
   "Minha banca": { text: "Editar banca, box, feira e status aberto/fechado.", badge: "Banca 18" },
   Produtos: { text: "Cadastrar produtos, valores, unidade, peso e disponibilidade.", badge: "Editar" },
   Estoque: { text: "Controlar quantidades e pausar itens esgotados.", badge: "2 alertas" },
