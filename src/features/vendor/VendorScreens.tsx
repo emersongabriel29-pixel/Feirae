@@ -832,17 +832,15 @@ export function FeiranteOperations({
             <div className="operation-metrics">
               <article>
                 <strong>{effectiveStoreOpen ? "Aberta agora" : "Fechada"}</strong>
-                <span>
-                  {bankProfile.name} · Banca {bankProfile.box || "sem número"}
-                </span>
+                <span>Banca {bankProfile.box || "sem número"}</span>
               </article>
               <article>
                 <strong>{pendingOrders.length}</strong>
                 <span>pedidos em andamento</span>
               </article>
               <article>
-                <strong>{approvalStatus}</strong>
-                <span>status cadastral</span>
+                <strong>{approvalStatus === "Aprovado" ? "Aprovado" : "Pendente"}</strong>
+                <span>{approvalStatus}</span>
               </article>
             </div>
           </div>
