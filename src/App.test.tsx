@@ -93,6 +93,63 @@ describe("Feiraê customer flow", () => {
     expect(password).toHaveAttribute("type", "text");
   });
 
+  it("rejects an incorrect password instead of ignoring it", () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "cliente@feirae.test" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "senha-errada" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/e-mail ou senha incorretos/i);
+    expect(screen.getByRole("heading", { name: /como você vai usar o aplicativo/i })).toBeInTheDocument();
+  });
+
+  it("applies customer name email and password only when the account form is saved", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /minha conta/i }));
+
+    fireEvent.change(screen.getByLabelText(/nome completo/i), {
+      target: { value: "Cliente Atualizada" },
+    });
+    fireEvent.change(screen.getByLabelText(/e-mail de acesso/i), {
+      target: { value: "cliente.nova@feirae.app" },
+    });
+    fireEvent.change(screen.getByLabelText(/nova senha/i), {
+      target: { value: "nova123" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /salvar alterações/i }));
+    expect(screen.getByText(/alterações salvas/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
+    expect(screen.getByRole("heading", { name: /olá, cliente atualizada/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /sair da conta/i }));
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "cliente.nova@feirae.app" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "nova123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
+    expect(screen.getByRole("heading", { name: /seu dia na feira começa aqui/i })).toBeInTheDocument();
+  });
+
+  it("applies the compact cards preference to the interface", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /configurações/i }));
+
+    fireEvent.click(screen.getByLabelText(/cards compactos/i));
+    expect(document.documentElement).toHaveClass("compact-product-cards");
+  });
+
   it("keeps featured fairs inside the fairs area", () => {
     render(<App />);
     loginAs("cliente");
@@ -397,6 +454,22 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/todas as bancas do pedido/i)).toBeInTheDocument();
   });
 
+  it("can discard bank edits without changing the saved public profile", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /minha banca/i }));
+    fireEvent.click(screen.getByRole("button", { name: /editar banca/i }));
+
+    fireEvent.change(screen.getByLabelText(/nome da banca/i), {
+      target: { value: "Nome que não deve salvar" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /cancelar alterações/i }));
+
+    expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
+    expect(screen.queryByText(/nome que não deve salvar/i)).not.toBeInTheDocument();
+  });
+
   it("opens real bank editing instead of inert cards", () => {
     render(<App />);
     loginAs("feirante");
@@ -526,6 +599,20 @@ describe("Feiraê role access", () => {
     expect(screen.getByLabelText(/^cnh$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/categoria da cnh/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/chave pix/i)).toBeInTheDocument();
+  });
+
+  it("persists the typed delivery support detail in a real local protocol", () => {
+    render(<App />);
+    loginAs("entregador");
+    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^ajuda$/i }));
+
+    const detail = screen.getByLabelText(/detalhe do atendimento/i);
+    fireEvent.change(detail, { target: { value: "Minha mensagem específica de suporte" } });
+    fireEvent.click(screen.getByRole("button", { name: /abrir atendimento/i }));
+
+    expect(screen.getByText(/minha mensagem específica de suporte/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/SUP-0001/i).length).toBeGreaterThan(0);
   });
 
   it("lets the delivery person choose Pix or bank account for payouts", () => {
