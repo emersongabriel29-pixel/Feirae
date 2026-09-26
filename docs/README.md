@@ -65,6 +65,7 @@ Um documento de requisito não é prova de implementação.
 
 ## Planejamento
 
+- [AUDIT_MASTER_CHECKLIST.md](AUDIT_MASTER_CHECKLIST.md) — checklist oficial das 57 auditorias + auditoria-mãe de rastreabilidade.
 - [MVP_CHECKLIST.md](MVP_CHECKLIST.md)
 - [ROADMAP.md](ROADMAP.md)
 - [TECHNICAL_REVIEW.md](TECHNICAL_REVIEW.md)
