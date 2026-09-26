@@ -129,6 +129,7 @@ todas as bancas delivered
 ```
 
 Uma banca não pode encerrar sozinha o pedido global de retirada quando existem outras bancas pendentes.
+
 ## 4. Pagamento
 
 Frontend:
