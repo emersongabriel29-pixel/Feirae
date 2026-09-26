@@ -295,7 +295,7 @@
 }
 .inventory-dot.warning {
   background: #e59a24;
-  box-shadow: 0 0 0 5px var(--fe-surface) 3dd;
+  box-shadow: 0 0 0 5px #fff3dd;
 }
 .mini-toggle {
   flex: none;
