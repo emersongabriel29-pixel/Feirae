@@ -307,21 +307,78 @@ export function appendReview(orderId: string, review: UnifiedReview) {
   patchUnifiedOrder(orderId, { reviews: [...(order.reviews ?? []), review] });
 }
 
-export function migrateUnifiedOrderCustomerKey(oldEmail: string, newEmail: string, newName?: string) {
+export function migrateUnifiedOrderAccountKey(
+  oldEmail: string,
+  newEmail: string,
+  role: "customer" | "feirante" | "delivery",
+  newName?: string,
+) {
   const from = oldEmail.trim().toLocaleLowerCase("pt-BR");
   const to = newEmail.trim().toLocaleLowerCase("pt-BR");
+  const oldVendorId = vendorIdFor(from);
+  const newVendorId = vendorIdFor(to);
   const current = readRawOrders();
+
   writeUnifiedOrders(
-    current.map((order) =>
-      order.customerKey?.trim().toLocaleLowerCase("pt-BR") === from
-        ? {
-            ...order,
-            customerKey: to,
-            customerName: newName?.trim() || order.customerName,
-            updatedAt: new Date().toISOString(),
-          }
-        : order,
-    ),
+    current.map((order) => {
+      let changed = false;
+      let nextOrder = order;
+
+      if (role === "customer" && order.customerKey?.trim().toLocaleLowerCase("pt-BR") === from) {
+        changed = true;
+        nextOrder = {
+          ...nextOrder,
+          customerKey: to,
+          customerName: newName?.trim() || order.customerName,
+        };
+      }
+
+      if (role === "delivery" && order.driver?.driverKey?.trim().toLocaleLowerCase("pt-BR") === from) {
+        changed = true;
+        nextOrder = {
+          ...nextOrder,
+          driver: {
+            ...order.driver,
+            driverKey: to,
+            name: newName?.trim() || order.driver.name,
+          },
+        };
+      }
+
+      if (role === "feirante") {
+        const vendors = (nextOrder.vendors ?? []).map((vendor) =>
+          vendor.vendorId === oldVendorId
+            ? { ...vendor, vendorId: newVendorId, vendorName: newName?.trim() || vendor.vendorName }
+            : vendor,
+        );
+        const items = nextOrder.items.map((item) =>
+          item.vendorId === oldVendorId
+            ? { ...item, vendorId: newVendorId, vendor: newName?.trim() || item.vendor }
+            : item,
+        );
+        if (
+          vendors.some((vendor, index) => vendor !== nextOrder.vendors?.[index]) ||
+          items.some((item, index) => item !== nextOrder.items[index])
+        ) {
+          changed = true;
+          nextOrder = { ...nextOrder, vendors, items };
+        }
+      }
+
+      const reviews = (nextOrder.reviews ?? []).map((review) => {
+        if (review.targetId === from) return { ...review, targetId: to };
+        if (role === "feirante" && review.targetId === oldVendorId) {
+          return { ...review, targetId: newVendorId };
+        }
+        return review;
+      });
+      if (reviews.some((review, index) => review !== nextOrder.reviews?.[index])) {
+        changed = true;
+        nextOrder = { ...nextOrder, reviews };
+      }
+
+      return changed ? { ...nextOrder, updatedAt: new Date().toISOString() } : nextOrder;
+    }),
   );
 }
 
