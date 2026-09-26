@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
   };
 
   const has = (permission: string) =>
-    ctx.isSuperadmin || ctx.permissions.has("*") || ctx.permissions.has(permission);
+    ctx.isSuperadmin || ctx.permissions.has(permission);
 
   const requirePermission = (permission: string) => {
     if (!has(permission)) throw new ResponseError("forbidden", 403);
@@ -407,6 +407,9 @@ Deno.serve(async (req) => {
         updated_by: ctx.id,
         updated_at: new Date().toISOString(),
       };
+      if (before.is_superadmin && !ctx.isSuperadmin) {
+        throw new ResponseError("superadmin_required", 403);
+      }
       if (body.active !== undefined) patch.active = Boolean(body.active);
       if (body.is_superadmin !== undefined) {
         if (!ctx.isSuperadmin) throw new ResponseError("superadmin_required", 403);
@@ -440,7 +443,6 @@ Deno.serve(async (req) => {
       const profileId = String(body.profile_id ?? "");
       const permissions = Array.isArray(body.permissions) ? body.permissions.map(String) : [];
       const allowedPermissions = new Set([
-        "*",
         "operations.manage",
         "documents.review",
         "accounts.enforce",
