@@ -57,6 +57,12 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await authClient.auth.getUser(token);
   if (userError || !userData.user) return json({ error: "unauthorized" }, 401);
 
+  const { data: aalData, error: aalError } =
+    await authClient.auth.mfa.getAuthenticatorAssuranceLevel(token);
+  if (aalError || aalData?.currentLevel !== "aal2") {
+    return json({ error: "mfa_required" }, 403);
+  }
+
   const adminId = userData.user.id;
   const [{ data: profile }, { data: access }, { data: permissionRows }] = await Promise.all([
     adminDb.from("profiles").select("id,role").eq("id", adminId).maybeSingle(),
