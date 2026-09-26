@@ -72,6 +72,49 @@ const labels={
 };
 function label(k){return labels[k]||title(k.replaceAll("_"," "));}
 
+const TABLE_SEARCH_FIELDS={
+  fairs:["name","state","city","address"],
+  profiles:["full_name","phone"],
+  vendor_profiles:["business_name","description"],
+  delivery_profiles:["city","state","receiving_method"],
+  onboarding_documents:["document_type","status","correction_reason"],
+  products:["name","unit"],
+  categories:["name"],
+  service_states:["code","name"],
+  service_regions:["code","name","state","city"],
+  vehicle_type_rules:["code","display_name"],
+  delivery_fee_rules:["name","vehicle_code"],
+  platform_fee_rules:["name","scope"],
+  payment_method_rules:["code","label","method_type"],
+  cancellation_reasons:["code","label","actor_role","flow_stage"],
+  onboarding_requirements:["document_type","label","vehicle_type"],
+  orders:["payment_status"],
+  deliveries:["status","cancel_reason","route_source"],
+  support_tickets:["topic","details","status"],
+  account_enforcements:["action_type","status","reason"],
+  payments:["provider","provider_payment_id","method","status"],
+  promotions:["name","promotion_type","rule_text"],
+  payouts:["status","provider_reference"],
+  order_reviews:["comment","target_role"],
+  feature_flags:["key","label","description"],
+  content_blocks:["key","area","title","body"],
+  system_announcements:["audience","title","body"],
+  notification_templates:["key","channel","audience","title_template","body_template"],
+  integration_registry:["key","provider","label","environment","status"],
+  privacy_requests:["request_type","status","details","resolution_notes"],
+  admin_permissions:["permission"],
+  admin_audit_logs:["action","entity","entity_id"]
+};
+
+function safeSearchTerm(value){
+ return String(value||"").trim().replace(/[,*()]/g," ").replace(/\s+/g," ").slice(0,120);
+}
+
+function isUuid(value){
+ return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+
 const reportDefs={
   orders:{label:"Pedidos",table:"orders",dateField:"created_at",cols:["id","status","payment_status","subtotal","delivery_fee","total","created_at"]},
   deliveries:{label:"Entregas",table:"deliveries",dateField:"updated_at",cols:["id","order_id","delivery_id","status","fee","total_distance_km","eta_minutes","cancel_reason","accepted_at","delivered_at","updated_at"]},
@@ -728,26 +771,47 @@ async function saveSetting(key){
 
 async function renderModule(m){
  $("#pageContent").innerHTML='<div class="empty">Carregando '+esc(m.label.toLowerCase())+'…</div>';
- let q=state.supabase.from(m.table).select("*").limit(300);
+ const from=state.page*state.pageSize,to=from+state.pageSize-1;
+ let q=state.supabase.from(m.table).select("*",{count:"exact"}).range(from,to);
+ const term=safeSearchTerm(state.query);
+ const searchFields=TABLE_SEARCH_FIELDS[m.table]||[];
+ const filters=[];
+ if(term){
+   for(const field of searchFields)filters.push(field+".ilike.*"+term+"*");
+   if(isUuid(term))filters.push((m.key||"id")+".eq."+term);
+   if(filters.length)q=q.or(filters.join(","));
+ }
  if(m.cols.includes("created_at"))q=q.order("created_at",{ascending:false});
  else if(m.cols.includes("updated_at"))q=q.order("updated_at",{ascending:false});
+ else if(m.cols.includes("name"))q=q.order("name");
  const r=await q;if(r.error){renderError(r.error);return;}
- state.rows=r.data||[];drawTable(m,state.rows);
+ state.rows=r.data||[];state.total=r.count||0;
+ if(!state.rows.length&&state.page>0){state.page--;return renderModule(m);}
+ drawTable(m,state.rows);
 }
 
 function drawTable(m,rows){
- let html='<section class="panel"><div class="panel-head"><div><h2>'+esc(m.label)+'</h2><p>'+esc(m.desc)+'</p></div><div class="toolbar"><input id="tableSearch" placeholder="Buscar nesta lista">';
+ const start=state.total?state.page*state.pageSize+1:0;
+ const end=Math.min((state.page+1)*state.pageSize,state.total);
+ let html='<section class="panel"><div class="panel-head"><div><h2>'+esc(m.label)+'</h2><p>'+esc(m.desc)+'</p></div><div class="toolbar"><input id="tableSearch" value="'+esc(state.query)+'" placeholder="Buscar no banco">';
  if(m.bulkField)html+='<button id="bulkEnable" class="secondary">Ativar selecionados</button><button id="bulkDisable" class="secondary">Desativar selecionados</button>';
  if(m.create)html+='<button id="newRecord" class="primary">Novo</button>';
  html+='</div></div><div class="table-wrap"><table><thead><tr>';
  if(m.bulkField)html+='<th><input id="selectAllRows" type="checkbox" aria-label="Selecionar todos"></th>';
  html+=m.cols.map((c)=>'<th>'+esc(label(c))+'</th>').join("");
  if(!m.readonly)html+='<th>Ações</th>';
- html+='</tr></thead><tbody id="tableBody"></tbody></table></div></section>';
+ html+='</tr></thead><tbody id="tableBody"></tbody></table></div>'+
+ '<div class="pagination"><span>'+start+'–'+end+' de '+state.total+'</span><div><button id="prevPage" class="secondary" '+(state.page===0?"disabled":"")+'>Anterior</button><button id="nextPage" class="secondary" '+(end>=state.total?"disabled":"")+'>Próxima</button></div></div></section>';
  $("#pageContent").innerHTML=html;
  fillRows(m,rows);
- $("#tableSearch").oninput=(e)=>{const t=e.target.value.toLowerCase().trim();fillRows(m,!t?state.rows:state.rows.filter((r)=>JSON.stringify(r).toLowerCase().includes(t)));};
- if(m.create)$("#newRecord").onclick=()=>openEditor(m,null);
+ let searchTimer;
+ $("#tableSearch").oninput=(e)=>{
+   clearTimeout(searchTimer);
+   searchTimer=setTimeout(async()=>{state.query=e.target.value;state.page=0;state.selected=new Set();await renderModule(m);},300);
+ };
+ $("#prevPage").onclick=async()=>{if(state.page>0){state.page--;state.selected=new Set();await renderModule(m);}};
+ $("#nextPage").onclick=async()=>{if((state.page+1)*state.pageSize<state.total){state.page++;state.selected=new Set();await renderModule(m);}};
+ if(m.create)$("#newRecord").onclick=()=>m.secureAction==="enforcement"?openEnforcementCreate():openEditor(m,null);
  if(m.bulkField){
    $("#bulkEnable").onclick=()=>bulkSet(m,true);
    $("#bulkDisable").onclick=()=>bulkSet(m,false);
@@ -771,7 +835,14 @@ function fillRows(m,rows){
      line+='<td><div class="actions">';
      if(m.table==="orders")line+='<button data-order-detail="'+i+'">Detalhes</button>';
      if(m.table==="deliveries")line+='<button data-delivery-detail="'+i+'">Detalhes</button>';
-     line+='<button data-edit="'+i+'">Editar</button>';
+     if(m.profileDetail)line+='<button data-profile-detail="'+i+'">Visão 360°</button>';
+     if(m.secureAction==="document_review")line+='<button data-document-review="'+i+'">Revisar</button>';
+     if(m.secureAction==="support_update")line+='<button data-support-update="'+i+'">Atender</button>';
+     if(m.secureAction==="payment_reconcile")line+='<button data-payment-reconcile="'+i+'">'+(row.reconciled?"Desconciliar":"Conciliar")+'</button>';
+     if(m.secureAction==="review_moderate")line+='<button data-review-moderate="'+i+'">Moderar</button>';
+     if(m.secureAction==="privacy_update")line+='<button data-privacy-update="'+i+'">Tratar</button>';
+     if(m.secureAction==="enforcement"&&row.status==="active")line+='<button data-enforcement-revoke="'+i+'">Revogar</button>';
+     if(m.fields?.length)line+='<button data-edit="'+i+'">Editar</button>';
      if(m.documentViewer&&row.file_path)line+='<button data-document="'+i+'">Abrir documento</button>';
      if(m.enforcementTarget&&canModule("enforcements")){
        line+='<button data-suspend="'+i+'">Suspender</button><button data-ban="'+i+'">Banir</button>';
@@ -788,6 +859,13 @@ function fillRows(m,rows){
  });
  body.querySelectorAll("[data-order-detail]").forEach((b)=>b.onclick=()=>renderOrderDetail(rows[Number(b.dataset.orderDetail)].id));
  body.querySelectorAll("[data-delivery-detail]").forEach((b)=>b.onclick=()=>renderDeliveryDetail(rows[Number(b.dataset.deliveryDetail)].id));
+ body.querySelectorAll("[data-profile-detail]").forEach((b)=>b.onclick=()=>renderProfile360(m.profileDetail,rows[Number(b.dataset.profileDetail)]));
+ body.querySelectorAll("[data-document-review]").forEach((b)=>b.onclick=()=>openDocumentReview(rows[Number(b.dataset.documentReview)]));
+ body.querySelectorAll("[data-support-update]").forEach((b)=>b.onclick=()=>openSupportUpdate(rows[Number(b.dataset.supportUpdate)]));
+ body.querySelectorAll("[data-payment-reconcile]").forEach((b)=>b.onclick=()=>togglePaymentReconcile(rows[Number(b.dataset.paymentReconcile)]));
+ body.querySelectorAll("[data-review-moderate]").forEach((b)=>b.onclick=()=>openReviewModeration(rows[Number(b.dataset.reviewModerate)]));
+ body.querySelectorAll("[data-privacy-update]").forEach((b)=>b.onclick=()=>openPrivacyUpdate(rows[Number(b.dataset.privacyUpdate)]));
+ body.querySelectorAll("[data-enforcement-revoke]").forEach((b)=>b.onclick=()=>revokeEnforcement(rows[Number(b.dataset.enforcementRevoke)]));
  body.querySelectorAll("[data-edit]").forEach((b)=>b.onclick=()=>openEditor(m,rows[Number(b.dataset.edit)]));
  body.querySelectorAll("[data-document]").forEach((b)=>b.onclick=()=>openDocument(rows[Number(b.dataset.document)]));
  body.querySelectorAll("[data-suspend]").forEach((b)=>b.onclick=()=>openEnforcement(rows[Number(b.dataset.suspend)].id,"suspension"));
