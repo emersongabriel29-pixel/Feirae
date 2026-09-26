@@ -228,7 +228,7 @@ Após coleta:
 - não usa cancelamento simples;
 - abre suporte.
 
-Se um pedido atribuído for cancelado, concluído ou reatribuído por outro ator, o entregador limpa o identificador e a etapa local da corrida para não ficar bloqueado para novas ofertas.
+Se um pedido atribuído for cancelado, concluído ou reatribuído por outro ator, o estado derivado deixa de considerar o lock local obsoleto, liberando novas ofertas; ao aceitar outra corrida, ID e etapa são sobrescritos.
 
 ## 15. Estoque
 
