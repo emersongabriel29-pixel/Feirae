@@ -214,7 +214,7 @@ create table if not exists public.system_announcements (
   active boolean not null default true,
   starts_at timestamptz,
   ends_at timestamptz,
-  created_by uuid references public.profiles(id) on delete set null,
+  created_by uuid references public.profiles(id) on delete set null default auth.uid(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -255,7 +255,7 @@ create table if not exists public.admin_permissions (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
   permission text not null,
-  granted_by uuid references public.profiles(id) on delete set null,
+  granted_by uuid references public.profiles(id) on delete set null default auth.uid(),
   created_at timestamptz not null default now(),
   unique(profile_id, permission)
 );
