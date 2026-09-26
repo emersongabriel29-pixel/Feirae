@@ -31,7 +31,7 @@ npm run build
 
 | Arquivo                                | Testes |
 | -------------------------------------- | -----: |
-| `src/App.test.tsx`                     |     46 |
+| `src/App.test.tsx`                     |     47 |
 | `src/domain/orderBridge.test.ts`       |      5 |
 | `src/domain/marketplaceBridge.test.ts` |      4 |
 | `src/domain/inventoryBridge.test.ts`   |      3 |
@@ -39,16 +39,19 @@ npm run build
 | `src/domain/marketplace.test.ts`       |      4 |
 | `src/domain/session.test.ts`           |      3 |
 | `src/utils.test.ts`                    |      4 |
-| **Total**                              | **73** |
+| **Total**                              | **74** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 46 testes cobrem explicitamente:
+Os 47 testes cobrem explicitamente:
 
 ### Cliente
 
-- abrir catálogo;
+- abrir catálogo e acessar Início pela navegação principal;
 - concluir checkout demo;
+- não incluir frete no total antes de existir endereço de entrega;
+- ocultar ferramentas de busca/localização fora das telas de descoberta;
+- desabilitar incremento do carrinho no limite do estoque e contar unidades;
 - identidade da conta;
 - campos de conta;
 - endereço estruturado;
@@ -58,7 +61,7 @@ Os 46 testes cobrem explicitamente:
 - cards compactos;
 - feiras em área correta;
 - filtro por região;
-- detalhe de pedido;
+- detalhe de pedido e apresentação pós-entrega sem ETA zero;
 - bancas da feira;
 - impedir mistura entre feiras;
 - busca sem acento;
@@ -130,7 +133,7 @@ Os 46 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 73 testes NÃO comprovam diretamente
+## 5. O que os 74 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -223,7 +226,7 @@ Uma release deve registrar:
 - bugs conhecidos;
 - rollback disponível.
 
-O número 73 é referência do protótipo atual, não selo de produção.
+O número 74 é referência do protótipo atual, não selo de produção.
 
 ## 12. QA visual após auditoria de design
 

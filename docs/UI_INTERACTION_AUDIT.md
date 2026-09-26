@@ -194,7 +194,7 @@ Correções implementadas no código:
 - login mobile com bloco promocional reduzido;
 - hero do cliente reduzido no mobile;
 - contexto de feira/localização mantém texto visível em tela pequena;
-- navegação primária Cliente alinhada em Feiras, Produtos, Pedidos e Perfil;
+- navegação primária Cliente alinhada em Início, Feiras, Produtos, Pedidos e Perfil;
 - Feirante e Entregador entram direto na Central operacional;
 - módulos operacionais agrupados sem menu lateral;
 - `operation-card` deixou de forçar 420 px de altura;
@@ -214,3 +214,23 @@ Documento de regra visual:
 ### Limite desta auditoria
 
 A suite atual usa jsdom. Portanto essas correções de layout ainda precisam de regressão visual em browser real para 320, 360, 390/412, 768, 1024, 1280 e 1440 px.
+
+## Correções da auditoria em vídeo — 26/09/2026 17:35
+
+Implementado nesta rodada:
+
+- **Navegação:** adicionado Início com ícone de casa na barra móvel e destino também no menu desktop do cliente.
+- **Cabeçalho:** busca em linha inteira acima de feira/localização; ferramentas de descoberta ocultas em Pedidos, Perfil, checkout e rastreamento.
+- **Checkout:** entrega sem endereço mostra “A calcular”; frete não entra no total até existir endereço; retirada mantém frete zero.
+- **Carrinho:** contador representa unidades e o botão de incremento é desativado no limite do estoque.
+- **Rastreamento:** entrega concluída não exibe “0 min”; mostra rota, horário do evento de entrega e “Ajuda pós-entrega”.
+- **Feiras:** textos administrativos “a configurar” deixaram a interface do cliente; configuração ausente é apresentada como indisponível no momento.
+
+Já estava correto no vídeo e foi preservado:
+
+- soma do peso do carrinho;
+- ordenação de pedidos por data/hora;
+- filtros de categoria;
+- área “Feiras em destaque” dentro de Feiras.
+
+A trava administrativa de ativação/publicação da feira depende do painel de gestão runtime, que ainda não está implementado; a regra obrigatória foi registrada em `ADMIN_MANAGEMENT_SPEC.md`.

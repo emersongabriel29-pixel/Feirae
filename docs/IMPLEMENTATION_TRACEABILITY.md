@@ -114,14 +114,16 @@ O checkout não usa a rota para formar o preço.
 1. pega as bancas do carrinho;
 2. lê `vendorMetrics.deliveryFee`;
 3. usa o maior valor como `fallbackDeliveryFee`;
-4. esse valor vira `calculatedDeliveryFee`;
-5. aplica subsídio/promoção.
+4. só transforma esse fallback em `calculatedDeliveryFee` quando existe endereço de entrega;
+5. sem endereço, o checkout mostra **A calcular** e não soma frete ao total;
+6. aplica subsídio/promoção somente sobre o frete já liberado.
 
 Portanto:
 
 - rota e ETA existem para logística;
 - preço de frete ainda é fixture/métrica local;
-- peso não altera o preço do frete atual.
+- peso não altera o preço do frete atual;
+- retirada usa frete zero.
 
 ## Capacidades de veículo atuais
 
@@ -201,7 +203,7 @@ Não faz:
 
 Contagem real:
 
-- `App.test.tsx`: 43;
+- `App.test.tsx`: 47;
 - `orderBridge.test.ts`: 4;
 - `marketplaceBridge.test.ts`: 4;
 - `inventoryBridge.test.ts`: 3;
@@ -210,4 +212,13 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **69**.
+Total: **74**.
+
+## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
+
+- `AppComponents.tsx::MobileNavigation`: cinco destinos, incluindo **Início** com ícone de casa;
+- `App.tsx`: ferramentas de busca/localização aparecem somente em `home`, `fairs` e `products` quando `screen === "main"`;
+- `auth.css` + `responsive.css`: busca em linha própria acima do contexto de feira/localização;
+- `CartDrawer`: incremento desabilitado no limite do estoque e contador da sacola semântico por unidades;
+- `DeliveryTracking`: pedido entregue deixa de exibir ETA zero e passa a mostrar horário de entrega + ajuda pós-entrega;
+- `FairCard`: configuração ausente é apresentada ao cliente como indisponibilidade, sem instrução administrativa “a configurar”.

@@ -64,6 +64,22 @@ Desativar uma feira:
 - remove de novas compras/publicação;
 - preserva pedidos e histórico.
 
+### Gate obrigatório de ativação/publicação
+
+A gestão **não pode ativar uma feira para compras** enquanto houver configuração obrigatória incompleta. Antes de ativar, validar no mínimo:
+
+- nome e região/UF atendida;
+- endereço ou coordenadas válidas;
+- agenda/horário definido e com estado de verificação conhecido;
+- pelo menos um modo de atendimento habilitado (entrega e/ou retirada);
+- se entrega estiver habilitada: política de frete/taxa vigente;
+- vínculo operacional necessário para receber pedidos;
+- status administrativo não suspenso/bloqueado.
+
+A UI administrativa deve listar exatamente quais pendências impedem a ativação. Não usar apenas um botão ativo/inativo sem explicar o bloqueio.
+
+**Situação atual:** esta é uma regra contratual do painel futuro. O painel administrativo runtime ainda não existe, portanto o repositório não deve afirmar que esse gate já está executando no backend.
+
 ## 4. Catálogo global de tipos de veículo
 
 Isto é diferente de editar o veículo particular de um entregador.
