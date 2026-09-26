@@ -86,6 +86,16 @@
   border-radius: 0.45rem;
   background: #f1f4f0;
 }
+.cart-item > div > div button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.stock-limit {
+  margin-top: 0.35rem;
+  color: var(--fe-danger);
+  font-size: 0.65rem !important;
+  font-weight: 800;
+}
 .cart-item > button {
   color: #8a4d4d;
 }
@@ -166,7 +176,7 @@
   bottom: 0;
   z-index: 35;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border-top: 1px solid var(--fe-border);
   background: rgba(255, 255, 255, 0.96);
   padding: 0.35rem max(0.5rem, env(safe-area-inset-right)) max(0.35rem, env(safe-area-inset-bottom))
