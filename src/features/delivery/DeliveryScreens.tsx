@@ -914,7 +914,7 @@ export function DeliveryOperations({
                       .reduce((sum, delivery) => sum + delivery.feeAmount, 0),
                   )}
                 </strong>
-                <span>ganhos das corridas compatíveis</span>
+                <span>ganhos possíveis</span>
               </article>
             </div>
           </div>
@@ -930,7 +930,7 @@ export function DeliveryOperations({
             {active === "Painel" ? (
               <>
                 <div className="delivery-hero">
-                  <span aria-hidden="true">🛵</span>
+                  <span aria-hidden="true"><Bike /></span>
                   <div>
                     <b>Rotas com capacidade compatível</b>
                     <p>O Feiraê só oferece corridas dentro do peso/volume aceito pelo veículo cadastrado.</p>
