@@ -194,7 +194,7 @@ Correções implementadas no código:
 - login mobile com bloco promocional reduzido;
 - hero do cliente reduzido no mobile;
 - contexto de feira/localização mantém texto visível em tela pequena;
-- navegação primária Cliente alinhada em Feiras, Produtos, Pedidos e Perfil;
+- navegação primária Cliente alinhada em Início, Feiras, Produtos, Pedidos e Perfil;
 - Feirante e Entregador entram direto na Central operacional;
 - módulos operacionais agrupados sem menu lateral;
 - `operation-card` deixou de forçar 420 px de altura;
