@@ -4,7 +4,9 @@ const base = process.env.BASE_SHA;
 const head = process.env.HEAD_SHA ?? "HEAD";
 
 if (!base) {
-  console.log("check-change-sync: BASE_SHA ausente; verificação semântica ignorada fora de pull request.");
+  console.log(
+    "check-change-sync: BASE_SHA ausente; verificação semântica ignorada fora de pull request.",
+  );
   process.exit(0);
 }
 
@@ -85,7 +87,10 @@ if (migrations.length > 0) {
   }
 }
 
-if (workflowsOrDeploy.length > 0 && !changedDocs.includes("docs/DEPLOYMENT_AND_ENVIRONMENTS.md")) {
+if (
+  workflowsOrDeploy.length > 0 &&
+  !changedDocs.includes("docs/DEPLOYMENT_AND_ENVIRONMENTS.md")
+) {
   failures.push(
     "Workflow/configuração de ambiente alterada sem atualizar DEPLOYMENT_AND_ENVIRONMENTS.md.",
   );
