@@ -3,19 +3,19 @@ import { navGroups, modules } from "./modules.js";
 
 const CONFIG_KEY="feirae:management:supabase";
 const $=(s)=>document.querySelector(s);
-const state={supabase:null,session:null,profile:null,active:"dashboard",rows:[],editing:null,permissions:new Set(),restricted:false};
+const state={supabase:null,session:null,profile:null,active:"dashboard",rows:[],editing:null,permissions:new Set(),restricted:false,selected:new Set()};
 
 const permissionByModule={
-  orders:"operations.manage",delivery_jobs:"operations.manage",support:"operations.manage",
+  alerts:"operations.manage",orders:"operations.manage",delivery_jobs:"operations.manage",support:"operations.manage",
   documents:"documents.review",enforcements:"accounts.enforce",
-  states:"registrations.manage",fairs:"registrations.manage",users:"registrations.manage",vendors:"registrations.manage",
+  states:"registrations.manage",fairs:"registrations.manage",stalls:"registrations.manage",users:"registrations.manage",vendors:"registrations.manage",
   drivers:"registrations.manage",products:"registrations.manage",categories:"registrations.manage",regions:"registrations.manage",
   vehicle_rules:"rules.manage",delivery_fees:"rules.manage",platform_fees:"rules.manage",payment_methods:"rules.manage",
   cancellation_reasons:"rules.manage",onboarding_requirements:"rules.manage",
-  promotions:"finance.manage",payouts:"finance.manage",reviews:"finance.manage",
+  finance:"finance.manage",payments:"finance.manage",promotions:"finance.manage",payouts:"finance.manage",reviews:"finance.manage",
   content:"communications.manage",announcements:"communications.manage",notifications:"communications.manage",
-  settings:"settings.manage",features:"settings.manage",integrations:"settings.manage",privacy:"settings.manage",
-  permissions:"permissions.manage",audit:"audit.view",reports:"reports.view"
+  settings:"settings.manage",features:"settings.manage",integrations:"settings.manage",integration_health:"settings.manage",privacy:"settings.manage",
+  admins:"permissions.manage",permissions:"permissions.manage",audit:"audit.view",reports:"reports.view"
 };
 function canModule(id){
   const permission=permissionByModule[id];
@@ -50,7 +50,10 @@ const labels={
  public_readable:"Público",area:"Área",title:"Título",audience:"Público",severity:"Tipo",channel:"Canal",title_template:"Título",
  provider:"Provedor",environment:"Ambiente",last_checked_at:"Última verificação",request_type:"Solicitação",resolved_at:"Resolvido",
  admin_id:"Admin",action:"Ação",entity:"Entidade",entity_id:"Registro",code:"Código",file_path:"Arquivo",
- action_type:"Ação",reason:"Motivo",ends_at:"Até",sort_order:"Ordem",permission:"Permissão"
+ action_type:"Ação",reason:"Motivo",ends_at:"Até",sort_order:"Ordem",permission:"Permissão",
+ stall_code:"Box",stall_name:"Banca / box",fair_id:"Feira",vendor_id:"Feirante",method:"Método",
+ provider_fee:"Taxa provedor",platform_amount:"Feiraê",vendor_amount:"Feirante",delivery_amount:"Entregador",
+ refunded_amount:"Reembolsado",reconciled:"Conciliado",total_distance_km:"Km",eta_minutes:"Minutos"
 };
 function label(k){return labels[k]||title(k.replaceAll("_"," "));}
 
@@ -125,11 +128,16 @@ function renderNav(){
 
 async function openModule(id){
  if(!canModule(id)){toast("Você não possui permissão para esta área.");return;}
- state.active=id;state.rows=[];
+ state.active=id;state.rows=[];state.selected=new Set();
  document.querySelectorAll(".nav-item").forEach((b)=>b.classList.toggle("active",b.dataset.module===id));
  $("#appView").classList.remove("menu-open");
  if(id==="dashboard"){ $("#pageTitle").textContent="Visão geral";$("#breadcrumb").textContent="Operação";await renderDashboard();return; }
  if(id==="reports"){ $("#pageTitle").textContent="Relatórios";$("#breadcrumb").textContent="Análises";await renderReports();return; }
+ if(id==="alerts"){ $("#pageTitle").textContent="Alertas";$("#breadcrumb").textContent="Operação";await renderAlerts();return; }
+ if(id==="finance"){ $("#pageTitle").textContent="Financeiro";$("#breadcrumb").textContent="Comercial e financeiro";await renderFinance();return; }
+ if(id==="integration_health"){ $("#pageTitle").textContent="Saúde das integrações";$("#breadcrumb").textContent="Sistema";await renderIntegrationHealth();return; }
+ if(id==="admins"){ $("#pageTitle").textContent="Administradores";$("#breadcrumb").textContent="Sistema";await renderAdmins();return; }
+ if(id==="audit"){ $("#pageTitle").textContent="Auditoria";$("#breadcrumb").textContent="Sistema";await renderAuditAdvanced();return; }
  if(id==="settings"){ $("#pageTitle").textContent="Configurações";$("#breadcrumb").textContent="Sistema";await renderSettings();return; }
  const m=modules[id];if(!m)return;
  $("#pageTitle").textContent=m.label;$("#breadcrumb").textContent="Gestão";
