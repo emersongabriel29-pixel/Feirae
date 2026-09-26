@@ -307,6 +307,7 @@ export function DeliveryOperations({
     setVehicleBrandModel("");
     setVehiclePlate("");
     setVehicleDocumentName("");
+    setVehicleDocumentFile(null);
     setVehicleError("");
   }
 
@@ -317,6 +318,7 @@ export function DeliveryOperations({
     setVehicleBrandModel(vehicle.brandModel);
     setVehiclePlate(vehicle.plate);
     setVehicleDocumentName(vehicle.documentFileName ?? "");
+    setVehicleDocumentFile(vehicle.documentFile ?? null);
     setVehicleError("");
     setVehicleFormOpen(true);
   }
@@ -346,6 +348,10 @@ export function DeliveryOperations({
         ? (vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.active ?? true)
         : true,
       documentFileName: requiresPlate(vehicleType) ? vehicleDocumentName : "",
+      documentFile: requiresPlate(vehicleType)
+        ? vehicleDocumentFile ??
+          vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFile
+        : undefined,
       documentStatus: requiresPlate(vehicleType)
         ? vehicleEditingId
           ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFileName ===
@@ -1172,12 +1178,21 @@ export function DeliveryOperations({
                                 onChange={(event) => {
                                   const file = event.target.files?.[0];
                                   if (!file) return;
-                                  setVehicleDocumentName(file.name);
-                                  setVehicleError("");
+                                  void readFileForLocalStorage(file)
+                                    .then((stored) => {
+                                      setVehicleDocumentName(stored.name);
+                                      setVehicleDocumentFile(stored);
+                                      setVehicleError("");
+                                    })
+                                    .catch((error: Error) => setVehicleError(error.message));
                                 }}
                               />
                             </span>
-                            <small>O documento entra em análise quando for novo ou substituído.</small>
+                            <small>
+                              {vehicleDocumentFile
+                                ? `Arquivo armazenado: ${storedFileLabel(vehicleDocumentFile)}`
+                                : "O documento entra em análise quando for novo ou substituído."}
+                            </small>
                           </label>
                         </>
                       )}
