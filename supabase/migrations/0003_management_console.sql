@@ -2,23 +2,29 @@
 -- This migration creates data-driven settings so the application can be operated
 -- without editing source code for routine commercial and operational changes.
 
-create or replace function public.is_feirae_admin()
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+grant usage on schema private to authenticated;
+
+create or replace function private.is_feirae_admin()
 returns boolean
 language sql
 stable
 security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.profiles p
-    where p.id = auth.uid()
-      and p.role = 'admin'
-  );
-$$;
+set search_path = ''
+as $
+  select
+    (select auth.uid()) is not null
+    and exists (
+      select 1
+      from public.profiles p
+      where p.id = (select auth.uid())
+        and p.role = 'admin'
+    );
+$;
 
-revoke all on function public.is_feirae_admin() from public;
-grant execute on function public.is_feirae_admin() to anon, authenticated;
+revoke all on function private.is_feirae_admin() from public, anon, authenticated;
+grant execute on function private.is_feirae_admin() to authenticated;
 
 create table if not exists public.platform_settings (
   key text primary key,
@@ -319,6 +325,59 @@ values
   ('push','push_provider','Notificações push',false,'not_configured')
 on conflict (key) do nothing;
 
+-- Explicit Data API grants. Supabase no longer guarantees automatic exposure for new tables.
+grant select on table
+  public.platform_settings,
+  public.service_regions,
+  public.vehicle_type_rules,
+  public.cancellation_reasons,
+  public.payment_method_rules,
+  public.onboarding_requirements,
+  public.feature_flags,
+  public.content_blocks,
+  public.system_announcements
+to anon;
+
+grant select on table
+  public.platform_settings,
+  public.service_regions,
+  public.vehicle_type_rules,
+  public.delivery_fee_rules,
+  public.platform_fee_rules,
+  public.cancellation_reasons,
+  public.payment_method_rules,
+  public.onboarding_requirements,
+  public.feature_flags,
+  public.content_blocks,
+  public.notification_templates,
+  public.integration_registry,
+  public.system_announcements,
+  public.privacy_requests,
+  public.admin_permissions,
+  public.admin_audit_logs
+to authenticated;
+
+grant insert, update, delete on table
+  public.platform_settings,
+  public.service_regions,
+  public.vehicle_type_rules,
+  public.delivery_fee_rules,
+  public.platform_fee_rules,
+  public.cancellation_reasons,
+  public.payment_method_rules,
+  public.onboarding_requirements,
+  public.feature_flags,
+  public.content_blocks,
+  public.notification_templates,
+  public.integration_registry,
+  public.system_announcements,
+  public.privacy_requests,
+  public.admin_permissions
+to authenticated;
+
+grant insert on table public.admin_audit_logs to authenticated;
+grant usage, select on sequence public.admin_audit_logs_id_seq to authenticated;
+
 -- RLS for management data.
 alter table public.platform_settings enable row level security;
 alter table public.service_regions enable row level security;
@@ -339,232 +398,271 @@ alter table public.admin_audit_logs enable row level security;
 
 create policy "public read public settings"
 on public.platform_settings for select
-using (public_readable or public.is_feirae_admin());
+to anon, authenticated
+using (public_readable);
 
 create policy "public read active regions"
 on public.service_regions for select
-using (active or public.is_feirae_admin());
+to anon, authenticated
+using (active);
 
 create policy "public read active vehicle rules"
 on public.vehicle_type_rules for select
-using (active or public.is_feirae_admin());
+to anon, authenticated
+using (active);
 
 create policy "public read active cancellation reasons"
 on public.cancellation_reasons for select
-using (active or public.is_feirae_admin());
+to anon, authenticated
+using (active);
 
 create policy "public read active payment methods"
 on public.payment_method_rules for select
-using (active or public.is_feirae_admin());
+to anon, authenticated
+using (active);
 
 create policy "public read active onboarding requirements"
 on public.onboarding_requirements for select
-using (active or public.is_feirae_admin());
+to anon, authenticated
+using (active);
 
 create policy "public read public feature flags"
 on public.feature_flags for select
-using (public_readable or public.is_feirae_admin());
+to anon, authenticated
+using (public_readable);
 
 create policy "public read active content"
 on public.content_blocks for select
+to anon, authenticated
 using (
-  public.is_feirae_admin()
-  or (
-    active
-    and (starts_at is null or starts_at <= now())
-    and (ends_at is null or ends_at >= now())
-  )
+  active
+  and (starts_at is null or starts_at <= now())
+  and (ends_at is null or ends_at >= now())
 );
 
 create policy "public read active announcements"
 on public.system_announcements for select
+to anon, authenticated
 using (
-  public.is_feirae_admin()
-  or (
-    active
-    and (starts_at is null or starts_at <= now())
-    and (ends_at is null or ends_at >= now())
-  )
+  active
+  and (starts_at is null or starts_at <= now())
+  and (ends_at is null or ends_at >= now())
 );
 
 create policy "admins manage platform settings"
 on public.platform_settings for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage service regions"
 on public.service_regions for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage vehicle rules"
 on public.vehicle_type_rules for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage delivery fee rules"
 on public.delivery_fee_rules for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage platform fee rules"
 on public.platform_fee_rules for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage cancellation reasons"
 on public.cancellation_reasons for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage payment methods"
 on public.payment_method_rules for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage onboarding requirements"
 on public.onboarding_requirements for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage feature flags"
 on public.feature_flags for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage content blocks"
 on public.content_blocks for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage notification templates"
 on public.notification_templates for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage integration registry"
 on public.integration_registry for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage announcements"
 on public.system_announcements for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage privacy requests"
 on public.privacy_requests for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage permissions"
 on public.admin_permissions for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins read audit logs"
 on public.admin_audit_logs for select
-using (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()));
 
 create policy "admins write audit logs"
 on public.admin_audit_logs for insert
-with check (public.is_feirae_admin());
+to authenticated
+with check ((select private.is_feirae_admin()));
 
 -- Admin access to operational entities that already use RLS.
 create policy "admins manage profiles"
 on public.profiles for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage fairs"
 on public.fairs for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage vendors"
 on public.vendor_profiles for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage products"
 on public.products for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage orders"
 on public.orders for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage delivery profiles"
 on public.delivery_profiles for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage delivery vehicles"
 on public.delivery_vehicles for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage delivery preferences"
 on public.delivery_preferences for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage onboarding documents"
 on public.onboarding_documents for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage promotions"
 on public.promotions for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage promotion usages"
 on public.promotion_usages for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage order events"
 on public.order_events for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage support tickets"
 on public.support_tickets for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage order reviews"
 on public.order_reviews for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage payouts"
 on public.payouts for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 create policy "admins manage wallet entries"
 on public.wallet_entries for all
-using (public.is_feirae_admin())
-with check (public.is_feirae_admin());
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
 
 -- Automatic audit trail for management/configuration tables.
-create or replace function public.log_feirae_admin_change()
+create or replace function private.log_feirae_admin_change()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   before_row jsonb;
   after_row jsonb;
   record_id text;
 begin
-  if not public.is_feirae_admin() then
-    return coalesce(new, old);
+  if not (select private.is_feirae_admin()) then
+    if tg_op = 'DELETE' then
+      return old;
+    end if;
+    return new;
   end if;
 
   before_row := case when tg_op in ('UPDATE','DELETE') then to_jsonb(old) else null end;
@@ -576,11 +674,16 @@ begin
   );
 
   insert into public.admin_audit_logs(admin_id, action, entity, entity_id, before_data, after_data)
-  values (auth.uid(), lower(tg_op), tg_table_name, record_id, before_row, after_row);
+  values ((select auth.uid()), lower(tg_op), tg_table_name, record_id, before_row, after_row);
 
-  return coalesce(new, old);
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
 end;
 $$;
+
+revoke all on function private.log_feirae_admin_change() from public, anon, authenticated;
 
 do $$
 declare
@@ -604,7 +707,7 @@ begin
   loop
     execute format('drop trigger if exists feirae_admin_audit on public.%I', tbl);
     execute format(
-      'create trigger feirae_admin_audit after insert or update or delete on public.%I for each row execute function public.log_feirae_admin_change()',
+      'create trigger feirae_admin_audit after insert or update or delete on public.%I for each row execute function private.log_feirae_admin_change()',
       tbl
     );
   end loop;
