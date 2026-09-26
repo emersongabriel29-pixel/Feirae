@@ -116,3 +116,12 @@ input:focus,textarea:focus,select:focus{border-color:var(--brand-2);box-shadow:0
 .mfa-secret{display:grid;gap:5px;margin:12px 0 18px;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
 .mfa-secret span{font-size:11px;color:var(--muted);font-weight:700}
 .mfa-secret code{word-break:break-all;font-size:12px}
+
+.pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-top:1px solid var(--line);background:var(--surface-2);font-size:12px;color:var(--muted)}
+.pagination>div{display:flex;gap:8px}
+.pagination button:disabled{opacity:.45;cursor:not-allowed}
+.mfa-qr{display:block;width:min(240px,100%);margin:16px auto;border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px}
+.mfa-secret{display:grid;gap:6px;margin:12px 0 18px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.mfa-secret span{font-size:11px;color:var(--muted);font-weight:700}
+.mfa-secret code{word-break:break-all;font-size:12px}
+@media(max-width:560px){.pagination{align-items:stretch;flex-direction:column}.pagination>div{width:100%}.pagination button{flex:1}}
