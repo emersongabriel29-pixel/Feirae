@@ -1,3 +1,4 @@
+/* global URL */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { modules } from "./modules.js";
