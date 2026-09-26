@@ -158,3 +158,20 @@ export function updateLocalAccount(input: {
   migrateScopedStorage(oldEmail, email);
   return { ok: true as const, account: next, oldEmail };
 }
+
+
+export function scrubLegacyPlaintextPasswords() {
+  if (typeof window === "undefined") return;
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key || !key.startsWith("feirae:account:")) continue;
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(key) ?? "{}") as Record<string, unknown>;
+      if (!Object.prototype.hasOwnProperty.call(parsed, "password")) continue;
+      delete parsed.password;
+      window.localStorage.setItem(key, JSON.stringify(parsed));
+    } catch {
+      // Mantém dados legados inválidos isolados sem bloquear a aplicação.
+    }
+  }
+}
