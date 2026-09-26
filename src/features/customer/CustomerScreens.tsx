@@ -1643,7 +1643,8 @@ export function NotificationsPage({
     Entregue: "Pedido concluído. Você já pode avaliar.",
     Cancelado: "Pedido cancelado.",
   };
-  const messages = orders.flatMap((order) => {
+  const [offersEnabled] = usePersistentState<boolean>(scopedStorageKey("feirae:offers"), true);
+  const orderMessages = orders.flatMap((order) => {
     const events = order.events?.length
       ? order.events
       : [{ key: "status", label: fallbackText[order.status], at: order.date }];
@@ -1651,11 +1652,33 @@ export function NotificationsPage({
       key: `${order.id}:${event.key}:${event.at}`,
       title: `${order.id} · ${event.label}`,
       at: event.at,
+      kind: "order" as const,
     }));
   });
+  const offerMessages = offersEnabled
+    ? readSharedStores().flatMap((store) =>
+        store.promotions
+          .filter((promotion) => promotion.active)
+          .map((promotion) => ({
+            key: `offer:${store.storeId}:${promotion.id}`,
+            title: `Oferta · ${store.name} · ${promotion.name}`,
+            at: promotion.endsAt ? `Válida até ${promotion.endsAt}` : "Oferta ativa",
+            kind: "offer" as const,
+          })),
+      )
+    : [];
+  const messages = [...orderMessages, ...offerMessages];
 
   return (
-    <Panel title="Notificações" subtitle="Histórico real das mudanças dos seus pedidos." onBack={onBack}>
+    <Panel
+      title="Notificações"
+      subtitle={
+        offersEnabled
+          ? "Mudanças dos pedidos e ofertas das bancas."
+          : "Somente mudanças dos seus pedidos; ofertas estão desativadas nas configurações."
+      }
+      onBack={onBack}
+    >
       <div className="mb-4 flex justify-end">
         <button onClick={onClear} className="text-button">
           Marcar todas como lidas
