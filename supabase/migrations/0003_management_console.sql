@@ -37,6 +37,17 @@ create table if not exists public.platform_settings (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.service_states (
+  code text primary key check (char_length(code) = 2),
+  name text not null,
+  customer_orders_enabled boolean not null default false,
+  vendor_registration_enabled boolean not null default false,
+  delivery_enabled boolean not null default false,
+  active boolean not null default false,
+  sort_order integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.service_regions (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
@@ -220,12 +231,33 @@ create table if not exists public.privacy_requests (
   resolved_at timestamptz
 );
 
+create table if not exists public.account_enforcements (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  action_type text not null check (action_type in ('suspension','ban','orders_block','sales_block','deliveries_block')),
+  status text not null default 'active' check (status in ('active','revoked','expired')),
+  reason text not null,
+  starts_at timestamptz not null default now(),
+  ends_at timestamptz,
+  created_by uuid references public.profiles(id) on delete set null,
+  revoked_by uuid references public.profiles(id) on delete set null,
+  revoked_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (action_type <> 'suspension' or ends_at is not null),
+  check (ends_at is null or ends_at > starts_at)
+);
+
+create index if not exists account_enforcements_profile_active_idx
+  on public.account_enforcements(profile_id, status, starts_at, ends_at);
+
 create table if not exists public.admin_permissions (
+  id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
   permission text not null,
   granted_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),
-  primary key (profile_id, permission)
+  unique(profile_id, permission)
 );
 
 create table if not exists public.admin_audit_logs (
@@ -268,8 +300,41 @@ values
   ('logistics.driver_offer_timeout_seconds','logistics','Tempo de oferta da corrida','60'::jsonb,'Tempo de resposta antes de ofertar a outro entregador.',false),
   ('finance.minimum_payout_amount','finance','Saque mínimo','20'::jsonb,'Valor mínimo de saque, se o provedor permitir saque manual.',false),
   ('finance.payout_delay_days','finance','Prazo padrão de liberação','2'::jsonb,'Dias para tornar o valor disponível quando aplicável.',false),
-  ('catalog.allow_multi_fair_cart','catalog','Carrinho com várias feiras','false'::jsonb,'Mantém uma compra vinculada a uma feira por padrão.',true)
+  ('catalog.allow_multi_fair_cart','catalog','Carrinho com várias feiras','false'::jsonb,'Mantém uma compra vinculada a uma feira por padrão.',true),
+  ('documents.storage_bucket','documents','Bucket de documentos','"onboarding-documents"'::jsonb,'Bucket privado usado para documentos de cadastro. Não contém segredo.',false)
 on conflict (key) do nothing;
+
+insert into public.service_states
+  (code, name, customer_orders_enabled, vendor_registration_enabled, delivery_enabled, active, sort_order)
+values
+  ('AC','Acre',false,false,false,false,10),
+  ('AL','Alagoas',false,false,false,false,20),
+  ('AP','Amapá',false,false,false,false,30),
+  ('AM','Amazonas',false,false,false,false,40),
+  ('BA','Bahia',false,false,false,false,50),
+  ('CE','Ceará',false,false,false,false,60),
+  ('DF','Distrito Federal',true,true,true,true,70),
+  ('ES','Espírito Santo',false,false,false,false,80),
+  ('GO','Goiás',false,false,false,false,90),
+  ('MA','Maranhão',false,false,false,false,100),
+  ('MT','Mato Grosso',false,false,false,false,110),
+  ('MS','Mato Grosso do Sul',false,false,false,false,120),
+  ('MG','Minas Gerais',false,false,false,false,130),
+  ('PA','Pará',false,false,false,false,140),
+  ('PB','Paraíba',false,false,false,false,150),
+  ('PR','Paraná',false,false,false,false,160),
+  ('PE','Pernambuco',false,false,false,false,170),
+  ('PI','Piauí',false,false,false,false,180),
+  ('RJ','Rio de Janeiro',false,false,false,false,190),
+  ('RN','Rio Grande do Norte',false,false,false,false,200),
+  ('RS','Rio Grande do Sul',false,false,false,false,210),
+  ('RO','Rondônia',false,false,false,false,220),
+  ('RR','Roraima',false,false,false,false,230),
+  ('SC','Santa Catarina',false,false,false,false,240),
+  ('SP','São Paulo',false,false,false,false,250),
+  ('SE','Sergipe',false,false,false,false,260),
+  ('TO','Tocantins',false,false,false,false,270)
+on conflict (code) do nothing;
 
 insert into public.feature_flags (key, label, enabled, description)
 values
@@ -328,6 +393,7 @@ on conflict (key) do nothing;
 -- Explicit Data API grants. Supabase no longer guarantees automatic exposure for new tables.
 grant select on table
   public.platform_settings,
+  public.service_states,
   public.service_regions,
   public.vehicle_type_rules,
   public.cancellation_reasons,
@@ -340,6 +406,7 @@ to anon;
 
 grant select on table
   public.platform_settings,
+  public.service_states,
   public.service_regions,
   public.vehicle_type_rules,
   public.delivery_fee_rules,
@@ -353,12 +420,14 @@ grant select on table
   public.integration_registry,
   public.system_announcements,
   public.privacy_requests,
+  public.account_enforcements,
   public.admin_permissions,
   public.admin_audit_logs
 to authenticated;
 
 grant insert, update, delete on table
   public.platform_settings,
+  public.service_states,
   public.service_regions,
   public.vehicle_type_rules,
   public.delivery_fee_rules,
@@ -372,6 +441,7 @@ grant insert, update, delete on table
   public.integration_registry,
   public.system_announcements,
   public.privacy_requests,
+  public.account_enforcements,
   public.admin_permissions
 to authenticated;
 
@@ -380,6 +450,7 @@ grant usage, select on sequence public.admin_audit_logs_id_seq to authenticated;
 
 -- RLS for management data.
 alter table public.platform_settings enable row level security;
+alter table public.service_states enable row level security;
 alter table public.service_regions enable row level security;
 alter table public.vehicle_type_rules enable row level security;
 alter table public.delivery_fee_rules enable row level security;
@@ -393,6 +464,7 @@ alter table public.notification_templates enable row level security;
 alter table public.integration_registry enable row level security;
 alter table public.system_announcements enable row level security;
 alter table public.privacy_requests enable row level security;
+alter table public.account_enforcements enable row level security;
 alter table public.admin_permissions enable row level security;
 alter table public.admin_audit_logs enable row level security;
 
@@ -400,6 +472,11 @@ create policy "public read public settings"
 on public.platform_settings for select
 to anon, authenticated
 using (public_readable);
+
+create policy "public read active states"
+on public.service_states for select
+to anon, authenticated
+using (active);
 
 create policy "public read active regions"
 on public.service_regions for select
@@ -451,6 +528,12 @@ using (
 
 create policy "admins manage platform settings"
 on public.platform_settings for all
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
+
+create policy "admins manage service states"
+on public.service_states for all
 to authenticated
 using ((select private.is_feirae_admin()))
 with check ((select private.is_feirae_admin()));
@@ -533,6 +616,17 @@ to authenticated
 using ((select private.is_feirae_admin()))
 with check ((select private.is_feirae_admin()));
 
+create policy "users read own enforcement history"
+on public.account_enforcements for select
+to authenticated
+using ((select auth.uid()) = profile_id);
+
+create policy "admins manage enforcements"
+on public.account_enforcements for all
+to authenticated
+using ((select private.is_feirae_admin()))
+with check ((select private.is_feirae_admin()));
+
 create policy "admins manage permissions"
 on public.admin_permissions for all
 to authenticated
@@ -548,6 +642,17 @@ create policy "admins write audit logs"
 on public.admin_audit_logs for insert
 to authenticated
 with check ((select private.is_feirae_admin()));
+
+-- Private onboarding files remain in Supabase Storage. This policy lets admins
+-- read objects from the configured default bucket through the Storage API.
+drop policy if exists "feirae admins read onboarding documents" on storage.objects;
+create policy "feirae admins read onboarding documents"
+on storage.objects for select
+to authenticated
+using (
+  bucket_id = 'onboarding-documents'
+  and (select private.is_feirae_admin())
+);
 
 -- Admin access to operational entities that already use RLS.
 create policy "admins manage profiles"
@@ -691,6 +796,7 @@ declare
 begin
   foreach tbl in array array[
     'platform_settings',
+    'service_states',
     'service_regions',
     'vehicle_type_rules',
     'delivery_fee_rules',
@@ -702,7 +808,9 @@ begin
     'content_blocks',
     'notification_templates',
     'integration_registry',
-    'system_announcements'
+    'system_announcements',
+    'account_enforcements',
+    'admin_permissions'
   ]
   loop
     execute format('drop trigger if exists feirae_admin_audit on public.%I', tbl);
