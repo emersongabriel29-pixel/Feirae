@@ -527,6 +527,249 @@ async function renderDeliveryDetail(deliveryId){
 }
 
 
+
+function openOrderTransition(order){
+ const options=ORDER_TRANSITIONS[order.status]||[];
+ if(!options.length){toast("Este pedido não possui transição administrativa disponível.");return;}
+ state.editing={special:"order_transition",order};
+ $("#modalTitle").textContent="Alterar etapa do pedido";
+ $("#editorForm").innerHTML=
+   '<label>Status atual<input value="'+esc(order.status)+'" disabled></label>'+
+   '<label>Próxima etapa<select id="secureNextStatus">'+options.map((x)=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("")+'</select></label>'+
+   '<label class="full-span">Motivo / observação<textarea id="secureReason" rows="4" placeholder="Descreva por que a intervenção é necessária"></textarea></label>';
+ $("#modal").classList.remove("hidden");
+}
+
+async function runDeliveryAction(action,delivery,payload={}){
+ try{
+   await invokeAdminAction(action,{delivery_id:delivery.id,...payload});
+   toast("Entrega atualizada com segurança.");
+   await renderDeliveryDetail(delivery.id);
+ }catch(e){toast(e.message||String(e));}
+}
+
+async function openDeliveryReassign(delivery){
+ const [profiles,approved]=await Promise.all([
+   state.supabase.from("profiles").select("id,full_name").order("full_name"),
+   state.supabase.from("delivery_profiles").select("id,approved").eq("approved",true)
+ ]);
+ if(profiles.error||approved.error){toast(profiles.error?.message||approved.error?.message);return;}
+ const approvedIds=new Set((approved.data||[]).map((x)=>x.id));
+ const rows=(profiles.data||[]).filter((x)=>approvedIds.has(x.id));
+ state.editing={special:"delivery_reassign",delivery};
+ $("#modalTitle").textContent="Reatribuir entrega";
+ $("#editorForm").innerHTML='<label class="full-span">Entregador aprovado<select id="secureDeliveryDriver"><option value="">Selecione</option>'+
+ rows.map((x)=>'<option value="'+esc(x.id)+'">'+esc(x.full_name||x.id)+'</option>').join("")+
+ '</select></label>';
+ $("#modal").classList.remove("hidden");
+}
+
+function openDeliveryCancel(delivery){
+ state.editing={special:"delivery_cancel",delivery};
+ $("#modalTitle").textContent="Cancelar corrida";
+ $("#editorForm").innerHTML='<label class="full-span">Motivo<textarea id="secureDeliveryReason" rows="4" required></textarea></label>';
+ $("#modal").classList.remove("hidden");
+}
+
+function openDocumentReview(row){
+ state.editing={special:"document_review",row};
+ $("#modalTitle").textContent="Revisar documento";
+ $("#editorForm").innerHTML=
+   '<label>Status<select id="secureDocumentStatus">'+["under_review","approved","correction_required","rejected"].map((x)=>'<option value="'+x+'" '+(row.status===x?"selected":"")+'>'+x+'</option>').join("")+'</select></label>'+
+   '<label>Validade<input id="secureDocumentExpiry" type="date" value="'+esc(row.expires_at||"")+'"></label>'+
+   '<label class="full-span">Motivo / correção<textarea id="secureDocumentReason" rows="4">'+esc(row.correction_reason||"")+'</textarea></label>';
+ $("#modal").classList.remove("hidden");
+}
+
+function openSupportUpdate(row){
+ state.editing={special:"support_update",row};
+ $("#modalTitle").textContent="Atender ticket";
+ $("#editorForm").innerHTML=
+   '<label>Prioridade<select id="secureSupportPriority"><option value="normal" '+(row.priority==="normal"?"selected":"")+'>Normal</option><option value="urgent" '+(row.priority==="urgent"?"selected":"")+'>Urgente</option></select></label>'+
+   '<label>Status<select id="secureSupportStatus">'+["open","resolved","closed"].map((x)=>'<option value="'+x+'" '+(row.status===x?"selected":"")+'>'+x+'</option>').join("")+'</select></label>'+
+   '<label class="full-span">Detalhes<textarea id="secureSupportDetails" rows="5">'+esc(row.details||"")+'</textarea></label>';
+ $("#modal").classList.remove("hidden");
+}
+
+async function togglePaymentReconcile(row){
+ try{
+   await invokeAdminAction("payment_reconcile",{payment_id:row.id,reconciled:!row.reconciled});
+   toast(row.reconciled?"Conciliação desfeita.":"Pagamento conciliado.");
+   await openModule("payments");
+ }catch(e){toast(e.message||String(e));}
+}
+
+function openReviewModeration(row){
+ state.editing={special:"review_moderate",row};
+ $("#modalTitle").textContent="Moderar avaliação";
+ $("#editorForm").innerHTML=
+   '<label class="check-row"><input id="secureReviewVisible" type="checkbox" '+(row.visible!==false?"checked":"")+'><span>Visível</span></label>'+
+   '<label class="full-span">Motivo da moderação<textarea id="secureReviewReason" rows="4">'+esc(row.moderation_reason||"")+'</textarea></label>';
+ $("#modal").classList.remove("hidden");
+}
+
+function openPrivacyUpdate(row){
+ state.editing={special:"privacy_update",row};
+ $("#modalTitle").textContent="Tratar solicitação LGPD";
+ $("#editorForm").innerHTML=
+   '<label>Status<select id="securePrivacyStatus">'+["open","in_review","completed","rejected"].map((x)=>'<option value="'+x+'" '+(row.status===x?"selected":"")+'>'+x+'</option>').join("")+'</select></label>'+
+   '<label class="full-span">Resolução<textarea id="securePrivacyNotes" rows="5">'+esc(row.resolution_notes||"")+'</textarea></label>';
+ $("#modal").classList.remove("hidden");
+}
+
+async function openEnforcementCreate(profileId=null,actionType="suspension"){
+ state.editing={special:"enforcement_create",profileId,actionType};
+ $("#modalTitle").textContent="Nova suspensão ou bloqueio";
+ const fixed=profileId
+   ? '<label class="full-span">Usuário<input id="secureEnforcementProfile" value="'+esc(profileId)+'" readonly></label>'
+   : '<label class="full-span">Buscar usuário<input id="secureProfileSearch" placeholder="Digite o nome"><select id="secureEnforcementProfile"><option value="">Busque e selecione</option></select></label>';
+ $("#editorForm").innerHTML=fixed+
+   '<label>Ação<select id="secureEnforcementType">'+["suspension","ban","orders_block","sales_block","deliveries_block"].map((x)=>'<option value="'+x+'" '+(actionType===x?"selected":"")+'>'+x+'</option>').join("")+'</select></label>'+
+   '<label>Até<input id="secureEnforcementEnd" type="datetime-local"></label>'+
+   '<label class="full-span">Motivo<textarea id="secureEnforcementReason" rows="4" required></textarea></label>';
+ $("#modal").classList.remove("hidden");
+ if(!profileId){
+   let timer;
+   $("#secureProfileSearch").oninput=(e)=>{
+     clearTimeout(timer);
+     timer=setTimeout(async()=>{
+       const term=safeSearchTerm(e.target.value);
+       if(term.length<2)return;
+       const r=await state.supabase.from("profiles").select("id,full_name,role").ilike("full_name","%"+term+"%").order("full_name").limit(20);
+       if(r.error){toast(r.error.message);return;}
+       $("#secureEnforcementProfile").innerHTML='<option value="">Selecione</option>'+(r.data||[]).map((x)=>'<option value="'+esc(x.id)+'">'+esc((x.full_name||x.id)+" · "+x.role)+'</option>').join("");
+     },250);
+   };
+ }
+}
+
+function openEnforcement(profileId,actionType){
+ if(!canModule("enforcements")){toast("Sem permissão para suspensões e bloqueios.");return;}
+ openEnforcementCreate(profileId,actionType);
+}
+
+async function revokeEnforcement(row){
+ if(!confirm("Revogar esta restrição mantendo o histórico?"))return;
+ try{
+   await invokeAdminAction("enforcement_revoke",{enforcement_id:row.id});
+   toast("Restrição revogada.");
+   await openModule("enforcements");
+ }catch(e){toast(e.message||String(e));}
+}
+
+async function saveSecureAction(){
+ const edit=state.editing;
+ if(!edit?.special)return false;
+
+ if(edit.special==="order_transition"){
+   await invokeAdminAction("order_transition",{
+     order_id:edit.order.id,
+     next_status:$("#secureNextStatus").value,
+     reason:$("#secureReason").value.trim()
+   });
+   return {module:"orders",message:"Etapa do pedido atualizada."};
+ }
+ if(edit.special==="delivery_reassign"){
+   const next=$("#secureDeliveryDriver").value;
+   if(!next)throw new Error("Selecione um entregador.");
+   await invokeAdminAction("delivery_reassign",{delivery_id:edit.delivery.id,next_delivery_id:next});
+   return {detail:()=>renderDeliveryDetail(edit.delivery.id),message:"Entrega reatribuída."};
+ }
+ if(edit.special==="delivery_cancel"){
+   const reason=$("#secureDeliveryReason").value.trim();
+   if(!reason)throw new Error("Informe o motivo.");
+   await invokeAdminAction("delivery_cancel",{delivery_id:edit.delivery.id,reason});
+   return {detail:()=>renderDeliveryDetail(edit.delivery.id),message:"Corrida cancelada."};
+ }
+ if(edit.special==="document_review"){
+   await invokeAdminAction("document_review",{
+     document_id:edit.row.id,
+     status:$("#secureDocumentStatus").value,
+     expires_at:$("#secureDocumentExpiry").value||null,
+     correction_reason:$("#secureDocumentReason").value.trim()
+   });
+   return {module:"documents",message:"Documento revisado e responsável registrado."};
+ }
+ if(edit.special==="support_update"){
+   await invokeAdminAction("support_update",{
+     ticket_id:edit.row.id,
+     priority:$("#secureSupportPriority").value,
+     status:$("#secureSupportStatus").value,
+     details:$("#secureSupportDetails").value
+   });
+   return {module:"support",message:"Ticket atualizado."};
+ }
+ if(edit.special==="review_moderate"){
+   await invokeAdminAction("review_moderate",{
+     review_id:edit.row.id,
+     visible:$("#secureReviewVisible").checked,
+     reason:$("#secureReviewReason").value.trim()
+   });
+   return {module:"reviews",message:"Avaliação moderada e responsável registrado."};
+ }
+ if(edit.special==="privacy_update"){
+   await invokeAdminAction("privacy_update",{
+     request_id:edit.row.id,
+     status:$("#securePrivacyStatus").value,
+     resolution_notes:$("#securePrivacyNotes").value.trim()
+   });
+   return {module:"privacy",message:"Solicitação LGPD atualizada."};
+ }
+ if(edit.special==="enforcement_create"){
+   const profileId=$("#secureEnforcementProfile").value;
+   const type=$("#secureEnforcementType").value;
+   const reason=$("#secureEnforcementReason").value.trim();
+   if(!profileId||!reason)throw new Error("Selecione o usuário e informe o motivo.");
+   const endRaw=$("#secureEnforcementEnd").value;
+   await invokeAdminAction("enforcement_create",{
+     profile_id:profileId,
+     action_type:type,
+     reason,
+     starts_at:new Date().toISOString(),
+     ends_at:endRaw?new Date(endRaw).toISOString():null
+   });
+   return {module:"enforcements",message:"Restrição criada e auditada."};
+ }
+ return false;
+}
+
+async function renderProfile360(kind,row){
+ const profileId=row.id;
+ $("#pageTitle").textContent=kind==="vendor"?"Feirante 360°":kind==="delivery"?"Entregador 360°":"Cliente 360°";
+ $("#breadcrumb").textContent="Cadastros";
+ $("#pageContent").innerHTML='<div class="empty">Carregando visão completa…</div>';
+ try{
+   const profile=await state.supabase.from("profiles").select("id,full_name,phone,role,created_at").eq("id",profileId).maybeSingle();
+   if(profile.error)throw profile.error;
+   const sections=[];
+   if(kind==="customer"){
+     if(canModule("orders"))sections.push(["Pedidos",await state.supabase.from("orders").select("id,status,payment_status,total,created_at").eq("customer_id",profileId).order("created_at",{ascending:false}).limit(50),["id","status","payment_status","total","created_at"]]);
+     if(canModule("support"))sections.push(["Suporte",await state.supabase.from("support_tickets").select("id,topic,priority,status,created_at").eq("opened_by",profileId).order("created_at",{ascending:false}).limit(50),["id","topic","priority","status","created_at"]]);
+     if(canModule("reviews"))sections.push(["Avaliações",await state.supabase.from("order_reviews").select("id,author_role,target_role,rating,comment,created_at").eq("author_id",profileId).order("created_at",{ascending:false}).limit(50),["id","author_role","target_role","rating","comment","created_at"]]);
+   }
+   if(kind==="vendor"){
+     sections.push(["Feiras e boxes",await state.supabase.from("fair_vendor_memberships").select("fair_id,stall_code,stall_name,active,updated_at").eq("vendor_id",profileId),["fair_id","stall_code","stall_name","active","updated_at"]]);
+     sections.push(["Lojas",await state.supabase.from("vendor_stores").select("id,name,is_open,delivery_enabled,pickup_enabled,updated_at").eq("vendor_id",profileId),["id","name","is_open","delivery_enabled","pickup_enabled","updated_at"]]);
+     sections.push(["Produtos",await state.supabase.from("products").select("id,name,price,stock,available,updated_at").eq("vendor_id",profileId).order("updated_at",{ascending:false}).limit(100),["id","name","price","stock","available","updated_at"]]);
+   }
+   if(kind==="delivery"){
+     sections.push(["Veículos",await state.supabase.from("delivery_vehicles").select("id,vehicle_type,brand_model,plate,capacity_kg,active,document_status,updated_at").eq("delivery_id",profileId),["id","vehicle_type","brand_model","plate","capacity_kg","active","document_status","updated_at"]]);
+     sections.push(["Disponibilidade",await state.supabase.from("delivery_preferences").select("online,radius_km,preferred_distance_km,regions,auto_schedule,schedule_start,schedule_end,updated_at").eq("delivery_id",profileId),["online","radius_km","preferred_distance_km","regions","auto_schedule","schedule_start","schedule_end","updated_at"]]);
+     if(canModule("delivery_jobs"))sections.push(["Corridas",await state.supabase.from("deliveries").select("id,order_id,status,fee,total_distance_km,accepted_at,delivered_at").eq("delivery_id",profileId).order("updated_at",{ascending:false}).limit(50),["id","order_id","status","fee","total_distance_km","accepted_at","delivered_at"]]);
+   }
+   if(canModule("documents"))sections.push(["Documentos",await state.supabase.from("onboarding_documents").select("id,document_type,status,expires_at,reviewed_at").eq("profile_id",profileId).order("updated_at",{ascending:false}),["id","document_type","status","expires_at","reviewed_at"]]);
+   if(canModule("payouts"))sections.push(["Repasses",await state.supabase.from("payouts").select("id,role,amount,status,requested_at,paid_at,created_at").eq("profile_id",profileId).order("created_at",{ascending:false}).limit(50),["id","role","amount","status","requested_at","paid_at","created_at"]]);
+   if(canModule("enforcements"))sections.push(["Restrições",await state.supabase.from("account_enforcements").select("id,action_type,status,reason,starts_at,ends_at,created_at").eq("profile_id",profileId).order("created_at",{ascending:false}),["id","action_type","status","reason","starts_at","ends_at","created_at"]]);
+
+   const bad=sections.map((x)=>x[1]).find((x)=>x.error);if(bad)throw bad.error;
+   let html='<div class="detail-head"><button class="secondary" id="backProfile360">← Voltar</button><div><b>'+esc(profile.data?.full_name||profileId)+'</b><span class="badge active">'+esc(profile.data?.role||kind)+'</span></div></div>';
+   html+=detailPairs([["Nome",profile.data?.full_name||"—"],["Telefone",profile.data?.phone||"—"],["Papel",profile.data?.role||kind],["Cadastro",date(profile.data?.created_at)]]);
+   for(const [titleText,result,cols] of sections)html+=miniTable(titleText,cols,result.data||[]);
+   $("#pageContent").innerHTML=html;
+   $("#backProfile360").onclick=()=>openModule(kind==="vendor"?"vendors":kind==="delivery"?"drivers":"users");
+ }catch(e){renderError(e);}
+}
+
 async function renderStalls(){
  $("#pageContent").innerHTML='<div class="empty">Carregando bancas e boxes…</div>';
  try{
@@ -926,19 +1169,6 @@ async function openDocument(row){
  }
  if(popup)popup.location.href=signed.data.signedUrl;
  else window.open(signed.data.signedUrl,"_blank","noopener,noreferrer");
-}
-
-function openEnforcement(profileId,actionType){
- if(!canModule("enforcements")){toast("Sem permissão para suspensões e bloqueios.");return;}
- const defaults={
-   profile_id:profileId,
-   action_type:actionType,
-   status:"active",
-   reason:"",
-   starts_at:new Date().toISOString(),
-   ends_at:null
- };
- openEditor(modules.enforcements,defaults,true);
 }
 
 function openEditor(m,row,forceCreate=false){
