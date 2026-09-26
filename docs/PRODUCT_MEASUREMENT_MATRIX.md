@@ -123,6 +123,14 @@ Não suporta hoje:
 
 Foto não é obrigatória para salvar/publicar.
 
+Quando `photoDataUrl` existe:
+
+- `syncVendorMarketplace()` publica a imagem como `imageDataUrl`;
+- o catálogo do cliente renderiza a foto;
+- sem foto, a UI mantém fallback visual por emoji/arte.
+
+A imagem continua sendo Data URL local; ainda não existe Storage nem `product_images` no SQL.
+
 ## 6. SQL atual
 
 Tabela `products` possui:
