@@ -2,18 +2,9 @@
 
 Atualizado em 26/09/2026.
 
-Este documento usa os **nomes oficiais do pedido unificado do protótipo**. O mapeamento para SQL/backend está em [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
+## 1. Pedido global no frontend
 
-## Regra principal
-
-Cada ator controla somente sua etapa:
-
-- Cliente: compra, cancelamento permitido, decisões de substituição, suporte e avaliação.
-- Feirante: aceitar/recusar, separar, informar peso real e marcar pronto.
-- Entregador: aceitar corrida, coleta, rota e entrega.
-- Backend futuro: validar transições, estoque, pagamento e eventos.
-
-## Estado global oficial do pedido
+Fonte: `orderBridge.ts`.
 
 ```
 received
@@ -25,204 +16,249 @@ received
 → delivered
 ```
 
-Saída alternativa antes da conclusão:
+Cancelamento:
 
 ```
 cancelled
 ```
 
-Não usar neste domínio `paid_waiting_vendor`, `delivery_offered`, `driver_accepted`, `ready_for_customer` ou `picked_up` como estados globais oficiais. Conceitos de pagamento, oferta da corrida e retirada são representados por campos/eventos/máquinas próprias.
+## 2. Divergência SQL
 
-## 1. Pedido recebido — `received`
+`public.order_status` ainda contém estados de pagamento e grafia `canceled`.
 
-Pré-condições do protótipo:
+`order_vendors.status` reutiliza esse enum, mas o frontend usa estados próprios de banca que não cabem nele.
 
-- checkout válido;
-- estoque reservado;
-- pagamento `authorized` ou `due_on_delivery`;
-- uma ou mais bancas vinculadas.
+Antes da integração real, corrigir schema conforme:
+[SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
-Por banca, estado inicial:
+## 3. Criação
 
-`pending`.
+`App.tsx::confirmOrder()`:
 
-Cliente vê: **Pedido recebido**.
+1. gera ID;
+2. reserva estoque via `reserveInventory`;
+3. cria pedido local;
+4. cria `UnifiedOrder`;
+5. registra evento de pagamento;
+6. registra evento `received`;
+7. aplica carteira/promoções.
 
-## 2. Banca aceita/prepara — `preparing`
+Se estoque não pode ser reservado, pedido não é criado.
 
-Estados possíveis da banca:
+## 4. Estado por banca
+
+O pedido unificado mantém cada banca separadamente.
+
+Estados internos atuais:
 
 ```
 pending
-→ accepted
-→ preparing
-→ ready
+accepted
+preparing
+ready
+collected
+delivered
+rejected
 ```
 
-A primeira banca que começa não libera logística se houver outras bancas pendentes.
+A tela do feirante também traduz esses conceitos em `VendorOrderStatus`.
 
-Se uma banca rejeitar, o fluxo local atual leva o pedido a `cancelled`. Backend futuro pode evoluir para cancelamento parcial por `order_vendor`.
+## 5. Preparo
 
-Durante preparo:
+Durante preparo, banca pode:
 
 - marcar item separado;
-- informar peso real;
-- item indisponível;
-- propor substituição;
-- observações.
+- marcar indisponível;
+- escrever observação/substituição;
+- informar peso real.
 
-O peso real substitui o peso estimado para compatibilidade logística.
+O peso real é propagado para os itens do pedido compartilhado.
 
-## 3. Todas as bancas prontas — `ready_for_pickup`
+## 6. Multi-banca
 
-O pedido global só chega aqui quando todas as bancas necessárias estão `ready`.
+Regra implementada/testada:
 
-### Entrega
+- pedido não vira `ready_for_pickup` até todas as bancas necessárias estarem prontas.
 
-Fica elegível para entregadores compatíveis.
+Limitação:
 
-### Retirada
+- a rota do entregador ainda não possui uma sequência real de stops por banca.
 
-Fica pronto para o cliente buscar, sem gerar corrida.
+Hoje a oferta pode exibir:
 
-## 4. Entregador atribuído — `driver_assigned`
+```
+Banca A + Banca B
+```
 
-A corrida foi aceita.
+mas rota logística continua resumida como feira/banca → cliente.
 
-Registrar:
+## 7. Pronto para coleta
 
-- entregador;
+`ready_for_pickup`:
+
+### Delivery
+
+pedido pode aparecer na lista do entregador se:
+
+- possuir rota;
+- estiver disponível;
+- filtros permitirem.
+
+### Pickup
+
+cliente espera retirada e o fluxo pode terminar diretamente em `delivered` após confirmação da banca.
+
+## 8. Oferta ao entregador
+
+`DeliveryScreens.tsx` só considera pedidos de entrega com status:
+
+- `ready_for_pickup`;
+- `driver_assigned`;
+- `collected`;
+- `out_for_delivery`;
+
+e com `order.route`.
+
+Oferta inclui:
+
+- ID;
+- feira;
+- bancas;
+- região;
+- peso;
+- itens;
+- distância até banca;
+- banca→cliente;
+- total;
+- ETA;
+- ganho;
+- pagamento.
+
+## 9. Filtro da corrida
+
+A lista disponível filtra:
+
+```
+delivery.available !== false
+AND totalDistanceKm <= radiusKm
+AND região permitida
+```
+
+Para aceitar:
+
+```
+online
+AND agenda permite
+AND approvalStatus = Aprovado
+AND nenhuma corrida ativa
+AND veículo compatível
+```
+
+## 10. Veículo compatível
+
+```
+vehicle.active
+AND capacityKg >= orderWeight
+AND vehicleReady
+```
+
+Para tipo que exige placa:
+
+- documento do veículo `approved`;
+- placa válida.
+
+## 11. Aceite
+
+Ao aceitar:
+
+- salva entrega ativa local;
+- etapa = 0;
+- pedido → `driver_assigned`;
+- salva motorista;
 - veículo;
-- placa mascarada quando aplicável;
-- distância/ETA quando disponíveis;
-- valor da corrida;
-- timestamp/evento.
-
-O pedido não volta à fila pública enquanto estiver atribuído.
-
-## 5. Coleta — `collected`
-
-O entregador confirma coleta.
-
-A partir daqui:
-
-- cliente não usa cancelamento simples;
-- problemas viram ocorrência/suporte;
-- estoque reservado já não deve ser devolvido por cancelamento comum.
-
-Confirmação forte de coleta (PIN/QR/dupla confirmação) é futura integração de backend.
-
-## 6. Em rota — `out_for_delivery`
-
-Cliente vê:
-
-- entregador;
-- veículo;
-- previsão;
+- placa mascarada;
+- ETA;
 - distância;
-- mapa quando provedor permitir;
-- suporte.
+- evento `driver-assigned`.
 
-## 7. Entregue — `delivered`
+## 12. Etapas do entregador
 
-Ao confirmar entrega:
+UI atual:
 
-- encerrar corrida;
-- pagamento na entrega passa para autorizado no protótipo;
-- estoque é consumido definitivamente;
-- avaliações são liberadas;
-- recebíveis locais podem ficar disponíveis.
+1. Ir para a banca
+2. Confirmar coleta
+3. Iniciar entrega
+4. Confirmar entrega
 
-## Retirada
+Estados compartilhados:
 
-Retirada utiliza o mesmo estado global até `ready_for_pickup` e depois termina em `delivered` quando a banca confirma a retirada.
+- coleta → `collected`;
+- iniciar → `out_for_delivery`;
+- concluir → `delivered`.
 
-```
-received
-→ preparing
-→ ready_for_pickup
-→ delivered
-```
+## 13. Cancelamento do entregador
 
-`fulfillment = pickup` diferencia o fluxo da entrega.
+Antes de concluir:
 
-## Cancelamento — `cancelled`
+- motivo;
+- detalhes;
+- log local;
+- pedido volta para `ready_for_pickup`;
+- motorista é removido;
+- evento `driver-cancelled`.
+
+Produção precisa impedir corrida dupla por transação/lock.
+
+## 14. Cancelamento do cliente
 
 Antes da coleta:
 
-- registrar ator, motivo, detalhes e data/hora;
-- liberar estoque reservado;
-- se pagamento local estava autorizado, registrar `refunded` e crédito/reembolso;
-- notificar participantes.
+- registra motivo/detalhes;
+- libera estoque;
+- trata reembolso local quando aplicável.
 
-Depois da coleta:
+Após coleta:
 
-- abrir suporte/ocorrência;
-- não transformar automaticamente em cancelamento simples.
+- não usa cancelamento simples;
+- abre suporte.
 
-## Substituição
+## 15. Estoque
 
-Quando um item fica indisponível:
+- reserva na criação;
+- libera no cancelamento elegível;
+- consome na conclusão.
 
-1. banca marca indisponível e informa proposta;
-2. evento é registrado;
-3. cliente aceita ou recusa;
-4. aceite atualiza item/evento;
-5. recusa pode levar a cancelamento/suporte conforme fase.
+Implementação é local, não banco.
 
-## Multi-banca
+## 16. Pagamento na entrega
 
-Cada `vendor` possui estado próprio.
+O método acompanha a corrida.
 
-O estado global é derivado:
+Dinheiro pode carregar `changeFor`.
 
-- qualquer banca em preparo → `preparing`;
-- todas prontas → `ready_for_pickup`;
-- após logística avançar, status global não regride por alteração tardia de banca.
+Ao concluir entrega, o protótipo pode considerar o pagamento autorizado, mas não existe conciliação real.
 
-## Pagamento
+## 17. Eventos
 
-Pagamento é máquina separada:
+`orderBridge` registra eventos do fluxo local.
 
-- `authorized`;
-- `due_on_delivery`;
-- `failed`;
-- `refunded`.
+A tabela SQL `order_events` não possui `previous_state/next_state`.
 
-Não misturar esses valores com o status global do pedido.
+Se produção precisar de auditoria completa de transição, criar esses campos ou registrar payload estruturado equivalente.
 
-## Eventos
+## 18. Critério para backend real
 
-Toda transição relevante deve gerar evento com:
+Não permitir UPDATE livre de `orders.status`.
 
-- chave;
-- rótulo;
-- data/hora;
-- ator;
-- motivo/detalhes quando aplicável.
+Criar ações server-side idempotentes para:
 
-Produção deve guardar eventos server-side e preferencialmente imutáveis.
+- banca aceitar;
+- banca preparar;
+- banca pronta;
+- atribuir motorista;
+- coleta;
+- iniciar entrega;
+- concluir;
+- cancelar.
 
-## Notificações
-
-### Cliente
-
-Pagamento, aceite/preparo, pronto, entregador atribuído, coletado, rota, entregue, cancelamento/reembolso, substituição e avaliação.
-
-### Feirante
-
-Novo pedido, pagamento, mudanças do cliente, entregador atribuído/coleta, ocorrência e repasse.
-
-### Entregador
-
-Nova corrida compatível, aceite, mudança/cancelamento pré-coleta, suporte e financeiro.
-
-## Regras de integridade
-
-- status não deve voltar livremente;
-- nenhuma tela controla etapa de outro papel;
-- estoque/preço/peso do pedido usam snapshot;
-- multi-banca não libera logística cedo;
-- um pedido já atribuído não volta à fila;
-- dinheiro e estoque serão mutações server-side na produção;
-- transições críticas devem ser idempotentes.
+Cada função valida estado anterior + ator + pré-condições.
