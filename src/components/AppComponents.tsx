@@ -203,7 +203,7 @@ export function LoginPage({
               </div>
             )}
             {formError && (
-              <p className="operation-footnote" role="alert">
+              <p className="inline-error" role="alert">
                 {formError}
               </p>
             )}
@@ -471,19 +471,57 @@ export function OperationsMenu({
   details: Record<string, { text: string; badge: string }>;
   onOpen: (module: string) => void;
 }) {
+  const groupFor = (module: string) => {
+    if (["Painel", "Pedidos", "Entregas", "Em andamento"].includes(module)) return "Agora";
+    if (
+      [
+        "Minha banca",
+        "Produtos",
+        "Estoque",
+        "Horários",
+        "Entrega/retirada",
+        "Veículos",
+        "Forma de entrega",
+        "Alertas graves",
+      ].includes(module)
+    )
+      return "Operação";
+    if (["Promoções", "Financeiro", "Avaliações", "Desempenho", "Vantagens"].includes(module))
+      return "Financeiro e desempenho";
+    return "Conta e suporte";
+  };
+  const groups = ["Agora", "Operação", "Financeiro e desempenho", "Conta e suporte"];
   return (
-    <div className="ops-card-grid">
-      {modules.map((module) => {
-        const detail = details[module] ?? { text: "Abrir módulo operacional.", badge: "Entrar" };
+    <div>
+      {groups.map((group) => {
+        const groupModules = modules.filter((module) => groupFor(module) === group);
+        if (!groupModules.length) return null;
         return (
-          <button className="module-card" key={module} onClick={() => onOpen(module)} aria-label={module}>
-            <span>{detail.badge}</span>
-            <b>{module}</b>
-            <small>{detail.text}</small>
-            <strong>
-              Entrar <ChevronRight size={16} />
-            </strong>
-          </button>
+          <section className="ops-group" key={group} aria-labelledby={`ops-group-${group}`}>
+            <h3 className="ops-group-title" id={`ops-group-${group}`}>
+              {group}
+            </h3>
+            <div className="ops-group-grid">
+              {groupModules.map((module) => {
+                const detail = details[module] ?? { text: "Abrir módulo operacional.", badge: "Entrar" };
+                return (
+                  <button
+                    className="module-card"
+                    key={module}
+                    onClick={() => onOpen(module)}
+                    aria-label={module}
+                  >
+                    <span>{detail.badge}</span>
+                    <b>{module}</b>
+                    <small>{detail.text}</small>
+                    <strong>
+                      Entrar <ChevronRight size={16} />
+                    </strong>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         );
       })}
     </div>
@@ -613,8 +651,8 @@ export function MobileNavigation({
   onTab: (tab: CustomerTab) => void;
 }) {
   const items: Array<[CustomerTab, string, ReactNode]> = [
-    ["home", "Início", <Home />],
     ["fairs", "Feiras", <Store />],
+    ["products", "Produtos", <ShoppingBag />],
     ["orders", "Pedidos", <Package />],
     ["profile", "Perfil", <User />],
   ];
@@ -637,14 +675,16 @@ export function Panel({
 }: {
   title: string;
   subtitle: string;
-  onBack: () => void;
+  onBack?: () => void;
   children: ReactNode;
 }) {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <button onClick={onBack} className="back-button">
-        <ArrowLeft size={17} /> Voltar
-      </button>
+      {onBack && (
+        <button onClick={onBack} className="back-button">
+          <ArrowLeft size={17} /> Voltar
+        </button>
+      )}
       <PageHeading title={title} subtitle={subtitle} />
       <div className="mt-6">{children}</div>
     </main>
