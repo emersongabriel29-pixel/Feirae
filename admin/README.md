@@ -36,6 +36,7 @@ Depois disso, a gestão de papéis pode ser feita pelo próprio painel, com audi
 ## Módulos
 
 - Visão geral e indicadores;
+- Relatórios por período com KPIs, CSV e impressão/PDF;
 - Pedidos;
 - Entregas;
 - Suporte;
