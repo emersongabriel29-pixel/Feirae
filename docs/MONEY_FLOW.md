@@ -1,231 +1,326 @@
 # Fluxo financeiro — Feiraê
 
-## Estado de implementação
+Atualizado em 26/09/2026 após comparação com frontend e schema.
 
-O fluxo financeiro deste documento é **arquitetura alvo de produção**.
+## 1. O que existe hoje
 
-No protótipo atual existem:
+Não existe movimentação financeira real.
 
-- estados locais de pagamento;
-- reembolso local;
-- carteira local;
-- saldos/repasse simulados para banca e entregador.
+O protótipo simula:
 
-Ainda não existem:
+### Cliente
 
-- cobrança real;
-- webhook;
-- split;
-- ledger com lastro;
-- saque/repasse bancário;
-- conciliação.
+- pagamento autorizado;
+- pagamento na entrega;
+- reembolso;
+- crédito em carteira;
+- uso de carteira.
 
-Portanto, valores mostrados no protótipo não devem ser tratados como movimentação financeira real.
+Código:
 
-Estados oficiais e separação entre pedido/pagamento/repasse: [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
-
-## Decisão de arquitetura
-
-O Feiraê não deve receber dinheiro do cliente em uma conta própria para depois repassar manualmente a feirantes e entregadores.
-
-O modelo alvo é usar um provedor de pagamentos/Instituição de Pagamento que suporte marketplace, recebedores e divisão de valores. O Banco Central trata marketplaces que recebem e repassam pagamentos como um modelo que pode atuar como subcredenciador, e instituições de pagamento são as entidades próprias para executar/gerir serviços de pagamento.
-
-No código do Feiraê, o dinheiro deve ser representado por um **livro-razão interno (ledger)** e por IDs/tokens do provedor, não por um “saldo fictício” sem lastro.
-
-## Cadastro para recebimento
+- `orderBridge.ts`;
+- `walletBridge.ts`;
+- `CustomerScreens.tsx`.
 
 ### Feirante
 
-Antes de vender, o feirante aprovado deve cadastrar um destino de recebimento:
+`VendorScreens.tsx` calcula localmente:
 
-- chave Pix; ou
-- conta bancária aceita pelo provedor;
-- titular;
-- CPF/CNPJ do titular;
-- vínculo com o recebedor aprovado no provedor.
+- bruto pendente;
+- bruto elegível após entrega;
+- valor disponível para solicitação;
+- solicitado;
+- pago.
 
-O titular do recebimento deve ser compatível com a pessoa física/jurídica aprovada ou com uma regra de representante validada.
+Persistência:
+
+- `feirae:vendor-settlements:<email>`.
 
 ### Entregador
 
-Antes de aceitar corridas pagas, o entregador aprovado deve cadastrar:
+`DeliveryScreens.tsx` mantém ledger local:
 
-- chave Pix; ou
-- conta bancária aceita pelo provedor;
+- `pending`;
+- `available`;
+- `withdrawal_requested`;
+- `paid`.
+
+Persistência:
+
+- `feirae:delivery-ledger:<email>`.
+
+Nada disso envia dinheiro.
+
+## 2. Estrutura SQL que já existe
+
+### `payments`
+
+Campos:
+
+- `order_id`;
+- `provider`;
+- `provider_payment_id`;
+- `method`;
+- `status`;
+- `amount`;
+- `commission`;
+- `vendor_amount`;
+- `delivery_amount`.
+
+### `payouts`
+
+Campos:
+
+- `profile_id`;
+- `role`;
+- `amount`;
+- `status`;
+- `provider_reference`;
+- `requested_at`;
+- `paid_at`.
+
+Status SQL:
+
+```
+pending
+available
+requested
+paid
+failed
+```
+
+### `wallet_entries`
+
+Tipos:
+
+- `refund_credit`;
+- `purchase_debit`;
+- `adjustment`.
+
+## 3. Gap financeiro multi-banca
+
+Um pedido pode ter N feirantes via `order_vendors`.
+
+Mas `payments` possui apenas um:
+
+```
+vendor_amount
+```
+
+Isso não representa:
+
+- feirante A;
+- feirante B;
+- feirante C;
+- subsídio de cada um;
+- comissão de cada parcela.
+
+Portanto, `payments.vendor_amount` não é suficiente para produção multi-banca.
+
+## 4. Ledger que falta
+
+Criar estrutura por lançamento, por exemplo:
+
+`ledger_entries`:
+
+- id;
+- order_id;
+- order_vendor_id opcional;
+- profile_id/recipient_id;
+- role;
+- entry_type;
+- gross_amount;
+- fee_amount;
+- net_amount;
+- currency;
+- status;
+- provider_reference;
+- reverses_entry_id;
+- created_at.
+
+Tipos mínimos:
+
+- `product_gross`;
+- `platform_fee`;
+- `payment_processor_fee`;
+- `delivery_customer_charge`;
+- `delivery_vendor_subsidy`;
+- `delivery_platform_subsidy`;
+- `delivery_earning`;
+- `refund`;
+- `adjustment`.
+
+Ajuste nunca deve apagar lançamento anterior.
+
+## 5. Estados divergentes
+
+Frontend entregador:
+
+```
+withdrawal_requested
+```
+
+SQL payouts:
+
+```
+requested
+```
+
+Normalizar para um único valor.
+
+Documento canônico: [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md).
+
+## 6. Checkout atual
+
+Pagamento “agora” é localmente marcado como autorizado.
+
+Pagamento “na entrega” usa:
+
+```
+due_on_delivery
+```
+
+Ao concluir entrega, o fluxo local pode mudar o estado para autorizado.
+
+Não há:
+
+- PSP;
+- QR Pix real;
+- autorização de cartão;
+- captura;
+- webhook;
+- chargeback.
+
+## 7. Cartão
+
+Tela atual armazena apenas:
+
 - titular;
-- CPF do titular;
-- recebedor/token criado no provedor.
+- últimos 4;
+- validade;
+- tipo;
+- bandeira.
 
-O Feiraê deve armazenar apenas os dados necessários à experiência e os identificadores retornados pelo provedor. Dados bancários sensíveis devem permanecer no ambiente do provedor sempre que possível.
+Número completo e CVV não são gravados no cartão salvo.
 
-## Estados do saldo
+Produção deve receber token/ID do PSP, não PAN/CVV.
 
-Cada recebedor possui três conceitos distintos:
+## 8. Frete
 
-1. **Pendente** — valor já associado a um pedido, mas ainda não liberado.
-2. **Disponível** — valor liberado após a conclusão/regras do pedido.
-3. **Pago/Sacado** — valor já enviado ao destino de recebimento.
+O valor de frete do checkout hoje vem de `vendorMetrics.deliveryFee`, usando o maior valor entre as bancas.
 
-Nunca mostrar “saldo disponível” antes do evento de liberação.
+Não é calculado por:
 
-## Fluxo de uma compra
+- km;
+- peso;
+- tempo;
+- veículo.
 
-1. Cliente confirma o checkout.
-2. Provedor confirma o pagamento.
-3. Feiraê cria o ledger do pedido.
-4. Valor do feirante fica como **pendente**.
-5. Taxa de entrega fica reservada para a operação logística.
-6. Pedido segue para aceite/preparo.
-7. Entrega/retirada é concluída.
-8. Regras de contestação/reembolso são verificadas.
-9. Parcela do feirante muda para **disponível**.
-10. Parcela do entregador muda para **disponível** quando a entrega é concluída.
-11. O provedor executa repasse automático ou saque solicitado, conforme configuração futura.
+A rota calculada é usada para logística, não para precificação atual.
 
-## Composição financeira
+## 9. Frete grátis
 
-Um pedido deve registrar de forma separada:
+Frontend suporta:
 
-- subtotal dos produtos;
-- desconto do produto;
-- desconto/cupom patrocinado pelo Feiraê;
-- desconto/cupom patrocinado pelo feirante;
-- taxa de entrega cobrada do cliente;
-- subsídio de entrega pago pelo feirante;
-- taxa administrativa/plataforma;
-- taxa do provedor de pagamento;
-- valor líquido do feirante;
-- remuneração do entregador;
-- reembolso/estorno;
-- ajustes.
+- promoção `freteGratis`;
+- configuração `absorbDeliveryFee` da banca.
 
-## Frete grátis patrocinado pelo feirante
+O cliente pode pagar R$ 0 de entrega enquanto o pedido mantém `calculatedDeliveryFee`.
 
-“Frete grátis” não significa que o entregador trabalha de graça.
+No modelo real, o ledger deve registrar quem patrocinou o custo.
 
-Fluxo:
+## 10. Taxa Feiraê
 
-1. Cliente vê frete R$ 0,00.
-2. O sistema calcula normalmente a remuneração da entrega.
-3. O valor do frete é debitado da parcela econômica do feirante.
-4. O entregador recebe a remuneração prevista normalmente.
-5. O Feiraê registra `delivery_sponsor = vendor`.
+Hoje a tela do feirante mostra:
 
-Exemplo conceitual:
+- “Taxa Feiraê — Não configurada”;
+- “Taxa de processamento — Não configurada”.
 
-- produtos: R$ 100;
-- entrega: R$ 12;
-- cliente paga: R$ 100;
-- feirante patrocina os R$ 12;
-- entregador continua tendo R$ 12 destinados à entrega;
-- o líquido do feirante é reduzido pelo subsídio, além das demais taxas aplicáveis.
+Não há fórmula final no código nem tabela de taxa.
 
-O feirante **não transfere dinheiro diretamente ao entregador**. O split/ledger do pedido resolve isso.
+A regra deve vir do painel administrativo por versão/vigência.
 
-## Frete grátis patrocinado pelo Feiraê
+## 11. Fluxo financeiro alvo por pedido
 
-O mesmo princípio vale para campanhas da plataforma:
+1. backend recalcula itens/preço;
+2. reserva estoque;
+3. cria pedido;
+4. PSP cria cobrança;
+5. webhook confirma;
+6. ledger cria parcelas por banca;
+7. cria parcela logística;
+8. registra comissão/taxa PSP;
+9. entrega/retirada conclui;
+10. recebíveis passam para disponível conforme política;
+11. payout é solicitado/agendado;
+12. provider confirma pagamento;
+13. conciliação compara provider x ledger.
 
-- cliente paga R$ 0 de entrega;
-- entregador recebe integralmente a remuneração calculada;
-- o subsídio é registrado como custo promocional da plataforma.
+## 12. Compra multi-banca
 
-## Compra com vários feirantes
+Exemplo estrutural:
 
-Um checkout pode gerar:
+Cliente paga R$ 160.
 
-- 1 pagamento do cliente;
-- N parcelas de vendedores;
-- 1 ou mais parcelas logísticas;
-- parcela da plataforma;
-- taxa do provedor.
+- Banca A produtos: R$ 70;
+- Banca B produtos: R$ 60;
+- entrega: R$ 20;
+- taxa Feiraê: R$ 10.
 
-Cada item deve manter o vendedor de origem. Cancelar um item/vendedor não deve obrigatoriamente estornar as outras parcelas.
+O sistema precisa guardar lançamentos separados. Um único `vendor_amount = 130` perde o recebedor de cada parcela.
 
-## Retirada na banca
+## 13. Cancelamento e estorno
 
-Sem entregador:
+Antes da coleta, o protótipo:
 
-- não existe remuneração logística;
-- valor do feirante fica pendente até a retirada ser confirmada;
-- confirmação pode usar código/PIN/QR ou ação dupla cliente + feirante na fase real.
+- cancela;
+- libera estoque;
+- cria reembolso local quando aplicável.
 
-## Cancelamentos e estornos
+Produção precisa:
 
-### Antes do aceite do feirante
+- chamar PSP;
+- aguardar/registrar status do estorno;
+- lançar reversões no ledger;
+- lidar com estorno parcial por banca/item.
 
-- cancelar pedido;
-- estornar integralmente a parcela correspondente;
-- não gerar ganho de entrega.
+## 14. Repasse
 
-### Durante preparo
+O protótipo permite marcar:
 
-- aplicar política configurável;
-- registrar motivo e ator;
-- recalcular itens e taxas antes de qualquer estorno parcial.
+- solicitado;
+- recebido/pago.
 
-### Após coleta
+Produção precisa de:
 
-- não permitir cancelamento simples pelo frontend;
-- abrir ocorrência/suporte;
-- preservar rastreabilidade do valor do feirante e do entregador.
+- recebedor no PSP;
+- destino validado;
+- policy de disponibilidade;
+- payout idempotente;
+- falha/retry;
+- conciliação.
 
-### Entrega cancelada por problema operacional
+## 15. Estruturas que faltam no banco
 
-- separar responsabilidade de cliente, feirante, entregador e plataforma;
-- não retirar automaticamente remuneração já devida sem regra e auditoria.
+- ledger por recebedor;
+- regra versionada de taxa;
+- snapshot da regra aplicada;
+- parcela financeira por `order_vendor`;
+- vínculo de subsídio;
+- disputa/chargeback;
+- conciliação.
 
-## Saque e repasse
+## 16. Fonte regulatória
 
-A interface de Feirante e Entregador deve mostrar:
+O modelo de pagamentos deve ser definido com o PSP e revisão jurídica/regulatória apropriada.
 
-- saldo pendente;
-- saldo disponível;
-- próximo repasse;
-- histórico;
-- detalhes por pedido/corrida;
-- botão “Sacar” somente se o provedor suportar saque sob demanda;
-- conta/Pix cadastrado;
-- status do recebedor no provedor.
-
-A periodicidade final (instantâneo, diário, semanal etc.) é decisão comercial e do provedor e **não deve ser hard-coded antes da integração**.
-
-## Estados sugeridos
-
-### Recebível
-
-- pending;
-- available;
-- withdrawal_requested;
-- paid;
-- refunded;
-- partially_refunded;
-- blocked;
-- disputed.
-
-### Repasse
-
-- scheduled;
-- processing;
-- completed;
-- failed;
-- reversed.
-
-## Segurança
-
-- nunca confiar em valores calculados apenas no frontend;
-- split e valores devem ser criados/recalculados no backend;
-- usar idempotência em cobrança, estorno e repasse;
-- webhooks devem ser reprocessáveis;
-- manter ledger imutável com ajustes por novos lançamentos, não apagando histórico;
-- nunca armazenar número completo de cartão/CVV;
-- conciliar ledger do Feiraê com o provedor.
-
-## Fontes regulatórias de referência
+Referências mantidas:
 
 - Banco Central — Instituições de Pagamento:
   https://www.bcb.gov.br/estabilidadefinanceira/instituicaopagamento
 - Banco Central — FAQ sobre marketplace/subcredenciador:
   https://www.bcb.gov.br/estabilidadefinanceira/faq-liquidacao-centralizada
 - Banco Central — Arranjos de Pagamento:
-  https://www.bcb.gov.br/estabilidadefinanceira/arranjospagamento/https%3A/www3.bcb.gov.br/sgspub
+  https://www.bcb.gov.br/estabilidadefinanceira/arranjospagamento/
+
+O fato de existir marketplace não significa, sozinho, que todo modelo seja necessariamente subcredenciador; depende de como o fluxo de pagamento é estruturado.
