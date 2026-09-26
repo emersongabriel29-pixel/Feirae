@@ -312,10 +312,13 @@ export function DeliveryOperations({
     if (vehicleEditingId || vehicleTypeOptions.length === 0) return;
     if (!vehicleTypeOptions.includes(vehicleType)) {
       const nextType = vehicleTypeOptions[0];
-      setVehicleType(nextType);
-      setVehicleCapacity(suggestedCapacityForVehicle(nextType));
-      setVehiclePlate("");
-      setVehicleDocumentName("");
+      const timer = window.setTimeout(() => {
+        setVehicleType(nextType);
+        setVehicleCapacity(suggestedCapacityForVehicle(nextType));
+        setVehiclePlate("");
+        setVehicleDocumentName("");
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
   }, [vehicleEditingId, vehicleType, vehicleTypeOptions]);
 
