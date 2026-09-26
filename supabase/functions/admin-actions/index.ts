@@ -221,6 +221,88 @@ Deno.serve(async (req) => {
       return json({ data: updated });
     }
 
+    if (action === "profile_approval") {
+      requirePermission("registrations.manage");
+      if (!has("documents.review") && !ctx.isSuperadmin) {
+        throw new ResponseError("documents_permission_required", 403);
+      }
+      const profileId = String(body.profile_id ?? "");
+      const profileKind = String(body.profile_kind ?? "");
+      const approved = Boolean(body.approved);
+      if (!["vendor", "delivery"].includes(profileKind)) {
+        throw new ResponseError("invalid_profile_kind", 400);
+      }
+
+      const profileTable = profileKind === "vendor" ? "vendor_profiles" : "delivery_profiles";
+      const { data: before, error: profileError } = await adminDb
+        .from(profileTable)
+        .select("*")
+        .eq("id", profileId)
+        .single();
+      if (profileError || !before) throw new ResponseError("profile_not_found", 404);
+
+      if (approved) {
+        const requiredTypes = new Set<string>();
+        const { data: requirements, error: requirementsError } = await adminDb
+          .from("onboarding_requirements")
+          .select("document_type,vehicle_type,required,active")
+          .eq("profile_role", profileKind)
+          .eq("required", true)
+          .eq("active", true);
+        if (requirementsError) throw new ResponseError("requirements_load_failed", 400, requirementsError.message);
+
+        let activeVehicleTypes: string[] = [];
+        if (profileKind === "delivery") {
+          const { data: vehicles, error: vehicleError } = await adminDb
+            .from("delivery_vehicles")
+            .select("vehicle_type")
+            .eq("delivery_id", profileId)
+            .eq("active", true);
+          if (vehicleError) throw new ResponseError("vehicles_load_failed", 400, vehicleError.message);
+          activeVehicleTypes = (vehicles ?? []).map((row) => String(row.vehicle_type));
+        }
+
+        for (const requirement of requirements ?? []) {
+          if (!requirement.vehicle_type || activeVehicleTypes.includes(String(requirement.vehicle_type))) {
+            requiredTypes.add(String(requirement.document_type));
+          }
+        }
+
+        const { data: documents, error: documentError } = await adminDb
+          .from("onboarding_documents")
+          .select("document_type,status,expires_at")
+          .eq("profile_id", profileId);
+        if (documentError) throw new ResponseError("documents_load_failed", 400, documentError.message);
+
+        const today = new Date().toISOString().slice(0, 10);
+        const approvedTypes = new Set(
+          (documents ?? [])
+            .filter((row) => row.status === "approved" && (!row.expires_at || String(row.expires_at) >= today))
+            .map((row) => String(row.document_type)),
+        );
+        const missing = [...requiredTypes].filter((type) => !approvedTypes.has(type));
+        if (missing.length) {
+          throw new ResponseError("required_documents_missing", 409, missing.join(", "));
+        }
+      }
+
+      const { data: updated, error: updateError } = await adminDb
+        .from(profileTable)
+        .update({ approved })
+        .eq("id", profileId)
+        .select()
+        .single();
+      if (updateError) throw new ResponseError("profile_approval_failed", 400, updateError.message);
+      await audit(
+        approved ? "profile_approved" : "profile_approval_revoked",
+        profileTable,
+        profileId,
+        before,
+        updated,
+      );
+      return json({ data: updated });
+    }
+
     if (action === "document_review") {
       requirePermission("documents.review");
       const documentId = String(body.document_id ?? "");
