@@ -235,6 +235,27 @@ alter table public.fairs
   add column if not exists state text not null default 'DF' references public.service_states(code),
   add column if not exists city text;
 
+alter table public.fair_vendor_memberships
+  add column if not exists id uuid not null default gen_random_uuid(),
+  add column if not exists stall_code text,
+  add column if not exists stall_name text,
+  add column if not exists custom_opening_hours jsonb,
+  add column if not exists notes text,
+  add column if not exists updated_at timestamptz not null default now();
+
+create unique index if not exists fair_vendor_memberships_id_uidx
+  on public.fair_vendor_memberships(id);
+
+alter table public.payments
+  add column if not exists provider_fee numeric(12,2) not null default 0 check (provider_fee >= 0),
+  add column if not exists platform_amount numeric(12,2) not null default 0 check (platform_amount >= 0),
+  add column if not exists refunded_amount numeric(12,2) not null default 0 check (refunded_amount >= 0),
+  add column if not exists failure_reason text,
+  add column if not exists reconciled boolean not null default false,
+  add column if not exists reconciled_by uuid references public.profiles(id) on delete set null,
+  add column if not exists reconciled_at timestamptz,
+  add column if not exists updated_at timestamptz not null default now();
+
 create table if not exists public.account_enforcements (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
@@ -280,6 +301,57 @@ drop trigger if exists feirae_stamp_account_enforcement on public.account_enforc
 create trigger feirae_stamp_account_enforcement
 before update on public.account_enforcements
 for each row execute function private.stamp_account_enforcement();
+
+create table if not exists public.admin_access (
+  profile_id uuid primary key references public.profiles(id) on delete cascade,
+  active boolean not null default true,
+  title text,
+  notes text,
+  updated_by uuid references public.profiles(id) on delete set null default auth.uid(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.integration_health_events (
+  id bigint generated always as identity primary key,
+  integration_key text not null references public.integration_registry(key) on delete cascade,
+  status text not null check (status in ('ok','degraded','error','not_configured')),
+  message text,
+  response_ms integer,
+  metadata jsonb not null default '{}'::jsonb,
+  checked_at timestamptz not null default now()
+);
+
+create index if not exists integration_health_events_key_checked_idx
+  on public.integration_health_events(integration_key, checked_at desc);
+
+-- After admin_access exists, access can be disabled without changing the profile role.
+create or replace function private.is_feirae_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select
+    (select auth.uid()) is not null
+    and exists (
+      select 1
+      from public.profiles p
+      where p.id = (select auth.uid())
+        and p.role = 'admin'
+    )
+    and coalesce(
+      (
+        select aa.active
+        from public.admin_access aa
+        where aa.profile_id = (select auth.uid())
+      ),
+      true
+    );
+$;
+
+revoke all on function private.is_feirae_admin() from public, anon, authenticated;
+grant execute on function private.is_feirae_admin() to authenticated;
 
 create table if not exists public.admin_permissions (
   id uuid primary key default gen_random_uuid(),
@@ -384,7 +456,10 @@ values
   ('finance.minimum_payout_amount','finance','Saque mínimo','20'::jsonb,'Valor mínimo de saque, se o provedor permitir saque manual.',false),
   ('finance.payout_delay_days','finance','Prazo padrão de liberação','2'::jsonb,'Dias para tornar o valor disponível quando aplicável.',false),
   ('catalog.allow_multi_fair_cart','catalog','Carrinho com várias feiras','false'::jsonb,'Mantém uma compra vinculada a uma feira por padrão.',true),
-  ('documents.storage_bucket','documents','Bucket de documentos','"onboarding-documents"'::jsonb,'Bucket privado usado para documentos de cadastro. O nome do bucket não é segredo.',true)
+  ('documents.storage_bucket','documents','Bucket de documentos','"onboarding-documents"'::jsonb,'Bucket privado usado para documentos de cadastro. O nome do bucket não é segredo.',true),
+  ('alerts.order_stale_minutes','alerts','Pedido parado (min)','45'::jsonb,'Tempo sem atualização para gerar alerta operacional de pedido.',false),
+  ('alerts.delivery_stale_minutes','alerts','Entrega parada (min)','30'::jsonb,'Tempo sem atualização para gerar alerta operacional de entrega.',false),
+  ('alerts.document_expiry_days','alerts','Documento vencendo (dias)','30'::jsonb,'Antecedência usada nos alertas de validade documental.',false)
 on conflict (key) do nothing;
 
 insert into public.service_states
@@ -504,7 +579,9 @@ grant select on table
   public.system_announcements,
   public.privacy_requests,
   public.account_enforcements,
+  public.admin_access,
   public.admin_permissions,
+  public.integration_health_events,
   public.admin_audit_logs
 to authenticated;
 
@@ -525,6 +602,7 @@ grant insert, update, delete on table
   public.system_announcements,
   public.privacy_requests,
   public.account_enforcements,
+  public.admin_access,
   public.admin_permissions
 to authenticated;
 
@@ -535,6 +613,23 @@ grant usage, select on sequence public.admin_audit_logs_id_seq to authenticated;
 grant select on table public.categories to anon, authenticated;
 grant insert, update, delete on table public.categories to authenticated;
 grant select, insert, update, delete on table public.deliveries to authenticated;
+
+grant select, insert, update on table
+  public.fair_vendor_memberships,
+  public.vendor_stores
+to authenticated;
+
+grant select on table
+  public.payments,
+  public.order_items,
+  public.order_vendors,
+  public.order_events,
+  public.addresses,
+  public.delivery_vehicles
+to authenticated;
+
+grant update on table public.payments to authenticated;
+grant usage, select on sequence public.integration_health_events_id_seq to authenticated;
 
 -- Reporting reads. RLS below decides which rows an administrator may see.
 grant select on table
@@ -549,6 +644,9 @@ to authenticated;
 -- RLS for management data.
 alter table public.categories enable row level security;
 alter table public.deliveries enable row level security;
+alter table public.fair_vendor_memberships enable row level security;
+alter table public.vendor_stores enable row level security;
+alter table public.payments enable row level security;
 alter table public.platform_settings enable row level security;
 alter table public.service_states enable row level security;
 alter table public.service_regions enable row level security;
@@ -565,7 +663,9 @@ alter table public.integration_registry enable row level security;
 alter table public.system_announcements enable row level security;
 alter table public.privacy_requests enable row level security;
 alter table public.account_enforcements enable row level security;
+alter table public.admin_access enable row level security;
 alter table public.admin_permissions enable row level security;
+alter table public.integration_health_events enable row level security;
 alter table public.admin_audit_logs enable row level security;
 
 drop policy if exists "public read active categories" on public.categories;
@@ -608,6 +708,67 @@ to authenticated
 using ((select private.feirae_admin_has('operations.manage')))
 with check ((select private.feirae_admin_has('operations.manage')));
 
+drop policy if exists "vendors read own fair memberships" on public.fair_vendor_memberships;
+create policy "vendors read own fair memberships"
+on public.fair_vendor_memberships for select
+to authenticated
+using (vendor_id = (select auth.uid()));
+
+create policy "admins manage fair memberships"
+on public.fair_vendor_memberships for all
+to authenticated
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
+
+drop policy if exists "vendors manage own stores" on public.vendor_stores;
+create policy "vendors manage own stores"
+on public.vendor_stores for all
+to authenticated
+using (vendor_id = (select auth.uid()))
+with check (vendor_id = (select auth.uid()));
+
+create policy "admins manage vendor stores"
+on public.vendor_stores for all
+to authenticated
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
+
+drop policy if exists "customers read own payments" on public.payments;
+create policy "customers read own payments"
+on public.payments for select
+to authenticated
+using (
+  exists (
+    select 1 from public.orders o
+    where o.id = order_id and o.customer_id = (select auth.uid())
+  )
+);
+
+create policy "admins read payments"
+on public.payments for select
+to authenticated
+using ((select private.feirae_admin_has('finance.manage')));
+
+create policy "admins reconcile payments"
+on public.payments for update
+to authenticated
+using ((select private.feirae_admin_has('finance.manage')))
+with check ((select private.feirae_admin_has('finance.manage')));
+
+create policy "admins manage admin access"
+on public.admin_access for all
+to authenticated
+using ((select private.feirae_admin_has('permissions.manage')))
+with check ((select private.feirae_admin_has('permissions.manage')));
+
+create policy "admins view integration health"
+on public.integration_health_events for select
+to authenticated
+using (
+  (select private.feirae_admin_has('settings.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
+
 create policy "admins view profiles in reports"
 on public.profiles for select
 to authenticated
@@ -616,7 +777,47 @@ using ((select private.feirae_admin_has('reports.view')));
 create policy "admins view orders in reports"
 on public.orders for select
 to authenticated
-using ((select private.feirae_admin_has('reports.view')));
+using (
+  (select private.feirae_admin_has('reports.view'))
+  or (select private.feirae_admin_has('operations.manage'))
+);
+
+create policy "admins view order items"
+on public.order_items for select
+to authenticated
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
+
+create policy "admins view order vendors"
+on public.order_vendors for select
+to authenticated
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
+
+create policy "admins view order events for detail"
+on public.order_events for select
+to authenticated
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('reports.view'))
+);
+
+create policy "admins view addresses for order detail"
+on public.addresses for select
+to authenticated
+using ((select private.feirae_admin_has('operations.manage')));
+
+create policy "admins view delivery vehicles for detail"
+on public.delivery_vehicles for select
+to authenticated
+using (
+  (select private.feirae_admin_has('operations.manage'))
+  or (select private.feirae_admin_has('registrations.manage'))
+);
 
 create policy "admins view deliveries in reports"
 on public.deliveries for select
@@ -1005,7 +1206,10 @@ begin
     'integration_registry',
     'system_announcements',
     'account_enforcements',
-    'admin_permissions'
+    'admin_access',
+    'admin_permissions',
+    'fair_vendor_memberships',
+    'vendor_stores'
   ]
   loop
     execute format('drop trigger if exists feirae_admin_audit on public.%I', tbl);
