@@ -1,3 +1,4 @@
+/* global process, console */
 import { execFileSync } from "node:child_process";
 
 const base = process.env.BASE_SHA;
