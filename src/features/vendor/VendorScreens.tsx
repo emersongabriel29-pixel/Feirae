@@ -911,10 +911,12 @@ export function FeiranteOperations({
                         {order.id} · {order.customer}
                       </b>
                       <small>
-                        {vendorOrderStatusLabel(order.status)} · {order.items.length} itens · {money(order.value)}
+                        {vendorOrderStatusLabel(order.status)} · {order.items.length} itens ·{" "}
+                        {money(order.value)}
                       </small>
                       <small>
-                        {order.fulfillment === "pickup" ? "Retirada na feira" : order.city} · {order.createdAt}
+                        {order.fulfillment === "pickup" ? "Retirada na feira" : order.city} ·{" "}
+                        {order.createdAt}
                       </small>
                     </div>
                     <button
