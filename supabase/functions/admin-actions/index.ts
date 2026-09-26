@@ -110,6 +110,16 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const action = String(body?.action ?? "");
 
+    if (action === "session_event") {
+      const event = String(body.event ?? "");
+      if (!["login", "logout"].includes(event)) throw new ResponseError("invalid_session_event", 400);
+      await audit(event === "login" ? "admin_login" : "admin_logout", "admin_session", ctx.id, null, {
+        event,
+        user_agent: req.headers.get("user-agent") ?? null,
+      });
+      return json({ ok: true });
+    }
+
     if (action === "order_transition") {
       requirePermission("operations.manage");
       const orderId = String(body.order_id ?? "");
