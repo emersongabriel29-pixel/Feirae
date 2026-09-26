@@ -54,10 +54,11 @@ A marca continua levando ao início.
 
 Navegação primária em desktop e mobile:
 
-1. Feiras;
-2. Produtos;
-3. Pedidos;
-4. Perfil.
+1. Início;
+2. Feiras;
+3. Produtos;
+4. Pedidos;
+5. Perfil.
 
 No mobile a barra inferior é fixa.
 
