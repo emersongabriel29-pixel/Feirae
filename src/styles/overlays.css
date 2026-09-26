@@ -195,3 +195,13 @@
   background: var(--fe-green-soft);
   color: var(--fe-green);
 }
+
+
+/* Mobile navigation polish */
+.mobile-nav button {
+  min-height: 3.7rem;
+}
+.mobile-nav button span {
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
