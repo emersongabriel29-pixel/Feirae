@@ -33,11 +33,7 @@ import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
 import { useUnifiedOrderRevision } from "./hooks/useUnifiedOrderRevision";
 import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
-import {
-  marketplaceProducts,
-  readStoreByIdentity,
-  registerPromotionUsage,
-} from "./domain/marketplaceBridge";
+import { marketplaceProducts, readStoreByIdentity, registerPromotionUsage } from "./domain/marketplaceBridge";
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import { consumeWallet } from "./domain/walletBridge";
@@ -54,7 +50,10 @@ export default function App() {
     true,
   );
   const catalog = marketplaceProducts(products);
-  const [favorites, setFavorites] = usePersistentState<number[]>(scopedStorageKey("feirae:favorites", accountKey), [2]);
+  const [favorites, setFavorites] = usePersistentState<number[]>(
+    scopedStorageKey("feirae:favorites", accountKey),
+    [2],
+  );
   const [vendorFavorites, setVendorFavorites] = usePersistentState<string[]>(
     scopedStorageKey("feirae:vendor-favorites", accountKey),
     [],

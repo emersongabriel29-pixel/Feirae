@@ -304,9 +304,7 @@ describe("Feiraê customer flow", () => {
           Boolean(within(article as HTMLElement).queryByRole("button", { name: /abrir pedido/i })),
       );
     expect(createdOrderCard).toBeTruthy();
-    fireEvent.click(
-      within(createdOrderCard as HTMLElement).getByRole("button", { name: /abrir pedido/i }),
-    );
+    fireEvent.click(within(createdOrderCard as HTMLElement).getByRole("button", { name: /abrir pedido/i }));
     fireEvent.click(screen.getByRole("button", { name: /aceitar pedido/i }));
     screen.getAllByRole("button", { name: /marcar separado/i }).forEach((button) => fireEvent.click(button));
     fireEvent.click(screen.getByRole("button", { name: /marcar pedido como pronto/i }));

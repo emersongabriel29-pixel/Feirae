@@ -80,11 +80,7 @@ export function staticStockAdjustment(productId: number) {
   return readJson<Record<string, number>>(STATIC_ADJUSTMENT_KEY, {})[String(productId)] ?? 0;
 }
 
-export function reserveInventory(
-  orderId: string,
-  baseProducts: Product[],
-  cart: Record<number, number>,
-) {
+export function reserveInventory(orderId: string, baseProducts: Product[], cart: Record<number, number>) {
   const currentReservations = reservations();
   const existing = currentReservations.find((reservation) => reservation.orderId === orderId);
   if (existing?.status === "reserved" || existing?.status === "consumed") {
@@ -122,7 +118,10 @@ export function reserveInventory(
     const dynamic = adjustSharedMarketplaceStock(item.productId, item.storeId, -item.quantity);
     if (!dynamic) adjustStaticStock(item.productId, -item.quantity);
   }
-  writeJson(RESERVATION_KEY, [reservation, ...currentReservations.filter((item) => item.orderId !== orderId)]);
+  writeJson(RESERVATION_KEY, [
+    reservation,
+    ...currentReservations.filter((item) => item.orderId !== orderId),
+  ]);
   return { ok: true as const };
 }
 

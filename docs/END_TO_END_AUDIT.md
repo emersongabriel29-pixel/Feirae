@@ -18,52 +18,52 @@ O pedido unificado registra eventos de transição e mantém estados separados p
 
 ## Cliente
 
-| Fluxo | Início | Andamento | Fim esperado |
-| --- | --- | --- | --- |
-| Cadastro | Criar conta | nome/e-mail/papel | sessão criada sem dados fictícios |
-| Carrinho | adicionar produto | quantidade/peso/estoque/feira | checkout |
-| Endereço | adicionar endereço | manual ou GPS | endereço principal utilizável |
-| Checkout | escolher modalidade | promoções, carteira, frete, pagamento | pedido criado |
-| Pagamento agora | Pix/cartão | status autorizado no fluxo local | pedido liberado |
-| Pagamento na entrega | dinheiro/maquininha | informação chega à corrida | autorizado ao concluir entrega |
-| Cancelamento antes da coleta | escolher motivo | outro exige descrição | pedido cancelado + estoque liberado + reembolso local quando aplicável |
-| Problema após coleta | abrir suporte | ocorrência vinculada ao pedido | protocolo aberto |
-| Retirada | selecionar retirada | banca prepara | banca confirma retirada e pedido termina entregue |
-| Entrega | pedido pronto | entregador aceita/coleta/rota | pedido entregue |
-| Substituição | item indisponível | banca propõe/cliente decide | aceite registrado ou cliente cancela |
-| Avaliação | pedido entregue | produto/banca/entrega | avaliação persistida |
-| Comprar novamente | selecionar pedido anterior | restaura itens ainda disponíveis | nova sacola |
-| Carteira | receber reembolso | saldo aparece no checkout | crédito consumido em nova compra |
-| Notificações | evento do pedido | histórico cronológico | leitura persistida |
+| Fluxo                        | Início                     | Andamento                             | Fim esperado                                                           |
+| ---------------------------- | -------------------------- | ------------------------------------- | ---------------------------------------------------------------------- |
+| Cadastro                     | Criar conta                | nome/e-mail/papel                     | sessão criada sem dados fictícios                                      |
+| Carrinho                     | adicionar produto          | quantidade/peso/estoque/feira         | checkout                                                               |
+| Endereço                     | adicionar endereço         | manual ou GPS                         | endereço principal utilizável                                          |
+| Checkout                     | escolher modalidade        | promoções, carteira, frete, pagamento | pedido criado                                                          |
+| Pagamento agora              | Pix/cartão                 | status autorizado no fluxo local      | pedido liberado                                                        |
+| Pagamento na entrega         | dinheiro/maquininha        | informação chega à corrida            | autorizado ao concluir entrega                                         |
+| Cancelamento antes da coleta | escolher motivo            | outro exige descrição                 | pedido cancelado + estoque liberado + reembolso local quando aplicável |
+| Problema após coleta         | abrir suporte              | ocorrência vinculada ao pedido        | protocolo aberto                                                       |
+| Retirada                     | selecionar retirada        | banca prepara                         | banca confirma retirada e pedido termina entregue                      |
+| Entrega                      | pedido pronto              | entregador aceita/coleta/rota         | pedido entregue                                                        |
+| Substituição                 | item indisponível          | banca propõe/cliente decide           | aceite registrado ou cliente cancela                                   |
+| Avaliação                    | pedido entregue            | produto/banca/entrega                 | avaliação persistida                                                   |
+| Comprar novamente            | selecionar pedido anterior | restaura itens ainda disponíveis      | nova sacola                                                            |
+| Carteira                     | receber reembolso          | saldo aparece no checkout             | crédito consumido em nova compra                                       |
+| Notificações                 | evento do pedido           | histórico cronológico                 | leitura persistida                                                     |
 
 ## Feirante
 
-| Fluxo | Início | Andamento | Fim esperado |
-| --- | --- | --- | --- |
-| Cadastro operacional | dados da banca | documentos/horários/produtos | catálogo publicado após aprovação |
-| Pedido | pedido recebido | aceitar → separar | parte da banca pronta |
-| Multi-banca | uma banca conclui | status individual por banca | logística só libera quando todas estão prontas |
-| Peso real | separar item | informar peso real | logística usa o peso atualizado |
-| Estoque | cadastrar/editar produto | reservar no pedido | consumir na conclusão ou devolver no cancelamento |
-| Promoção | criar campanha | período/uso/alvo/cupom | desconto refletido no checkout e uso contabilizado |
-| Horário | horário da feira ou próprio | suporta virada da meia-noite | banca aberta/fechada governa compra |
-| Pagamento na entrega | habilitar formas | checkout respeita banca | instrução chega à corrida |
-| Avaliação | pedido concluído | avaliar cliente/entregador | avaliação vinculada ao pedido |
-| Financeiro | pedido entregue | disponível → solicitado | recebido registrado no fluxo local |
+| Fluxo                | Início                      | Andamento                    | Fim esperado                                       |
+| -------------------- | --------------------------- | ---------------------------- | -------------------------------------------------- |
+| Cadastro operacional | dados da banca              | documentos/horários/produtos | catálogo publicado após aprovação                  |
+| Pedido               | pedido recebido             | aceitar → separar            | parte da banca pronta                              |
+| Multi-banca          | uma banca conclui           | status individual por banca  | logística só libera quando todas estão prontas     |
+| Peso real            | separar item                | informar peso real           | logística usa o peso atualizado                    |
+| Estoque              | cadastrar/editar produto    | reservar no pedido           | consumir na conclusão ou devolver no cancelamento  |
+| Promoção             | criar campanha              | período/uso/alvo/cupom       | desconto refletido no checkout e uso contabilizado |
+| Horário              | horário da feira ou próprio | suporta virada da meia-noite | banca aberta/fechada governa compra                |
+| Pagamento na entrega | habilitar formas            | checkout respeita banca      | instrução chega à corrida                          |
+| Avaliação            | pedido concluído            | avaliar cliente/entregador   | avaliação vinculada ao pedido                      |
+| Financeiro           | pedido entregue             | disponível → solicitado      | recebido registrado no fluxo local                 |
 
 ## Entregador
 
-| Fluxo | Início | Andamento | Fim esperado |
-| --- | --- | --- | --- |
-| Cadastro | dados pessoais | documentos + veículo | aprovação antes de ficar disponível |
-| Veículo | cadastrar | capacidade/documento/ativo | veículo elegível para corridas |
-| Disponibilidade | ligar | agenda/raio/região | corridas filtradas |
-| Corrida | oferta compatível | aceitar → banca → coletar → rota | confirmar entrega |
-| Recarregar durante corrida | corrida aceita | ID e etapa persistidos | continua da mesma etapa |
-| Peso | pedido liberado | capacidade >= peso real | somente veículos compatíveis recebem |
-| Alerta grave | ocorrência | protocolo prioritário | novas ofertas pausadas |
-| Avaliação | entrega concluída | cliente/banca | avaliação persistida |
-| Financeiro | entrega concluída | disponível → saque solicitado | repasse recebido registrado |
+| Fluxo                      | Início            | Andamento                        | Fim esperado                         |
+| -------------------------- | ----------------- | -------------------------------- | ------------------------------------ |
+| Cadastro                   | dados pessoais    | documentos + veículo             | aprovação antes de ficar disponível  |
+| Veículo                    | cadastrar         | capacidade/documento/ativo       | veículo elegível para corridas       |
+| Disponibilidade            | ligar             | agenda/raio/região               | corridas filtradas                   |
+| Corrida                    | oferta compatível | aceitar → banca → coletar → rota | confirmar entrega                    |
+| Recarregar durante corrida | corrida aceita    | ID e etapa persistidos           | continua da mesma etapa              |
+| Peso                       | pedido liberado   | capacidade >= peso real          | somente veículos compatíveis recebem |
+| Alerta grave               | ocorrência        | protocolo prioritário            | novas ofertas pausadas               |
+| Avaliação                  | entrega concluída | cliente/banca                    | avaliação persistida                 |
+| Financeiro                 | entrega concluída | disponível → saque solicitado    | repasse recebido registrado          |
 
 ## Integridade
 

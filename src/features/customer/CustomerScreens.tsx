@@ -23,7 +23,11 @@ import {
 } from "lucide-react";
 import { categories, fairs, products, vendorMetrics } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
-import { calculateCheckoutPromotions, marketplaceProducts, readStoreByIdentity } from "../../domain/marketplaceBridge";
+import {
+  calculateCheckoutPromotions,
+  marketplaceProducts,
+  readStoreByIdentity,
+} from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
@@ -756,12 +760,7 @@ export function DeliveryTracking({
           : unifiedOrder?.status === "driver_assigned"
             ? "A corrida foi aceita e o entregador segue para a banca."
             : "A corrida pode ser aceita por um entregador compatível.",
-      activeStep:
-        order.fulfillment === "pickup"
-          ? 3
-          : unifiedOrder?.status === "driver_assigned"
-            ? 4
-            : 3,
+      activeStep: order.fulfillment === "pickup" ? 3 : unifiedOrder?.status === "driver_assigned" ? 4 : 3,
     },
     "Em rota": {
       title: "Seu pedido está a caminho",
@@ -771,9 +770,7 @@ export function DeliveryTracking({
     Entregue: {
       title: order.fulfillment === "pickup" ? "Pedido retirado" : "Pedido entregue",
       description:
-        order.fulfillment === "pickup"
-          ? "A retirada foi confirmada pela banca."
-          : "A entrega foi concluída.",
+        order.fulfillment === "pickup" ? "A retirada foi confirmada pela banca." : "A entrega foi concluída.",
       activeStep: 7,
     },
     Cancelado: {
@@ -851,8 +848,7 @@ export function DeliveryTracking({
       appendReview(order.id, {
         id: entry.id,
         authorRole: "customer",
-        targetRole:
-          entry.type === "Produto" ? "product" : entry.type === "Banca" ? "vendor" : "delivery",
+        targetRole: entry.type === "Produto" ? "product" : entry.type === "Banca" ? "vendor" : "delivery",
         targetId: entry.target,
         rating: entry.rating,
         comment: entry.text,
@@ -871,7 +867,13 @@ export function DeliveryTracking({
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="tracking-map">
           <span aria-hidden="true">
-            {order.status === "Entregue" ? "✅" : order.status === "Cancelado" ? "✕" : order.fulfillment === "pickup" ? "🧺" : "🛵"}
+            {order.status === "Entregue"
+              ? "✅"
+              : order.status === "Cancelado"
+                ? "✕"
+                : order.fulfillment === "pickup"
+                  ? "🧺"
+                  : "🛵"}
           </span>
           <div className="route-line">
             {timeline.map((step, index) => (
@@ -897,7 +899,9 @@ export function DeliveryTracking({
                     {typeof order.driver.distanceKm === "number" && (
                       <span>{order.driver.distanceKm.toLocaleString("pt-BR")} km</span>
                     )}
-                    {typeof order.driver.etaMinutes === "number" && <span>{order.driver.etaMinutes} min</span>}
+                    {typeof order.driver.etaMinutes === "number" && (
+                      <span>{order.driver.etaMinutes} min</span>
+                    )}
                     <span>Suporte disponível</span>
                   </div>
                 </>
@@ -1206,7 +1210,8 @@ export function Checkout({
   const cardPayment = payment === "Cartão";
   const cashPayment = payment === "Dinheiro na entrega";
   const parsedChangeFor = Number(changeFor.replace(/[^0-9,.-]/g, "").replace(",", "."));
-  const changeValid = !cashPayment || !needsChange || (Number.isFinite(parsedChangeFor) && parsedChangeFor >= total);
+  const changeValid =
+    !cashPayment || !needsChange || (Number.isFinite(parsedChangeFor) && parsedChangeFor >= total);
   const canConfirm =
     storesOpen &&
     (fulfillment === "pickup" ? pickupAllowed : Boolean(defaultAddress) && deliveryAllowed) &&
@@ -1493,7 +1498,10 @@ export function Checkout({
                 promotionDiscount,
                 walletUsed,
                 appliedPromotions: promotionResult.appliedPromotions,
-                changeFor: cashPayment && needsChange && Number.isFinite(parsedChangeFor) ? parsedChangeFor : undefined,
+                changeFor:
+                  cashPayment && needsChange && Number.isFinite(parsedChangeFor)
+                    ? parsedChangeFor
+                    : undefined,
               })
             }
             className="primary-action w-full"
@@ -1506,13 +1514,13 @@ export function Checkout({
                 ? "Uma das bancas está fechada no momento."
                 : !deliveryAllowed && fulfillment === "delivery"
                   ? "Uma das bancas não aceita entrega."
-                : !pickupAllowed && fulfillment === "pickup"
-                  ? "Uma das bancas não aceita retirada."
-                  : cardPayment && !selectedCardId
-                    ? "Selecione um cartão salvo antes de confirmar."
-                    : cashPayment && needsChange && !changeValid
-                      ? "Informe um valor de troco igual ou maior que o total."
-                      : "Cadastre um endereço para entrega antes de confirmar."}
+                  : !pickupAllowed && fulfillment === "pickup"
+                    ? "Uma das bancas não aceita retirada."
+                    : cardPayment && !selectedCardId
+                      ? "Selecione um cartão salvo antes de confirmar."
+                      : cashPayment && needsChange && !changeValid
+                        ? "Informe um valor de troco igual ou maior que o total."
+                        : "Cadastre um endereço para entrega antes de confirmar."}
             </small>
           )}
         </aside>
@@ -2370,16 +2378,21 @@ export function PaymentsPage({ onBack }: { onBack: () => void }) {
           <h2>{money(walletBalance(currentAccountKey()))}</h2>
           <p>Créditos de reembolso podem ser usados no checkout.</p>
           <div className="operation-list detailed">
-            {walletHistory(currentAccountKey()).slice(0, 6).map((entry) => (
-              <article key={entry.id}>
-                <Wallet />
-                <div>
-                  <b>{entry.label}</b>
-                  <small>{entry.orderId}</small>
-                </div>
-                <strong>{entry.type === "credit" ? "+" : "−"}{money(entry.amount)}</strong>
-              </article>
-            ))}
+            {walletHistory(currentAccountKey())
+              .slice(0, 6)
+              .map((entry) => (
+                <article key={entry.id}>
+                  <Wallet />
+                  <div>
+                    <b>{entry.label}</b>
+                    <small>{entry.orderId}</small>
+                  </div>
+                  <strong>
+                    {entry.type === "credit" ? "+" : "−"}
+                    {money(entry.amount)}
+                  </strong>
+                </article>
+              ))}
           </div>
         </div>
       </div>
@@ -2513,10 +2526,9 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
 }
 export function ChatPage({ onBack }: { onBack: () => void }) {
   const [topic, setTopic] = useState("Pedido em andamento");
-  const [messages, setMessages] = usePersistentState<string[]>(
-    scopedStorageKey("feirae:support-messages"),
-    ["Olá! Escolha o assunto e descreva o problema."],
-  );
+  const [messages, setMessages] = usePersistentState<string[]>(scopedStorageKey("feirae:support-messages"), [
+    "Olá! Escolha o assunto e descreva o problema.",
+  ]);
   const [tickets, setTickets] = usePersistentState<
     { id: string; topic: string; message: string; createdAt: string; status: "Aberto" | "Resolvido" }[]
   >(scopedStorageKey("feirae:support-general"), []);
@@ -2593,8 +2605,12 @@ export function ChatPage({ onBack }: { onBack: () => void }) {
               <article key={ticket.id}>
                 <MessageCircle />
                 <div>
-                  <b>{ticket.id} · {ticket.topic}</b>
-                  <small>{ticket.createdAt} · {ticket.status}</small>
+                  <b>
+                    {ticket.id} · {ticket.topic}
+                  </b>
+                  <small>
+                    {ticket.createdAt} · {ticket.status}
+                  </small>
                   <p>{ticket.message}</p>
                 </div>
               </article>

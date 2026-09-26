@@ -10,20 +10,10 @@ export type UnifiedOrderStatus =
   | "delivered"
   | "cancelled";
 
-export type UnifiedPaymentStatus =
-  | "authorized"
-  | "due_on_delivery"
-  | "failed"
-  | "refunded";
+export type UnifiedPaymentStatus = "authorized" | "due_on_delivery" | "failed" | "refunded";
 
 export type UnifiedVendorStatus =
-  | "pending"
-  | "accepted"
-  | "preparing"
-  | "ready"
-  | "collected"
-  | "delivered"
-  | "rejected";
+  "pending" | "accepted" | "preparing" | "ready" | "collected" | "delivered" | "rejected";
 
 export type UnifiedOrderItem = {
   productId: number;
@@ -138,30 +128,29 @@ function normalizeOrder(order: UnifiedOrderRecord): UnifiedOrderRecord {
     storeId: item.storeId ?? storeIdFor(order.fairName, item.vendor),
     estimatedWeightKg: item.estimatedWeightKg ?? item.weightKg,
   }));
-  const vendors =
-    order.vendors?.length
-      ? order.vendors
-      : Array.from(new Set(items.map((item) => item.vendorId!))).map((vendorId) => {
-          const first = items.find((item) => item.vendorId === vendorId)!;
-          return {
-            vendorId,
-            storeId: first.storeId!,
-            vendorName: first.vendor,
-            status:
-              order.status === "received"
-                ? ("pending" as const)
-                : ["preparing"].includes(order.status)
-                  ? ("preparing" as const)
-                  : ["ready_for_pickup", "driver_assigned"].includes(order.status)
-                    ? ("ready" as const)
-                    : ["collected", "out_for_delivery"].includes(order.status)
-                      ? ("collected" as const)
-                      : order.status === "delivered"
-                        ? ("delivered" as const)
-                        : ("rejected" as const),
-            productIds: items.filter((item) => item.vendorId === vendorId).map((item) => item.productId),
-          };
-        });
+  const vendors = order.vendors?.length
+    ? order.vendors
+    : Array.from(new Set(items.map((item) => item.vendorId!))).map((vendorId) => {
+        const first = items.find((item) => item.vendorId === vendorId)!;
+        return {
+          vendorId,
+          storeId: first.storeId!,
+          vendorName: first.vendor,
+          status:
+            order.status === "received"
+              ? ("pending" as const)
+              : ["preparing"].includes(order.status)
+                ? ("preparing" as const)
+                : ["ready_for_pickup", "driver_assigned"].includes(order.status)
+                  ? ("ready" as const)
+                  : ["collected", "out_for_delivery"].includes(order.status)
+                    ? ("collected" as const)
+                    : order.status === "delivered"
+                      ? ("delivered" as const)
+                      : ("rejected" as const),
+          productIds: items.filter((item) => item.vendorId === vendorId).map((item) => item.productId),
+        };
+      });
   return {
     ...order,
     paymentStatus:
@@ -199,8 +188,7 @@ export function readUnifiedOrders(customerKey?: string): UnifiedOrderRecord[] {
   const orders = readRawOrders();
   return customerKey
     ? orders.filter(
-        (order) =>
-          order.customerKey?.toLocaleLowerCase("pt-BR") === customerKey.toLocaleLowerCase("pt-BR"),
+        (order) => order.customerKey?.toLocaleLowerCase("pt-BR") === customerKey.toLocaleLowerCase("pt-BR"),
       )
     : orders;
 }
@@ -244,7 +232,8 @@ function overallVendorStatus(order: UnifiedOrderRecord, vendors: UnifiedOrderVen
   if (vendors.some((vendor) => vendor.status === "rejected")) return "cancelled" as const;
   if (order.status === "delivered" || order.status === "cancelled") return order.status;
   if (["driver_assigned", "collected", "out_for_delivery"].includes(order.status)) return order.status;
-  if (vendors.length && vendors.every((vendor) => vendor.status === "ready")) return "ready_for_pickup" as const;
+  if (vendors.length && vendors.every((vendor) => vendor.status === "ready"))
+    return "ready_for_pickup" as const;
   if (vendors.some((vendor) => ["accepted", "preparing", "ready"].includes(vendor.status))) {
     return "preparing" as const;
   }
@@ -295,8 +284,7 @@ export function patchUnifiedOrderItem(
             ? {
                 ...item,
                 ...patch,
-                weightKg:
-                  typeof patch.actualWeightKg === "number" ? patch.actualWeightKg : item.weightKg,
+                weightKg: typeof patch.actualWeightKg === "number" ? patch.actualWeightKg : item.weightKg,
               }
             : item,
         ),

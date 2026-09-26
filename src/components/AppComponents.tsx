@@ -386,7 +386,11 @@ export function RoleDashboard({
         <div className="region-strip mt-5">
           <Check size={18} />
           <div>
-            <b>{role === "feirante" ? "Configure sua banca para começar" : "Complete seu cadastro para entregar"}</b>
+            <b>
+              {role === "feirante"
+                ? "Configure sua banca para começar"
+                : "Complete seu cadastro para entregar"}
+            </b>
             <p>
               {role === "feirante"
                 ? "Preencha dados da banca, envie documentos, defina horários e cadastre seus primeiros produtos."
@@ -398,8 +402,18 @@ export function RoleDashboard({
       <div className="metrics">
         {(newAccount
           ? role === "feirante"
-            ? [["0", "pedidos"], ["R$ 0", "vendas"], ["0", "produtos"], ["—", "avaliação"]]
-            : [["0", "disponíveis"], ["0", "em rota"], ["R$ 0", "ganhos hoje"], ["—", "avaliação"]]
+            ? [
+                ["0", "pedidos"],
+                ["R$ 0", "vendas"],
+                ["0", "produtos"],
+                ["—", "avaliação"],
+              ]
+            : [
+                ["0", "disponíveis"],
+                ["0", "em rota"],
+                ["R$ 0", "ganhos hoje"],
+                ["—", "avaliação"],
+              ]
           : config.metrics
         ).map(([value, label]) => (
           <article key={label}>

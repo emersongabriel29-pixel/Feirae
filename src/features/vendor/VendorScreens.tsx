@@ -281,9 +281,10 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   const [vendorReviewOrderId, setVendorReviewOrderId] = useState<string | null>(null);
   const [vendorReviewScore, setVendorReviewScore] = useState(5);
   const [vendorReviewComment, setVendorReviewComment] = useState("");
-  const [settlementStatus, setSettlementStatus] = usePersistentState<
-    Record<string, "requested" | "paid">
-  >(`feirae:vendor-settlements:${session.email}`, {});
+  const [settlementStatus, setSettlementStatus] = usePersistentState<Record<string, "requested" | "paid">>(
+    `feirae:vendor-settlements:${session.email}`,
+    {},
+  );
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -349,12 +350,12 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
               : ["collected", "out_for_delivery"].includes(record.status)
                 ? "collected"
                 : vendorState?.status === "ready"
-                ? "ready_for_pickup"
-                : vendorState?.status === "collected"
-                  ? "collected"
-                  : vendorState?.status === "accepted" || vendorState?.status === "preparing"
-                    ? "preparing"
-                    : statusMap[record.status];
+                  ? "ready_for_pickup"
+                  : vendorState?.status === "collected"
+                    ? "collected"
+                    : vendorState?.status === "accepted" || vendorState?.status === "preparing"
+                      ? "preparing"
+                      : statusMap[record.status];
         const alreadySeparated = ["ready_for_pickup", "collected", "delivered"].includes(localStatus);
         byId.set(record.id, {
           id: record.id,
@@ -401,8 +402,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   );
   const pendingVendorReviewOrders = vendorUnifiedOrders.filter(
     (order) =>
-      order.status === "delivered" &&
-      !order.reviews?.some((review) => review.authorRole === "vendor"),
+      order.status === "delivered" && !order.reviews?.some((review) => review.authorRole === "vendor"),
   );
   const pendingOrders = orders.filter((order) =>
     ["new", "preparing", "ready_for_pickup", "collected"].includes(order.status),
@@ -558,12 +558,7 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
       "accepted",
       eventNow("vendor-confirmed", "Confirmado pela banca", "vendor"),
     );
-    patchVendorStatus(
-      order.id,
-      vendorId,
-      "preparing",
-      eventNow("preparing", "Em separação", "vendor"),
-    );
+    patchVendorStatus(order.id, vendorId, "preparing", eventNow("preparing", "Em separação", "vendor"));
     showNotice(`Pedido ${order.id} aceito. Cliente notificado.`);
   }
 
@@ -2130,13 +2125,14 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                   <button
                     className="secondary-action"
                     onClick={() =>
-                      setSettlementStatus((current) =>
-                        Object.fromEntries(
-                          Object.entries(current).map(([id, status]) => [
-                            id,
-                            status === "requested" ? "paid" : status,
-                          ]),
-                        ) as Record<string, "requested" | "paid">,
+                      setSettlementStatus(
+                        (current) =>
+                          Object.fromEntries(
+                            Object.entries(current).map(([id, status]) => [
+                              id,
+                              status === "requested" ? "paid" : status,
+                            ]),
+                          ) as Record<string, "requested" | "paid">,
                       )
                     }
                   >
@@ -2526,8 +2522,12 @@ function SectionHistoryReview({
             <article key={order.id}>
               <Star />
               <div>
-                <b>{order.id} · {order.customerName}</b>
-                <small>{order.driver?.name ? `Entregador: ${order.driver.name}` : "Retirada pelo cliente"}</small>
+                <b>
+                  {order.id} · {order.customerName}
+                </b>
+                <small>
+                  {order.driver?.name ? `Entregador: ${order.driver.name}` : "Retirada pelo cliente"}
+                </small>
                 {selectedOrderId === order.id && (
                   <div className="form-card compact">
                     <label>

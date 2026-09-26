@@ -93,10 +93,7 @@ export function DeliveryOperations({
     null,
   );
   const [, setRouteRevision] = useState(0);
-  const [stage, setStage] = usePersistentState<number>(
-    `feirae:delivery-stage:${session.email}`,
-    0,
-  );
+  const [stage, setStage] = usePersistentState<number>(`feirae:delivery-stage:${session.email}`, 0);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelDetails, setCancelDetails] = useState("");
   const [deliveryCancellationLog, setDeliveryCancellationLog] = usePersistentState<
@@ -170,11 +167,11 @@ export function DeliveryOperations({
       ? [
           {
             id: "ledger-1022",
-      deliveryId: "FE-1022",
-      label: "Feira Central",
-      amount: 18.9,
-      status: "paid",
-    },
+            deliveryId: "FE-1022",
+            label: "Feira Central",
+            amount: 18.9,
+            status: "paid",
+          },
           {
             id: "ledger-1023",
             deliveryId: "FE-1023",
@@ -226,11 +223,7 @@ export function DeliveryOperations({
       fileName: "motofrete.pdf",
       expiresAt: "",
     },
-  ].map((document) =>
-    seedDemoData
-      ? document
-      : { ...document, status: "pending" as const, fileName: "" },
-  );
+  ].map((document) => (seedDemoData ? document : { ...document, status: "pending" as const, fileName: "" }));
   const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
     {
       id: string;
@@ -1524,7 +1517,9 @@ export function DeliveryOperations({
                       <article key={order.id}>
                         <Star />
                         <div>
-                          <b>{order.id} · {order.customerName}</b>
+                          <b>
+                            {order.id} · {order.customerName}
+                          </b>
                           <small>{order.vendors?.map((vendor) => vendor.vendorName).join(" · ")}</small>
                           {deliveryReviewOrderId === order.id && (
                             <div className="form-card compact">

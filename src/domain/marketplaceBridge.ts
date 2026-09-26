@@ -125,7 +125,9 @@ export function syncVendorMarketplace(input: {
     acceptCardOnDelivery: input.acceptCardOnDelivery,
     promotions: input.promotions,
     aliases: Array.from(
-      new Set([...(previousStore?.aliases ?? []), previousStore?.name, input.name].filter(Boolean) as string[]),
+      new Set(
+        [...(previousStore?.aliases ?? []), previousStore?.name, input.name].filter(Boolean) as string[],
+      ),
     ),
     updatedAt: new Date().toISOString(),
   };
@@ -199,7 +201,9 @@ export function marketplaceProducts(baseProducts: Product[]): Product[] {
         active: (product.active ?? true) && stock > 0,
       };
     });
-  return [...staticProducts, ...current.products].filter((product) => (product.active ?? true) && product.stock > 0);
+  return [...staticProducts, ...current.products].filter(
+    (product) => (product.active ?? true) && product.stock > 0,
+  );
 }
 
 function promotionIsActive(promotion: SharedPromotion) {
@@ -220,9 +224,7 @@ export function registerPromotionUsage(promotionNames: string[]) {
     stores: current.stores.map((store) => ({
       ...store,
       promotions: store.promotions.map((promotion) =>
-        names.has(promotion.name)
-          ? { ...promotion, usedCount: promotion.usedCount + 1 }
-          : promotion,
+        names.has(promotion.name) ? { ...promotion, usedCount: promotion.usedCount + 1 } : promotion,
       ),
     })),
   });
@@ -242,14 +244,10 @@ export function calculateCheckoutPromotions(
   for (const store of marketplace.stores) {
     const storeItems = items.filter(
       (item) =>
-        item.storeId === store.storeId ||
-        (item.fair === store.fairName && item.feirante === store.name),
+        item.storeId === store.storeId || (item.fair === store.fairName && item.feirante === store.name),
     );
     if (!storeItems.length) continue;
-    const storeSubtotal = storeItems.reduce(
-      (sum, item) => sum + item.price * (cart[item.id] ?? 0),
-      0,
-    );
+    const storeSubtotal = storeItems.reduce((sum, item) => sum + item.price * (cart[item.id] ?? 0), 0);
 
     for (const promotion of store.promotions.filter(promotionIsActive)) {
       if (storeSubtotal < (promotion.minimumOrder ?? 0)) continue;
@@ -260,10 +258,7 @@ export function calculateCheckoutPromotions(
               item.category.toLocaleLowerCase("pt-BR").includes(promotion.target!.toLocaleLowerCase("pt-BR")),
           )
         : storeItems;
-      const targetSubtotal = targetItems.reduce(
-        (sum, item) => sum + item.price * (cart[item.id] ?? 0),
-        0,
-      );
+      const targetSubtotal = targetItems.reduce((sum, item) => sum + item.price * (cart[item.id] ?? 0), 0);
 
       if (
         promotion.type === "cupom" &&
@@ -280,8 +275,7 @@ export function calculateCheckoutPromotions(
         ["percentual", "produtoCategoria", "horario", "combo", "cupom"].includes(promotion.type) &&
         (promotion.discountValue ?? 0) > 0
       ) {
-        promotionDiscount +=
-          targetSubtotal * Math.min(100, promotion.discountValue ?? 0) / 100;
+        promotionDiscount += (targetSubtotal * Math.min(100, promotion.discountValue ?? 0)) / 100;
         applied.push(promotion.name);
       } else if (promotion.type === "valorFixo" && (promotion.discountValue ?? 0) > 0) {
         promotionDiscount += Math.min(storeSubtotal, promotion.discountValue ?? 0);
