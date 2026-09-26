@@ -57,7 +57,7 @@
   border-radius: 999px;
   background: var(--fe-surface-soft);
   padding: 0.55rem 0.8rem;
-  color: #56635c;
+  color: var(--fe-muted);
   font-size: 0.72rem;
   font-weight: 850;
 }
@@ -103,11 +103,11 @@
 .ops-summary {
   display: grid;
   gap: 1rem;
-  border: 1px solid #d8e6dc;
+  border: 1px solid var(--fe-border);
   border-radius: var(--fe-radius-lg);
   background:
     radial-gradient(circle at 90% 10%, rgba(223, 243, 107, 0.2), transparent 11rem),
-    linear-gradient(135deg, #ffffff, #f5faf6);
+    linear-gradient(135deg, var(--fe-surface), var(--fe-surface-soft));
   padding: clamp(1rem, 3vw, 1.5rem);
   box-shadow: 0 14px 34px rgba(30, 45, 34, 0.06);
 }
@@ -130,7 +130,7 @@
   display: grid;
   min-height: 145px;
   align-content: space-between;
-  border: 1px solid #dde8df;
+  border: 1px solid var(--fe-border);
   border-radius: 1.2rem;
   background: var(--fe-surface);
   padding: 1rem;
@@ -142,7 +142,7 @@
     border-color 0.18s ease;
 }
 .module-card:hover {
-  border-color: #acd0b7;
+  border-color: var(--fe-border);
   translate: 0 -2px;
   box-shadow: 0 18px 36px rgba(30, 45, 34, 0.09);
 }
@@ -213,9 +213,9 @@
 }
 .module-kpi-strip article {
   min-width: 0;
-  border: 1px solid #dce9df;
+  border: 1px solid var(--fe-border);
   border-radius: 0.9rem;
-  background: linear-gradient(180deg, #ffffff, #f5faf6);
+  background: linear-gradient(180deg, var(--fe-surface), var(--fe-surface-soft));
   padding: 0.75rem;
 }
 .module-kpi-strip strong,
@@ -252,12 +252,12 @@
   gap: 0.75rem;
   border: 1px solid var(--fe-border);
   border-radius: 0.9rem;
-  background: #fafbf9;
+  background: var(--fe-surface-soft);
   padding: 0.85rem;
 }
 .operation-list.detailed article {
   align-items: flex-start;
-  background: radial-gradient(circle at 98% 0%, rgba(223, 243, 107, 0.13), transparent 6rem), #ffffff;
+  background: radial-gradient(circle at 98% 0%, rgba(223, 243, 107, 0.13), transparent 6rem), var(--fe-surface);
 }
 .operation-list article svg {
   flex: none;
@@ -294,7 +294,7 @@
 }
 .inventory-dot.warning {
   background: #e59a24;
-  box-shadow: 0 0 0 5px #fff3dd;
+  box-shadow: 0 0 0 5px var(--fe-surface)3dd;
 }
 .mini-toggle {
   flex: none;
@@ -329,11 +329,11 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border: 1px solid #d8e6dc;
+  border: 1px solid var(--fe-border);
   border-radius: 1.1rem;
   background:
     radial-gradient(circle at 100% 0%, rgba(223, 243, 107, 0.18), transparent 8rem),
-    linear-gradient(135deg, #ffffff, #f6fbf7);
+    linear-gradient(135deg, var(--fe-surface), #f6fbf7);
   padding: 0.9rem;
   box-shadow: 0 12px 28px rgba(30, 45, 34, 0.05);
 }
@@ -401,7 +401,7 @@
 .document-status {
   flex: none;
   border-radius: 999px;
-  background: #f0f7f2;
+  background: var(--fe-surface-soft);
   padding: 0.4rem 0.55rem;
   color: var(--fe-green-dark);
   font-size: 0.63rem;
@@ -414,7 +414,7 @@
   margin-top: 1rem;
   border: 1px solid var(--fe-border);
   border-radius: var(--fe-radius-md);
-  background: #fff;
+  background: var(--fe-surface);
   padding: 0.85rem;
 }
 .finance-breakdown p {
@@ -452,7 +452,7 @@
   place-items: center;
   border-radius: 0.65rem;
   background: var(--fe-green);
-  color: #fff;
+  color: var(--fe-surface);
   font-size: 0.75rem;
   font-weight: 950;
 }
@@ -570,7 +570,7 @@
   top: 50%;
   height: 3px;
   translate: 0 -50%;
-  background: #bed4c4;
+  background: var(--fe-border);
 }
 .delivery-progress span {
   position: relative;
@@ -579,7 +579,7 @@
   width: 1.8rem;
   height: 1.8rem;
   place-items: center;
-  border: 3px solid #bed4c4;
+  border: 3px solid var(--fe-border);
   border-radius: 50%;
   background: var(--fe-surface);
   color: var(--fe-muted);
@@ -644,7 +644,7 @@
   color: var(--fe-danger);
 }
 .inline-error {
-  border: 1px solid #efcccc;
+  border: 1px solid color-mix(in srgb, var(--fe-danger) 25%, var(--fe-surface));
   border-radius: var(--fe-radius-sm);
   background: var(--fe-danger-soft);
   padding: 0.65rem 0.75rem;
@@ -658,7 +658,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  border: 1px solid #efcccc;
+  border: 1px solid color-mix(in srgb, var(--fe-danger) 25%, var(--fe-surface));
   border-radius: var(--fe-radius-sm);
   background: var(--fe-danger-soft);
   padding: 0.7rem 1rem;
