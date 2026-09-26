@@ -526,6 +526,9 @@ export default function App() {
         locationLoading={locationLoading}
         notifications={notifications}
         itemCount={itemCount}
+        showCustomerTools={
+          role === "customer" && screen === "main" && ["home", "fairs", "products"].includes(tab)
+        }
         onHome={() => {
           if (role === "customer") openCustomerTab("home");
           else openRoleRoot(role);
