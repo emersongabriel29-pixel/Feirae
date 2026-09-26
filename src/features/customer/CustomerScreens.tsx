@@ -1,4 +1,4 @@
-import { FormEvent, ReactNode, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
 import {
   Bell,
   Bike,
@@ -30,6 +30,11 @@ import {
   readStoreByIdentity,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
+import {
+  getRuntimeConfiguration,
+  runtimePaymentMethods,
+  type RuntimeServiceState,
+} from "../../domain/runtimeConfig";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
   appendReview,
@@ -39,7 +44,7 @@ import {
   patchUnifiedOrderItem,
   readUnifiedOrders,
 } from "../../domain/orderBridge";
-import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
+import type { Address, CustomerTab, DemoOrder, DemoSession, Fair, Product, Screen } from "../../types";
 import { money, sortFairsByDistance } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
 import {
@@ -62,12 +67,14 @@ import {
 } from "../../components/AppComponents";
 
 export function HomePage({
+  firstFairName,
   onTab,
   onFair,
   onVendors,
   onTracking,
   onAdd,
 }: {
+  firstFairName?: string;
   onTab: (tab: CustomerTab) => void;
   onFair: (name: string) => void;
   onVendors: () => void;
@@ -107,7 +114,7 @@ export function HomePage({
             icon={<MapPin size={22} />}
             title="Feiras próximas"
             text="Estado, cidade e feira"
-            onClick={() => onFair(fairs[0].name)}
+            onClick={() => onFair(firstFairName ?? fairs[0].name)}
           />
           <QuickAction
             icon={<Store size={22} />}
@@ -165,21 +172,51 @@ export function HomePage({
 }
 export function FairsPage({
   fairItems,
+  serviceStates,
+  runtimeManaged,
   onFair,
   onMap,
 }: {
   fairItems: ReturnType<typeof sortFairsByDistance>;
+  serviceStates: RuntimeServiceState[];
+  runtimeManaged: boolean;
   onFair: (name: string) => void;
   onMap: (destination: number | string, lng?: number) => void;
 }) {
+  const fallbackStates: RuntimeServiceState[] = [
+    {
+      code: "DF",
+      name: "Distrito Federal",
+      customer_orders_enabled: true,
+      vendor_registration_enabled: true,
+      delivery_enabled: true,
+      active: true,
+      sort_order: 0,
+    },
+  ];
+  const availableStates = runtimeManaged ? serviceStates : fallbackStates;
+  const [selectedState, setSelectedState] = useState(availableStates[0]?.code ?? "");
+  const [selectedRegion, setSelectedRegion] = useState("");
+
+  useEffect(() => {
+    if (!availableStates.some((state) => state.code === selectedState)) {
+      setSelectedState(availableStates[0]?.code ?? "");
+      setSelectedRegion("");
+    }
+  }, [availableStates, selectedState]);
+
   const officialItems = fairItems.filter((fair) => fair.source !== "demo");
-  const regions = Array.from(new Set(officialItems.map((fair) => fair.place))).sort((a, b) =>
+  const stateItems = selectedState
+    ? officialItems.filter((fair) => (fair.state ?? "DF") === selectedState)
+    : [];
+  const regions = Array.from(new Set(stateItems.map((fair) => fair.place))).sort((a, b) =>
     a.localeCompare(b, "pt-BR"),
   );
-  const [selectedRegion, setSelectedRegion] = useState("");
   const filteredItems = selectedRegion
-    ? officialItems.filter((fair) => fair.place === selectedRegion)
-    : officialItems;
+    ? stateItems.filter((fair) => fair.place === selectedRegion)
+    : stateItems;
+  const selectedStateLabel =
+    availableStates.find((state) => state.code === selectedState)?.name ?? "Estado";
   const featuredItems = filteredItems.slice(0, 3);
   const otherItems = filteredItems.slice(3);
 
@@ -192,8 +229,20 @@ export function FairsPage({
       <div className="region-selector">
         <label>
           Estado
-          <select value="Distrito Federal" aria-label="Estado" disabled>
-            <option>Distrito Federal</option>
+          <select
+            value={selectedState}
+            aria-label="Estado"
+            disabled={availableStates.length <= 1}
+            onChange={(event) => {
+              setSelectedState(event.target.value);
+              setSelectedRegion("");
+            }}
+          >
+            {availableStates.map((state) => (
+              <option key={state.code} value={state.code}>
+                {state.name}
+              </option>
+            ))}
           </select>
         </label>
         <label>
@@ -215,7 +264,7 @@ export function FairsPage({
 
       <div className="mt-7">
         <SectionHeading
-          eyebrow={selectedRegion ? "Região selecionada" : "Distrito Federal"}
+          eyebrow={selectedRegion ? "Região selecionada" : selectedStateLabel}
           title={selectedRegion ? `Feiras em ${selectedRegion}` : "Feiras em destaque"}
         />
         {featuredItems.length ? (
@@ -540,6 +589,7 @@ export function ProfilePage({
 
 export function FairDetail({
   fairName,
+  fairItems,
   onBack,
   onMap,
   onAdd,
@@ -547,13 +597,14 @@ export function FairDetail({
   onFavorite,
 }: {
   fairName: string;
+  fairItems: Fair[];
   onBack: () => void;
   onMap: (destination: number | string, lng?: number) => void;
   onAdd: (id: number) => void;
   favorites: number[];
   onFavorite: (id: number) => void;
 }) {
-  const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
+  const fair = fairItems.find((item) => item.name === fairName) ?? fairItems[0] ?? fairs[0];
   const liveProducts = marketplaceProducts(products);
   const fairProducts = liveProducts.filter((product) => product.fair === fair.name);
 
@@ -610,18 +661,20 @@ export function FairDetail({
 
 export function VendorsPage({
   fairName,
+  fairItems,
   onBack,
   onVendor,
   vendorFavorites,
   onVendorFavorite,
 }: {
   fairName: string;
+  fairItems: Fair[];
   onBack: () => void;
   onVendor: (name: string) => void;
   vendorFavorites: string[];
   onVendorFavorite: (name: string) => void;
 }) {
-  const fair = fairs.find((item) => item.name === fairName);
+  const fair = fairItems.find((item) => item.name === fairName) ?? fairs.find((item) => item.name === fairName);
   const liveProducts = marketplaceProducts(products);
   const fairProducts = liveProducts.filter((product) => product.fair === fairName);
   const vendors = vendorSummaries(fairProducts, vendorMetrics);
