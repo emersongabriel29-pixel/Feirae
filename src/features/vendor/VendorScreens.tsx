@@ -2522,7 +2522,7 @@ export function FeiranteOperations({
                     />
                   </label>
                   {accountError && (
-                    <p className="operation-footnote" role="alert">
+                    <p className="inline-error" role="alert">
                       {accountError}
                     </p>
                   )}
