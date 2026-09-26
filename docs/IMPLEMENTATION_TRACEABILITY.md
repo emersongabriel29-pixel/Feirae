@@ -214,7 +214,6 @@ Contagem real:
 
 Total: **74**.
 
-
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
 - `AppComponents.tsx::MobileNavigation`: cinco destinos, incluindo **Início** com ícone de casa;
