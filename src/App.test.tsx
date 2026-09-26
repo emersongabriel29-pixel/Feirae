@@ -137,7 +137,8 @@ describe("Feiraê customer flow", () => {
       target: { value: "nova123" },
     });
     fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
-    expect(screen.getByRole("heading", { name: /seu dia na feira começa aqui/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
+    expect(screen.getByRole("heading", { name: /olá, cliente atualizada/i })).toBeInTheDocument();
   });
 
   it("applies the compact cards preference to the interface", () => {
