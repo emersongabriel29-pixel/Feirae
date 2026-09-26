@@ -105,6 +105,17 @@ async function acceptSession(session){
    return false;
  }
  state.profile=r.data;
+ const access=await state.supabase.from("admin_access").select("active").eq("profile_id",session.user.id).maybeSingle();
+ if(access.error){
+   await state.supabase.auth.signOut();
+   loginError("Não foi possível validar o acesso administrativo.");
+   return false;
+ }
+ if(access.data?.active===false){
+   await state.supabase.auth.signOut();
+   loginError("Este acesso administrativo está desativado.");
+   return false;
+ }
  const permissions=await state.supabase.from("admin_permissions").select("permission").eq("profile_id",session.user.id);
  state.permissions=new Set((permissions.data||[]).map((x)=>x.permission));
  state.restricted=state.permissions.size>0&&!state.permissions.has("*");
