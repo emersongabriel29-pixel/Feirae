@@ -927,13 +927,20 @@ async function renderAdmins(){
    (candidates.data||[]).map((u)=>'<option value="'+esc(u.id)+'">'+esc((u.full_name||"Sem nome")+" · "+u.role)+'</option>').join("")+
    '</select></label><button class="primary" id="promoteAdmin">Promover selecionado</button></div><div class="admin-list">';
    for(const p of profiles.data||[]){
-     const ac=accessMap[p.id],active=ac?.active!==false,perms=permMap[p.id]||["* (acesso total enquanto não há regras explícitas)"];
-     html+='<div class="admin-card"><div><strong>'+esc(p.full_name||p.id)+'</strong><small>'+esc(p.id)+'</small><div class="permission-chips">'+perms.map((x)=>'<span>'+esc(x)+'</span>').join("")+'</div></div><div class="actions"><span class="badge '+(active?"true":"false")+'">'+(active?"Ativo":"Desativado")+'</span><button data-admin-access="'+esc(p.id)+'" data-active="'+active+'">'+(active?"Desativar":"Ativar")+'</button><button data-admin-permissions="'+esc(p.id)+'">Permissões</button></div></div>';
+     const ac=accessMap[p.id],active=ac?.active===true,isSuper=ac?.is_superadmin===true,perms=permMap[p.id]||[];
+     html+='<div class="admin-card"><div><strong>'+esc(p.full_name||p.id)+'</strong><small>'+esc(p.id)+'</small><div class="permission-chips">'+
+       (isSuper?'<span>SUPERADMIN</span>':perms.length?perms.map((x)=>'<span>'+esc(x)+'</span>').join(""):'<span>SEM PERMISSÕES</span>')+
+       '</div></div><div class="actions"><span class="badge '+(active?"true":"false")+'">'+(active?"Ativo":"Desativado")+'</span>'+
+       (isSuper?'<span class="badge active">Superadmin</span>':'')+
+       '<button data-admin-access="'+esc(p.id)+'" data-active="'+active+'">'+(active?"Desativar":"Ativar")+'</button>'+
+       (state.isSuperadmin?'<button data-admin-super="'+esc(p.id)+'" data-super="'+isSuper+'">'+(isSuper?"Remover superadmin":"Tornar superadmin")+'</button>':'')+
+       '<button data-admin-permissions="'+esc(p.id)+'">Permissões</button></div></div>';
    }
    html+='</div></section><div class="notice">Promover alguém a administrador altera um papel sensível e exige a permissão <code>permissions.manage</code>. O painel não cria contas do Auth nem envia convite usando service role.</div>';
    $("#pageContent").innerHTML=html;
    $("#promoteAdmin").onclick=promoteExistingAdmin;
    document.querySelectorAll("[data-admin-access]").forEach((b)=>b.onclick=()=>setAdminAccess(b.dataset.adminAccess,b.dataset.active!=="true"));
+   document.querySelectorAll("[data-admin-super]").forEach((b)=>b.onclick=()=>setAdminSuperadmin(b.dataset.adminSuper,b.dataset.super!=="true"));
    document.querySelectorAll("[data-admin-permissions]").forEach((b)=>b.onclick=()=>editAdminPermissions(b.dataset.adminPermissions,permMap[b.dataset.adminPermissions]||[]));
  }catch(e){renderError(e);}
 }
@@ -941,29 +948,35 @@ async function renderAdmins(){
 async function promoteExistingAdmin(){
  const id=$("#adminCandidate")?.value;
  if(!id){toast("Selecione um usuário.");return;}
- const r=await state.supabase.from("profiles").update({role:"admin"}).eq("id",id).select("id,full_name").maybeSingle();
- if(r.error){toast(r.error.message);return;}
- if(!r.data){toast("Usuário não encontrado.");return;}
- const a=await state.supabase.from("admin_access").upsert({profile_id:id,active:true,updated_by:state.session.user.id},{onConflict:"profile_id"});
- if(a.error){toast(a.error.message);return;}
- await audit("promote_admin","profiles",id,null,{role:"admin"});
- toast("Administrador promovido.");
- await renderAdmins();
+ try{
+   await invokeAdminAction("admin_promote",{profile_id:id});
+   toast("Administrador promovido com acesso mínimo.");
+   await renderAdmins();
+ }catch(e){toast(e.message||String(e));}
 }
 
 async function setAdminAccess(profileId,active){
- if(profileId===state.session.user.id&&!active){toast("Você não pode desativar seu próprio acesso nesta sessão.");return;}
- const r=await state.supabase.from("admin_access").upsert({profile_id:profileId,active,updated_by:state.session.user.id,updated_at:new Date().toISOString()},{onConflict:"profile_id"});
- if(r.error){toast(r.error.message);return;}
- await audit(active?"admin_enable":"admin_disable","admin_access",profileId,null,{active});
- toast(active?"Acesso ativado.":"Acesso desativado.");
- await renderAdmins();
+ try{
+   await invokeAdminAction("admin_access_update",{profile_id:profileId,active});
+   toast(active?"Acesso ativado.":"Acesso desativado.");
+   await renderAdmins();
+ }catch(e){toast(e.message||String(e));}
+}
+
+async function setAdminSuperadmin(profileId,isSuperadmin){
+ if(!state.isSuperadmin){toast("Somente superadmin pode alterar este nível.");return;}
+ if(!confirm(isSuperadmin?"Conceder acesso irrestrito de superadmin?":"Remover acesso de superadmin?"))return;
+ try{
+   await invokeAdminAction("admin_access_update",{profile_id:profileId,is_superadmin:isSuperadmin});
+   toast("Nível administrativo atualizado.");
+   await renderAdmins();
+ }catch(e){toast(e.message||String(e));}
 }
 
 function editAdminPermissions(profileId,current){
  state.editing={special:"admin_permissions",profileId};
  $("#modalTitle").textContent="Permissões administrativas";
- $("#editorForm").innerHTML='<div class="full-span permission-editor"><p>Marque as áreas permitidas. Sem nenhuma permissão explícita, o administrador mantém acesso total por compatibilidade de bootstrap.</p>'+
+ $("#editorForm").innerHTML='<div class="full-span permission-editor"><p>Marque as áreas permitidas. Sem permissões explícitas, o administrador comum não acessa módulos protegidos.</p>'+
  ADMIN_PERMISSION_SET.map((p)=>'<label class="check-row"><input type="checkbox" data-admin-perm="'+esc(p)+'" '+(current.includes(p)?"checked":"")+'><span>'+esc(p)+'</span></label>').join("")+'</div>';
  $("#modal").classList.remove("hidden");
 }
@@ -971,14 +984,10 @@ function editAdminPermissions(profileId,current){
 async function saveAdminPermissions(){
  const id=state.editing.profileId;
  const selected=[...$("#editorForm").querySelectorAll("[data-admin-perm]:checked")].map((x)=>x.dataset.adminPerm);
- const del=await state.supabase.from("admin_permissions").delete().eq("profile_id",id);
- if(del.error){toast(del.error.message);return false;}
- if(selected.length){
-   const ins=await state.supabase.from("admin_permissions").insert(selected.map((permission)=>({profile_id:id,permission,granted_by:state.session.user.id})));
-   if(ins.error){toast(ins.error.message);return false;}
- }
- await audit("permissions_replace","admin_permissions",id,null,{permissions:selected});
- return true;
+ try{
+   await invokeAdminAction("admin_permissions_replace",{profile_id:id,permissions:selected});
+   return true;
+ }catch(e){toast(e.message||String(e));return false;}
 }
 
 async function renderAuditAdvanced(){
@@ -1224,6 +1233,22 @@ async function saveEditor(){
    const ok=await saveAdminPermissions();
    $("#saveEdit").disabled=false;
    if(ok){closeEditor();toast("Permissões atualizadas.");await renderAdmins();}
+   return;
+ }
+ if(state.editing.special){
+   $("#saveEdit").disabled=true;
+   try{
+     const result=await saveSecureAction();
+     $("#saveEdit").disabled=false;
+     if(result){
+       closeEditor();toast(result.message||"Alteração salva.");
+       if(result.detail)await result.detail();
+       else if(result.module)await openModule(result.module);
+     }
+   }catch(e){
+     $("#saveEdit").disabled=false;
+     toast(e.message||String(e));
+   }
    return;
  }
  const {m,row,isNew}=state.editing;let payload;
