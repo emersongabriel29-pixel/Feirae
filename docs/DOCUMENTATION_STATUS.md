@@ -189,3 +189,18 @@ Mudanças registradas:
 - regras de QA visual.
 
 A documentação não afirma regressão visual automatizada: Playwright/Cypress e screenshot testing continuam ausentes.
+
+## Governança permanente de mudanças
+
+A partir desta atualização, a sincronização deixa de ser apenas uma recomendação documental.
+
+Foram adicionados:
+
+- `docs/CHANGE_GOVERNANCE.md`;
+- `CONTRIBUTING.md`;
+- `.github/pull_request_template.md`;
+- `scripts/check-change-sync.mjs`;
+- script npm `check:sync`;
+- etapa de CI para pull requests.
+
+Regra permanente: toda mudança avalia impacto em código, testes, documentação, banco, segurança, integrações, LGPD, admin e deploy. O que for afetado deve ser atualizado no mesmo PR.
