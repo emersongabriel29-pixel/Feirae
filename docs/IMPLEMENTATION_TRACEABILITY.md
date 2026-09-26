@@ -246,7 +246,6 @@ Limite: o repositório ainda não possui backend que persista `PushSubscription`
 - `App.test.tsx`: cobre limpeza de erro, onboarding prioritário e ausência/renomeação do card;
 - `localAuth.test.ts`: cobre mensagem de acesso vinculado ao papel correto.
 
-
 ## Mensagem de marca na entrada — 26/09/2026
 
 - `AppComponents.tsx::LoginPage`: mantém **A feira do seu jeito** como slogan e troca o título estrutural por **Da banca até você.**;
