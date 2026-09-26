@@ -1,4 +1,4 @@
-/* global document, window, localStorage, setTimeout, clearTimeout, setInterval, confirm, CSS */
+/* global document, window, localStorage, sessionStorage, setTimeout, clearTimeout, setInterval, confirm, CSS, console, Blob, URL */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { navGroups, modules } from "./modules.js";
 
@@ -237,6 +237,7 @@ async function acceptSession(session){
  renderNav();
  $("#adminIdentity").textContent=(r.data.full_name||session.user.email)+(state.isSuperadmin?" · Superadmin":"");
  show("appView");
+ await auditAdminSessionStart();
  await openModule("dashboard");
  return "ready";
 }
@@ -246,6 +247,22 @@ async function invokeAdminAction(action,payload={}){
  if(result.error)throw result.error;
  if(result.data?.error)throw new Error(result.data.detail||result.data.error);
  return result.data;
+}
+
+async function auditAdminSessionStart(){
+ const key="feirae:admin:session-audited:"+state.session?.user?.id;
+ if(!state.session?.user?.id||sessionStorage.getItem(key)==="1")return;
+ try{
+   await invokeAdminAction("session_event",{event:"login"});
+   sessionStorage.setItem(key,"1");
+ }catch(e){console.warn("Não foi possível registrar o login administrativo.",e);}
+}
+
+async function auditAdminSessionEnd(){
+ if(!state.session?.user?.id)return;
+ const key="feirae:admin:session-audited:"+state.session.user.id;
+ try{await invokeAdminAction("session_event",{event:"logout"});}catch(e){console.warn("Não foi possível registrar o logout administrativo.",e);}
+ sessionStorage.removeItem(key);
 }
 
 function renderNav(){
@@ -403,6 +420,9 @@ async function loadReport(){
        reportTableHtml(def.label,def.cols,rows);
    }
    $("#exportReport").disabled=!state.reportRows?.length;
+   if(state.reportTruncated){
+     $("#reportResult").insertAdjacentHTML("afterbegin",'<div class="notice"><b>Volume alto:</b> a visualização no navegador foi limitada a 20.000 registros. Para períodos maiores, gere a exportação/agregação no backend.</div>');
+   }
  }catch(e){
    state.reportRows=[];state.reportColumns=[];state.reportName="";
    $("#reportResult").innerHTML='<div class="notice"><b>Não foi possível gerar o relatório.</b><br>'+esc(e.message||String(e))+'</div>';
@@ -839,13 +859,27 @@ async function saveStallEditor(){
  return true;
 }
 
+async function fetchPagedTable(table,orderField="created_at",maxRows=20000){
+ const rows=[],chunk=1000;
+ for(let from=0;from<maxRows;from+=chunk){
+   const r=await state.supabase.from(table).select("*").order(orderField,{ascending:false}).range(from,from+chunk-1);
+   if(r.error)throw r.error;
+   const batch=r.data||[];
+   rows.push(...batch);
+   if(batch.length<chunk)break;
+ }
+ return rows;
+}
+
 async function renderFinance(){
  $("#pageContent").innerHTML='<div class="empty">Carregando conciliação financeira…</div>';
  try{
-   const [payments,payouts]=await Promise.all([
-     state.supabase.from("payments").select("*").order("created_at",{ascending:false}).limit(1000),
-     state.supabase.from("payouts").select("*").order("created_at",{ascending:false}).limit(1000)
+   const [paymentsRows,payoutRows]=await Promise.all([
+     fetchPagedTable("payments","created_at",20000),
+     fetchPagedTable("payouts","created_at",20000)
    ]);
+   const payments={data:paymentsRows,error:null};
+   const payouts={data:payoutRows,error:null};
    if(payments.error)throw payments.error;if(payouts.error)throw payouts.error;
    const rows=payments.data||[];
    const gross=rows.reduce((s,r)=>s+Number(r.amount||0),0);
@@ -1187,7 +1221,6 @@ async function bulkSet(m,value){
  q=ids.length===1?q.eq(key,ids[0]):q.in(key,ids);
  const r=await q;
  if(r.error){toast(r.error.message);return;}
- await audit("bulk_update",m.table,ids.join(","),null,{field:m.bulkField,value,count:ids.length});
  toast(ids.length+" registros atualizados.");
  state.selected=new Set();
  await openModule(state.active);
@@ -1330,7 +1363,6 @@ async function saveEditor(){
  }
  $("#saveEdit").disabled=false;
  if(r.error){toast(r.error.message);return;}
- if(m.audit)await audit(isNew?"insert":"update",m.table,String(r.data?.[key]||""),isNew?null:row,r.data);
  closeEditor();toast("Alteração salva.");await openModule(state.active);
 }
 
@@ -1339,16 +1371,7 @@ async function removeRow(m,row){
  const key=m.key||"id";
  const r=await state.supabase.from(m.table).delete().eq(key,row[key]);
  if(r.error){toast(r.error.message);return;}
- if(m.audit)await audit("delete",m.table,String(row[key]||""),row,null);
  toast("Registro excluído.");await openModule(state.active);
-}
-
-async function audit(action,entity,entityId,beforeData,afterData){
- try{
-   await state.supabase.from("admin_audit_logs").insert({
-     admin_id:state.session.user.id,action,entity,entity_id:entityId,before_data:beforeData,after_data:afterData
-   });
- }catch{}
 }
 
 function closeEditor(){state.editing=null;$("#modal").classList.add("hidden");$("#editorForm").innerHTML="";}
@@ -1383,7 +1406,7 @@ $("#mfaForm").onsubmit=async(e)=>{
  if(session)await acceptSession(session);
 };
 $("#mfaCancel").onclick=async()=>{await state.supabase.auth.signOut();state.mfaFactorId=null;show("loginView");};
-$("#logoutBtn").onclick=async()=>{await state.supabase.auth.signOut();state.profile=null;show("loginView");};
+$("#logoutBtn").onclick=async()=>{await auditAdminSessionEnd();await state.supabase.auth.signOut();state.profile=null;state.session=null;show("loginView");};
 $("#refreshBtn").onclick=()=>openModule(state.active);
 $("#menuBtn").onclick=()=>$("#appView").classList.toggle("menu-open");
 $("#closeModal").onclick=closeEditor;
