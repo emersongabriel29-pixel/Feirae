@@ -31,19 +31,19 @@ npm run build
 
 | Arquivo                                | Testes |
 | -------------------------------------- | -----: |
-| `src/App.test.tsx`                     |     43 |
-| `src/domain/orderBridge.test.ts`       |      4 |
+| `src/App.test.tsx`                     |     46 |
+| `src/domain/orderBridge.test.ts`       |      5 |
 | `src/domain/marketplaceBridge.test.ts` |      4 |
 | `src/domain/inventoryBridge.test.ts`   |      3 |
 | `src/domain/localAuth.test.ts`         |      4 |
 | `src/domain/marketplace.test.ts`       |      4 |
 | `src/domain/session.test.ts`           |      3 |
 | `src/utils.test.ts`                    |      4 |
-| **Total**                              | **69** |
+| **Total**                              | **73** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 43 testes cobrem explicitamente:
+Os 46 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -83,7 +83,8 @@ Os 43 testes cobrem explicitamente:
 - horário oficial/customizado;
 - entrega/retirada/frete grátis;
 - recebimento/taxas não configuradas;
-- documento enviado entra em análise.
+- documento enviado entra em análise;
+- conta real sem storage de documentos não recebe aprovação seed.
 
 ### Entregador
 
@@ -95,6 +96,8 @@ Os 43 testes cobrem explicitamente:
 - Pix/conta bancária;
 - estados de repasse;
 - aprovação documental;
+- conta real recém-criada não recebe corridas fixture;
+- lock de corrida cancelada externamente é liberado;
 - trocar perfil somente após logout.
 
 ## 4. Cobertura comprovada de domínio
@@ -102,6 +105,7 @@ Os 43 testes cobrem explicitamente:
 ### orderBridge
 
 - multi-banca só libera após todas prontas;
+- retirada multi-banca só conclui após todas as bancas confirmarem;
 - peso real propaga;
 - suporte/avaliações ficam no mesmo pedido;
 - histórico isolado por cliente.
@@ -126,7 +130,7 @@ Os 43 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 69 testes NÃO comprovam diretamente
+## 5. O que os 73 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -219,7 +223,7 @@ Uma release deve registrar:
 - bugs conhecidos;
 - rollback disponível.
 
-O número 69 é referência do protótipo atual, não selo de produção.
+O número 73 é referência do protótipo atual, não selo de produção.
 
 ## 12. QA visual após auditoria de design
 
