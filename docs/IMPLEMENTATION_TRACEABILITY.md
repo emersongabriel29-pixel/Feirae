@@ -205,6 +205,7 @@ Contagem real:
 
 - `App.test.tsx`: 50;
 - `orderBridge.test.ts`: 5;
+- `feiraeNotifications.test.ts`: 5;
 - `marketplaceBridge.test.ts`: 4;
 - `inventoryBridge.test.ts`: 3;
 - `localAuth.test.ts`: 4;
@@ -212,7 +213,7 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **77**.
+Total: **82**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
@@ -252,3 +253,17 @@ Limite: o repositório ainda não possui backend que persista `PushSubscription`
 - texto de apoio passa a explicar as três frentes do produto: comprar, gerenciar banca e fazer entregas;
 - `App.test.tsx`: valida slogan, novo título e mensagem de propósito;
 - `DESIGN_SYSTEM.md` e `FUNCTIONAL_SPEC.md`: registram a mensagem oficial da entrada.
+
+
+## Notificações por papel — 26/09/2026
+
+- `feiraeNotifications.ts`: centraliza textos e filtros de eventos para Cliente, Feirante e Entregador;
+- `App.tsx`: Cliente recebe notificações locais/browser de etapas do pedido e de promoções novas;
+- `CustomerScreens.tsx`: Cliente pode ativar notificações do sistema e a central usa nomes amigáveis como **Pedido feito**, **Saiu para entrega**, **Pedido chegando** e **Pedido chegou**;
+- `VendorScreens.tsx`: Feirante recebe eventos relevantes da própria banca e possui módulo **Notificações**;
+- `DeliveryScreens.tsx`: Entregador recebe eventos de rota/entrega e ganhou a etapa **Avisar chegada**;
+- `marketplaceBridge.ts` + `useMarketplaceRevision.ts`: alterações de promoções disparam revisão local para o Cliente;
+- `feiraeNotifications.test.ts`: valida a matriz de mensagens por papel;
+- `App.test.tsx`: cobre card do Cliente e a nova etapa de chegada.
+
+Limite mantido: receber alertas quando o aplicativo está totalmente fechado em outro aparelho ainda depende do backend real enviar Web Push para a assinatura persistida.
