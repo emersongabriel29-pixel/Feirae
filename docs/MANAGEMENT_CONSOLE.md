@@ -574,7 +574,9 @@ Prioridade de migração:
 8. `content_blocks`;
 9. regras de frete/taxas no backend.
 
-Até essa migração do frontend/backend ser concluída, o painel pode salvar corretamente as configurações, mas telas ainda baseadas em dados locais não refletirão todas as mudanças.
+A primeira camada dessa migração já existe em `src/domain/runtimeConfig.ts`: quando o Data API do Supabase está configurado, o app público lê Estados/UF ativos, Feiras ativas, tipos/capacidades de veículos e meios de pagamento habilitados para cliente. O checkout deixa de exibir um meio desativado pela Gestão.
+
+Ainda permanecem fora dessa primeira camada regras que precisam de backend/autenticação compartilhada, como sanções por usuário, cálculo autoritativo de frete/taxas, ledger, estoque transacional e demais operações sensíveis.
 
 
 ## Endurecimento após nova auditoria
