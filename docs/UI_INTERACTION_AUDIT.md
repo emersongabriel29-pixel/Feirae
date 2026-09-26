@@ -183,3 +183,35 @@ Um controle só é “funcional” quando:
 - persistência é a esperada;
 - outra tela dependente recebe a alteração;
 - teste existe para ação crítica.
+
+
+## Auditoria de design/layout aplicada em 26/09/2026
+
+Correções implementadas no código:
+
+- tokens semânticos de superfície, sucesso, atenção, erro e informação;
+- escala compartilhada de radius, shadow e alvo de toque;
+- breakpoint grande alinhado em 1024 px;
+- login mobile com bloco promocional reduzido;
+- hero do cliente reduzido no mobile;
+- contexto de feira/localização mantém texto visível em tela pequena;
+- navegação primária Cliente alinhada em Feiras, Produtos, Pedidos e Perfil;
+- Feirante e Entregador entram direto na Central operacional;
+- módulos operacionais agrupados sem menu lateral;
+- `operation-card` deixou de forçar 420 px de altura;
+- cards de pedido reorganizam em telas estreitas;
+- card de produto mobile oculta metadados secundários;
+- botões de adicionar/favoritar/estoque e chips interativos ganharam área de toque maior;
+- pedidos possuem cor semântica por estado;
+- documentos distinguem aprovado, em análise e correção;
+- erros de formulário usam `.inline-error`;
+- upload de foto do produto agora pode chegar ao catálogo via `marketplaceBridge.ts`;
+- catálogo usa foto quando existe e emoji apenas como fallback;
+- atalhos principais da Home usam iconografia Lucide.
+
+Documento de regra visual:
+[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+
+### Limite desta auditoria
+
+A suite atual usa jsdom. Portanto essas correções de layout ainda precisam de regressão visual em browser real para 320, 360, 390/412, 768, 1024, 1280 e 1440 px.
