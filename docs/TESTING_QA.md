@@ -33,13 +33,14 @@ npm run build
 | -------------------------------------- | -----: |
 | `src/App.test.tsx`                     |     50 |
 | `src/domain/orderBridge.test.ts`       |      5 |
+| `src/domain/feiraeNotifications.test.ts` |      5 |
 | `src/domain/marketplaceBridge.test.ts` |      4 |
 | `src/domain/inventoryBridge.test.ts`   |      3 |
 | `src/domain/localAuth.test.ts`         |      4 |
 | `src/domain/marketplace.test.ts`       |      4 |
 | `src/domain/session.test.ts`           |      3 |
 | `src/utils.test.ts`                    |      4 |
-| **Total**                              | **77** |
+| **Total**                              | **82** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
@@ -71,6 +72,8 @@ Os 50 testes cobrem explicitamente:
 - formulário de cartão e CVV não persistido;
 - motivos de cancelamento;
 - notificações a partir de estados;
+- card de ativação das notificações Feiraê;
+- etapa “Avisar chegada” antes da confirmação da entrega;
 - avaliações;
 - retirada completa;
 - consentimento WhatsApp explícito;
@@ -114,6 +117,14 @@ Os 50 testes cobrem explicitamente:
 
 ## 4. Cobertura comprovada de domínio
 
+### feiraeNotifications
+
+- Cliente recebe linguagem própria para pedido feito, preparação, saída, aproximação e entrega;
+- promoção do catálogo gera mensagem própria para Cliente;
+- Feirante recebe linguagem de novo pedido, pagamento e coleta;
+- Entregador recebe linguagem de rota, coleta e conclusão;
+- evento irrelevante para um papel é ignorado.
+
 ### orderBridge
 
 - multi-banca só libera após todas prontas;
@@ -142,7 +153,7 @@ Os 50 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 77 testes NÃO comprovam diretamente
+## 5. O que os 82 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
