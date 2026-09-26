@@ -360,9 +360,13 @@ Se estoque = 0, o produto é salvo como inativo/esgotado.
 
 Pedido unificado mantém uma lista de bancas e seus estados.
 
-Regra local testada:
+Regras locais testadas:
 
-- logística só libera quando todas as bancas estão prontas.
+- logística só libera quando todas as bancas estão prontas;
+- retirada multi-banca mantém o pedido aberto após a primeira banca;
+- o pedido de retirada só vira entregue após todas as bancas confirmarem a entrega ao cliente.
+
+Fixtures de corrida de demonstração são restritas às contas `@feirae.test`; uma conta real/recém-criada não deve receber ofertas fictícias.
 
 Limitação atual de rota:
 
