@@ -50,7 +50,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.45rem;
-    border: 1px solid #cfe1d4;
+    border: 1px solid var(--fe-border);
     border-radius: 0.9rem;
     background: var(--fe-green-soft);
     padding: 0 0.65rem;
