@@ -39,15 +39,17 @@ Depois disso, a gestão de papéis pode ser feita pelo próprio painel, com audi
 - Pedidos;
 - Entregas;
 - Suporte;
-- Aprovação documental;
+- Aprovação documental com abertura segura do arquivo;
+- Estados e cobertura por UF;
 - Feiras;
 - Usuários;
 - Feirantes;
 - Entregadores;
+- Suspensões, banimentos e bloqueios;
 - Produtos;
 - Categorias;
 - Regiões de atendimento;
-- Tipos/capacidade de veículos;
+- Catálogo global de veículos permitidos, status e peso máximo;
 - Regras de frete;
 - Taxas da plataforma;
 - Meios de pagamento;
@@ -63,6 +65,7 @@ Depois disso, a gestão de papéis pode ser feita pelo próprio painel, com audi
 - Configurações gerais;
 - Registro/status de integrações;
 - LGPD;
+- Permissões administrativas granulares;
 - Auditoria.
 
 ## Repositório
