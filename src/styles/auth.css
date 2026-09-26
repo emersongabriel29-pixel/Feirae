@@ -1,7 +1,7 @@
 .login-page {
   display: grid;
   min-height: 100vh;
-  background: white;
+  background: var(--fe-surface);
 }
 .login-showcase {
   position: relative;
@@ -105,8 +105,8 @@
   align-items: center;
   gap: 0.8rem;
   border: 1px solid var(--fe-border);
-  border-radius: 1rem;
-  background: white;
+  border-radius: var(--fe-radius-md);
+  background: var(--fe-surface);
   padding: 0.8rem;
   text-align: left;
   transition:
@@ -226,7 +226,7 @@
   font-weight: 900;
 }
 .auth-switch button.active {
-  background: white;
+  background: var(--fe-surface);
   color: var(--fe-green);
   box-shadow: 0 4px 14px rgba(30, 45, 34, 0.08);
 }
@@ -315,9 +315,9 @@
   color: #7b8781;
 }
 .desktop-nav {
-  border-radius: 0.75rem;
+  border-radius: var(--fe-radius-sm);
   padding: 0.6rem 0.8rem;
-  color: #53615a;
+  color: var(--fe-text-soft);
   font-size: 0.82rem;
   font-weight: 750;
 }
@@ -334,7 +334,7 @@
   place-items: center;
   border: 1px solid var(--fe-border);
   border-radius: 0.9rem;
-  background: white;
+  background: var(--fe-surface);
   color: #314039;
 }
 .icon-button:hover {
@@ -398,7 +398,7 @@
 }
 .search-field:focus-within {
   border-color: #75a887;
-  background: white;
+  background: var(--fe-surface);
   box-shadow: 0 0 0 4px rgba(23, 107, 58, 0.07);
 }
 .search-field input {
@@ -460,7 +460,7 @@
 }
 .fair-switcher button {
   border-radius: 0.65rem;
-  background: white;
+  background: var(--fe-surface);
   padding: 0.45rem 0.55rem;
   color: var(--fe-green);
   font-size: 0.72rem;
@@ -474,7 +474,7 @@
   gap: 0.45rem;
   border: 1px solid var(--fe-border);
   border-radius: 0.95rem;
-  background: white;
+  background: var(--fe-surface);
   padding: 0 0.8rem;
   color: #46544d;
   font-size: 0.76rem;
