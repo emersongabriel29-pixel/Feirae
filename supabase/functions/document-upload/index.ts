@@ -61,6 +61,12 @@ Deno.serve(async (req) => {
   if (!matchesSignature(bytes, rule.signature)) return json({ error: "file_signature_mismatch" }, 415);
 
   const userId = userData.user.id;
+  const { data: currentDocument } = await adminDb
+    .from("onboarding_documents")
+    .select("id,file_path,status")
+    .eq("profile_id", userId)
+    .eq("document_type", documentType)
+    .maybeSingle();
   const path = `${userId}/${crypto.randomUUID()}.${rule.extension}`;
 
   const { error: uploadError } = await adminDb.storage
@@ -74,22 +80,29 @@ Deno.serve(async (req) => {
 
   const { data: documentRow, error: documentError } = await adminDb
     .from("onboarding_documents")
-    .insert({
-      profile_id: userId,
-      document_type: documentType,
-      file_path: path,
-      status: "pending",
-      correction_reason: null,
-      reviewed_by: null,
-      reviewed_at: null,
-      updated_at: new Date().toISOString(),
-    })
+    .upsert(
+      {
+        profile_id: userId,
+        document_type: documentType,
+        file_path: path,
+        status: "pending",
+        correction_reason: null,
+        reviewed_by: null,
+        reviewed_at: null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "profile_id,document_type" },
+    )
     .select()
     .single();
 
   if (documentError) {
     await adminDb.storage.from("onboarding-documents").remove([path]);
     return json({ error: "document_record_failed", detail: documentError.message }, 400);
+  }
+
+  if (currentDocument?.file_path && currentDocument.file_path !== path) {
+    await adminDb.storage.from("onboarding-documents").remove([currentDocument.file_path]);
   }
 
   return json({
