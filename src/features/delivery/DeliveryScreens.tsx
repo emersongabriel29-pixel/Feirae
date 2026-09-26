@@ -639,9 +639,7 @@ export function DeliveryOperations({
       (order) => order.driver?.driverKey === session.email || order.id === effectiveAccepted,
     );
     const currentKeys = new Set(
-      relevantOrders.flatMap((order) =>
-        order.events.map((event) => `${order.id}:${event.key}:${event.at}`),
-      ),
+      relevantOrders.flatMap((order) => order.events.map((event) => `${order.id}:${event.key}:${event.at}`)),
     );
 
     if (seenDeliveryNotificationKeys.current === null) {
@@ -737,10 +735,7 @@ export function DeliveryOperations({
           </article>
         ))}
       </div>
-      <div
-        className="delivery-progress"
-        aria-label={`Etapa ${stage + 1} de ${deliveryStages.length}`}
-      >
+      <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de ${deliveryStages.length}`}>
         {deliveryStages.map((label, index) => (
           <span className={index <= stage ? "done" : ""} key={label}>
             {index + 1}
