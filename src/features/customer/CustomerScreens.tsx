@@ -438,7 +438,19 @@ export function OrdersPage({
               {order.paymentMethod && <small>{order.paymentMethod}</small>}
             </div>
             <div className="text-right">
-              <span>{order.status}</span>
+              <span
+                className={`order-status ${
+                  order.status === "Entregue"
+                    ? "status-success"
+                    : order.status === "Cancelado"
+                      ? "status-danger"
+                      : order.status === "Recebido"
+                        ? "status-warning"
+                        : "status-progress"
+                }`}
+              >
+                {order.status}
+              </span>
               <strong>{money(order.value)}</strong>
               <div className="order-actions">
                 <button onClick={() => onTracking(order.id)}>Ver detalhes</button>
