@@ -135,6 +135,7 @@ async function openModule(id){
  if(id==="dashboard"){ $("#pageTitle").textContent="Visão geral";$("#breadcrumb").textContent="Operação";await renderDashboard();return; }
  if(id==="reports"){ $("#pageTitle").textContent="Relatórios";$("#breadcrumb").textContent="Análises";await renderReports();return; }
  if(id==="alerts"){ $("#pageTitle").textContent="Alertas";$("#breadcrumb").textContent="Operação";await renderAlerts();return; }
+ if(id==="stalls"){ $("#pageTitle").textContent="Bancas / Boxes";$("#breadcrumb").textContent="Cadastros";await renderStalls();return; }
  if(id==="finance"){ $("#pageTitle").textContent="Financeiro";$("#breadcrumb").textContent="Comercial e financeiro";await renderFinance();return; }
  if(id==="integration_health"){ $("#pageTitle").textContent="Saúde das integrações";$("#breadcrumb").textContent="Sistema";await renderIntegrationHealth();return; }
  if(id==="admins"){ $("#pageTitle").textContent="Administradores";$("#breadcrumb").textContent="Sistema";await renderAdmins();return; }
@@ -382,6 +383,64 @@ async function renderDeliveryDetail(deliveryId){
    $("#pageContent").innerHTML=html;
    $("#backDeliveries").onclick=()=>openModule("delivery_jobs");
  }catch(e){renderError(e);}
+}
+
+
+async function renderStalls(){
+ $("#pageContent").innerHTML='<div class="empty">Carregando bancas e boxes…</div>';
+ try{
+   const [memberships,fairs,vendors]=await Promise.all([
+     state.supabase.from("fair_vendor_memberships").select("*").order("updated_at",{ascending:false}).limit(1000),
+     state.supabase.from("fairs").select("id,name,state,city").order("name"),
+     state.supabase.from("vendor_profiles").select("id,business_name,approved").order("business_name")
+   ]);
+   const bad=[memberships,fairs,vendors].find((x)=>x.error);if(bad)throw bad.error;
+   const fairMap=Object.fromEntries((fairs.data||[]).map((x)=>[x.id,x]));
+   const vendorMap=Object.fromEntries((vendors.data||[]).map((x)=>[x.id,x]));
+   state.stallContext={fairs:fairs.data||[],vendors:vendors.data||[]};
+   let html='<section class="panel"><div class="panel-head"><div><h2>Bancas / Boxes</h2><p>Vincule feira, feirante, box e horários sem usar UUID manualmente.</p></div><button class="primary" id="newStall">Nova banca / box</button></div><div class="table-wrap"><table><thead><tr><th>Feira</th><th>Feirante</th><th>Box</th><th>Nome</th><th>Ativa</th><th>Atualizado</th><th>Ações</th></tr></thead><tbody>';
+   html+=(memberships.data||[]).length?(memberships.data||[]).map((row,i)=>{
+     const fair=fairMap[row.fair_id],vendor=vendorMap[row.vendor_id];
+     return '<tr><td>'+esc(fair?.name||row.fair_id)+'</td><td>'+esc(vendor?.business_name||row.vendor_id)+'</td><td>'+esc(row.stall_code||"—")+'</td><td>'+esc(row.stall_name||"—")+'</td><td>'+cell("active",row.active)+'</td><td>'+date(row.updated_at)+'</td><td><div class="actions"><button data-stall-edit="'+i+'">Editar</button><button data-stall-toggle="'+i+'">'+(row.active?"Desativar":"Ativar")+'</button></div></td></tr>';
+   }).join(""):'<tr><td colspan="7" class="empty">Nenhuma banca/box cadastrada.</td></tr>';
+   html+='</tbody></table></div></section>';
+   $("#pageContent").innerHTML=html;
+   $("#newStall").onclick=()=>openStallEditor(null);
+   document.querySelectorAll("[data-stall-edit]").forEach((b)=>b.onclick=()=>openStallEditor(memberships.data[Number(b.dataset.stallEdit)]));
+   document.querySelectorAll("[data-stall-toggle]").forEach((b)=>b.onclick=async()=>{
+     const row=memberships.data[Number(b.dataset.stallToggle)];
+     const r=await state.supabase.from("fair_vendor_memberships").update({active:!row.active,updated_at:new Date().toISOString()}).eq("id",row.id);
+     if(r.error){toast(r.error.message);return;}toast(row.active?"Banca desativada.":"Banca ativada.");await renderStalls();
+   });
+ }catch(e){renderError(e);}
+}
+
+function openStallEditor(row){
+ const ctx=state.stallContext||{fairs:[],vendors:[]};
+ state.editing={special:"stall",row,isNew:!row};
+ $("#modalTitle").textContent=row?"Editar banca / box":"Nova banca / box";
+ $("#editorForm").innerHTML=
+   '<label>Feira<select id="stallFair"><option value="">Selecione</option>'+ctx.fairs.map((x)=>'<option value="'+esc(x.id)+'" '+(row?.fair_id===x.id?"selected":"")+'>'+esc(x.name+" · "+(x.city||x.state||""))+'</option>').join("")+'</select></label>'+
+   '<label>Feirante<select id="stallVendor"><option value="">Selecione</option>'+ctx.vendors.map((x)=>'<option value="'+esc(x.id)+'" '+(row?.vendor_id===x.id?"selected":"")+'>'+esc(x.business_name+(x.approved?"":" · pendente"))+'</option>').join("")+'</select></label>'+
+   '<label>Código do box<input id="stallCode" value="'+esc(row?.stall_code||"")+'"></label>'+
+   '<label>Nome da banca/box<input id="stallName" value="'+esc(row?.stall_name||"")+'"></label>'+
+   '<label class="full-span">Horários próprios (JSON)<textarea id="stallHours" rows="4">'+esc(row?.custom_opening_hours?JSON.stringify(row.custom_opening_hours,null,2):"{}")+'</textarea></label>'+
+   '<label class="full-span">Observações<textarea id="stallNotes" rows="3">'+esc(row?.notes||"")+'</textarea></label>'+
+   '<label class="check-row"><input id="stallActive" type="checkbox" '+(row?.active!==false?"checked":"")+'><span>Ativa</span></label>';
+ $("#modal").classList.remove("hidden");
+}
+
+async function saveStallEditor(){
+ const {row,isNew}=state.editing;
+ const fair_id=$("#stallFair").value,vendor_id=$("#stallVendor").value;
+ if(!fair_id||!vendor_id){toast("Selecione a feira e o feirante.");return false;}
+ let hours;try{hours=JSON.parse($("#stallHours").value||"{}");}catch{toast("Horários em JSON inválido.");return false;}
+ const payload={fair_id,vendor_id,stall_code:$("#stallCode").value.trim()||null,stall_name:$("#stallName").value.trim()||null,custom_opening_hours:hours,notes:$("#stallNotes").value.trim()||null,active:$("#stallActive").checked,updated_at:new Date().toISOString()};
+ const r=isNew
+   ?await state.supabase.from("fair_vendor_memberships").insert(payload)
+   :await state.supabase.from("fair_vendor_memberships").update(payload).eq("id",row.id);
+ if(r.error){toast(r.error.message);return false;}
+ return true;
 }
 
 async function renderFinance(){
@@ -747,6 +806,13 @@ function readPayload(){
 
 async function saveEditor(){
  if(!state.editing)return;
+ if(state.editing.special==="stall"){
+   $("#saveEdit").disabled=true;
+   const ok=await saveStallEditor();
+   $("#saveEdit").disabled=false;
+   if(ok){closeEditor();toast("Banca/box salva.");await renderStalls();}
+   return;
+ }
  if(state.editing.special==="admin_permissions"){
    $("#saveEdit").disabled=true;
    const ok=await saveAdminPermissions();
