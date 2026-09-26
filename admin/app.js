@@ -470,15 +470,19 @@ const ADMIN_PERMISSION_SET=["*","operations.manage","documents.review","accounts
 async function renderAdmins(){
  $("#pageContent").innerHTML='<div class="empty">Carregando administradores…</div>';
  try{
-   const [profiles,access,permissions]=await Promise.all([
+   const [profiles,candidates,access,permissions]=await Promise.all([
      state.supabase.from("profiles").select("id,full_name,phone,role,created_at").eq("role","admin").order("full_name"),
+     state.supabase.from("profiles").select("id,full_name,role").neq("role","admin").order("full_name").limit(200),
      state.supabase.from("admin_access").select("*"),
      state.supabase.from("admin_permissions").select("*")
    ]);
-   if(profiles.error)throw profiles.error;if(access.error)throw access.error;if(permissions.error)throw permissions.error;
+   if(profiles.error)throw profiles.error;if(candidates.error)throw candidates.error;if(access.error)throw access.error;if(permissions.error)throw permissions.error;
    const accessMap=Object.fromEntries((access.data||[]).map((a)=>[a.profile_id,a]));
    const permMap=(permissions.data||[]).reduce((a,p)=>{(a[p.profile_id]??=[]).push(p.permission);return a;},{});
-   let html='<section class="panel"><div class="panel-head"><div><h2>Administradores</h2><p>Ative/desative acessos e configure permissões sem compartilhar acesso total.</p></div><button class="primary" id="promoteAdmin">Promover usuário existente</button></div><div class="admin-list">';
+   let html='<section class="panel"><div class="panel-head"><div><h2>Administradores</h2><p>Ative/desative acessos e configure permissões sem compartilhar acesso total.</p></div></div>'+
+   '<div class="admin-promote"><label>Adicionar administrador<select id="adminCandidate"><option value="">Selecione um usuário</option>'+
+   (candidates.data||[]).map((u)=>'<option value="'+esc(u.id)+'">'+esc((u.full_name||"Sem nome")+" · "+u.role)+'</option>').join("")+
+   '</select></label><button class="primary" id="promoteAdmin">Promover selecionado</button></div><div class="admin-list">';
    for(const p of profiles.data||[]){
      const ac=accessMap[p.id],active=ac?.active!==false,perms=permMap[p.id]||["* (acesso total enquanto não há regras explícitas)"];
      html+='<div class="admin-card"><div><strong>'+esc(p.full_name||p.id)+'</strong><small>'+esc(p.id)+'</small><div class="permission-chips">'+perms.map((x)=>'<span>'+esc(x)+'</span>').join("")+'</div></div><div class="actions"><span class="badge '+(active?"true":"false")+'">'+(active?"Ativo":"Desativado")+'</span><button data-admin-access="'+esc(p.id)+'" data-active="'+active+'">'+(active?"Desativar":"Ativar")+'</button><button data-admin-permissions="'+esc(p.id)+'">Permissões</button></div></div>';
@@ -492,8 +496,8 @@ async function renderAdmins(){
 }
 
 async function promoteExistingAdmin(){
- const id=prompt("UUID do usuário existente que será promovido a administrador:");
- if(!id)return;
+ const id=$("#adminCandidate")?.value;
+ if(!id){toast("Selecione um usuário.");return;}
  const r=await state.supabase.from("profiles").update({role:"admin"}).eq("id",id).select("id,full_name").maybeSingle();
  if(r.error){toast(r.error.message);return;}
  if(!r.data){toast("Usuário não encontrado.");return;}
