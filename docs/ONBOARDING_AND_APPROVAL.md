@@ -1,5 +1,30 @@
 # Cadastro, documentos e aprovação — Feiraê
 
+Atualizado em 26/09/2026.
+
+## Estado de implementação
+
+O protótipo já permite:
+
+- cadastro por papel;
+- preenchimento de dados;
+- upload local de documentos;
+- estados localmente simulados de revisão/aprovação;
+- bloqueios de operação baseados em aprovação no fluxo local.
+
+Produção ainda exige:
+
+- Auth real;
+- Storage privado;
+- validação de arquivo;
+- revisão administrativa;
+- KYC quando escolhido;
+- revalidação;
+- bloqueio server-side;
+- trilha de auditoria.
+
+Os requisitos regulatórios e documentos variam conforme atividade, veículo, feira e regras vigentes. Antes de produção, fontes oficiais devem ser revalidadas e os requisitos devem ser configuráveis, não codificados como verdade universal.
+
 ## Regra principal
 
 Criar a conta não significa estar autorizado a vender ou entregar.
