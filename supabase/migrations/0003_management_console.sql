@@ -531,7 +531,14 @@ to authenticated;
 grant insert on table public.admin_audit_logs to authenticated;
 grant usage, select on sequence public.admin_audit_logs_id_seq to authenticated;
 
+-- Explicit privileges for legacy operational tables used by the management console.
+grant select on table public.categories to anon, authenticated;
+grant insert, update, delete on table public.categories to authenticated;
+grant select, insert, update, delete on table public.deliveries to authenticated;
+
 -- RLS for management data.
+alter table public.categories enable row level security;
+alter table public.deliveries enable row level security;
 alter table public.platform_settings enable row level security;
 alter table public.service_states enable row level security;
 alter table public.service_regions enable row level security;
@@ -550,6 +557,46 @@ alter table public.privacy_requests enable row level security;
 alter table public.account_enforcements enable row level security;
 alter table public.admin_permissions enable row level security;
 alter table public.admin_audit_logs enable row level security;
+
+drop policy if exists "public read active categories" on public.categories;
+create policy "public read active categories"
+on public.categories for select
+to anon, authenticated
+using (active);
+
+create policy "admins manage categories"
+on public.categories for all
+to authenticated
+using ((select private.feirae_admin_has('registrations.manage')))
+with check ((select private.feirae_admin_has('registrations.manage')));
+
+drop policy if exists "order participants read deliveries" on public.deliveries;
+create policy "order participants read deliveries"
+on public.deliveries for select
+to authenticated
+using (
+  delivery_id = (select auth.uid())
+  or exists (
+    select 1
+    from public.orders o
+    where o.id = order_id
+      and (
+        o.customer_id = (select auth.uid())
+        or exists (
+          select 1
+          from public.order_vendors ov
+          where ov.order_id = o.id
+            and ov.vendor_id = (select auth.uid())
+        )
+      )
+  )
+);
+
+create policy "admins manage deliveries"
+on public.deliveries for all
+to authenticated
+using ((select private.feirae_admin_has('operations.manage')))
+with check ((select private.feirae_admin_has('operations.manage')));
 
 create policy "public read public settings"
 on public.platform_settings for select
