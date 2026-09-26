@@ -171,7 +171,6 @@ A documentação agora registra, mas não resolve sozinha:
 
 Esses itens só podem ser marcados concluídos quando o código correspondente for implementado e testado.
 
-
 ## Governança permanente adicionada
 
 A partir desta atualização, a sincronização deixa de ser apenas uma recomendação documental.
