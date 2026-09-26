@@ -319,6 +319,7 @@ export default function App() {
       promotionDiscount: number;
       walletUsed: number;
       appliedPromotions: string[];
+      whatsappConsent: boolean;
       changeFor?: number;
     },
   ) {
@@ -367,6 +368,7 @@ export default function App() {
       customerKey: session?.email,
       paymentMethod: details.paymentMethod,
       paymentStatus: paymentOnDelivery ? "due_on_delivery" : "authorized",
+      whatsappConsent: details.whatsappConsent,
       changeFor: details.changeFor,
       subtotal,
       promotionDiscount: details.promotionDiscount,
