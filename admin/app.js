@@ -1,6 +1,7 @@
 /* global document, window, localStorage, sessionStorage, setTimeout, clearTimeout, setInterval, confirm, CSS, console, Blob, URL */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { navGroups, modules } from "./modules.js";
+import { ORDER_TRANSITIONS, safeSearchTerm, isUuid, canAccessPermission } from "./core.js";
 
 const CONFIG_KEY="feirae:management:supabase";
 const $=(s)=>document.querySelector(s);
@@ -23,8 +24,10 @@ const permissionByModule={
   admins:"permissions.manage",permissions:"permissions.manage",audit:"audit.view",reports:"reports.view"
 };
 function canModule(id){
-  const permission=permissionByModule[id];
-  return !permission||state.isSuperadmin||state.permissions.has(permission);
+  return canAccessPermission(
+    {isSuperadmin:state.isSuperadmin,permissions:[...state.permissions]},
+    permissionByModule[id]
+  );
 }
 
 function show(id){["boot","setupView","loginView","mfaView","appView"].forEach((x)=>$("#"+x).classList.toggle("hidden",x!==id));}
@@ -107,29 +110,6 @@ const TABLE_SEARCH_FIELDS={
   admin_audit_logs:["action","entity","entity_id"]
 };
 
-function safeSearchTerm(value){
- return String(value||"").trim().replace(/[,*()]/g," ").replace(/\s+/g," ").slice(0,120);
-}
-
-function isUuid(value){
- return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
-
-
-const ORDER_TRANSITIONS={
-  pending_payment:["paid","canceled"],
-  paid:["accepted","canceled","refunded"],
-  accepted:["preparing","canceled"],
-  preparing:["ready_for_pickup","canceled"],
-  ready_for_pickup:["driver_assigned","canceled"],
-  driver_assigned:["collected","canceled"],
-  collected:["out_for_delivery"],
-  out_for_delivery:["delivered"],
-  delivered:["refunded"],
-  canceled:["refunded"],
-  refunded:[]
-};
-
 const reportDefs={
   orders:{label:"Pedidos",table:"orders",dateField:"created_at",cols:["id","status","payment_status","subtotal","delivery_fee","total","created_at"]},
   deliveries:{label:"Entregas",table:"deliveries",dateField:"updated_at",cols:["id","order_id","delivery_id","status","fee","total_distance_km","eta_minutes","cancel_reason","accepted_at","delivered_at","updated_at"]},
@@ -157,12 +137,34 @@ function cell(k,v){
  const s=String(v);return s.length>80?esc(s.slice(0,77))+"…":esc(s);
 }
 
-function getConfig(){try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||"null");}catch{return null;}}
+const LOCAL_HOSTS=new Set(["localhost","127.0.0.1","::1"]);
+const isLocalAdmin=LOCAL_HOSTS.has(window.location.hostname);
+
+async function getConfig(){
+ try{
+   const response=await fetch("./config.json",{cache:"no-store"});
+   if(response.ok){
+     const config=await response.json();
+     if(config?.url&&config?.anonKey)return config;
+   }
+ }catch{}
+ if(isLocalAdmin){
+   try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||"null");}catch{return null;}
+ }
+ return null;
+}
 function configure(c){state.supabase=createClient(c.url,c.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});}
 
 async function boot(){
- const c=getConfig();
- if(!c?.url||!c?.anonKey){show("setupView");return;}
+ const c=await getConfig();
+ if(!c?.url||!c?.anonKey){
+   show("setupView");
+   if(!isLocalAdmin){
+     $("#setupForm").classList.add("hidden");
+     $("#setupView .auth-card p").innerHTML="Configuração de ambiente ausente. Publique <code>admin/config.json</code> com apenas a URL do projeto e a chave publishable/anon. A produção não permite trocar o banco pelo navegador.";
+   }
+   return;
+ }
  configure(c);
  const session=(await state.supabase.auth.getSession()).data.session;
  if(!session){show("loginView");return;}
@@ -1379,6 +1381,7 @@ function renderError(e){$("#pageContent").innerHTML='<div class="notice"><b>Não
 
 $("#setupForm").onsubmit=(e)=>{
  e.preventDefault();
+ if(!isLocalAdmin){loginError("A conexão da Gestão é fixa em produção.");return;}
  const c={url:$("#supabaseUrl").value.trim(),anonKey:$("#supabaseAnonKey").value.trim()};
  localStorage.setItem(CONFIG_KEY,JSON.stringify(c));configure(c);show("loginView");
 };
