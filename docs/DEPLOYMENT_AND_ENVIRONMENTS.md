@@ -6,11 +6,20 @@ Atualizado em 26/09/2026 com base no repositório atual.
 
 ### Workflow
 
-Existe somente:
+Existe:
 
 `.github/workflows/quality.yml`.
 
-Ele valida código.
+Ele valida:
+
+- dependências;
+- lint;
+- testes;
+- TypeScript/build;
+- Prettier;
+- em pull requests, sincronização entre código/testes/documentação via `npm run check:sync`.
+
+O checkout do workflow usa `fetch-depth: 0` para comparar a branch do PR com o SHA base.
 
 ### Arquivos de hosting
 
@@ -35,6 +44,21 @@ Não existe:
 Não existe diretório de Edge Functions.
 
 Conclusão: o repositório não contém um pipeline explícito de deploy.
+
+## 1.1 Verificação de sincronização no PR
+
+Script:
+
+`scripts/check-change-sync.mjs`.
+
+Regras automatizadas atuais:
+
+- alteração não documental exige documentação no mesmo PR;
+- alteração comportamental em `src/**/*.ts(x)` exige teste alterado;
+- migration exige atualização de `SCHEMA_GAP_MATRIX.md`, `DATA_MODEL_AND_STATES.md` ou `IMPLEMENTATION_TRACEABILITY.md`;
+- workflow/configuração de ambiente exige atualização deste documento.
+
+A matriz humana completa continua em [CHANGE_GOVERNANCE.md](CHANGE_GOVERNANCE.md).
 
 ## 2. .env.example atual
 
