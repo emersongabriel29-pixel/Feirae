@@ -50,7 +50,7 @@ export function DeliveryOperations({
   onAccountUpdate,
 }: {
   session: DemoSession;
-  onBack: () => void;
+  onBack?: () => void;
   onMap: (destination?: string) => void;
   onAccountUpdate: (name: string, email: string, newPassword?: string) => string | null;
 }) {
