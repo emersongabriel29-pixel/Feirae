@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate:
@@ -29,19 +29,4 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: npm run check:sync
-      - name: Format and persist Prettier fixes
-        if: github.event_name == 'pull_request'
-        run: |
-          git checkout ${{ github.event.pull_request.head.sha }}
-          npm run format
-          git show ${{ github.event.pull_request.base.sha }}:.github/workflows/quality.yml > .github/workflows/quality.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No formatting changes needed."
-          else
-            git commit -m "chore: format code with prettier"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
       - run: npm run format:check
