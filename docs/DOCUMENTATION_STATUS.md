@@ -170,3 +170,19 @@ A documentação agora registra, mas não resolve sozinha:
 - PSP/KYC/Storage ausentes.
 
 Esses itens só podem ser marcados concluídos quando o código correspondente for implementado e testado.
+
+
+## Governança permanente adicionada
+
+A partir desta atualização, a sincronização deixa de ser apenas uma recomendação documental.
+
+Foram adicionados:
+
+- `docs/CHANGE_GOVERNANCE.md`;
+- `CONTRIBUTING.md`;
+- `.github/pull_request_template.md`;
+- `scripts/check-change-sync.mjs`;
+- script npm `check:sync`;
+- etapa de CI para pull requests.
+
+A regra passa a ser: toda mudança avalia impacto em código, testes, documentação, banco, segurança, integrações, LGPD, admin e deploy. Itens afetados devem ser alterados no mesmo PR.
