@@ -18,6 +18,7 @@ describe("Feiraê customer flow", () => {
   it("opens the catalog from the home page", () => {
     render(<App />);
     loginAs("cliente");
+    expect(screen.getByRole("button", { name: /^perfil$/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
     expect(screen.getByRole("heading", { name: /produtos da feira/i })).toBeInTheDocument();
     expect(window.location.hash).toBe("#/cliente/produtos");
