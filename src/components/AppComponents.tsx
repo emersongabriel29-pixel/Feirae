@@ -734,19 +734,25 @@ export function Step({ title, children }: { title: string; children: ReactNode }
 }
 export function Choice({
   active,
+  disabled = false,
   onClick,
   icon,
   title,
   text,
 }: {
   active: boolean;
+  disabled?: boolean;
   onClick: () => void;
   icon: ReactNode;
   title: string;
   text: string;
 }) {
   return (
-    <button onClick={onClick} className={active ? "choice active" : "choice"}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={active ? "choice active" : disabled ? "choice disabled" : "choice"}
+    >
       <span>{icon}</span>
       <b>{title}</b>
       <small>{text}</small>
