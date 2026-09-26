@@ -350,7 +350,6 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /^perfil$/i }));
     fireEvent.click(screen.getByRole("button", { name: /sair da conta/i }));
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
 
     const createdOrderCard = screen
@@ -397,14 +396,13 @@ describe("Feiraê role access", () => {
   it("opens the vendor experience selected at login", () => {
     render(<App />);
     loginAs("feirante");
-    expect(screen.getByRole("heading", { name: /painel do feirante/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /operação do feirante/i })).toBeInTheDocument();
     expect(screen.queryByText(/minha feira/i)).not.toBeInTheDocument();
   });
 
   it("lets the vendor manage products and inventory in the demo", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^produtos$/i }));
     expect(screen.getByText(/30 cesta\(s\)/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /editar r\$/i })).not.toBeInTheDocument();
@@ -423,7 +421,6 @@ describe("Feiraê role access", () => {
   it("gives the vendor a personal account form separate from the stall", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^conta$/i }));
 
     expect(screen.getByRole("heading", { name: /^minha conta$/i })).toBeInTheDocument();
@@ -436,7 +433,6 @@ describe("Feiraê role access", () => {
   it("keeps the vendor order flow sequential and hands delivery stages to the driver", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^pedidos$/i }));
 
     const firstOrder = screen.getByText(/FE-1027 · Dona Marta/i).closest("article");
@@ -458,7 +454,6 @@ describe("Feiraê role access", () => {
   it("can discard bank edits without changing the saved public profile", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /minha banca/i }));
     fireEvent.click(screen.getByRole("button", { name: /editar banca/i }));
 
@@ -474,7 +469,6 @@ describe("Feiraê role access", () => {
   it("opens real bank editing instead of inert cards", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /minha banca/i }));
     fireEvent.click(screen.getByRole("button", { name: /editar banca/i }));
 
@@ -488,7 +482,6 @@ describe("Feiraê role access", () => {
   it("uses the selected fair official schedule and allows custom day-by-day hours", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^horários$/i }));
 
     expect(screen.getByText(/segunda e quinta · 19h–2h/i)).toBeInTheDocument();
@@ -502,7 +495,6 @@ describe("Feiraê role access", () => {
   it("configures delivery, pickup and vendor-sponsored free shipping without a fixed 20 kg rule", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /entrega\/retirada/i }));
 
     expect(screen.queryByText(/até 20 kg para moto/i)).not.toBeInTheDocument();
@@ -513,7 +505,6 @@ describe("Feiraê role access", () => {
   it("explains vendor receiving status and keeps real fees unconfigured", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^financeiro$/i }));
 
     expect(screen.getByText(/taxa feiraê/i)).toBeInTheDocument();
@@ -525,7 +516,6 @@ describe("Feiraê role access", () => {
   it("keeps document uploads under review instead of treating upload as approval", () => {
     render(<App />);
     loginAs("feirante");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
     expect(screen.getByText(/enviar arquivo não aprova o cadastro/i)).toBeInTheDocument();
@@ -539,13 +529,12 @@ describe("Feiraê role access", () => {
   it("opens the delivery experience selected at login", () => {
     render(<App />);
     loginAs("entregador");
-    expect(screen.getByRole("heading", { name: /central do entregador/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /operação do entregador/i })).toBeInTheDocument();
   });
 
   it("lets the delivery person complete all delivery stages", () => {
     render(<App />);
     loginAs("entregador");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^entregas$/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /aceitar/i })[0]);
     expect(screen.getByText(/entrega em andamento/i)).toBeInTheDocument();
@@ -566,7 +555,6 @@ describe("Feiraê role access", () => {
   it("offers all delivery vehicle types with editable carrying capacity", () => {
     render(<App />);
     loginAs("entregador");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^veículos$/i }));
     fireEvent.click(screen.getByRole("button", { name: /cadastrar veículo/i }));
 
@@ -592,7 +580,6 @@ describe("Feiraê role access", () => {
   it("gives the delivery person a personal account with CPF and CNH fields", () => {
     render(<App />);
     loginAs("entregador");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^conta$/i }));
 
     expect(screen.getByRole("heading", { name: /^minha conta$/i })).toBeInTheDocument();
@@ -605,7 +592,6 @@ describe("Feiraê role access", () => {
   it("persists the typed delivery support detail in a real local protocol", () => {
     render(<App />);
     loginAs("entregador");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^ajuda$/i }));
 
     const detail = screen.getByLabelText(/detalhe do atendimento/i);
@@ -619,7 +605,6 @@ describe("Feiraê role access", () => {
   it("lets the delivery person choose Pix or bank account for payouts", () => {
     render(<App />);
     loginAs("entregador");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^conta$/i }));
 
     const receivingMethod = screen.getByLabelText(/forma de recebimento/i);
@@ -634,7 +619,6 @@ describe("Feiraê role access", () => {
   it("shows delivery payout states instead of a fixed Friday payout", () => {
     render(<App />);
     loginAs("entregador");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^financeiro$/i }));
 
     expect(screen.getByText(/pendente até concluir entrega/i)).toBeInTheDocument();
@@ -646,7 +630,6 @@ describe("Feiraê role access", () => {
   it("requires delivery document approval before real operation", () => {
     render(<App />);
     loginAs("entregador");
-    fireEvent.click(screen.getByRole("button", { name: /abrir central operacional/i }));
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
     expect(screen.getByRole("heading", { name: /documentação e aprovação/i })).toBeInTheDocument();
