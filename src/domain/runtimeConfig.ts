@@ -126,11 +126,15 @@ export async function refreshRuntimeConfiguration(): Promise<RuntimeConfiguratio
       ),
     ]);
 
+    const orderEnabledStates = new Set(
+      states.filter((state) => state.customer_orders_enabled).map((state) => state.code),
+    );
+
     currentConfig = {
       loaded: true,
       source: "supabase",
       states,
-      fairs,
+      fairs: fairs.filter((fair) => orderEnabledStates.has(fair.state)),
       vehicleRules,
       paymentMethods,
     };
@@ -156,7 +160,7 @@ export function runtimePaymentMethods() {
 }
 
 export function mergeRuntimeFairs(fallback: Fair[]): Fair[] {
-  if (!currentConfig.fairs.length) return fallback;
+  if (currentConfig.source !== "supabase") return fallback;
 
   return currentConfig.fairs.map((fair) => ({
     name: fair.name,
