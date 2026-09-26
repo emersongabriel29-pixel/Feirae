@@ -279,7 +279,6 @@ Exemplos de título do sistema:
 
 No mobile, o card de permissão empilha o botão abaixo do conteúdo para preservar leitura e alvo de toque.
 
-
 ## Login/cadastro — polimento da auditoria em vídeo
 
 - erros de autenticação não permanecem ao trocar entre **Entrar** e **Criar conta**;
