@@ -129,8 +129,7 @@ Requisito passou a incluir concretamente:
 ## Documentos novos desta rodada
 
 - `SCHEMA_GAP_MATRIX.md`;
-- `IMPLEMENTATION_TRACEABILITY.md`;
-- `DESIGN_SYSTEM.md`.
+- `IMPLEMENTATION_TRACEABILITY.md`.
 
 ## Documentos reescritos com base no código
 
@@ -172,21 +171,22 @@ A documentação agora registra, mas não resolve sozinha:
 
 Esses itens só podem ser marcados concluídos quando o código correspondente for implementado e testado.
 
+## Governança permanente adicionada
 
-## Atualização visual posterior — 26/09/2026
+A partir desta atualização, a sincronização deixa de ser apenas uma recomendação documental.
 
-A auditoria de design/layout foi aplicada ao código e documentada.
+Foram adicionados:
 
-Mudanças registradas:
+- `docs/CHANGE_GOVERNANCE.md`;
+- `CONTRIBUTING.md`;
+- `.github/pull_request_template.md`;
+- `scripts/check-change-sync.mjs`;
+- script npm `check:sync`;
+- etapa de CI para pull requests.
 
-- design tokens semânticos;
-- responsividade mobile;
-- navegação Cliente;
-- entrada direta nas Centrais de Feirante/Entregador;
-- agrupamento de módulos;
-- estados semânticos de pedidos/documentos;
-- erros visuais;
-- publicação/renderização local de foto de produto;
-- regras de QA visual.
+A regra passa a ser: toda mudança avalia impacto em código, testes, documentação, banco, segurança, integrações, LGPD, admin e deploy. Itens afetados devem ser alterados no mesmo PR.
 
-A documentação não afirma regressão visual automatizada: Playwright/Cypress e screenshot testing continuam ausentes.
+
+### Ajuste incidental detectado pelo novo gate
+
+A ativação do gate também expôs um import não utilizado de `Home` em `AppComponents.tsx`. O import foi removido e o teste de navegação do cliente foi reforçado no mesmo PR, seguindo a própria regra de sincronização.
