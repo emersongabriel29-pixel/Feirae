@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  Home,
   LocateFixed,
   LogOut,
   MapPin,
