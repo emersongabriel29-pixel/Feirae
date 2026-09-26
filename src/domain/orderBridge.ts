@@ -307,6 +307,24 @@ export function appendReview(orderId: string, review: UnifiedReview) {
   patchUnifiedOrder(orderId, { reviews: [...(order.reviews ?? []), review] });
 }
 
+export function migrateUnifiedOrderCustomerKey(oldEmail: string, newEmail: string, newName?: string) {
+  const from = oldEmail.trim().toLocaleLowerCase("pt-BR");
+  const to = newEmail.trim().toLocaleLowerCase("pt-BR");
+  const current = readRawOrders();
+  writeUnifiedOrders(
+    current.map((order) =>
+      order.customerKey?.trim().toLocaleLowerCase("pt-BR") === from
+        ? {
+            ...order,
+            customerKey: to,
+            customerName: newName?.trim() || order.customerName,
+            updatedAt: new Date().toISOString(),
+          }
+        : order,
+    ),
+  );
+}
+
 export function eventNow(
   key: string,
   label: string,
