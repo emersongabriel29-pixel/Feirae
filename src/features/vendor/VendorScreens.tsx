@@ -1064,17 +1064,30 @@ export function FeiranteOperations({
                               selectedOrder.id,
                               selectedOrder.vendorId ?? vendorIdFor(session.email),
                               "delivered",
+                              eventNow("pickup-vendor-complete", "Retirada confirmada nesta banca", "vendor"),
                             );
-                            consumeInventory(selectedOrder.id);
-                            patchUnifiedOrder(
-                              selectedOrder.id,
-                              {
-                                status: "delivered",
-                                pickupConfirmedAt: new Date().toISOString(),
-                              },
-                              eventNow("pickup-complete", "Retirado na banca", "vendor"),
+                            const sharedAfterPickup = readUnifiedOrders().find(
+                              (order) => order.id === selectedOrder.id,
                             );
-                            showNotice(`Retirada do pedido ${selectedOrder.id} confirmada.`);
+                            if (sharedAfterPickup?.status === "delivered") {
+                              consumeInventory(selectedOrder.id);
+                              patchUnifiedOrder(
+                                selectedOrder.id,
+                                {
+                                  pickupConfirmedAt: new Date().toISOString(),
+                                },
+                                eventNow(
+                                  "pickup-complete",
+                                  "Retirada concluída em todas as bancas",
+                                  "vendor",
+                                ),
+                              );
+                              showNotice(`Retirada do pedido ${selectedOrder.id} concluída.`);
+                            } else {
+                              showNotice(
+                                `Retirada nesta banca confirmada. O pedido ${selectedOrder.id} aguarda as demais bancas.`,
+                              );
+                            }
                           }}
                         >
                           <Check size={17} /> Confirmar retirada pelo cliente
