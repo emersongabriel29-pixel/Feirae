@@ -18,6 +18,7 @@ describe("Feiraê customer flow", () => {
   it("opens the catalog from the home page", () => {
     render(<App />);
     loginAs("cliente");
+    expect(screen.getAllByRole("button", { name: /^início$/i }).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
     expect(screen.getByRole("heading", { name: /produtos da feira/i })).toBeInTheDocument();
     expect(window.location.hash).toBe("#/cliente/produtos");
@@ -28,9 +29,12 @@ describe("Feiraê customer flow", () => {
     loginAs("cliente");
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
     fireEvent.click(screen.getByRole("button", { name: /adicionar planta ornamental/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 itens/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     expect(screen.getByRole("heading", { name: /finalizar pedido/i })).toBeInTheDocument();
+    expect(screen.getByText(/frete estimado/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^a calcular$/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/o frete só entra no total depois que um endereço/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
     expect(screen.getByRole("heading", { name: /meus pedidos/i })).toBeInTheDocument();
@@ -41,6 +45,7 @@ describe("Feiraê customer flow", () => {
     render(<App />);
     loginAs("cliente");
     fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
+    expect(screen.queryByPlaceholderText(/busque produtos/i)).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /olá, cliente/i })).toBeInTheDocument();
     expect(screen.getByText(/cliente@feirae\.test/i)).toBeInTheDocument();
   });
@@ -184,6 +189,21 @@ describe("Feiraê customer flow", () => {
       JSON.stringify([
         { id: "FE-1029", date: "21/09/2026", status: "Recebido", value: 65.8 },
         { id: "FE-1024", date: "20/09/2026", status: "Em rota", value: 58.7 },
+        {
+          id: "FE-1019",
+          date: "19/09/2026 12:18",
+          status: "Entregue",
+          value: 42.9,
+          fulfillment: "delivery",
+          driver: {
+            name: "Rafael",
+            vehicle: "Moto",
+            plateMasked: "***1D23",
+            etaMinutes: 0,
+            distanceKm: 4.4,
+          },
+          events: [{ key: "delivered", label: "Entregue", at: "19/09/2026 13:11" }],
+        },
       ]),
     );
 
@@ -198,6 +218,15 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/pedido fe-1029.*recebido/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^pedido recebido$/i })).toBeInTheDocument();
     expect(screen.queryByText(/seu pedido está a caminho/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^voltar$/i }));
+    const deliveredOrderCard = screen.getByText("FE-1019").closest("article");
+    expect(deliveredOrderCard).not.toBeNull();
+    fireEvent.click(within(deliveredOrderCard as HTMLElement).getByRole("button", { name: /ver detalhes/i }));
+
+    expect(screen.queryByText(/^0 min$/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/entregue em 19\/09\/2026 13:11/i)).toBeInTheDocument();
+    expect(screen.getByText(/ajuda pós-entrega/i)).toBeInTheDocument();
   });
 
   it("shows only vendors from the selected fair", () => {
@@ -227,7 +256,23 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /adicionar bolsa artesanal/i }));
 
     expect(screen.getByText(/sua sacola é da feira do produtor rural/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /abrir sacola com 1 itens/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i })).toBeInTheDocument();
+  });
+
+  it("disables the cart increment at the stock limit and counts total units", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const search = screen.getByPlaceholderText(/busque produtos/i);
+    fireEvent.change(search, { target: { value: "bolsa artesanal" } });
+    const addButton = screen.getByRole("button", { name: /adicionar bolsa artesanal/i });
+    for (let quantity = 0; quantity < 7; quantity += 1) fireEvent.click(addButton);
+
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 7 unidades/i }));
+    expect(
+      screen.getByRole("button", { name: /limite de estoque atingido para bolsa artesanal/i }),
+    ).toBeDisabled();
+    expect(screen.getByText(/limite de estoque atingido/i)).toBeInTheDocument();
   });
 
   it("finds products ignoring accents and clears the category constraint for global search", () => {
@@ -259,7 +304,7 @@ describe("Feiraê customer flow", () => {
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "tomate orgânico" } });
     fireEvent.click(screen.getByRole("button", { name: /adicionar tomate orgânico/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 itens/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
 
     expect(screen.getByRole("button", { name: /pix/i })).toBeInTheDocument();
@@ -338,7 +383,7 @@ describe("Feiraê customer flow", () => {
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "cesta de frutas" } });
     fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 itens/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
