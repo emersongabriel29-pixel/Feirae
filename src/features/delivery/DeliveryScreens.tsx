@@ -1720,13 +1720,42 @@ export function DeliveryOperations({
                       onClick={() => {
                         setHelpTopic(item);
                         setHelpProtocol("");
+                        setHelpDetail(
+                          item === "Problema no pedido"
+                            ? "Pedido com embalagem ou peso divergente"
+                            : item === "Dúvida de repasse"
+                              ? "Conferir taxa e data do próximo pagamento"
+                              : "Preciso falar com o suporte da rota",
+                        );
                       }}
                     >
                       {item}
                     </button>
                   ))}
                 </div>
-                <form className="form-card compact">
+                <form
+                  className="form-card compact"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!helpDetail.trim()) return;
+                    const protocol = `SUP-${String(helpTickets.length + 1).padStart(4, "0")}`;
+                    const createdAt = new Intl.DateTimeFormat("pt-BR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(new Date());
+                    setHelpTickets((current) => [
+                      {
+                        id: protocol,
+                        topic: helpTopic,
+                        details: helpDetail.trim(),
+                        createdAt,
+                        status: "Aberto",
+                      },
+                      ...current,
+                    ]);
+                    setHelpProtocol(protocol);
+                  }}
+                >
                   <label>
                     Assunto selecionado
                     <input value={helpTopic} readOnly />
@@ -1734,20 +1763,12 @@ export function DeliveryOperations({
                   <label>
                     Detalhe do atendimento
                     <input
-                      defaultValue={
-                        helpTopic === "Problema no pedido"
-                          ? "Pedido com embalagem ou peso divergente"
-                          : helpTopic === "Dúvida de repasse"
-                            ? "Conferir taxa e data do próximo pagamento"
-                            : "Preciso falar com o suporte da rota"
-                      }
+                      value={helpDetail}
+                      onChange={(event) => setHelpDetail(event.target.value)}
+                      required
                     />
                   </label>
-                  <button
-                    type="button"
-                    className="primary-action"
-                    onClick={() => setHelpProtocol(`SUP-${Math.floor(1000 + Math.random() * 8000)}`)}
-                  >
+                  <button type="submit" className="primary-action">
                     Abrir atendimento
                   </button>
                   {helpProtocol && (
@@ -1756,6 +1777,20 @@ export function DeliveryOperations({
                     </p>
                   )}
                 </form>
+                {helpTickets.length > 0 && (
+                  <div className="operation-list detailed">
+                    {helpTickets.slice(0, 6).map((ticket) => (
+                      <article key={ticket.id}>
+                        <Info />
+                        <div>
+                          <b>{ticket.id} · {ticket.topic}</b>
+                          <small>{ticket.createdAt} · {ticket.status}</small>
+                          <p>{ticket.details}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
                 <div className="operation-list detailed">
                   {[
                     "Como confirmar coleta",
