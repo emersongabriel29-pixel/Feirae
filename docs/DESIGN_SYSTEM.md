@@ -252,3 +252,30 @@ QR Code e copia e cola são gerados no checkout.
 ```
 
 Não colocar título e descrição corridos na mesma linha. A mesma regra vale para cartão, dinheiro e pagamento na entrega.
+
+
+## Central operacional ao vivo
+
+Feirante e entregador devem enxergar trabalho novo na própria Central, antes da grade de módulos.
+
+- Feirante: pedidos novos/em andamento aparecem em uma área de prioridade com botão **Abrir pedido**.
+- Entregador: corridas compatíveis aparecem no painel principal e a corrida ativa permanece destacada.
+- Cards operacionais prioritários vêm antes dos atalhos secundários.
+- Não obrigar o usuário a entrar em outra tela apenas para descobrir se há trabalho novo.
+
+## Identidade de notificação Feiraê
+
+O card de permissão e as notificações do sistema usam:
+
+- marca/ícone `feirae-mark.svg`;
+- nome **Feiraê** como emissor visual;
+- título curto do evento abaixo da marca;
+- texto operacional curto;
+- ação de ativar notificações apenas quando a permissão ainda está em estado `default`.
+
+Exemplos de título do sistema:
+
+- `Feiraê • Novo pedido`;
+- `Feiraê • Nova corrida`.
+
+No mobile, o card de permissão empilha o botão abaixo do conteúdo para preservar leitura e alvo de toque.
