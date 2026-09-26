@@ -1,11 +1,15 @@
-self.addEventListener("push", (event) => {
-  let payload = {};
-  try {
-    payload = event.data ? event.data.json() : {};
-  } catch {
-    payload = { body: event.data ? event.data.text() : "" };
-  }
+/* global self */
 
+function notificationPayload(event) {
+  try {
+    return event.data ? event.data.json() : {};
+  } catch {
+    return { body: event.data ? event.data.text() : "" };
+  }
+}
+
+self.addEventListener("push", (event) => {
+  const payload = notificationPayload(event);
   const title = payload.title ? `Feiraê • ${payload.title}` : "Feiraê";
   const options = {
     body: payload.body || "Você tem uma nova atualização no Feiraê.",
