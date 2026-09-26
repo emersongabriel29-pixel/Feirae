@@ -171,6 +171,27 @@ Produção:
 - [INTEGRATIONS.md](docs/INTEGRATIONS.md)
 - [DEPLOYMENT_AND_ENVIRONMENTS.md](docs/DEPLOYMENT_AND_ENVIRONMENTS.md)
 
+## Regra para qualquer atualização
+
+Toda mudança futura deve seguir [Governança de mudanças](docs/CHANGE_GOVERNANCE.md).
+
+O projeto deve avançar em conjunto quando houver impacto em:
+
+- código;
+- interface;
+- testes;
+- documentação;
+- schema/migrations;
+- segurança/RLS;
+- integrações;
+- LGPD/dados;
+- painel administrativo;
+- deploy/ambientes.
+
+O PR template exige a revisão desses impactos e o CI executa `npm run check:sync`.
+
+Veja também [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Desenvolvimento
 
 ```bash
