@@ -235,7 +235,6 @@ Já estava correto no vídeo e foi preservado:
 
 A trava administrativa de ativação/publicação da feira depende do painel de gestão runtime, que ainda não está implementado; a regra obrigatória foi registrada em `ADMIN_MANAGEMENT_SPEC.md`.
 
-
 ## Polimento após vídeo — autenticação e onboarding
 
 - alternar entre **Entrar** e **Criar conta** limpa mensagens de erro anteriores;
