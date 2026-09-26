@@ -1728,12 +1728,38 @@ export function NotificationsPage({
     const events = order.events?.length
       ? order.events
       : [{ key: "status", label: fallbackText[order.status], at: order.date }];
-    return events.map((event) => ({
-      key: `${order.id}:${event.key}:${event.at}`,
-      title: `${order.id} · ${event.label}`,
-      at: event.at,
-      kind: "order" as const,
-    }));
+    return events.map((event) => {
+      const friendlyLabel =
+        event.key === "received"
+          ? "Pedido feito"
+          : ["vendor-confirmed", "preparing"].includes(event.key)
+            ? "Pedido em preparação"
+            : event.key === "ready"
+              ? order.fulfillment === "pickup"
+                ? "Pronto para retirada"
+                : "Pedido pronto"
+              : event.key === "driver-assigned"
+                ? "Entregador a caminho da banca"
+                : ["collected", "out-for-delivery"].includes(event.key)
+                  ? "Saiu para entrega"
+                  : event.key === "approaching"
+                    ? "Pedido chegando"
+                    : event.key === "delivered"
+                      ? "Pedido chegou"
+                      : ["cancelled", "vendor-rejected"].includes(event.key)
+                        ? "Pedido cancelado"
+                        : event.key === "payment-authorized"
+                          ? "Pagamento confirmado"
+                          : event.key === "payment-on-delivery"
+                            ? "Pagamento na entrega"
+                            : event.label;
+      return {
+        key: `${order.id}:${event.key}:${event.at}`,
+        title: `${order.id} · ${friendlyLabel}`,
+        at: event.at,
+        kind: "order" as const,
+      };
+    });
   });
   const offerMessages = offersEnabled
     ? readSharedStores().flatMap((store) =>
