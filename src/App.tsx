@@ -42,6 +42,7 @@ import {
 import {
   marketplaceProducts,
   migrateMarketplaceAccountKey,
+  readSharedStores,
   readStoreByIdentity,
   registerPromotionUsage,
 } from "./domain/marketplaceBridge";
@@ -64,6 +65,10 @@ export default function App() {
   const [compactCards] = usePersistentState<boolean>(
     scopedStorageKey("feirae:compact-cards", accountKey),
     false,
+  );
+  const [offersEnabled] = usePersistentState<boolean>(
+    scopedStorageKey("feirae:offers", accountKey),
+    true,
   );
   const catalog = marketplaceProducts(products);
   const [favorites, setFavorites] = usePersistentState<number[]>(
@@ -88,9 +93,17 @@ export default function App() {
     scopedStorageKey("feirae:notification-read", accountKey),
     [],
   );
-  const notificationKeys = orders.flatMap((order) =>
+  const orderNotificationKeys = orders.flatMap((order) =>
     (order.events ?? []).map((event) => `${order.id}:${event.key}:${event.at}`),
   );
+  const offerNotificationKeys = offersEnabled
+    ? readSharedStores().flatMap((store) =>
+        store.promotions
+          .filter((promotion) => promotion.active)
+          .map((promotion) => `offer:${store.storeId}:${promotion.id}`),
+      )
+    : [];
+  const notificationKeys = [...orderNotificationKeys, ...offerNotificationKeys];
   const notifications = orderUpdatesEnabled
     ? notificationKeys.filter((key) => !readNotificationKeys.includes(key)).length
     : 0;
