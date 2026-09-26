@@ -1,67 +1,91 @@
 # Documentação do Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 26/09/2026 após segunda auditoria código ↔ testes ↔ migrations.
 
-## Como ler esta documentação
+## Regra de interpretação
 
-Os documentos usam três categorias:
+### Para saber o que existe hoje
 
-- **Atual/protótipo**: comportamento existente no código atual.
-- **Alvo de produção**: comportamento que exige backend/integração.
-- **Referência/regra**: decisão de produto, legal ou operacional que orienta implementação.
+Ordem de evidência:
 
-Quando houver conflito, a prioridade é:
+1. código atual;
+2. testes atuais;
+3. migrations atuais;
+4. documentação de rastreabilidade.
 
-1. [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md) para estados/identidades;
-2. [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) para regras funcionais;
-3. [ARCHITECTURE.md](ARCHITECTURE.md) para arquitetura;
-4. código/testes para comportamento atual;
-5. roadmap para trabalho futuro.
+### Para saber o comportamento desejado
 
-## Produto e fluxos
+Usar:
 
-- [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) — especificação funcional consolidada.
-- [END_TO_END_AUDIT.md](END_TO_END_AUDIT.md) — auditoria completa dos fluxos.
-- [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md) — botões, formulários e edição.
-- [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido, banca, coleta, rota e entrega.
-- [PRODUCT_MEASUREMENT_MATRIX.md](PRODUCT_MEASUREMENT_MATRIX.md) — unidades, peso e categorias.
-- [FAIR_HOURS.md](FAIR_HOURS.md) — horários/fontes de feiras.
+1. especificação funcional;
+2. modelo de dados/estados;
+3. requisitos administrativos;
+4. roadmap.
 
-## Arquitetura e dados
+Um documento de requisito não é prova de implementação.
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — arquitetura atual e alvo.
-- [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md) — entidades, IDs e máquinas de estados.
-- [INTEGRATIONS.md](INTEGRATIONS.md) — integrações externas.
-- [SECURITY_AND_AUTH.md](SECURITY_AND_AUTH.md) — autenticação e segurança.
-- [DEPLOYMENT_AND_ENVIRONMENTS.md](DEPLOYMENT_AND_ENVIRONMENTS.md) — ambientes, migrations e deploy.
-- [TESTING_QA.md](TESTING_QA.md) — estratégia e cobertura de testes.
+## Rastreabilidade
 
-## Operação e governança
+- [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md) — função → arquivo → chave local → tabela SQL.
+- [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md) — incompatibilidades concretas frontend x SQL.
+- [DOCUMENTATION_STATUS.md](DOCUMENTATION_STATUS.md) — resultado da segunda auditoria.
 
-- [ADMIN_MANAGEMENT_SPEC.md](ADMIN_MANAGEMENT_SPEC.md) — painel administrativo e controles.
-- [ONBOARDING_AND_APPROVAL.md](ONBOARDING_AND_APPROVAL.md) — documentos e aprovação.
-- [MONEY_FLOW.md](MONEY_FLOW.md) — pagamentos, split e repasses.
-- [LGPD_AND_PRIVACY.md](LGPD_AND_PRIVACY.md) — dados pessoais e privacidade.
+## Produto
+
+- [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) — comportamento atual e limites.
+- [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido e entrega.
+- [END_TO_END_AUDIT.md](END_TO_END_AUDIT.md) — implementado x testado x pendente.
+- [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md) — botões/campos/edição.
+- [PRODUCT_MEASUREMENT_MATRIX.md](PRODUCT_MEASUREMENT_MATRIX.md) — campos/categorias/unidades reais.
+- [FAIR_HOURS.md](FAIR_HOURS.md) — feiras e fontes.
+
+## Backend/arquitetura
+
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [DATA_MODEL_AND_STATES.md](DATA_MODEL_AND_STATES.md)
+- [SECURITY_AND_AUTH.md](SECURITY_AND_AUTH.md)
+- [INTEGRATIONS.md](INTEGRATIONS.md)
+- [TESTING_QA.md](TESTING_QA.md)
+- [DEPLOYMENT_AND_ENVIRONMENTS.md](DEPLOYMENT_AND_ENVIRONMENTS.md)
+
+## Operação
+
+- [ADMIN_MANAGEMENT_SPEC.md](ADMIN_MANAGEMENT_SPEC.md)
+- [ONBOARDING_AND_APPROVAL.md](ONBOARDING_AND_APPROVAL.md)
+- [MONEY_FLOW.md](MONEY_FLOW.md)
+- [LGPD_AND_PRIVACY.md](LGPD_AND_PRIVACY.md)
 
 ## Planejamento
 
-- [DOCUMENTATION_STATUS.md](DOCUMENTATION_STATUS.md) — resultado da auditoria documental.
-- [MVP_CHECKLIST.md](MVP_CHECKLIST.md) — concluído x pendente.
-- [ROADMAP.md](ROADMAP.md) — próximas fases.
-- [TECHNICAL_REVIEW.md](TECHNICAL_REVIEW.md) — revisão técnica atual.
+- [MVP_CHECKLIST.md](MVP_CHECKLIST.md)
+- [ROADMAP.md](ROADMAP.md)
+- [TECHNICAL_REVIEW.md](TECHNICAL_REVIEW.md)
 
-## Regra de manutenção
+## Atualização obrigatória
 
-Toda alteração relevante deve atualizar a documentação correspondente no mesmo PR quando mudar:
+Mudou código de:
 
-- status/estado;
-- fluxo de pedido;
-- regra financeira;
-- papel/permissão;
-- dado pessoal;
+- estado;
+- produto;
+- veículo;
+- promoção;
+- pagamento;
+- documento;
+- RLS;
+- migration;
 - integração;
-- schema/migration;
-- comportamento de botão/formulário;
-- critério de teste.
+- taxa;
+- admin;
+- teste.
 
-Documentos devem conter data de atualização quando descrevem estado atual.
+Então o PR deve atualizar o documento correspondente.
+
+## Proibição
+
+Não escrever:
+
+- “implementado” sem arquivo/tabela/teste que sustente;
+- “CI garante” sem teste direto;
+- “backend pronto” somente porque migration existe;
+- “deploy feito” somente porque houve merge;
+- “aprovação validada” quando é apenas status local.
