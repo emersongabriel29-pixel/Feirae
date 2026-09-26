@@ -35,6 +35,7 @@ import {
 import { readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
 import { vendorIdFor } from "../../domain/identity";
 import { consumeInventory, releaseInventory } from "../../domain/inventoryBridge";
+import { readFileForLocalStorage, storedFileLabel } from "../../domain/storedFile";
 import {
   initialBankProfile,
   initialVendorDocuments,
@@ -726,19 +727,24 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
   }
 
   function uploadDocument(document: VendorDocument, file: File) {
-    setDocuments((current) =>
-      current.map((item) =>
-        item.id === document.id
-          ? {
-              ...item,
-              fileName: file.name,
-              status: "under_review",
-              correctionReason: "",
-            }
-          : item,
-      ),
-    );
-    showNotice(`${document.name} enviado. O envio não equivale à aprovação.`);
+    void readFileForLocalStorage(file)
+      .then((stored) => {
+        setDocuments((current) =>
+          current.map((item) =>
+            item.id === document.id
+              ? {
+                  ...item,
+                  fileName: stored.name,
+                  file: stored,
+                  status: "under_review",
+                  correctionReason: "",
+                }
+              : item,
+          ),
+        );
+        showNotice(`${document.name} enviado e armazenado neste dispositivo. O envio não equivale à aprovação.`);
+      })
+      .catch((error: Error) => showNotice(error.message));
   }
 
   const inventory = (
@@ -2462,7 +2468,11 @@ export function FeiranteOperations({ session, onBack }: { session: DemoSession; 
                           {!document.required && " · quando aplicável"}
                         </b>
                         <small>{document.description}</small>
-                        {document.fileName && <small>Arquivo: {document.fileName}</small>}
+                        {document.fileName && (
+                          <small>
+                            Arquivo: {document.file ? storedFileLabel(document.file) : document.fileName}
+                          </small>
+                        )}
                         {document.correctionReason && (
                           <small>Correção solicitada: {document.correctionReason}</small>
                         )}
