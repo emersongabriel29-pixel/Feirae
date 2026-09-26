@@ -79,6 +79,8 @@ Problema objetivo: o enum SQL não possui `pending`, `ready` nem `rejected`, por
 
 Correção necessária: criar enum próprio, por exemplo `order_vendor_status`, e migrar `order_vendors.status`.
 
+A retirada multi-banca também depende desse estado por banca: uma participação pode estar `delivered` enquanto o pedido global continua `ready_for_pickup`; somente todas as participações `delivered` encerram o pedido. O backend precisa derivar essa transição atomicamente.
+
 ## 4. Pagamento
 
 Frontend do pedido unificado usa:
