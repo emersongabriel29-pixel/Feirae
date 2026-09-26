@@ -285,9 +285,7 @@ export function FairCard({
             {fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Entrega indisponível no momento"}
           </span>
           <span>
-            {typeof fair.deliveryFee === "number"
-              ? money(fair.deliveryFee)
-              : "Taxa indisponível no momento"}
+            {typeof fair.deliveryFee === "number" ? money(fair.deliveryFee) : "Taxa indisponível no momento"}
           </span>
         </div>
         <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
