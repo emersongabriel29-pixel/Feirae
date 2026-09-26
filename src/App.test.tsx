@@ -21,6 +21,8 @@ describe("Feiraê customer flow", () => {
     expect(screen.getAllByRole("button", { name: /^início$/i }).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
     expect(screen.getByRole("heading", { name: /produtos da feira/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^laticínios$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^queijos$/i })).not.toBeInTheDocument();
     expect(window.location.hash).toBe("#/cliente/produtos");
   });
 

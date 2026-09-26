@@ -1039,6 +1039,21 @@
 .payment-list svg {
   color: var(--fe-green);
 }
+.payment-list article > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+.payment-list article > div > b,
+.payment-list article > div > small {
+  display: block;
+}
+.payment-list article > div > b {
+  line-height: 1.25;
+}
+.payment-list article > div > small {
+  line-height: 1.45;
+}
 .payment-list small,
 .wallet-card p {
   color: var(--fe-muted);
