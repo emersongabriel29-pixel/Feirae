@@ -12,6 +12,12 @@ type LocalAccount = {
 
 const STORAGE_KEY = "feirae:local-auth:v1";
 
+const roleAccessLabel: Record<Role, string> = {
+  customer: "Cliente",
+  feirante: "Feirante",
+  delivery: "Entregador",
+};
+
 function normalizeEmail(value: string) {
   return value.trim().toLocaleLowerCase("pt-BR");
 }
@@ -60,7 +66,13 @@ export function authenticateLocalAccount(input: {
 
   if (input.signup) {
     if (!input.name.trim()) return { ok: false as const, message: "Informe seu nome completo." };
-    if (existing) return { ok: false as const, message: "Já existe uma conta local com este e-mail." };
+    if (existing) {
+      const access = roleAccessLabel[existing.role];
+      return {
+        ok: false as const,
+        message: `Este e-mail já possui uma conta ${access}. Entre como ${access} ou utilize outro e-mail.`,
+      };
+    }
     const now = new Date().toISOString();
     const account: LocalAccount = {
       email,
@@ -76,7 +88,11 @@ export function authenticateLocalAccount(input: {
 
   if (existing) {
     if (existing.role !== input.role) {
-      return { ok: false as const, message: "Esta conta está cadastrada em outro tipo de acesso." };
+      const access = roleAccessLabel[existing.role];
+      return {
+        ok: false as const,
+        message: `Este e-mail já está vinculado ao acesso ${access}. Entre como ${access} ou utilize outro e-mail.`,
+      };
     }
     if (existing.passwordDigest !== digestPassword(password)) {
       return { ok: false as const, message: "E-mail ou senha incorretos." };
