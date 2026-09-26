@@ -193,8 +193,7 @@
 }
 .central-live-feed .operation-list article {
   background:
-    radial-gradient(circle at 100% 0%, rgba(223, 243, 107, 0.13), transparent 6rem),
-    var(--fe-surface-soft);
+    radial-gradient(circle at 100% 0%, rgba(223, 243, 107, 0.13), transparent 6rem), var(--fe-surface-soft);
 }
 .central-live-feed .operation-list article > button {
   flex: none;
