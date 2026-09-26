@@ -34,6 +34,7 @@ import { usePersistentState } from "../../usePersistentState";
 import { useUnifiedOrderRevision } from "../../hooks/useUnifiedOrderRevision";
 import { money } from "../../utils";
 import { consumeInventory } from "../../domain/inventoryBridge";
+import { readFileForLocalStorage, storedFileLabel, type StoredFile } from "../../domain/storedFile";
 import {
   appendReview,
   appendSupportTicket,
@@ -46,10 +47,12 @@ export function DeliveryOperations({
   session,
   onBack,
   onMap,
+  onAccountUpdate,
 }: {
   session: DemoSession;
   onBack: () => void;
   onMap: (destination?: string) => void;
+  onAccountUpdate: (name: string, email: string, newPassword?: string) => string | null;
 }) {
   const unifiedOrderRevision = useUnifiedOrderRevision();
   const modules = [
@@ -101,7 +104,11 @@ export function DeliveryOperations({
   >(`feirae:delivery-cancellations:${session.email}`, []);
   const [active, setActive] = useState("Central");
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
+  const [helpDetail, setHelpDetail] = useState("Preciso falar com o suporte da rota");
   const [helpProtocol, setHelpProtocol] = useState("");
+  const [helpTickets, setHelpTickets] = usePersistentState<
+    { id: string; topic: string; details: string; createdAt: string; status: "Aberto" | "Resolvido" }[]
+  >(`feirae:delivery-help:${session.email}`, []);
   const [accountSaved, setAccountSaved] = useState(false);
   const [deliveryReviewOrderId, setDeliveryReviewOrderId] = useState<string | null>(null);
   const [deliveryReviewScore, setDeliveryReviewScore] = useState(5);
@@ -111,6 +118,7 @@ export function DeliveryOperations({
   const [vehicleEditingId, setVehicleEditingId] = useState<string | null>(null);
   const [vehicleError, setVehicleError] = useState("");
   const [vehicleDocumentName, setVehicleDocumentName] = useState("");
+  const [vehicleDocumentFile, setVehicleDocumentFile] = useState<StoredFile | null>(null);
   const [vehicleType, setVehicleType] = useState<DeliveryVehicleType>("Moto");
   const [vehicleCapacity, setVehicleCapacity] = useState<number>(suggestedCapacityForVehicle("Moto"));
   const [vehicleBrandModel, setVehicleBrandModel] = useState("");
