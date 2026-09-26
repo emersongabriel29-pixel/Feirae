@@ -488,18 +488,18 @@ export function DeliveryOperations({
       };
     });
   const sharedIds = new Set(sharedDeliveries.map((delivery) => delivery.id));
-  const deliveries = [
-    ...sharedDeliveries,
-    ...deliveryFixtures
-      .filter((delivery) => !sharedIds.has(delivery.id))
-      .map((delivery) => ({
-        ...delivery,
-        available: true,
-        paymentMethod: "Pago no aplicativo",
-        changeFor: undefined as number | undefined,
-        assignedDriverKey: undefined as string | undefined,
-      })),
-  ];
+  const fixtureDeliveries = seedDemoData
+    ? deliveryFixtures
+        .filter((delivery) => !sharedIds.has(delivery.id))
+        .map((delivery) => ({
+          ...delivery,
+          available: true,
+          paymentMethod: "Pago no aplicativo",
+          changeFor: undefined as number | undefined,
+          assignedDriverKey: undefined as string | undefined,
+        }))
+    : [];
+  const deliveries = [...sharedDeliveries, ...fixtureDeliveries];
   const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
   const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
   const hasMoto = activeVehicles.some(
