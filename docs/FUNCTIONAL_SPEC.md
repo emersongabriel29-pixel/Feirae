@@ -335,6 +335,12 @@ Licença sanitária está marcada como opcional no seed e depende da atividade.
 
 ## 13. Produto
 
+### Taxonomia de categorias
+
+A categoria de derivados de leite é **Laticínios**. Produtos como queijo, manteiga, requeijão, iogurte e leite ficam dentro dessa categoria; o nome específico continua no produto.
+
+Não usar **Queijos** como categoria principal do catálogo.
+
 `VendorProduct` possui atualmente:
 
 - id;
