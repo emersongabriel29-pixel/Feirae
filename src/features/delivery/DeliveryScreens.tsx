@@ -34,6 +34,7 @@ import { usePersistentState } from "../../usePersistentState";
 import { useUnifiedOrderRevision } from "../../hooks/useUnifiedOrderRevision";
 import { money } from "../../utils";
 import { consumeInventory } from "../../domain/inventoryBridge";
+import { readFileForLocalStorage, storedFileLabel, type StoredFile } from "../../domain/storedFile";
 import {
   appendReview,
   appendSupportTicket,
@@ -46,10 +47,12 @@ export function DeliveryOperations({
   session,
   onBack,
   onMap,
+  onAccountUpdate,
 }: {
   session: DemoSession;
   onBack: () => void;
   onMap: (destination?: string) => void;
+  onAccountUpdate: (name: string, email: string, newPassword?: string) => string | null;
 }) {
   const unifiedOrderRevision = useUnifiedOrderRevision();
   const modules = [
@@ -101,7 +104,11 @@ export function DeliveryOperations({
   >(`feirae:delivery-cancellations:${session.email}`, []);
   const [active, setActive] = useState("Central");
   const [helpTopic, setHelpTopic] = useState("Falar com suporte");
+  const [helpDetail, setHelpDetail] = useState("Preciso falar com o suporte da rota");
   const [helpProtocol, setHelpProtocol] = useState("");
+  const [helpTickets, setHelpTickets] = usePersistentState<
+    { id: string; topic: string; details: string; createdAt: string; status: "Aberto" | "Resolvido" }[]
+  >(`feirae:delivery-help:${session.email}`, []);
   const [accountSaved, setAccountSaved] = useState(false);
   const [deliveryReviewOrderId, setDeliveryReviewOrderId] = useState<string | null>(null);
   const [deliveryReviewScore, setDeliveryReviewScore] = useState(5);
@@ -111,6 +118,7 @@ export function DeliveryOperations({
   const [vehicleEditingId, setVehicleEditingId] = useState<string | null>(null);
   const [vehicleError, setVehicleError] = useState("");
   const [vehicleDocumentName, setVehicleDocumentName] = useState("");
+  const [vehicleDocumentFile, setVehicleDocumentFile] = useState<StoredFile | null>(null);
   const [vehicleType, setVehicleType] = useState<DeliveryVehicleType>("Moto");
   const [vehicleCapacity, setVehicleCapacity] = useState<number>(suggestedCapacityForVehicle("Moto"));
   const [vehicleBrandModel, setVehicleBrandModel] = useState("");
@@ -135,6 +143,11 @@ export function DeliveryOperations({
       state: "DF",
     },
   );
+  const [deliveryAccountDraft, setDeliveryAccountDraft] = useState({
+    ...deliveryAccount,
+    newPassword: "",
+  });
+  const [accountError, setAccountError] = useState("");
   const [vehicles, setVehicles] = usePersistentState<DeliveryVehicle[]>(
     `feirae:delivery-vehicles:${session.email}`,
     seedDemoData
@@ -231,6 +244,7 @@ export function DeliveryOperations({
       description: string;
       status: "pending" | "under_review" | "approved" | "correction_required";
       fileName: string;
+      file?: StoredFile;
       expiresAt: string;
     }[]
   >(`feirae:delivery-documents:${session.email}`, defaultDeliveryDocuments);
@@ -299,6 +313,7 @@ export function DeliveryOperations({
     setVehicleBrandModel("");
     setVehiclePlate("");
     setVehicleDocumentName("");
+    setVehicleDocumentFile(null);
     setVehicleError("");
   }
 
@@ -309,6 +324,7 @@ export function DeliveryOperations({
     setVehicleBrandModel(vehicle.brandModel);
     setVehiclePlate(vehicle.plate);
     setVehicleDocumentName(vehicle.documentFileName ?? "");
+    setVehicleDocumentFile(vehicle.documentFile ?? null);
     setVehicleError("");
     setVehicleFormOpen(true);
   }
@@ -338,6 +354,9 @@ export function DeliveryOperations({
         ? (vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.active ?? true)
         : true,
       documentFileName: requiresPlate(vehicleType) ? vehicleDocumentName : "",
+      documentFile: requiresPlate(vehicleType)
+        ? (vehicleDocumentFile ?? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFile)
+        : undefined,
       documentStatus: requiresPlate(vehicleType)
         ? vehicleEditingId
           ? vehicles.find((vehicle) => vehicle.id === vehicleEditingId)?.documentFileName ===
@@ -1164,12 +1183,21 @@ export function DeliveryOperations({
                                 onChange={(event) => {
                                   const file = event.target.files?.[0];
                                   if (!file) return;
-                                  setVehicleDocumentName(file.name);
-                                  setVehicleError("");
+                                  void readFileForLocalStorage(file)
+                                    .then((stored) => {
+                                      setVehicleDocumentName(stored.name);
+                                      setVehicleDocumentFile(stored);
+                                      setVehicleError("");
+                                    })
+                                    .catch((error: Error) => setVehicleError(error.message));
                                 }}
                               />
                             </span>
-                            <small>O documento entra em análise quando for novo ou substituído.</small>
+                            <small>
+                              {vehicleDocumentFile
+                                ? `Arquivo armazenado: ${storedFileLabel(vehicleDocumentFile)}`
+                                : "O documento entra em análise quando for novo ou substituído."}
+                            </small>
                           </label>
                         </>
                       )}
@@ -1696,13 +1724,42 @@ export function DeliveryOperations({
                       onClick={() => {
                         setHelpTopic(item);
                         setHelpProtocol("");
+                        setHelpDetail(
+                          item === "Problema no pedido"
+                            ? "Pedido com embalagem ou peso divergente"
+                            : item === "Dúvida de repasse"
+                              ? "Conferir taxa e data do próximo pagamento"
+                              : "Preciso falar com o suporte da rota",
+                        );
                       }}
                     >
                       {item}
                     </button>
                   ))}
                 </div>
-                <form className="form-card compact">
+                <form
+                  className="form-card compact"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!helpDetail.trim()) return;
+                    const protocol = `SUP-${String(helpTickets.length + 1).padStart(4, "0")}`;
+                    const createdAt = new Intl.DateTimeFormat("pt-BR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(new Date());
+                    setHelpTickets((current) => [
+                      {
+                        id: protocol,
+                        topic: helpTopic,
+                        details: helpDetail.trim(),
+                        createdAt,
+                        status: "Aberto",
+                      },
+                      ...current,
+                    ]);
+                    setHelpProtocol(protocol);
+                  }}
+                >
                   <label>
                     Assunto selecionado
                     <input value={helpTopic} readOnly />
@@ -1710,20 +1767,12 @@ export function DeliveryOperations({
                   <label>
                     Detalhe do atendimento
                     <input
-                      defaultValue={
-                        helpTopic === "Problema no pedido"
-                          ? "Pedido com embalagem ou peso divergente"
-                          : helpTopic === "Dúvida de repasse"
-                            ? "Conferir taxa e data do próximo pagamento"
-                            : "Preciso falar com o suporte da rota"
-                      }
+                      value={helpDetail}
+                      onChange={(event) => setHelpDetail(event.target.value)}
+                      required
                     />
                   </label>
-                  <button
-                    type="button"
-                    className="primary-action"
-                    onClick={() => setHelpProtocol(`SUP-${Math.floor(1000 + Math.random() * 8000)}`)}
-                  >
+                  <button type="submit" className="primary-action">
                     Abrir atendimento
                   </button>
                   {helpProtocol && (
@@ -1732,6 +1781,24 @@ export function DeliveryOperations({
                     </p>
                   )}
                 </form>
+                {helpTickets.length > 0 && (
+                  <div className="operation-list detailed">
+                    {helpTickets.slice(0, 6).map((ticket) => (
+                      <article key={ticket.id}>
+                        <Info />
+                        <div>
+                          <b>
+                            {ticket.id} · {ticket.topic}
+                          </b>
+                          <small>
+                            {ticket.createdAt} · {ticket.status}
+                          </small>
+                          <p>{ticket.details}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
                 <div className="operation-list detailed">
                   {[
                     "Como confirmar coleta",
@@ -1783,6 +1850,43 @@ export function DeliveryOperations({
                   className="form-card"
                   onSubmit={(event) => {
                     event.preventDefault();
+                    const nextAccount = {
+                      name: deliveryAccountDraft.name.trim(),
+                      cpf: deliveryAccountDraft.cpf.trim(),
+                      birthDate: deliveryAccountDraft.birthDate,
+                      email: deliveryAccountDraft.email.trim().toLocaleLowerCase("pt-BR"),
+                      phone: deliveryAccountDraft.phone.trim(),
+                      pixKey: deliveryAccountDraft.pixKey.trim(),
+                      receivingMethod: deliveryAccountDraft.receivingMethod,
+                      bankName: deliveryAccountDraft.bankName.trim(),
+                      agency: deliveryAccountDraft.agency.trim(),
+                      accountNumber: deliveryAccountDraft.accountNumber.trim(),
+                      cnh: deliveryAccountDraft.cnh.trim(),
+                      cnhCategory: deliveryAccountDraft.cnhCategory.trim(),
+                      cep: deliveryAccountDraft.cep.trim(),
+                      city: deliveryAccountDraft.city.trim(),
+                      state: deliveryAccountDraft.state.trim().toUpperCase(),
+                    };
+                    const error = onAccountUpdate(
+                      nextAccount.name,
+                      nextAccount.email,
+                      deliveryAccountDraft.newPassword.trim() || undefined,
+                    );
+                    if (error) {
+                      setAccountError(error);
+                      setAccountSaved(false);
+                      return;
+                    }
+                    if (nextAccount.email !== session.email.trim().toLocaleLowerCase("pt-BR")) {
+                      window.localStorage.setItem(
+                        `feirae:delivery-account:${nextAccount.email}`,
+                        JSON.stringify(nextAccount),
+                      );
+                    } else {
+                      setDeliveryAccount(nextAccount);
+                    }
+                    setDeliveryAccountDraft({ ...nextAccount, newPassword: "" });
+                    setAccountError("");
                     setAccountSaved(true);
                     window.setTimeout(() => setAccountSaved(false), 2200);
                   }}
@@ -1791,18 +1895,18 @@ export function DeliveryOperations({
                     <label>
                       Nome completo
                       <input
-                        value={deliveryAccount.name}
+                        value={deliveryAccountDraft.name}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, name: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({ ...current, name: event.target.value }))
                         }
                       />
                     </label>
                     <label>
                       CPF
                       <input
-                        value={deliveryAccount.cpf}
+                        value={deliveryAccountDraft.cpf}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, cpf: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({ ...current, cpf: event.target.value }))
                         }
                         placeholder="000.000.000-00"
                         inputMode="numeric"
@@ -1812,18 +1916,21 @@ export function DeliveryOperations({
                       Data de nascimento
                       <input
                         type="date"
-                        value={deliveryAccount.birthDate}
+                        value={deliveryAccountDraft.birthDate}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, birthDate: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({
+                            ...current,
+                            birthDate: event.target.value,
+                          }))
                         }
                       />
                     </label>
                     <label>
                       Telefone
                       <input
-                        value={deliveryAccount.phone}
+                        value={deliveryAccountDraft.phone}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, phone: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({ ...current, phone: event.target.value }))
                         }
                         placeholder="(61) 99999-9999"
                       />
@@ -1833,9 +1940,9 @@ export function DeliveryOperations({
                     E-mail
                     <input
                       type="email"
-                      value={deliveryAccount.email}
+                      value={deliveryAccountDraft.email}
                       onChange={(event) =>
-                        setDeliveryAccount((current) => ({ ...current, email: event.target.value }))
+                        setDeliveryAccountDraft((current) => ({ ...current, email: event.target.value }))
                       }
                     />
                   </label>
@@ -1843,9 +1950,9 @@ export function DeliveryOperations({
                     <label>
                       Forma de recebimento
                       <select
-                        value={deliveryAccount.receivingMethod}
+                        value={deliveryAccountDraft.receivingMethod}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({
+                          setDeliveryAccountDraft((current) => ({
                             ...current,
                             receivingMethod: event.target.value,
                           }))
@@ -1858,21 +1965,21 @@ export function DeliveryOperations({
                     <label>
                       CEP
                       <input
-                        value={deliveryAccount.cep}
+                        value={deliveryAccountDraft.cep}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, cep: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({ ...current, cep: event.target.value }))
                         }
                         placeholder="00000-000"
                       />
                     </label>
                   </div>
-                  {deliveryAccount.receivingMethod === "Pix" ? (
+                  {deliveryAccountDraft.receivingMethod === "Pix" ? (
                     <label>
                       Chave Pix para repasse
                       <input
-                        value={deliveryAccount.pixKey}
+                        value={deliveryAccountDraft.pixKey}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, pixKey: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({ ...current, pixKey: event.target.value }))
                         }
                         placeholder="CPF, e-mail, telefone ou chave"
                       />
@@ -1882,9 +1989,9 @@ export function DeliveryOperations({
                       <label>
                         Banco
                         <input
-                          value={deliveryAccount.bankName}
+                          value={deliveryAccountDraft.bankName}
                           onChange={(event) =>
-                            setDeliveryAccount((current) => ({
+                            setDeliveryAccountDraft((current) => ({
                               ...current,
                               bankName: event.target.value,
                             }))
@@ -1894,9 +2001,9 @@ export function DeliveryOperations({
                       <label>
                         Agência
                         <input
-                          value={deliveryAccount.agency}
+                          value={deliveryAccountDraft.agency}
                           onChange={(event) =>
-                            setDeliveryAccount((current) => ({
+                            setDeliveryAccountDraft((current) => ({
                               ...current,
                               agency: event.target.value,
                             }))
@@ -1906,9 +2013,9 @@ export function DeliveryOperations({
                       <label>
                         Conta
                         <input
-                          value={deliveryAccount.accountNumber}
+                          value={deliveryAccountDraft.accountNumber}
                           onChange={(event) =>
-                            setDeliveryAccount((current) => ({
+                            setDeliveryAccountDraft((current) => ({
                               ...current,
                               accountNumber: event.target.value,
                             }))
@@ -1921,18 +2028,18 @@ export function DeliveryOperations({
                     <label>
                       Cidade/região
                       <input
-                        value={deliveryAccount.city}
+                        value={deliveryAccountDraft.city}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, city: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({ ...current, city: event.target.value }))
                         }
                       />
                     </label>
                     <label>
                       Estado
                       <input
-                        value={deliveryAccount.state}
+                        value={deliveryAccountDraft.state}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, state: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({ ...current, state: event.target.value }))
                         }
                         maxLength={2}
                       />
@@ -1940,9 +2047,9 @@ export function DeliveryOperations({
                     <label>
                       CNH
                       <input
-                        value={deliveryAccount.cnh}
+                        value={deliveryAccountDraft.cnh}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({ ...current, cnh: event.target.value }))
+                          setDeliveryAccountDraft((current) => ({ ...current, cnh: event.target.value }))
                         }
                         placeholder="Para veículos que exigem habilitação"
                       />
@@ -1950,9 +2057,9 @@ export function DeliveryOperations({
                     <label>
                       Categoria da CNH
                       <input
-                        value={deliveryAccount.cnhCategory}
+                        value={deliveryAccountDraft.cnhCategory}
                         onChange={(event) =>
-                          setDeliveryAccount((current) => ({
+                          setDeliveryAccountDraft((current) => ({
                             ...current,
                             cnhCategory: event.target.value,
                           }))
@@ -1964,10 +2071,44 @@ export function DeliveryOperations({
                   <p className="operation-footnote">
                     Bicicletas não exigem CNH; veículos motorizados e motofrete têm documentação própria.
                   </p>
+                  <label>
+                    Nova senha
+                    <input
+                      type="password"
+                      value={deliveryAccountDraft.newPassword}
+                      onChange={(event) =>
+                        setDeliveryAccountDraft((current) => ({
+                          ...current,
+                          newPassword: event.target.value,
+                        }))
+                      }
+                      minLength={6}
+                      placeholder="Deixe vazio para manter a atual"
+                      autoComplete="new-password"
+                    />
+                  </label>
+                  {accountError && (
+                    <p className="operation-footnote" role="alert">
+                      {accountError}
+                    </p>
+                  )}
                   {accountSaved && <p className="inline-success">Dados da conta salvos neste dispositivo.</p>}
-                  <button type="submit" className="primary-action">
-                    Salvar alterações
-                  </button>
+                  <div className="module-action-row">
+                    <button type="submit" className="primary-action">
+                      Salvar alterações
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary-action"
+                      onClick={() => {
+                        setDeliveryAccountDraft({ ...deliveryAccount, newPassword: "" });
+                        setAccountError("");
+                        setAccountSaved(false);
+                      }}
+                    >
+                      Descartar alterações
+                    </button>
+                  </div>
                 </form>
               </>
             ) : active === "Documentos" ? (
@@ -1998,7 +2139,11 @@ export function DeliveryOperations({
                             {document.name} · {requiredNow ? "obrigatório agora" : "não obrigatório agora"}
                           </b>
                           <small>{document.description}</small>
-                          {document.fileName && <small>Arquivo: {document.fileName}</small>}
+                          {document.fileName && (
+                            <small>
+                              Arquivo: {document.file ? storedFileLabel(document.file) : document.fileName}
+                            </small>
+                          )}
                         </div>
                         <div className="item-actions">
                           <span className="document-status">
@@ -2019,18 +2164,23 @@ export function DeliveryOperations({
                               onChange={(event) => {
                                 const file = event.target.files?.[0];
                                 if (!file) return;
-                                setDeliveryDocuments((current) =>
-                                  current.map((item) =>
-                                    item.id === document.id
-                                      ? {
-                                          ...item,
-                                          fileName: file.name,
-                                          status: "under_review",
-                                        }
-                                      : item,
-                                  ),
-                                );
-                                if (requiredNow) setOnline(false);
+                                void readFileForLocalStorage(file)
+                                  .then((stored) => {
+                                    setDeliveryDocuments((current) =>
+                                      current.map((item) =>
+                                        item.id === document.id
+                                          ? {
+                                              ...item,
+                                              fileName: stored.name,
+                                              file: stored,
+                                              status: "under_review",
+                                            }
+                                          : item,
+                                      ),
+                                    );
+                                    if (requiredNow) setOnline(false);
+                                  })
+                                  .catch((error: Error) => setIncidentNotice(error.message));
                               }}
                             />
                           </label>

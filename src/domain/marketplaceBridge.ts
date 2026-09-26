@@ -83,6 +83,29 @@ function writeMarketplace(value: SharedMarketplace) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
 }
 
+export function migrateMarketplaceAccountKey(oldEmail: string, newEmail: string) {
+  const from = oldEmail.trim().toLocaleLowerCase("pt-BR");
+  const to = newEmail.trim().toLocaleLowerCase("pt-BR");
+  const oldVendorId = vendorIdFor(from);
+  const newVendorId = vendorIdFor(to);
+  const current = readMarketplace();
+  writeMarketplace({
+    stores: current.stores.map((store) =>
+      store.accountKey.trim().toLocaleLowerCase("pt-BR") === from
+        ? {
+            ...store,
+            accountKey: to,
+            vendorId: store.vendorId === oldVendorId ? newVendorId : store.vendorId,
+            updatedAt: new Date().toISOString(),
+          }
+        : store,
+    ),
+    products: current.products.map((product) =>
+      product.vendorId === oldVendorId ? { ...product, vendorId: newVendorId } : product,
+    ),
+  });
+}
+
 export function syncVendorMarketplace(input: {
   accountKey: string;
   name: string;

@@ -35,7 +35,13 @@ const roleLabels: Record<Role, string> = {
 export function LoginPage({
   onLogin,
 }: {
-  onLogin: (role: Role, email: string, name: string, isNewAccount: boolean) => void;
+  onLogin: (
+    role: Role,
+    email: string,
+    name: string,
+    password: string,
+    isNewAccount: boolean,
+  ) => string | null;
 }) {
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -43,6 +49,7 @@ export function LoginPage({
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState("");
   const options: Array<{ role: Role; title: string; text: string; icon: ReactNode }> = [
     {
       role: "customer",
@@ -66,7 +73,8 @@ export function LoginPage({
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    onLogin(selectedRole, email.trim(), name.trim(), mode === "signup");
+    const error = onLogin(selectedRole, email.trim(), name.trim(), password, mode === "signup");
+    setFormError(error ?? "");
   }
 
   return (
@@ -193,6 +201,11 @@ export function LoginPage({
                 <b>Cadastro de entregador</b>
                 <span>Veículo, capacidade, CNH/documentos, foto e validação antes de aceitar corridas.</span>
               </div>
+            )}
+            {formError && (
+              <p className="operation-footnote" role="alert">
+                {formError}
+              </p>
             )}
             <button type="submit" className="primary-action w-full">
               {mode === "login" ? "Entrar" : "Criar conta"} como {roleLabels[selectedRole]}{" "}
@@ -725,19 +738,25 @@ export function Step({ title, children }: { title: string; children: ReactNode }
 }
 export function Choice({
   active,
+  disabled = false,
   onClick,
   icon,
   title,
   text,
 }: {
   active: boolean;
+  disabled?: boolean;
   onClick: () => void;
   icon: ReactNode;
   title: string;
   text: string;
 }) {
   return (
-    <button onClick={onClick} className={active ? "choice active" : "choice"}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={active ? "choice active" : disabled ? "choice disabled" : "choice"}
+    >
       <span>{icon}</span>
       <b>{title}</b>
       <small>{text}</small>

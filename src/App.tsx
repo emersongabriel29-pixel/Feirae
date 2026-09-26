@@ -32,15 +32,32 @@ import { useDemoCart } from "./hooks/useDemoCart";
 import { useDemoSession } from "./hooks/useDemoSession";
 import { useToast } from "./hooks/useToast";
 import { useUnifiedOrderRevision } from "./hooks/useUnifiedOrderRevision";
-import { eventNow, patchUnifiedOrder, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
-import { marketplaceProducts, readStoreByIdentity, registerPromotionUsage } from "./domain/marketplaceBridge";
+import {
+  eventNow,
+  migrateUnifiedOrderAccountKey,
+  patchUnifiedOrder,
+  readUnifiedOrders,
+  upsertUnifiedOrder,
+} from "./domain/orderBridge";
+import {
+  marketplaceProducts,
+  migrateMarketplaceAccountKey,
+  readSharedStores,
+  readStoreByIdentity,
+  registerPromotionUsage,
+} from "./domain/marketplaceBridge";
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
+import {
+  authenticateLocalAccount,
+  scrubLegacyPlaintextPasswords,
+  updateLocalAccount,
+} from "./domain/localAuth";
 
 export default function App() {
-  const { session, role, startSession, clearSession } = useDemoSession();
+  const { session, role, startSession, updateSession, clearSession } = useDemoSession();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const accountKey = session?.email ?? "guest";
@@ -49,6 +66,11 @@ export default function App() {
     scopedStorageKey("feirae:order-updates", accountKey),
     true,
   );
+  const [compactCards] = usePersistentState<boolean>(
+    scopedStorageKey("feirae:compact-cards", accountKey),
+    false,
+  );
+  const [offersEnabled] = usePersistentState<boolean>(scopedStorageKey("feirae:offers", accountKey), true);
   const catalog = marketplaceProducts(products);
   const [favorites, setFavorites] = usePersistentState<number[]>(
     scopedStorageKey("feirae:favorites", accountKey),
@@ -72,9 +94,17 @@ export default function App() {
     scopedStorageKey("feirae:notification-read", accountKey),
     [],
   );
-  const notificationKeys = orders.flatMap((order) =>
+  const orderNotificationKeys = orders.flatMap((order) =>
     (order.events ?? []).map((event) => `${order.id}:${event.key}:${event.at}`),
   );
+  const offerNotificationKeys = offersEnabled
+    ? readSharedStores().flatMap((store) =>
+        store.promotions
+          .filter((promotion) => promotion.active)
+          .map((promotion) => `offer:${store.storeId}:${promotion.id}`),
+      )
+    : [];
+  const notificationKeys = [...orderNotificationKeys, ...offerNotificationKeys];
   const notifications = orderUpdatesEnabled
     ? notificationKeys.filter((key) => !readNotificationKeys.includes(key)).length
     : 0;
@@ -83,6 +113,15 @@ export default function App() {
   const [locationLoading, setLocationLoading] = useState(false);
   const { toast, notify } = useToast();
   const unifiedOrderRevision = useUnifiedOrderRevision();
+
+  useEffect(() => {
+    scrubLegacyPlaintextPasswords();
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("compact-product-cards", compactCards);
+    return () => document.documentElement.classList.remove("compact-product-cards");
+  }, [compactCards]);
   const {
     cart,
     setCart,
@@ -167,9 +206,38 @@ export default function App() {
     });
   }, [role, session?.email, setOrders, unifiedOrderRevision]);
 
-  function login(nextRole: Role, email: string, name: string, isNewAccount: boolean) {
-    startSession(nextRole, email, name, isNewAccount);
+  function login(nextRole: Role, email: string, name: string, password: string, isNewAccount: boolean) {
+    const result = authenticateLocalAccount({
+      role: nextRole,
+      email,
+      name,
+      password,
+      signup: isNewAccount,
+    });
+    if (!result.ok) return result.message;
+    startSession(nextRole, result.account.email, result.account.name, result.isNewAccount);
     resetForRole(nextRole);
+    return null;
+  }
+
+  function updateAccountIdentity(name: string, email: string, newPassword?: string) {
+    if (!session) return "Sessão indisponível.";
+    const result = updateLocalAccount({
+      oldEmail: session.email,
+      role: session.role,
+      name,
+      email,
+      newPassword: newPassword?.trim() || undefined,
+    });
+    if (!result.ok) return result.message;
+
+    migrateUnifiedOrderAccountKey(session.email, result.account.email, session.role, result.account.name);
+    if (session.role === "feirante") {
+      migrateMarketplaceAccountKey(session.email, result.account.email);
+    }
+    updateSession({ email: result.account.email, name: result.account.name });
+    notify(newPassword?.trim() ? "Conta e senha atualizadas." : "Dados da conta atualizados.");
+    return null;
   }
 
   function logout() {
@@ -258,6 +326,7 @@ export default function App() {
       promotionDiscount: number;
       walletUsed: number;
       appliedPromotions: string[];
+      whatsappConsent: boolean;
       changeFor?: number;
     },
   ) {
@@ -306,6 +375,7 @@ export default function App() {
       customerKey: session?.email,
       paymentMethod: details.paymentMethod,
       paymentStatus: paymentOnDelivery ? "due_on_delivery" : "authorized",
+      whatsappConsent: details.whatsappConsent,
       changeFor: details.changeFor,
       subtotal,
       promotionDiscount: details.promotionDiscount,
@@ -588,20 +658,29 @@ export default function App() {
         )}
         {screen === "addresses" && <AddressesPage onBack={() => openCustomerTab("profile")} />}
         {screen === "account" && session && (
-          <AccountPage session={session} onBack={() => openCustomerTab("profile")} />
+          <AccountPage
+            session={session}
+            onBack={() => openCustomerTab("profile")}
+            onAccountUpdate={updateAccountIdentity}
+          />
         )}
         {screen === "payments" && <PaymentsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "ratings" && <RatingsPage orders={orders} onBack={() => openCustomerTab("profile")} />}
         {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "feiranteOps" && session && (
-          <FeiranteOperations session={session} onBack={() => openRoleRoot("feirante")} />
+          <FeiranteOperations
+            session={session}
+            onBack={() => openRoleRoot("feirante")}
+            onAccountUpdate={updateAccountIdentity}
+          />
         )}
         {screen === "deliveryOps" && session && (
           <DeliveryOperations
             session={session}
             onBack={() => openRoleRoot("delivery")}
             onMap={(destination) => openMap(destination ?? "-15.621,-47.657")}
+            onAccountUpdate={updateAccountIdentity}
           />
         )}
       </div>

@@ -16,6 +16,15 @@ export function useDemoSession() {
     });
   }
 
+  function updateSession(update: Partial<Pick<NonNullable<typeof session>, "email" | "name">>) {
+    if (!session) return;
+    setStoredSession({
+      ...session,
+      ...update,
+      isNewAccount: false,
+    });
+  }
+
   function clearSession() {
     setStoredSession(null);
   }
@@ -24,6 +33,7 @@ export function useDemoSession() {
     session,
     role,
     startSession,
+    updateSession,
     clearSession,
   };
 }
