@@ -18,6 +18,7 @@ import {
 import {
   FeiraeNotificationCard,
   ModuleHeader,
+  OperationalOnboardingCard,
   OperationsMenu,
   Panel,
   Toggle,
@@ -71,7 +72,6 @@ import {
 } from "./vendorModel";
 
 const modules = [
-  "Painel",
   "Pedidos",
   "Minha banca",
   "Produtos",
@@ -497,6 +497,10 @@ export function FeiranteOperations({
       : documents.some((document) => document.status === "under_review")
         ? "Em análise"
         : "Documentação pendente";
+  const vendorProfileReady = Boolean(
+    bankProfile.name.trim() && bankProfile.fairName.trim() && bankProfile.box.trim(),
+  );
+  const vendorOnboardingTarget = vendorProfileReady ? "Documentos" : "Minha banca";
 
   const officialHours = fairHoursForName(bankProfile.fairName);
   const scheduleForStatus =
@@ -885,6 +889,17 @@ export function FeiranteOperations({
               </article>
             </div>
           </div>
+          {approvalStatus !== "Aprovado" && (
+            <OperationalOnboardingCard
+              title="Complete seu cadastro para vender"
+              status={approvalStatus}
+              text="A banca só fica liberada para operação real depois que os dados essenciais e os documentos obrigatórios forem aprovados."
+              steps={["Conta", "Banca", "Documentos", "Aprovação"]}
+              action={vendorProfileReady ? "Revisar documentos" : "Completar minha banca"}
+              onAction={() => setActive(vendorOnboardingTarget)}
+            />
+          )}
+
           <FeiraeNotificationCard
             permission={notificationPermission}
             message={
