@@ -36,6 +36,7 @@ Um documento de requisito não é prova de implementação.
 - [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido e entrega.
 - [END_TO_END_AUDIT.md](END_TO_END_AUDIT.md) — implementado x testado x pendente.
 - [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md) — botões/campos/edição.
+- [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) — identidade, tokens, responsividade e regras de layout.
 - [PRODUCT_MEASUREMENT_MATRIX.md](PRODUCT_MEASUREMENT_MATRIX.md) — campos/categorias/unidades reais.
 - [FAIR_HOURS.md](FAIR_HOURS.md) — feiras e fontes.
 
@@ -76,7 +77,10 @@ Mudou código de:
 - integração;
 - taxa;
 - admin;
-- teste.
+- teste;
+- navegação/layout;
+- breakpoint;
+- componente visual compartilhado.
 
 Então o PR deve atualizar o documento correspondente.
 
