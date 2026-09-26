@@ -1660,7 +1660,7 @@ export function FavoritesPage({
         <p className="operation-footnote">Nenhum produto favorito ainda.</p>
       )}
 
-      <SectionHeading eyebrow="Lojas" title="Bancas favoritas" />
+      <SectionHeading eyebrow="Lojas" title="Lojas favoritas" />
       {favoriteVendors.length ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {favoriteVendors.map((vendor) => (
@@ -1684,9 +1684,9 @@ export function FavoritesPage({
         </div>
       ) : (
         <Empty
-          title="Nenhuma banca favorita"
-          text="Abra uma banca e toque no coração para salvá-la aqui."
-          action="Explorar produtos"
+          title="Nenhuma loja favorita"
+          text="Abra uma loja e toque no coração para salvá-la aqui."
+          action="Explorar lojas"
           onAction={onExplore}
         />
       )}
