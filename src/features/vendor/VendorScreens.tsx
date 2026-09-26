@@ -230,13 +230,13 @@ export function FeiranteOperations({
   );
   const [documents, setDocuments] = usePersistentState<VendorDocument[]>(
     `feirae:vendor-documents:${session.email}`,
-    session.isNewAccount
-      ? initialVendorDocuments.map((document) => ({
+    seedDemoData
+      ? initialVendorDocuments
+      : initialVendorDocuments.map((document) => ({
           ...document,
           status: "pending" as const,
           fileName: "",
-        }))
-      : initialVendorDocuments,
+        })),
   );
   const [stockHistory, setStockHistory] = usePersistentState<
     { id: string; product: string; delta: number; reason: string; createdAt: string }[]
