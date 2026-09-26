@@ -30,6 +30,20 @@ function title(v){return String(v).replace(/(^|\s)\S/g,(m)=>m.toUpperCase());}
 function money(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}):esc(v);}
 function date(v){if(!v)return "—";const d=new Date(v);return Number.isNaN(d.getTime())?esc(v):d.toLocaleString("pt-BR");}
 
+function updateManagementClock(){
+ const dateEl=$("#managementDate"),timeEl=$("#managementTime"),zoneEl=$("#managementTimezone");
+ if(!dateEl||!timeEl||!zoneEl)return;
+ const now=new Date();
+ dateEl.textContent=new Intl.DateTimeFormat("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}).format(now);
+ timeEl.textContent=new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);
+ const zone=Intl.DateTimeFormat().resolvedOptions().timeZone||"Horário local";
+ zoneEl.textContent=zone.replaceAll("_"," ");
+ dateEl.setAttribute("title",now.toLocaleString("pt-BR"));
+ timeEl.setAttribute("title","Horário local da Gestão");
+}
+updateManagementClock();
+setInterval(updateManagementClock,1000);
+
 const labels={
  id:"ID",name:"Nome",address:"Endereço",is_active:"Ativa",opening_hours:"Horários",full_name:"Nome",phone:"Telefone",
  role:"Papel",created_at:"Criado em",updated_at:"Atualizado",business_name:"Banca",approved:"Aprovado",description:"Descrição",
