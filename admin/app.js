@@ -15,7 +15,7 @@ const permissionByModule={
   promotions:"finance.manage",payouts:"finance.manage",reviews:"finance.manage",
   content:"communications.manage",announcements:"communications.manage",notifications:"communications.manage",
   settings:"settings.manage",features:"settings.manage",integrations:"settings.manage",privacy:"settings.manage",
-  permissions:"permissions.manage",audit:"audit.view"
+  permissions:"permissions.manage",audit:"audit.view",reports:"reports.view"
 };
 function canModule(id){
   const permission=permissionByModule[id];
@@ -53,6 +53,22 @@ const labels={
  action_type:"Ação",reason:"Motivo",ends_at:"Até",sort_order:"Ordem",permission:"Permissão"
 };
 function label(k){return labels[k]||title(k.replaceAll("_"," "));}
+
+const reportDefs={
+  orders:{label:"Pedidos",table:"orders",dateField:"created_at",cols:["id","status","payment_status","subtotal","delivery_fee","total","created_at"]},
+  deliveries:{label:"Entregas",table:"deliveries",dateField:"updated_at",cols:["id","order_id","delivery_id","status","fee","total_distance_km","eta_minutes","cancel_reason","accepted_at","delivered_at","updated_at"]},
+  payouts:{label:"Financeiro / repasses",table:"payouts",dateField:"created_at",cols:["id","profile_id","role","amount","status","provider_reference","requested_at","paid_at","created_at"]},
+  cancellations:{label:"Cancelamentos",table:"orders",dateField:"created_at",cols:["id","status","payment_status","subtotal","delivery_fee","total","refund_amount","created_at"],statuses:["canceled","refunded"]},
+  support:{label:"Suporte",table:"support_tickets",dateField:"created_at",cols:["id","order_id","actor_role","topic","priority","status","created_at"]},
+  documents:{label:"Documentos",table:"onboarding_documents",dateField:"created_at",cols:["id","profile_id","document_type","status","expires_at","correction_reason","reviewed_at","created_at"]},
+  users:{label:"Usuários",table:"profiles",dateField:"created_at",cols:["id","full_name","role","created_at"]},
+  reviews:{label:"Avaliações",table:"order_reviews",dateField:"created_at",cols:["id","order_id","author_role","target_role","rating","comment","visible","created_at"]},
+  enforcements:{label:"Suspensões e bloqueios",table:"account_enforcements",dateField:"created_at",cols:["id","profile_id","action_type","status","reason","starts_at","ends_at","created_at"]}
+};
+function inputDate(d){
+ const p=(n)=>String(n).padStart(2,"0");
+ return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
 
 function cell(k,v){
  if(v===null||v===undefined||v==="")return '<span class="cell-muted">—</span>';
@@ -113,6 +129,7 @@ async function openModule(id){
  document.querySelectorAll(".nav-item").forEach((b)=>b.classList.toggle("active",b.dataset.module===id));
  $("#appView").classList.remove("menu-open");
  if(id==="dashboard"){ $("#pageTitle").textContent="Visão geral";$("#breadcrumb").textContent="Operação";await renderDashboard();return; }
+ if(id==="reports"){ $("#pageTitle").textContent="Relatórios";$("#breadcrumb").textContent="Análises";await renderReports();return; }
  if(id==="settings"){ $("#pageTitle").textContent="Configurações";$("#breadcrumb").textContent="Sistema";await renderSettings();return; }
  const m=modules[id];if(!m)return;
  $("#pageTitle").textContent=m.label;$("#breadcrumb").textContent="Gestão";
@@ -147,6 +164,116 @@ async function renderDashboard(){
  html+=ints.length?ints.map((i)=>'<div class="list-item"><div><b>'+esc(i.label)+'</b><br><small>'+esc(i.environment)+'</small></div><span class="badge '+(i.enabled?"active":"false")+'">'+esc(i.status)+'</span></div>').join(""):'<div class="empty">Aplique a migration da gestão.</div>';
  html+='</div></section></div>';
  $("#pageContent").innerHTML=html;
+}
+
+async function fetchReportRows(def,from,to){
+ let q=state.supabase.from(def.table).select(def.cols.join(",")).gte(def.dateField,from+"T00:00:00").lte(def.dateField,to+"T23:59:59.999").order(def.dateField,{ascending:false}).limit(5000);
+ if(def.statuses?.length)q=q.in("status",def.statuses);
+ const r=await q;
+ if(r.error)throw r.error;
+ return r.data||[];
+}
+
+function reportKpi(labelText,value,helper=""){
+ return '<div class="kpi"><span>'+esc(labelText)+'</span><strong>'+esc(value)+'</strong>'+(helper?'<small>'+esc(helper)+'</small>':"")+'</div>';
+}
+
+async function renderReports(){
+ const now=new Date(),start=new Date(now.getFullYear(),now.getMonth(),1);
+ $("#pageContent").innerHTML=
+   '<section class="panel report-panel"><div class="panel-head"><div><h2>Relatórios da operação</h2><p>Filtre por período, consulte indicadores e exporte os dados.</p></div></div>'+
+   '<div class="report-filters">'+
+     '<label>Relatório<select id="reportType">'+
+       '<option value="summary">Resumo executivo</option>'+
+       Object.entries(reportDefs).map(([k,v])=>'<option value="'+esc(k)+'">'+esc(v.label)+'</option>').join("")+
+     '</select></label>'+
+     '<label>De<input id="reportFrom" type="date" value="'+inputDate(start)+'"></label>'+
+     '<label>Até<input id="reportTo" type="date" value="'+inputDate(now)+'"></label>'+
+     '<div class="report-actions"><button id="runReport" class="primary">Gerar relatório</button><button id="exportReport" class="secondary" disabled>Exportar CSV</button><button id="printReport" class="secondary">Imprimir / PDF</button></div>'+
+   '</div></section><div id="reportResult"><div class="empty">Gerando resumo do período…</div></div>';
+ $("#runReport").onclick=loadReport;
+ $("#exportReport").onclick=exportCurrentReport;
+ $("#printReport").onclick=()=>window.print();
+ await loadReport();
+}
+
+async function loadReport(){
+ const type=$("#reportType").value,from=$("#reportFrom").value,to=$("#reportTo").value;
+ if(!from||!to){toast("Informe o período do relatório.");return;}
+ if(new Date(to)<new Date(from)){toast("A data final precisa ser igual ou posterior à inicial.");return;}
+ $("#reportResult").innerHTML='<div class="empty">Carregando relatório…</div>';
+ $("#exportReport").disabled=true;
+ try{
+   if(type==="summary"){
+     const [orders,payouts,deliveries,support]=await Promise.all([
+       fetchReportRows(reportDefs.orders,from,to),
+       fetchReportRows(reportDefs.payouts,from,to),
+       fetchReportRows(reportDefs.deliveries,from,to),
+       fetchReportRows(reportDefs.support,from,to)
+     ]);
+     const delivered=orders.filter((r)=>r.status==="delivered").length;
+     const canceled=orders.filter((r)=>["canceled","refunded"].includes(r.status)).length;
+     const gross=orders.reduce((s,r)=>s+Number(r.total||0),0);
+     const freight=orders.reduce((s,r)=>s+Number(r.delivery_fee||0),0);
+     const payoutsPaid=payouts.filter((r)=>r.status==="paid").reduce((s,r)=>s+Number(r.amount||0),0);
+     const openSupport=support.filter((r)=>r.status==="open").length;
+     const avg=orders.length?gross/orders.length:0;
+     state.reportRows=orders;
+     state.reportColumns=reportDefs.orders.cols;
+     state.reportName="resumo-pedidos";
+     $("#reportResult").innerHTML=
+       '<div class="kpi-grid report-kpis">'+
+         reportKpi("Pedidos",orders.length)+
+         reportKpi("Entregues",delivered)+
+         reportKpi("Cancelados / reembolsados",canceled)+
+         reportKpi("Valor bruto",money(gross))+
+         reportKpi("Frete cobrado",money(freight))+
+         reportKpi("Ticket médio",money(avg))+
+         reportKpi("Repasses pagos",money(payoutsPaid))+
+         reportKpi("Suportes abertos",openSupport)+
+         reportKpi("Entregas movimentadas",deliveries.length)+
+       '</div>'+
+       reportTableHtml("Pedidos do período",reportDefs.orders.cols,orders);
+   }else{
+     const def=reportDefs[type],rows=await fetchReportRows(def,from,to);
+     state.reportRows=rows;state.reportColumns=def.cols;state.reportName=type;
+     $("#reportResult").innerHTML=
+       '<div class="kpi-grid report-kpis">'+
+         reportKpi("Registros",rows.length)+
+         (type==="orders"?reportKpi("Valor total",money(rows.reduce((s,r)=>s+Number(r.total||0),0))):"")+
+         (type==="deliveries"?reportKpi("Taxas de entrega",money(rows.reduce((s,r)=>s+Number(r.fee||0),0))):"")+
+         (type==="payouts"?reportKpi("Valor dos repasses",money(rows.reduce((s,r)=>s+Number(r.amount||0),0))):"")+
+         (type==="reviews"&&rows.length?reportKpi("Nota média",(rows.reduce((s,r)=>s+Number(r.rating||0),0)/rows.length).toFixed(2)):"")+
+       '</div>'+
+       reportTableHtml(def.label,def.cols,rows);
+   }
+   $("#exportReport").disabled=!state.reportRows?.length;
+ }catch(e){
+   state.reportRows=[];state.reportColumns=[];state.reportName="";
+   $("#reportResult").innerHTML='<div class="notice"><b>Não foi possível gerar o relatório.</b><br>'+esc(e.message||String(e))+'</div>';
+ }
+}
+
+function reportTableHtml(titleText,cols,rows){
+ return '<section class="panel report-output"><div class="panel-head"><div><h2>'+esc(titleText)+'</h2><p>'+rows.length+' registros no período.</p></div></div>'+
+   '<div class="table-wrap"><table><thead><tr>'+cols.map((k)=>'<th>'+esc(label(k))+'</th>').join("")+'</tr></thead><tbody>'+
+   (rows.length?rows.map((row)=>'<tr>'+cols.map((k)=>'<td>'+cell(k,row[k])+'</td>').join("")+'</tr>').join(""):'<tr><td colspan="'+cols.length+'" class="empty">Nenhum registro encontrado.</td></tr>')+
+   '</tbody></table></div></section>';
+}
+
+function exportCurrentReport(){
+ const rows=state.reportRows||[],cols=state.reportColumns||[];
+ if(!rows.length||!cols.length){toast("Não há dados para exportar.");return;}
+ const csvValue=(v)=>{
+   if(v===null||v===undefined)return '""';
+   const raw=typeof v==="object"?JSON.stringify(v):String(v);
+   return '"'+raw.replaceAll('"','""')+'"';
+ };
+ const csv=[cols.map((k)=>csvValue(label(k))).join(";"),...rows.map((row)=>cols.map((k)=>csvValue(row[k])).join(";"))].join("\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="feirae-"+(state.reportName||"relatorio")+"-"+inputDate(new Date())+".csv";
+ document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
 
 async function renderSettings(){
