@@ -309,11 +309,22 @@ async function renderDashboard(){
 }
 
 async function fetchReportRows(def,from,to){
- let q=state.supabase.from(def.table).select(def.cols.join(",")).gte(def.dateField,from+"T00:00:00").lte(def.dateField,to+"T23:59:59.999").order(def.dateField,{ascending:false}).limit(5000);
- if(def.statuses?.length)q=q.in("status",def.statuses);
- const r=await q;
- if(r.error)throw r.error;
- return r.data||[];
+ const all=[],chunkSize=1000,maxRows=20000;
+ for(let start=0;start<maxRows;start+=chunkSize){
+   let q=state.supabase.from(def.table).select(def.cols.join(","))
+     .gte(def.dateField,from+"T00:00:00")
+     .lte(def.dateField,to+"T23:59:59.999")
+     .order(def.dateField,{ascending:false})
+     .range(start,start+chunkSize-1);
+   if(def.statuses?.length)q=q.in("status",def.statuses);
+   const r=await q;
+   if(r.error)throw r.error;
+   const rows=r.data||[];
+   all.push(...rows);
+   if(rows.length<chunkSize)break;
+ }
+ state.reportTruncated=all.length>=maxRows;
+ return all;
 }
 
 function reportKpi(labelText,value,helper=""){
@@ -860,35 +871,40 @@ async function renderFinance(){
 }
 
 async function renderAlerts(){
- $("#pageContent").innerHTML='<div class="empty">Verificando alertas operacionais…</div>';
+ $("#pageContent").innerHTML='<div class="empty">Atualizando alertas operacionais…</div>';
  try{
-   const settingR=await state.supabase.from("platform_settings").select("key,value").in("key",["alerts.order_stale_minutes","alerts.delivery_stale_minutes","alerts.document_expiry_days"]);
-   const settings=Object.fromEntries((settingR.data||[]).map((r)=>[r.key,Number(r.value)]));
-   const orderMinutes=settings["alerts.order_stale_minutes"]||45;
-   const deliveryMinutes=settings["alerts.delivery_stale_minutes"]||30;
-   const expiryDays=settings["alerts.document_expiry_days"]||30;
-   const now=Date.now(),orderCut=new Date(now-orderMinutes*60000).toISOString(),deliveryCut=new Date(now-deliveryMinutes*60000).toISOString();
-   const expiry=new Date(now+expiryDays*86400000).toISOString().slice(0,10);
-   const empty={data:[],error:null};
-   const [orders,deliveries,docs,payments,payouts,integrations]=await Promise.all([
-     state.supabase.from("orders").select("id,status,total,updated_at,created_at").not("status","in","(delivered,canceled,refunded)").lt("updated_at",orderCut).order("updated_at"),
-     state.supabase.from("deliveries").select("id,order_id,status,delivery_id,updated_at").not("status","in","(delivered,canceled)").lt("updated_at",deliveryCut).order("updated_at"),
-     canModule("documents")?state.supabase.from("onboarding_documents").select("id,profile_id,document_type,status,expires_at").neq("status","rejected").lte("expires_at",expiry).order("expires_at"):Promise.resolve(empty),
-     state.supabase.from("payments").select("id,order_id,status,amount,failure_reason,created_at").in("status",["failed","error","declined"]).order("created_at",{ascending:false}).limit(100),
-     canModule("finance")?state.supabase.from("payouts").select("id,profile_id,status,amount,created_at").eq("status","failed").order("created_at",{ascending:false}).limit(100):Promise.resolve(empty),
-     canModule("integration_health")?state.supabase.from("integration_registry").select("key,label,enabled,status,last_checked_at").eq("enabled",true).neq("status","ok"):Promise.resolve(empty)
-   ]);
-   const all=[orders,deliveries,docs,payments,payouts,integrations];const bad=all.find((x)=>x.error);if(bad)throw bad.error;
-   const total=all.reduce((s,x)=>s+(x.data?.length||0),0);
-   let html='<div class="kpi-grid">'+reportKpi("Alertas ativos",total)+reportKpi("Pedidos parados",orders.data.length)+reportKpi("Entregas paradas",deliveries.data.length)+reportKpi("Documentos vencendo",docs.data.length)+reportKpi("Falhas financeiras",payments.data.length+payouts.data.length)+reportKpi("Integrações",integrations.data.length)+'</div>';
-   html+=miniTable("Pedidos sem atualização",["id","status","total","updated_at","created_at"],orders.data||[]);
-   html+=miniTable("Entregas sem atualização",["id","order_id","status","delivery_id","updated_at"],deliveries.data||[]);
-   html+=miniTable("Documentos vencidos ou próximos",["profile_id","document_type","status","expires_at"],docs.data||[]);
-   html+=miniTable("Pagamentos com falha",["order_id","status","amount","failure_reason","created_at"],payments.data||[]);
-   html+=miniTable("Repasses com falha",["profile_id","status","amount","created_at"],payouts.data||[]);
-   html+=miniTable("Integrações com atenção",["key","label","status","last_checked_at"],integrations.data||[]);
+   await invokeAdminAction("refresh_alerts");
+   const r=await state.supabase.from("operational_alerts").select("*").order("last_seen_at",{ascending:false}).limit(500);
+   if(r.error)throw r.error;
+   const rows=r.data||[];
+   const open=rows.filter((x)=>x.status==="open");
+   const ack=rows.filter((x)=>x.status==="acknowledged");
+   const critical=rows.filter((x)=>x.status!=="resolved"&&x.severity==="critical");
+   let html='<div class="kpi-grid">'+
+     reportKpi("Abertos",open.length)+
+     reportKpi("Reconhecidos",ack.length)+
+     reportKpi("Críticos",critical.length)+
+     reportKpi("Total recente",rows.length)+
+   '</div><section class="panel"><div class="panel-head"><div><h2>Central de alertas</h2><p>Alertas persistentes com responsável e histórico.</p></div><button id="refreshAlerts" class="secondary">Recalcular</button></div>'+
+   '<div class="table-wrap"><table><thead><tr><th>Severidade</th><th>Alerta</th><th>Entidade</th><th>Status</th><th>Detectado</th><th>Última ocorrência</th><th>Ações</th></tr></thead><tbody>';
+   html+=rows.length?rows.map((row,i)=>'<tr><td><span class="badge '+esc(row.severity)+'">'+esc(row.severity)+'</span></td><td><b>'+esc(row.title)+'</b><br><small>'+esc(row.message||"")+'</small></td><td>'+esc(row.entity)+'<br><small>'+esc(row.entity_id)+'</small></td><td>'+cell("status",row.status)+'</td><td>'+date(row.detected_at)+'</td><td>'+date(row.last_seen_at)+'</td><td><div class="actions">'+
+     (row.status==="open"?'<button data-alert-ack="'+i+'">Reconhecer</button>':'')+
+     (row.status!=="resolved"?'<button data-alert-resolve="'+i+'">Resolver</button>':'')+
+     '</div></td></tr>').join(""):'<tr><td colspan="7" class="empty">Nenhum alerta ativo.</td></tr>';
+   html+='</tbody></table></div></section>';
    $("#pageContent").innerHTML=html;
+   $("#refreshAlerts").onclick=()=>renderAlerts();
+   document.querySelectorAll("[data-alert-ack]").forEach((b)=>b.onclick=()=>updateAlert("alert_acknowledge",rows[Number(b.dataset.alertAck)]));
+   document.querySelectorAll("[data-alert-resolve]").forEach((b)=>b.onclick=()=>updateAlert("alert_resolve",rows[Number(b.dataset.alertResolve)]));
  }catch(e){renderError(e);}
+}
+
+async function updateAlert(action,row){
+ try{
+   await invokeAdminAction(action,{alert_id:row.id});
+   toast(action==="alert_acknowledge"?"Alerta reconhecido.":"Alerta resolvido.");
+   await renderAlerts();
+ }catch(e){toast(e.message||String(e));}
 }
 
 async function renderIntegrationHealth(){
@@ -901,11 +917,22 @@ async function renderIntegrationHealth(){
    if(registry.error)throw registry.error;if(events.error)throw events.error;
    const latest={};for(const e of events.data||[]){if(!latest[e.integration_key])latest[e.integration_key]=e;}
    const rows=(registry.data||[]).map((r)=>({...r,health_status:latest[r.key]?.status||r.status,health_message:latest[r.key]?.message||"",response_ms:latest[r.key]?.response_ms,checked_at:latest[r.key]?.checked_at||r.last_checked_at}));
-   let html='<div class="notice"><b>Teste real:</b> health checks que dependem de credenciais devem ser executados no backend/Edge Function. Esta tela exibe o resultado recebido e nunca expõe segredo no navegador.</div>';
-   html+=miniTable("Estado atual",["label","provider","environment","enabled","health_status","health_message","response_ms","checked_at"],rows);
+   let html='<div class="notice"><b>Health check seguro:</b> o navegador solicita a verificação, mas a URL/segredo fica no ambiente da Edge Function.</div>'+
+   '<section class="panel"><div class="panel-head"><div><h2>Estado atual</h2><p>Verifique uma integração sem expor credenciais.</p></div></div><div class="table-wrap"><table><thead><tr><th>Integração</th><th>Provedor</th><th>Ambiente</th><th>Status</th><th>Latência</th><th>Verificado</th><th>Ação</th></tr></thead><tbody>'+
+   rows.map((row)=>'<tr><td>'+esc(row.label)+'</td><td>'+esc(row.provider)+'</td><td>'+esc(row.environment)+'</td><td>'+cell("status",row.health_status)+'</td><td>'+esc(row.response_ms??"—")+' ms</td><td>'+date(row.checked_at)+'</td><td><button class="secondary" data-health-check="'+esc(row.key)+'">Testar</button></td></tr>').join("")+
+   '</tbody></table></div></section>';
    html+=miniTable("Histórico de verificações",["integration_key","status","message","response_ms","checked_at"],events.data||[]);
    $("#pageContent").innerHTML=html;
+   document.querySelectorAll("[data-health-check]").forEach((b)=>b.onclick=()=>runHealthCheck(b.dataset.healthCheck));
  }catch(e){renderError(e);}
+}
+
+async function runHealthCheck(key){
+ try{
+   const result=await invokeAdminAction("health_check",{integration_key:key});
+   toast("Health check: "+(result.data?.status||"concluído"));
+   await renderIntegrationHealth();
+ }catch(e){toast(e.message||String(e));}
 }
 
 const ADMIN_PERMISSION_SET=["*","operations.manage","documents.review","accounts.enforce","registrations.manage","rules.manage","finance.manage","communications.manage","settings.manage","permissions.manage","audit.view","reports.view"];
