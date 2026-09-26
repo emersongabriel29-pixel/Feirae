@@ -32,18 +32,18 @@ A fonte de verdade ainda é o navegador. Portanto, estado local não oferece gar
 
 ## Achados prioritários atuais
 
-| Prioridade | Achado | Impacto | Próxima ação |
-| --- | --- | --- | --- |
-| P0 | Auth local é apenas mecanismo de protótipo | segurança | migrar para Supabase Auth + RLS |
-| P0 | Pedido/estoque/ledger ainda não são server-side | consistência e fraude | RPC/Edge Functions/transações |
-| P0 | Pagamento não é real | financeiro | escolher provedor e implementar webhooks |
-| P0 | Documentos ficam no navegador | privacidade/durabilidade | Storage privado + policies |
-| P1 | Estados de frontend e enum SQL precisam de uma convenção única | integração | seguir `DATA_MODEL_AND_STATES.md` |
-| P1 | Rotas usam serviço de protótipo | SLA/termos | provedor de produção |
-| P1 | Não há painel administrativo implementado | operação | `ADMIN_MANAGEMENT_SPEC.md` |
-| P1 | Não há observabilidade/telemetria de produção | operação | monitoramento + incidentes |
-| P2 | Fixtures ainda convivem com dados locais em contas demo | clareza | separar seed/demo de dados reais |
-| P2 | E2E atual é Testing Library, não browser E2E | regressão | Playwright/Cypress ou equivalente |
+| Prioridade | Achado                                                         | Impacto                  | Próxima ação                             |
+| ---------- | -------------------------------------------------------------- | ------------------------ | ---------------------------------------- |
+| P0         | Auth local é apenas mecanismo de protótipo                     | segurança                | migrar para Supabase Auth + RLS          |
+| P0         | Pedido/estoque/ledger ainda não são server-side                | consistência e fraude    | RPC/Edge Functions/transações            |
+| P0         | Pagamento não é real                                           | financeiro               | escolher provedor e implementar webhooks |
+| P0         | Documentos ficam no navegador                                  | privacidade/durabilidade | Storage privado + policies               |
+| P1         | Estados de frontend e enum SQL precisam de uma convenção única | integração               | seguir `DATA_MODEL_AND_STATES.md`        |
+| P1         | Rotas usam serviço de protótipo                                | SLA/termos               | provedor de produção                     |
+| P1         | Não há painel administrativo implementado                      | operação                 | `ADMIN_MANAGEMENT_SPEC.md`               |
+| P1         | Não há observabilidade/telemetria de produção                  | operação                 | monitoramento + incidentes               |
+| P2         | Fixtures ainda convivem com dados locais em contas demo        | clareza                  | separar seed/demo de dados reais         |
+| P2         | E2E atual é Testing Library, não browser E2E                   | regressão                | Playwright/Cypress ou equivalente        |
 
 ## Arquitetura alvo
 

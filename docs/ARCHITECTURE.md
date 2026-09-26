@@ -163,9 +163,9 @@ Exemplo conceitual:
 
 ```ts
 interface OrderRepository {
-  get(id: string): Promise<Order>
-  create(input: CreateOrder): Promise<Order>
-  transition(id: string, action: OrderAction): Promise<Order>
+  get(id: string): Promise<Order>;
+  create(input: CreateOrder): Promise<Order>;
+  transition(id: string, action: OrderAction): Promise<Order>;
 }
 ```
 
@@ -178,19 +178,19 @@ Implementações:
 
 Produção:
 
-| Domínio | Fonte de verdade |
-| --- | --- |
-| sessão | Auth |
-| papéis | Postgres/RLS |
-| catálogo | Postgres |
-| imagens/documentos | Storage |
-| estoque | Postgres/transação |
-| pedido | Postgres |
-| eventos | Postgres |
-| pagamento | provedor + ledger |
-| rota | provedor/cache |
-| notificações | backend |
-| avaliações | Postgres |
+| Domínio            | Fonte de verdade   |
+| ------------------ | ------------------ |
+| sessão             | Auth               |
+| papéis             | Postgres/RLS       |
+| catálogo           | Postgres           |
+| imagens/documentos | Storage            |
+| estoque            | Postgres/transação |
+| pedido             | Postgres           |
+| eventos            | Postgres           |
+| pagamento          | provedor + ledger  |
+| rota               | provedor/cache     |
+| notificações       | backend            |
+| avaliações         | Postgres           |
 
 ## Princípios
 

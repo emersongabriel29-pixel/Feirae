@@ -8,19 +8,19 @@ Toda integração deve ficar atrás de adapter/repository. A UI não deve conhec
 
 ## Matriz
 
-| Integração | Protótipo atual | Produção |
-| --- | --- | --- |
-| Auth | autenticação local | Supabase Auth ou equivalente |
-| Banco | localStorage + migrations no repo | Supabase Postgres |
-| Arquivos | data URL/localStorage | Supabase Storage privado |
-| Geocodificação | serviço público de protótipo | provedor com SLA/termos adequados |
-| Rotas | OSRM público/protótipo | provedor de produção |
-| Mapas | abertura de mapa | provedor definido |
-| Pix/cartão | simulação de estados | PSP/gateway marketplace |
-| KYC | status local | serviço/revisão real |
-| Push | não integrado | FCM/APNs/serviço |
-| WhatsApp | consentimento local | BSP/API oficial |
-| Observabilidade | CI apenas | erros/logs/métricas/traces |
+| Integração      | Protótipo atual                   | Produção                          |
+| --------------- | --------------------------------- | --------------------------------- |
+| Auth            | autenticação local                | Supabase Auth ou equivalente      |
+| Banco           | localStorage + migrations no repo | Supabase Postgres                 |
+| Arquivos        | data URL/localStorage             | Supabase Storage privado          |
+| Geocodificação  | serviço público de protótipo      | provedor com SLA/termos adequados |
+| Rotas           | OSRM público/protótipo            | provedor de produção              |
+| Mapas           | abertura de mapa                  | provedor definido                 |
+| Pix/cartão      | simulação de estados              | PSP/gateway marketplace           |
+| KYC             | status local                      | serviço/revisão real              |
+| Push            | não integrado                     | FCM/APNs/serviço                  |
+| WhatsApp        | consentimento local               | BSP/API oficial                   |
+| Observabilidade | CI apenas                         | erros/logs/métricas/traces        |
 
 ## Pagamentos
 

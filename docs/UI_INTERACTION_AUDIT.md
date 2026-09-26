@@ -112,7 +112,7 @@ onClick={() => undefined}
 Se indisponível:
 
 ```tsx
-disabled
+disabled;
 ```
 
 e explicar o motivo.
