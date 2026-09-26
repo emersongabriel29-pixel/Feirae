@@ -553,7 +553,7 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /entrar como feirante/i }));
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
-    expect(screen.getByText(/status: documentação pendente/i)).toBeInTheDocument();
+    expect(screen.getByText(/status do cadastro: documentação pendente/i)).toBeInTheDocument();
   });
 
   it("opens the delivery experience selected at login", () => {
