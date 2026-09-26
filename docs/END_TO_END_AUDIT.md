@@ -33,7 +33,7 @@ Legenda desta rodada:
 | A1-11 | Entregador: criar conta → documentos → aprovação → ficar online | 🚧 Não fecha | Documentação pode ser enviada, porém não existe revisão administrativa funcional para aprovar conta real. |
 | A1-12 | Entregador: oferta → aceitar → coletar → entregar | ✅ OK no protótipo demo | Sequência local existe e é testada; aceite atômico entre dispositivos ainda não existe. |
 | A1-13 | Entregador real: lista de corridas | ✅ Corrigido | Fixtures `FE-1024…FE-1027` deixaram de aparecer para contas reais/novas; ficam restritas a contas demo. |
-| A1-14 | Cancelamento/reatribuição de corrida | ✅ Corrigido localmente | Se o pedido foi cancelado, concluído ou deixou de estar atribuído ao motorista, o lock local da corrida ativa é limpo. |
+| A1-14 | Cancelamento/reatribuição de corrida | ✅ Corrigido localmente | Se o pedido foi cancelado, concluído ou deixou de estar atribuído ao motorista, o lock local obsoleto deixa de bloquear novas ofertas. |
 | A1-15 | Rota/ETA | 🔌 Depende de integração | Nominatim/OSRM públicos calculam geocodificação/rota. Sem rota, a oferta real não é liberada ao entregador. |
 | A1-16 | Rota de pedido multi-banca | 🚧 Não implementado | Ainda não existem múltiplos stops entre bancas; a rota é resumida para uma origem → cliente. |
 | A1-17 | Pix/cartão/estorno/conciliação | 🔌 Depende de integração | Estados financeiros são simulados; não existe PSP, webhook ou conciliação. |
@@ -45,7 +45,7 @@ Legenda desta rodada:
 ### Correções aplicadas nesta auditoria
 
 - `DeliveryScreens.tsx`: fixtures de corrida ficam exclusivas de conta demo;
-- `DeliveryScreens.tsx`: lock de corrida ativa é limpo quando o pedido compartilhado foi cancelado, concluído ou reatribuído;
+- `DeliveryScreens.tsx`: o estado derivado deixa de considerar um lock local obsoleto quando o pedido foi cancelado, concluído ou reatribuído;
 - `VendorScreens.tsx`: conta real nunca recebe aprovação documental seed por ausência de storage;
 - `VendorScreens.tsx` + `orderBridge.ts`: retirada multi-banca só conclui o pedido após todas as bancas confirmarem;
 - testes de regressão adicionados em `App.test.tsx` e `orderBridge.test.ts`.
@@ -53,6 +53,7 @@ Legenda desta rodada:
 ### Conclusão da Auditoria 1
 
 A jornada local do protótipo está encadeada para compra, preparo, logística, retirada/entrega e avaliação, mas **o Feiraê ainda não possui um fluxo ponta a ponta de produção**. Os bloqueadores centrais são backend compartilhado, revisão administrativa, aceite transacional de corrida, multi-stop, PSP/ledger e resolução operacional de suporte.
+
 ## Cliente
 
 | Fluxo                     | Implementado | Teste direto                                    | Limite atual                               |
