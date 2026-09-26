@@ -597,7 +597,9 @@ A nova auditoria da Gestão corrigiu os seguintes pontos:
 - campos de Estado, Região e Veículo convertidos para seletores quando aplicável;
 - auditoria filtrável por nome do administrador;
 - testes estruturais da Gestão em `admin/management.test.js`;
-- bucket privado de documentos com limite/tipos permitidos.
+- bucket privado de documentos com limite/tipos permitidos;
+- upload server-side em `document-upload` com validação de tamanho, MIME e magic bytes;
+- conexão do painel fixa por `admin/config.json` em produção; configuração manual fica restrita a localhost.
 
 ### Limites que continuam externos
 
@@ -605,7 +607,7 @@ Não foram marcados como concluídos:
 
 - aplicação da migration no Supabase correto;
 - deploy da Edge Function;
-- validação de magic bytes/antivírus no upload;
+- antivírus/antimalware adicional no pipeline de documentos;
 - integração do app principal às tabelas de runtime configuration;
 - PSP/ledger real;
 - staging/E2E em ambiente conectado.
