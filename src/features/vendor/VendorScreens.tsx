@@ -2306,6 +2306,41 @@ export function FeiranteOperations({
                   className="form-card"
                   onSubmit={(event) => {
                     event.preventDefault();
+                    const nextAccount = {
+                      name: vendorAccountDraft.name.trim(),
+                      cpf: vendorAccountDraft.cpf.trim(),
+                      birthDate: vendorAccountDraft.birthDate,
+                      email: vendorAccountDraft.email.trim().toLocaleLowerCase("pt-BR"),
+                      phone: vendorAccountDraft.phone.trim(),
+                      pixKey: vendorAccountDraft.pixKey.trim(),
+                      businessType: vendorAccountDraft.businessType,
+                      cnpj: vendorAccountDraft.cnpj.trim(),
+                      responsibleDocument: vendorAccountDraft.responsibleDocument.trim(),
+                      receivingMethod: vendorAccountDraft.receivingMethod,
+                      bankName: vendorAccountDraft.bankName.trim(),
+                      agency: vendorAccountDraft.agency.trim(),
+                      accountNumber: vendorAccountDraft.accountNumber.trim(),
+                    };
+                    const error = onAccountUpdate(
+                      nextAccount.name,
+                      nextAccount.email,
+                      vendorAccountDraft.newPassword.trim() || undefined,
+                    );
+                    if (error) {
+                      setAccountError(error);
+                      setAccountSaved(false);
+                      return;
+                    }
+                    if (nextAccount.email !== session.email.trim().toLocaleLowerCase("pt-BR")) {
+                      window.localStorage.setItem(
+                        `feirae:vendor-account:${nextAccount.email}`,
+                        JSON.stringify(nextAccount),
+                      );
+                    } else {
+                      setVendorAccount(nextAccount);
+                    }
+                    setVendorAccountDraft({ ...nextAccount, newPassword: "" });
+                    setAccountError("");
                     setAccountSaved(true);
                     window.setTimeout(() => setAccountSaved(false), 2200);
                   }}
@@ -2314,18 +2349,18 @@ export function FeiranteOperations({
                     <label>
                       Nome completo
                       <input
-                        value={vendorAccount.name}
+                        value={vendorAccountDraft.name}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({ ...current, name: event.target.value }))
+                          setVendorAccountDraft((current) => ({ ...current, name: event.target.value }))
                         }
                       />
                     </label>
                     <label>
                       CPF
                       <input
-                        value={vendorAccount.cpf}
+                        value={vendorAccountDraft.cpf}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({ ...current, cpf: event.target.value }))
+                          setVendorAccountDraft((current) => ({ ...current, cpf: event.target.value }))
                         }
                         placeholder="000.000.000-00"
                         inputMode="numeric"
@@ -2335,18 +2370,18 @@ export function FeiranteOperations({
                       Data de nascimento
                       <input
                         type="date"
-                        value={vendorAccount.birthDate}
+                        value={vendorAccountDraft.birthDate}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({ ...current, birthDate: event.target.value }))
+                          setVendorAccountDraft((current) => ({ ...current, birthDate: event.target.value }))
                         }
                       />
                     </label>
                     <label>
                       Telefone
                       <input
-                        value={vendorAccount.phone}
+                        value={vendorAccountDraft.phone}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({ ...current, phone: event.target.value }))
+                          setVendorAccountDraft((current) => ({ ...current, phone: event.target.value }))
                         }
                         placeholder="(61) 99999-9999"
                       />
@@ -2356,9 +2391,9 @@ export function FeiranteOperations({
                     E-mail
                     <input
                       type="email"
-                      value={vendorAccount.email}
+                      value={vendorAccountDraft.email}
                       onChange={(event) =>
-                        setVendorAccount((current) => ({ ...current, email: event.target.value }))
+                        setVendorAccountDraft((current) => ({ ...current, email: event.target.value }))
                       }
                     />
                   </label>
@@ -2366,9 +2401,9 @@ export function FeiranteOperations({
                     <label>
                       Tipo de cadastro
                       <select
-                        value={vendorAccount.businessType}
+                        value={vendorAccountDraft.businessType}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({
+                          setVendorAccountDraft((current) => ({
                             ...current,
                             businessType: event.target.value,
                           }))
@@ -2381,9 +2416,9 @@ export function FeiranteOperations({
                     <label>
                       CNPJ (se houver)
                       <input
-                        value={vendorAccount.cnpj}
+                        value={vendorAccountDraft.cnpj}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({ ...current, cnpj: event.target.value }))
+                          setVendorAccountDraft((current) => ({ ...current, cnpj: event.target.value }))
                         }
                         placeholder="00.000.000/0000-00"
                       />
@@ -2391,9 +2426,9 @@ export function FeiranteOperations({
                     <label>
                       Documento do responsável
                       <input
-                        value={vendorAccount.responsibleDocument}
+                        value={vendorAccountDraft.responsibleDocument}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({
+                          setVendorAccountDraft((current) => ({
                             ...current,
                             responsibleDocument: event.target.value,
                           }))
@@ -2404,9 +2439,9 @@ export function FeiranteOperations({
                     <label>
                       Forma de recebimento
                       <select
-                        value={vendorAccount.receivingMethod}
+                        value={vendorAccountDraft.receivingMethod}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({
+                          setVendorAccountDraft((current) => ({
                             ...current,
                             receivingMethod: event.target.value,
                           }))
@@ -2417,13 +2452,13 @@ export function FeiranteOperations({
                       </select>
                     </label>
                   </div>
-                  {vendorAccount.receivingMethod === "Pix" ? (
+                  {vendorAccountDraft.receivingMethod === "Pix" ? (
                     <label>
                       Chave Pix para repasse
                       <input
-                        value={vendorAccount.pixKey}
+                        value={vendorAccountDraft.pixKey}
                         onChange={(event) =>
-                          setVendorAccount((current) => ({ ...current, pixKey: event.target.value }))
+                          setVendorAccountDraft((current) => ({ ...current, pixKey: event.target.value }))
                         }
                         placeholder="CPF, e-mail, telefone ou chave"
                       />
@@ -2433,9 +2468,9 @@ export function FeiranteOperations({
                       <label>
                         Banco
                         <input
-                          value={vendorAccount.bankName}
+                          value={vendorAccountDraft.bankName}
                           onChange={(event) =>
-                            setVendorAccount((current) => ({
+                            setVendorAccountDraft((current) => ({
                               ...current,
                               bankName: event.target.value,
                             }))
@@ -2445,9 +2480,9 @@ export function FeiranteOperations({
                       <label>
                         Agência
                         <input
-                          value={vendorAccount.agency}
+                          value={vendorAccountDraft.agency}
                           onChange={(event) =>
-                            setVendorAccount((current) => ({
+                            setVendorAccountDraft((current) => ({
                               ...current,
                               agency: event.target.value,
                             }))
@@ -2457,9 +2492,9 @@ export function FeiranteOperations({
                       <label>
                         Conta
                         <input
-                          value={vendorAccount.accountNumber}
+                          value={vendorAccountDraft.accountNumber}
                           onChange={(event) =>
-                            setVendorAccount((current) => ({
+                            setVendorAccountDraft((current) => ({
                               ...current,
                               accountNumber: event.target.value,
                             }))
@@ -2468,10 +2503,40 @@ export function FeiranteOperations({
                       </label>
                     </div>
                   )}
+                  <label>
+                    Nova senha
+                    <input
+                      type="password"
+                      value={vendorAccountDraft.newPassword}
+                      onChange={(event) =>
+                        setVendorAccountDraft((current) => ({
+                          ...current,
+                          newPassword: event.target.value,
+                        }))
+                      }
+                      minLength={6}
+                      placeholder="Deixe vazio para manter a atual"
+                      autoComplete="new-password"
+                    />
+                  </label>
+                  {accountError && <p className="operation-footnote" role="alert">{accountError}</p>}
                   {accountSaved && <p className="inline-success">Alterações salvas.</p>}
-                  <button className="primary-action" type="submit">
-                    <Edit3 size={17} /> Salvar alterações
-                  </button>
+                  <div className="module-action-row">
+                    <button className="primary-action" type="submit">
+                      <Edit3 size={17} /> Salvar alterações
+                    </button>
+                    <button
+                      className="secondary-action"
+                      type="button"
+                      onClick={() => {
+                        setVendorAccountDraft({ ...vendorAccount, newPassword: "" });
+                        setAccountError("");
+                        setAccountSaved(false);
+                      }}
+                    >
+                      Descartar alterações
+                    </button>
+                  </div>
                 </form>
               </>
             ) : active === "Documentos" ? (
