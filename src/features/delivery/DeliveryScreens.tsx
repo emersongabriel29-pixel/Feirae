@@ -239,6 +239,7 @@ export function DeliveryOperations({
       description: string;
       status: "pending" | "under_review" | "approved" | "correction_required";
       fileName: string;
+      file?: StoredFile;
       expiresAt: string;
     }[]
   >(`feirae:delivery-documents:${session.email}`, defaultDeliveryDocuments);
@@ -2021,7 +2022,11 @@ export function DeliveryOperations({
                             {document.name} · {requiredNow ? "obrigatório agora" : "não obrigatório agora"}
                           </b>
                           <small>{document.description}</small>
-                          {document.fileName && <small>Arquivo: {document.fileName}</small>}
+                          {document.fileName && (
+                            <small>
+                              Arquivo: {document.file ? storedFileLabel(document.file) : document.fileName}
+                            </small>
+                          )}
                         </div>
                         <div className="item-actions">
                           <span className="document-status">
@@ -2042,18 +2047,23 @@ export function DeliveryOperations({
                               onChange={(event) => {
                                 const file = event.target.files?.[0];
                                 if (!file) return;
-                                setDeliveryDocuments((current) =>
-                                  current.map((item) =>
-                                    item.id === document.id
-                                      ? {
-                                          ...item,
-                                          fileName: file.name,
-                                          status: "under_review",
-                                        }
-                                      : item,
-                                  ),
-                                );
-                                if (requiredNow) setOnline(false);
+                                void readFileForLocalStorage(file)
+                                  .then((stored) => {
+                                    setDeliveryDocuments((current) =>
+                                      current.map((item) =>
+                                        item.id === document.id
+                                          ? {
+                                              ...item,
+                                              fileName: stored.name,
+                                              file: stored,
+                                              status: "under_review",
+                                            }
+                                          : item,
+                                      ),
+                                    );
+                                    if (requiredNow) setOnline(false);
+                                  })
+                                  .catch((error: Error) => setIncidentNotice(error.message));
                               }}
                             />
                           </label>
