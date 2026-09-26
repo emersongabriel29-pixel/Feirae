@@ -21,11 +21,12 @@ import { deliveryModuleDetails } from "../../domain/operations";
 import { fairs } from "../../data";
 import { drivingRoute, geocodeAddress } from "../../domain/routing";
 import {
+  getVehicleTypeOptions,
   isValidBrazilianPlate,
+  isVehicleTypeActive,
   normalizePlate,
   requiresPlate,
   suggestedCapacityForVehicle,
-  vehicleTypeOptions,
   type DeliveryVehicle,
   type DeliveryVehicleType,
 } from "../../domain/vehicles";
@@ -123,6 +124,7 @@ export function DeliveryOperations({
   const [vehicleCapacity, setVehicleCapacity] = useState<number>(suggestedCapacityForVehicle("Moto"));
   const [vehicleBrandModel, setVehicleBrandModel] = useState("");
   const [vehiclePlate, setVehiclePlate] = useState("");
+  const vehicleTypeOptions = getVehicleTypeOptions();
   const [deliveryAccount, setDeliveryAccount] = usePersistentState(
     `feirae:delivery-account:${session.email}`,
     {
@@ -306,6 +308,17 @@ export function DeliveryOperations({
     };
   }, [deliveryPreferences.baseLat, deliveryPreferences.baseLng]);
 
+  useEffect(() => {
+    if (vehicleEditingId || vehicleTypeOptions.length === 0) return;
+    if (!vehicleTypeOptions.includes(vehicleType)) {
+      const nextType = vehicleTypeOptions[0];
+      setVehicleType(nextType);
+      setVehicleCapacity(suggestedCapacityForVehicle(nextType));
+      setVehiclePlate("");
+      setVehicleDocumentName("");
+    }
+  }, [vehicleEditingId, vehicleType, vehicleTypeOptions]);
+
   function resetVehicleForm() {
     setVehicleEditingId(null);
     setVehicleType("Moto");
@@ -333,6 +346,15 @@ export function DeliveryOperations({
     const plate = normalizePlate(vehiclePlate);
     if (vehicleCapacity <= 0) {
       setVehicleError("Informe uma capacidade maior que zero.");
+      return;
+    }
+    const configuredMaximum = suggestedCapacityForVehicle(vehicleType);
+    if (!vehicleEditingId && vehicleCapacity > configuredMaximum) {
+      setVehicleError(`A Gestão permite no máximo ${configuredMaximum} kg para ${vehicleType}.`);
+      return;
+    }
+    if (!isVehicleTypeActive(vehicleType)) {
+      setVehicleError("Este tipo de veículo está desativado pela Gestão.");
       return;
     }
     if (requiresPlate(vehicleType) && !isValidBrazilianPlate(plate)) {
@@ -507,7 +529,9 @@ export function DeliveryOperations({
         }))
     : [];
   const deliveries = [...sharedDeliveries, ...fixtureDeliveries];
-  const activeVehicles = vehicles.filter((vehicle) => vehicle.active);
+  const activeVehicles = vehicles.filter(
+    (vehicle) => vehicle.active && isVehicleTypeActive(vehicle.type),
+  );
   const hasMotorizedVehicle = activeVehicles.some((vehicle) => requiresPlate(vehicle.type));
   const hasMoto = activeVehicles.some(
     (vehicle) => vehicle.type === "Moto" || vehicle.type === "Moto com baú",
@@ -568,7 +592,11 @@ export function DeliveryOperations({
     (vehicle.documentStatus === "approved" && isValidBrazilianPlate(vehicle.plate));
   const compatibleVehicleForWeight = (weight: number) =>
     [...activeVehicles]
-      .filter((vehicle) => vehicle.capacityKg >= weight && vehicleReady(vehicle))
+      .filter(
+        (vehicle) =>
+          Math.min(vehicle.capacityKg, suggestedCapacityForVehicle(vehicle.type)) >= weight &&
+          vehicleReady(vehicle),
+      )
       .sort((a, b) => a.capacityKg - b.capacityKg)[0] ?? null;
   const visibleDeliveries = deliveries
     .filter((delivery) => delivery.available !== false)
