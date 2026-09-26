@@ -56,9 +56,7 @@ function customerOrderNotification(
       title: order.fulfillment === "pickup" ? "Pronto para retirada" : "Pedido pronto",
       body: orderBody(
         order,
-        order.fulfillment === "pickup"
-          ? "já pode ser retirado na feira"
-          : "aguardando coleta do entregador",
+        order.fulfillment === "pickup" ? "já pode ser retirado na feira" : "aguardando coleta do entregador",
       ),
       tag: `feirae-customer-${order.id}-ready`,
       url: "/#/cliente/pedidos",
@@ -304,12 +302,7 @@ export async function requestFeiraeNotificationPermission(): Promise<FeiraeNotif
   return Notification.requestPermission();
 }
 
-export async function showFeiraeNotification({
-  title,
-  body,
-  tag,
-  url = "/",
-}: FeiraeNotificationMessage) {
+export async function showFeiraeNotification({ title, body, tag, url = "/" }: FeiraeNotificationMessage) {
   if (typeof window === "undefined" || !("Notification" in window)) return false;
   if (Notification.permission !== "granted") return false;
 
