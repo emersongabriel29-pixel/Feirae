@@ -253,7 +253,6 @@ QR Code e copia e cola são gerados no checkout.
 
 Não colocar título e descrição corridos na mesma linha. A mesma regra vale para cartão, dinheiro e pagamento na entrega.
 
-
 ## Central operacional ao vivo
 
 Feirante e entregador devem enxergar trabalho novo na própria Central, antes da grade de módulos.
