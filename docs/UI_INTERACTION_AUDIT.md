@@ -184,7 +184,6 @@ Um controle só é “funcional” quando:
 - outra tela dependente recebe a alteração;
 - teste existe para ação crítica.
 
-
 ## Auditoria de design/layout aplicada em 26/09/2026
 
 Correções implementadas no código:

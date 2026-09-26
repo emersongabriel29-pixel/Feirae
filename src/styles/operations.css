@@ -257,7 +257,8 @@
 }
 .operation-list.detailed article {
   align-items: flex-start;
-  background: radial-gradient(circle at 98% 0%, rgba(223, 243, 107, 0.13), transparent 6rem), var(--fe-surface);
+  background:
+    radial-gradient(circle at 98% 0%, rgba(223, 243, 107, 0.13), transparent 6rem), var(--fe-surface);
 }
 .operation-list article svg {
   flex: none;
@@ -294,7 +295,7 @@
 }
 .inventory-dot.warning {
   background: #e59a24;
-  box-shadow: 0 0 0 5px var(--fe-surface)3dd;
+  box-shadow: 0 0 0 5px var(--fe-surface) 3dd;
 }
 .mini-toggle {
   flex: none;
@@ -591,7 +592,6 @@
   background: var(--fe-green);
   color: white;
 }
-
 
 /* Design-system consolidation */
 .ops-group + .ops-group {

@@ -172,7 +172,6 @@ A documentação agora registra, mas não resolve sozinha:
 
 Esses itens só podem ser marcados concluídos quando o código correspondente for implementado e testado.
 
-
 ## Atualização visual posterior — 26/09/2026
 
 A auditoria de design/layout foi aplicada ao código e documentada.
