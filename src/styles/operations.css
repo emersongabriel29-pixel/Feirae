@@ -591,3 +591,88 @@
   background: var(--fe-green);
   color: white;
 }
+
+
+/* Design-system consolidation */
+.ops-group + .ops-group {
+  margin-top: 1.35rem;
+}
+.ops-group-title {
+  margin: 0 0 0.65rem;
+  color: var(--fe-text-soft);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ops-group-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+.module-card,
+.operation-card,
+.operation-list article,
+.operation-summary,
+.review-card,
+.finance-breakdown {
+  box-shadow: var(--fe-shadow-sm);
+}
+.operation-card {
+  min-height: 0;
+}
+.mini-toggle,
+.status-button {
+  min-height: var(--fe-touch);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.stock-controls button {
+  width: var(--fe-touch);
+  height: var(--fe-touch);
+}
+.document-status.status-approved {
+  background: var(--fe-success-soft);
+  color: var(--fe-success);
+}
+.document-status.status-review {
+  background: var(--fe-warning-soft);
+  color: var(--fe-warning);
+}
+.document-status.status-error {
+  background: var(--fe-danger-soft);
+  color: var(--fe-danger);
+}
+.inline-error {
+  border: 1px solid #efcccc;
+  border-radius: var(--fe-radius-sm);
+  background: var(--fe-danger-soft);
+  padding: 0.65rem 0.75rem;
+  color: var(--fe-danger);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+.danger-action {
+  display: inline-flex;
+  min-height: var(--fe-touch);
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid #efcccc;
+  border-radius: var(--fe-radius-sm);
+  background: var(--fe-danger-soft);
+  padding: 0.7rem 1rem;
+  color: var(--fe-danger);
+  font-size: 0.82rem;
+  font-weight: 880;
+}
+@media (min-width: 640px) {
+  .ops-group-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .ops-group-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
