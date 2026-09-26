@@ -443,6 +443,24 @@ export function DeliveryOperations({
   ];
   const sharedOrders = readUnifiedOrders();
   void unifiedOrderRevision;
+
+  useEffect(() => {
+    if (!accepted) return;
+    const sharedAcceptedOrder = readUnifiedOrders().find((order) => order.id === accepted);
+    if (!sharedAcceptedOrder) return;
+
+    const stillAssignedToThisDriver =
+      ["driver_assigned", "collected", "out_for_delivery"].includes(sharedAcceptedOrder.status) &&
+      sharedAcceptedOrder.driver?.driverKey === session.email;
+
+    if (!stillAssignedToThisDriver) {
+      setAccepted(null);
+      setStage(0);
+      setCancelReason("");
+      setCancelDetails("");
+    }
+  }, [accepted, session.email, setAccepted, setStage, unifiedOrderRevision]);
+
   const deliveredReviewOrders = sharedOrders.filter(
     (order) =>
       order.status === "delivered" &&
