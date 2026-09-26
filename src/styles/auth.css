@@ -115,7 +115,7 @@
     translate 0.2s ease;
 }
 .role-options > button:hover {
-  border-color: #9fc8aa;
+  border-color: var(--fe-border);
   translate: 2px 0;
 }
 .role-options > button.selected {
@@ -129,7 +129,7 @@
   height: 2.8rem;
   place-items: center;
   border-radius: 0.85rem;
-  background: #edf3ed;
+  background: var(--fe-surface-soft);
   color: var(--fe-green);
 }
 .role-options > button.selected > span:first-child {
@@ -150,7 +150,7 @@
   width: 1.45rem;
   height: 1.45rem;
   place-items: center;
-  border: 1px solid #bdc8c0;
+  border: 1px solid var(--fe-border);
   border-radius: 50%;
   color: white;
 }
@@ -167,7 +167,7 @@
 .login-form label {
   display: grid;
   gap: 0.35rem;
-  color: #3e4c44;
+  color: var(--fe-muted);
   font-size: 0.72rem;
   font-weight: 850;
 }
@@ -204,7 +204,7 @@
 }
 .demo-notice {
   margin-top: 0.8rem;
-  color: #7b8781;
+  color: var(--fe-muted);
   font-size: 0.66rem;
   line-height: 1.5;
   text-align: center;
@@ -215,7 +215,7 @@
   gap: 0.4rem;
   margin: 0.7rem 0 1rem;
   border-radius: 0.9rem;
-  background: #eef2ee;
+  background: var(--fe-surface-soft);
   padding: 0.3rem;
 }
 .auth-switch button {
@@ -231,7 +231,7 @@
   box-shadow: 0 4px 14px rgba(30, 45, 34, 0.08);
 }
 .signup-requirements {
-  border: 1px solid #cfe1d4;
+  border: 1px solid var(--fe-border);
   border-radius: 0.9rem;
   background: var(--fe-green-soft);
   padding: 0.85rem;
@@ -260,11 +260,11 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  border: 1px solid #e4cccc;
+  border: 1px solid color-mix(in srgb, var(--fe-danger) 25%, var(--fe-surface));
   border-radius: 0.8rem;
-  background: #fffafa;
+  background: var(--fe-danger-soft);
   padding: 0.65rem 0.8rem;
-  color: #914646;
+  color: var(--fe-danger);
   font-size: 0.75rem;
   font-weight: 850;
 }
@@ -312,7 +312,7 @@
   font-weight: 800;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: #7b8781;
+  color: var(--fe-muted);
 }
 .desktop-nav {
   border-radius: var(--fe-radius-sm);
@@ -338,7 +338,7 @@
   color: #314039;
 }
 .icon-button:hover {
-  border-color: #b8d0bf;
+  border-color: var(--fe-border);
   background: var(--fe-green-soft);
 }
 .icon-button.large {
@@ -394,7 +394,7 @@
   border-radius: 0.95rem;
   background: #f9faf8;
   padding: 0 0.85rem;
-  color: #77837d;
+  color: var(--fe-muted);
 }
 .search-field:focus-within {
   border-color: #75a887;
@@ -437,7 +437,7 @@
   grid-template-columns: auto minmax(110px, 190px) auto;
   align-items: center;
   gap: 0.45rem;
-  border: 1px solid #cfe1d4;
+  border: 1px solid var(--fe-border);
   border-radius: 0.95rem;
   background: var(--fe-green-soft);
   padding: 0 0.45rem 0 0.75rem;
@@ -476,7 +476,7 @@
   border-radius: 0.95rem;
   background: var(--fe-surface);
   padding: 0 0.8rem;
-  color: #46544d;
+  color: var(--fe-muted);
   font-size: 0.76rem;
   font-weight: 800;
 }
