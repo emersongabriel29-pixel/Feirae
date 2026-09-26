@@ -3,7 +3,11 @@ import { navGroups, modules } from "./modules.js";
 
 const CONFIG_KEY="feirae:management:supabase";
 const $=(s)=>document.querySelector(s);
-const state={supabase:null,session:null,profile:null,active:"dashboard",rows:[],editing:null,permissions:new Set(),restricted:false,selected:new Set()};
+const state={
+ supabase:null,session:null,profile:null,active:"dashboard",rows:[],editing:null,
+ permissions:new Set(),isSuperadmin:false,selected:new Set(),
+ page:0,pageSize:50,total:0,query:"",mfaFactorId:null
+};
 
 const permissionByModule={
   alerts:"operations.manage",orders:"operations.manage",delivery_jobs:"operations.manage",support:"operations.manage",
@@ -19,10 +23,10 @@ const permissionByModule={
 };
 function canModule(id){
   const permission=permissionByModule[id];
-  return !permission||!state.restricted||state.permissions.has("*")||state.permissions.has(permission);
+  return !permission||state.isSuperadmin||state.permissions.has("*")||state.permissions.has(permission);
 }
 
-function show(id){["boot","setupView","loginView","appView"].forEach((x)=>$("#"+x).classList.toggle("hidden",x!==id));}
+function show(id){["boot","setupView","loginView","mfaView","appView"].forEach((x)=>$("#"+x).classList.toggle("hidden",x!==id));}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
 function toast(msg){const el=$("#toast");el.textContent=msg;el.classList.remove("hidden");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.add("hidden"),3000);}
 function loginError(msg){$("#loginError").textContent=msg;$("#loginError").classList.toggle("hidden",!msg);}
@@ -104,7 +108,40 @@ async function boot(){
  configure(c);
  const session=(await state.supabase.auth.getSession()).data.session;
  if(!session){show("loginView");return;}
- if(!(await acceptSession(session)))show("loginView");
+ const result=await acceptSession(session);
+ if(result==="denied")show("loginView");
+}
+
+async function ensureAdminMfa(){
+ const aal=await state.supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+ if(aal.error){loginError(aal.error.message);return "denied";}
+ if(aal.data?.currentLevel==="aal2")return "ready";
+
+ const factors=await state.supabase.auth.mfa.listFactors();
+ if(factors.error){loginError(factors.error.message);return "denied";}
+ const verified=(factors.data?.totp||[]).find((factor)=>factor.status==="verified");
+ if(verified){
+   state.mfaFactorId=verified.id;
+   $("#mfaEnrollment").classList.add("hidden");
+   $("#mfaInstructions").textContent="Digite o código atual do seu aplicativo autenticador.";
+   $("#mfaError").classList.add("hidden");
+   show("mfaView");
+   return "mfa";
+ }
+
+ const enrollment=await state.supabase.auth.mfa.enroll({
+   factorType:"totp",
+   friendlyName:"Feiraê Gestão"
+ });
+ if(enrollment.error){loginError(enrollment.error.message);return "denied";}
+ state.mfaFactorId=enrollment.data.id;
+ $("#mfaQr").src=enrollment.data.totp.qr_code;
+ $("#mfaSecret").textContent=enrollment.data.totp.secret;
+ $("#mfaEnrollment").classList.remove("hidden");
+ $("#mfaInstructions").textContent="Escaneie o QR Code no autenticador e informe o código gerado.";
+ $("#mfaError").classList.add("hidden");
+ show("mfaView");
+ return "mfa";
 }
 
 async function acceptSession(session){
@@ -113,28 +150,44 @@ async function acceptSession(session){
  if(r.error||!r.data||r.data.role!=="admin"){
    await state.supabase.auth.signOut();
    loginError(r.error?.message||"Esta conta não possui papel admin.");
-   return false;
+   return "denied";
  }
  state.profile=r.data;
- const access=await state.supabase.from("admin_access").select("active").eq("profile_id",session.user.id).maybeSingle();
- if(access.error){
+ const access=await state.supabase.from("admin_access").select("active,is_superadmin").eq("profile_id",session.user.id).maybeSingle();
+ if(access.error||!access.data){
    await state.supabase.auth.signOut();
-   loginError("Não foi possível validar o acesso administrativo.");
-   return false;
+   loginError(access.error?.message||"Esta conta não possui acesso administrativo configurado.");
+   return "denied";
  }
- if(access.data?.active===false){
+ if(access.data.active===false){
    await state.supabase.auth.signOut();
    loginError("Este acesso administrativo está desativado.");
-   return false;
+   return "denied";
  }
+
+ const mfaResult=await ensureAdminMfa();
+ if(mfaResult!=="ready")return mfaResult;
+
+ state.isSuperadmin=Boolean(access.data.is_superadmin);
  const permissions=await state.supabase.from("admin_permissions").select("permission").eq("profile_id",session.user.id);
+ if(permissions.error){
+   await state.supabase.auth.signOut();
+   loginError("Não foi possível carregar as permissões administrativas.");
+   return "denied";
+ }
  state.permissions=new Set((permissions.data||[]).map((x)=>x.permission));
- state.restricted=state.permissions.size>0&&!state.permissions.has("*");
  renderNav();
- $("#adminIdentity").textContent=r.data.full_name||session.user.email;
+ $("#adminIdentity").textContent=(r.data.full_name||session.user.email)+(state.isSuperadmin?" · Superadmin":"");
  show("appView");
  await openModule("dashboard");
- return true;
+ return "ready";
+}
+
+async function invokeAdminAction(action,payload={}){
+ const result=await state.supabase.functions.invoke("admin-actions",{body:{action,...payload}});
+ if(result.error)throw result.error;
+ if(result.data?.error)throw new Error(result.data.detail||result.data.error);
+ return result.data;
 }
 
 function renderNav(){
@@ -151,7 +204,7 @@ function renderNav(){
 
 async function openModule(id){
  if(!canModule(id)){toast("Você não possui permissão para esta área.");return;}
- state.active=id;state.rows=[];state.selected=new Set();
+ state.active=id;state.rows=[];state.selected=new Set();state.page=0;state.query="";
  document.querySelectorAll(".nav-item").forEach((b)=>b.classList.toggle("active",b.dataset.module===id));
  $("#appView").classList.remove("menu-open");
  if(id==="dashboard"){ $("#pageTitle").textContent="Visão geral";$("#breadcrumb").textContent="Operação";await renderDashboard();return; }
@@ -899,9 +952,26 @@ $("#loginForm").onsubmit=async(e)=>{
  e.preventDefault();loginError("");
  const r=await state.supabase.auth.signInWithPassword({email:$("#email").value.trim(),password:$("#password").value});
  if(r.error){loginError(r.error.message);return;}
- if(!(await acceptSession(r.data.session)))show("loginView");
+ const result=await acceptSession(r.data.session);
+ if(result==="denied")show("loginView");
 };
-$("#changeConnection").onclick=()=>{localStorage.removeItem(CONFIG_KEY);show("setupView");};
+$("#mfaForm").onsubmit=async(e)=>{
+ e.preventDefault();
+ const code=$("#mfaCode").value.trim();
+ if(!state.mfaFactorId||!code)return;
+ $("#mfaError").classList.add("hidden");
+ const verified=await state.supabase.auth.mfa.challengeAndVerify({factorId:state.mfaFactorId,code});
+ if(verified.error){
+   $("#mfaError").textContent=verified.error.message;
+   $("#mfaError").classList.remove("hidden");
+   return;
+ }
+ $("#mfaCode").value="";
+ $("#mfaEnrollment").classList.add("hidden");
+ const session=(await state.supabase.auth.getSession()).data.session;
+ if(session)await acceptSession(session);
+};
+$("#mfaCancel").onclick=async()=>{await state.supabase.auth.signOut();state.mfaFactorId=null;show("loginView");};
 $("#logoutBtn").onclick=async()=>{await state.supabase.auth.signOut();state.profile=null;show("loginView");};
 $("#refreshBtn").onclick=()=>openModule(state.active);
 $("#menuBtn").onclick=()=>$("#appView").classList.toggle("menu-open");
