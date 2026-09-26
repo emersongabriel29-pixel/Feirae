@@ -217,3 +217,26 @@ Uma release deve registrar:
 - rollback disponível.
 
 O número 69 é referência do protótipo atual, não selo de produção.
+
+
+## 12. QA visual após auditoria de design
+
+A auditoria de 26/09/2026 alterou layout e navegação sem adicionar framework de browser E2E.
+
+Cobertura funcional foi ajustada para a entrada direta de Feirante/Entregador nas Centrais.
+
+Ainda não há prova automatizada de regressão visual para:
+
+- 320 px;
+- 360 px;
+- 390/412 px;
+- 768 px;
+- 1024 px;
+- 1280 px;
+- 1440 px;
+- foto de produto com diferentes proporções;
+- quebra de KPI com textos longos;
+- drawer/carrinho com teclado virtual;
+- contraste calculado por ferramenta automatizada.
+
+Antes de produção, adicionar Playwright (ou equivalente) com screenshots das telas-chave e comparação visual.
