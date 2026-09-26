@@ -219,9 +219,7 @@ export default function App() {
     if (role !== "customer" || !session) return;
     const unifiedOrders = readUnifiedOrders(session.email);
     const currentKeys = new Set(
-      unifiedOrders.flatMap((order) =>
-        order.events.map((event) => `${order.id}:${event.key}:${event.at}`),
-      ),
+      unifiedOrders.flatMap((order) => order.events.map((event) => `${order.id}:${event.key}:${event.at}`)),
     );
 
     if (seenCustomerOrderNotifications.current === null) {
