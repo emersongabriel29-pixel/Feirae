@@ -2022,8 +2022,16 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
     </Panel>
   );
 }
-export function AccountPage({ session, onBack }: { session: DemoSession; onBack: () => void }) {
-  const [profile, setProfile] = usePersistentState(`feirae:account:${session.email}`, {
+export function AccountPage({
+  session,
+  onBack,
+  onAccountUpdate,
+}: {
+  session: DemoSession;
+  onBack: () => void;
+  onAccountUpdate: (name: string, email: string, newPassword?: string) => string | null;
+}) {
+  const initialProfile = {
     name: session.name,
     cpf: "",
     birthDate: "",
@@ -2035,20 +2043,62 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
     complement: "",
     city: "Planaltina",
     state: "DF",
-    password: "",
-  });
+  };
+  const [profile, setProfile] = usePersistentState(scopedStorageKey("feirae:account"), initialProfile);
+  const [draft, setDraft] = useState({ ...profile, newPassword: "" });
   const [saved, setSaved] = useState(false);
+  const [formError, setFormError] = useState("");
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    const nextProfile = {
+      name: draft.name.trim(),
+      cpf: draft.cpf.trim(),
+      birthDate: draft.birthDate,
+      email: draft.email.trim().toLocaleLowerCase("pt-BR"),
+      phone: draft.phone.trim(),
+      cep: draft.cep.trim(),
+      address: draft.address.trim(),
+      number: draft.number.trim(),
+      complement: draft.complement.trim(),
+      city: draft.city.trim(),
+      state: draft.state.trim().toUpperCase(),
+    };
+    const error = onAccountUpdate(
+      nextProfile.name,
+      nextProfile.email,
+      draft.newPassword.trim() || undefined,
+    );
+    if (error) {
+      setFormError(error);
+      setSaved(false);
+      return;
+    }
+
+    if (nextProfile.email !== session.email.trim().toLocaleLowerCase("pt-BR")) {
+      window.localStorage.setItem(
+        scopedStorageKey("feirae:account", nextProfile.email),
+        JSON.stringify(nextProfile),
+      );
+    } else {
+      setProfile(nextProfile);
+    }
+    setDraft({ ...nextProfile, newPassword: "" });
+    setFormError("");
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2200);
+  }
+
+  function discardChanges() {
+    setDraft({ ...profile, name: session.name, email: session.email, newPassword: "" });
+    setFormError("");
+    setSaved(false);
   }
 
   return (
     <Panel
       title="Minha conta"
-      subtitle="Dados pessoais, contato, endereço e segurança da sua conta."
+      subtitle="As alterações só são aplicadas quando você toca em Salvar alterações."
       onBack={onBack}
     >
       <form className="form-card max-w-2xl" onSubmit={submit}>
@@ -2056,16 +2106,17 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
           <label>
             Nome completo
             <input
-              value={profile.name}
-              onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
+              value={draft.name}
+              onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
               autoComplete="name"
+              required
             />
           </label>
           <label>
             CPF
             <input
-              value={profile.cpf}
-              onChange={(event) => setProfile((current) => ({ ...current, cpf: event.target.value }))}
+              value={draft.cpf}
+              onChange={(event) => setDraft((current) => ({ ...current, cpf: event.target.value }))}
               placeholder="000.000.000-00"
               inputMode="numeric"
             />
@@ -2073,16 +2124,18 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
           <label>
             Data de nascimento
             <input
-              value={profile.birthDate}
+              value={draft.birthDate}
               type="date"
-              onChange={(event) => setProfile((current) => ({ ...current, birthDate: event.target.value }))}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, birthDate: event.target.value }))
+              }
             />
           </label>
           <label>
             Telefone
             <input
-              value={profile.phone}
-              onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
+              value={draft.phone}
+              onChange={(event) => setDraft((current) => ({ ...current, phone: event.target.value }))}
               placeholder="(61) 99999-9999"
               autoComplete="tel"
             />
@@ -2090,21 +2143,23 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
         </div>
 
         <label>
-          E-mail
+          E-mail de acesso
           <input
-            value={profile.email}
+            value={draft.email}
             type="email"
-            onChange={(event) => setProfile((current) => ({ ...current, email: event.target.value }))}
+            onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))}
             autoComplete="email"
+            required
           />
+          <small>Ao salvar, o novo e-mail passa a ser usado no próximo login.</small>
         </label>
 
         <div className="grid gap-3 sm:grid-cols-[.7fr_1.3fr]">
           <label>
             CEP
             <input
-              value={profile.cep}
-              onChange={(event) => setProfile((current) => ({ ...current, cep: event.target.value }))}
+              value={draft.cep}
+              onChange={(event) => setDraft((current) => ({ ...current, cep: event.target.value }))}
               placeholder="00000-000"
               inputMode="numeric"
             />
@@ -2112,8 +2167,10 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
           <label>
             Endereço
             <input
-              value={profile.address}
-              onChange={(event) => setProfile((current) => ({ ...current, address: event.target.value }))}
+              value={draft.address}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, address: event.target.value }))
+              }
               placeholder="Rua, avenida, quadra..."
               autoComplete="street-address"
             />
@@ -2124,31 +2181,35 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
           <label>
             Número
             <input
-              value={profile.number}
-              onChange={(event) => setProfile((current) => ({ ...current, number: event.target.value }))}
+              value={draft.number}
+              onChange={(event) => setDraft((current) => ({ ...current, number: event.target.value }))}
               placeholder="Número/lote"
             />
           </label>
           <label>
             Complemento
             <input
-              value={profile.complement}
-              onChange={(event) => setProfile((current) => ({ ...current, complement: event.target.value }))}
+              value={draft.complement}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, complement: event.target.value }))
+              }
               placeholder="Apartamento, bloco, referência"
             />
           </label>
           <label>
             Cidade/região
             <input
-              value={profile.city}
-              onChange={(event) => setProfile((current) => ({ ...current, city: event.target.value }))}
+              value={draft.city}
+              onChange={(event) => setDraft((current) => ({ ...current, city: event.target.value }))}
             />
           </label>
           <label>
             Estado
             <input
-              value={profile.state}
-              onChange={(event) => setProfile((current) => ({ ...current, state: event.target.value }))}
+              value={draft.state}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, state: event.target.value.toUpperCase() }))
+              }
               maxLength={2}
             />
           </label>
@@ -2157,22 +2218,31 @@ export function AccountPage({ session, onBack }: { session: DemoSession; onBack:
         <label>
           Nova senha
           <input
-            value={profile.password}
-            onChange={(event) => setProfile((current) => ({ ...current, password: event.target.value }))}
+            value={draft.newPassword}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, newPassword: event.target.value }))
+            }
             type="password"
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Deixe vazio para manter a atual"
             autoComplete="new-password"
+            minLength={6}
           />
+          <small>A senha não é salva junto com os dados do perfil.</small>
         </label>
+        {formError && <p className="operation-footnote" role="alert">{formError}</p>}
         {saved && <p className="inline-success">Alterações salvas.</p>}
-        <button type="submit" className="primary-action">
-          <Edit3 size={17} /> Salvar alterações
-        </button>
+        <div className="module-action-row">
+          <button type="submit" className="primary-action">
+            <Edit3 size={17} /> Salvar alterações
+          </button>
+          <button type="button" className="secondary-action" onClick={discardChanges}>
+            Descartar alterações
+          </button>
+        </div>
       </form>
     </Panel>
   );
 }
-
 export function PaymentsPage({ onBack }: { onBack: () => void }) {
   const [cards, setCards] = usePersistentState<
     { id: string; holder: string; last4: string; expiry: string; type: string; brand?: string }[]
