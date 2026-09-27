@@ -31,8 +31,9 @@ npm run build
 
 | Arquivo                                  | Testes |
 | ---------------------------------------- | -----: |
-| `src/App.test.tsx`                       |     52 |
-| `src/domain/orderBridge.test.ts`         |      5 |
+| `src/App.test.tsx`                       |     53 |
+| `src/domain/orderBridge.test.ts`         |      7 |
+| `src/domain/multiVendor.test.ts`         |      4 |
 | `src/domain/feiraeNotifications.test.ts` |      5 |
 | `src/domain/legalTerms.test.ts`          |      8 |
 | `src/domain/marketplaceBridge.test.ts`   |      4 |
@@ -41,11 +42,11 @@ npm run build
 | `src/domain/marketplace.test.ts`         |      4 |
 | `src/domain/session.test.ts`             |      3 |
 | `src/utils.test.ts`                      |      4 |
-| **Total**                                | **92** |
+| **Total**                                | **99** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 52 testes cobrem explicitamente:
+Os 53 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -143,9 +144,18 @@ Os 52 testes cobrem explicitamente:
 
 - multi-banca só libera após todas prontas;
 - retirada multi-banca só conclui após todas as bancas confirmarem;
+- entrega multi-banca mantém status global até a última coleta;
+- `pickupStops` são derivados/persistidos na rota;
 - peso real propaga;
 - suporte/avaliações ficam no mesmo pedido;
 - histórico isolado por cliente.
+
+### multiVendor
+
+- aceita várias bancas da mesma feira;
+- bloqueia mistura de feiras;
+- limita o MVP a quatro bancas;
+- continua permitindo itens de uma banca que já está na sacola.
 
 ### marketplaceBridge
 
@@ -167,7 +177,7 @@ Os 52 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 92 testes NÃO comprovam diretamente
+## 5. O que os 99 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
