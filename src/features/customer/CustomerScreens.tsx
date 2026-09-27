@@ -742,8 +742,8 @@ export function VendorStore({
             {minutesLabel(metrics.deliveryMinutes)} · entrega a partir de {money(metrics.deliveryFee)}
           </p>
           <p>
-            Pedido mínimo nesta banca: <strong>{money(MIN_VENDOR_ORDER_AMOUNT)}</strong>. Em pedidos multi-banca,
-            cada banca precisa atingir esse mínimo.
+            Pedido mínimo nesta banca: <strong>{money(MIN_VENDOR_ORDER_AMOUNT)}</strong>. Em pedidos
+            multi-banca, cada banca precisa atingir esse mínimo.
           </p>
         </div>
         <button
@@ -978,9 +978,15 @@ export function DeliveryTracking({
               <div className="operation-list detailed">
                 {vendorStates.map((vendor, index) => (
                   <article key={vendor.vendorId}>
-                    {["collected", "delivered"].includes(vendor.status) ? <Check size={17} /> : <Store size={17} />}
+                    {["collected", "delivered"].includes(vendor.status) ? (
+                      <Check size={17} />
+                    ) : (
+                      <Store size={17} />
+                    )}
                     <div>
-                      <b>{index + 1}. {vendor.vendorName}</b>
+                      <b>
+                        {index + 1}. {vendor.vendorName}
+                      </b>
                       <small>
                         {vendor.status === "pending"
                           ? "Aguardando confirmação"
@@ -1016,7 +1022,9 @@ export function DeliveryTracking({
                       {refund.deliveryAmount > 0 ? ` · ajuste de frete: ${money(refund.deliveryAmount)}` : ""}
                     </small>
                     {refund.walletRestoreAmount > 0 && (
-                      <small>{money(refund.walletRestoreAmount)} de saldo usado foi devolvido à carteira.</small>
+                      <small>
+                        {money(refund.walletRestoreAmount)} de saldo usado foi devolvido à carteira.
+                      </small>
                     )}
                     {refund.externalAmount > 0 && refund.status === "pending_choice" && (
                       <div className="module-action-row">
@@ -1035,7 +1043,9 @@ export function DeliveryTracking({
                       </div>
                     )}
                     {refund.status === "requested" && (
-                      <small>Estorno solicitado no meio de pagamento original. A conclusão depende do PSP.</small>
+                      <small>
+                        Estorno solicitado no meio de pagamento original. A conclusão depende do PSP.
+                      </small>
                     )}
                     {refund.status === "credited" && refund.destination === "wallet" && (
                       <small>Crédito disponibilizado na carteira Feiraê.</small>
@@ -1574,9 +1584,7 @@ export function Checkout({
             {vendorMinimums.map((summary) => (
               <p key={summary.vendorName}>
                 <strong>{summary.vendorName}</strong> · {money(summary.subtotal)}{" "}
-                {summary.meetsMinimum
-                  ? "✓ mínimo atingido"
-                  : `· faltam ${money(summary.missingForMinimum)}`}
+                {summary.meetsMinimum ? "✓ mínimo atingido" : `· faltam ${money(summary.missingForMinimum)}`}
               </p>
             ))}
             <small>Cada banca precisa somar pelo menos {money(MIN_VENDOR_ORDER_AMOUNT)} em produtos.</small>
@@ -1635,7 +1643,9 @@ export function Checkout({
             </p>
             <p>
               <span>Bancas</span>
-              <b>{vendorCount} de até {MAX_VENDORS_PER_ORDER}</b>
+              <b>
+                {vendorCount} de até {MAX_VENDORS_PER_ORDER}
+              </b>
             </p>
             <p>
               <span>Subtotal</span>
@@ -1747,14 +1757,14 @@ export function Checkout({
                 : !vendorMinimumMet
                   ? `Cada banca precisa atingir o pedido mínimo de ${money(MIN_VENDOR_ORDER_AMOUNT)}.`
                   : !deliveryAllowed && fulfillment === "delivery"
-                  ? "Uma das bancas não aceita entrega."
-                  : !pickupAllowed && fulfillment === "pickup"
-                    ? "Uma das bancas não aceita retirada."
-                    : cardPayment && !selectedCardId
-                      ? "Selecione um cartão salvo antes de confirmar."
-                      : cashPayment && needsChange && !changeValid
-                        ? "Informe um valor de troco igual ou maior que o total."
-                        : "Cadastre um endereço para entrega antes de confirmar."}
+                    ? "Uma das bancas não aceita entrega."
+                    : !pickupAllowed && fulfillment === "pickup"
+                      ? "Uma das bancas não aceita retirada."
+                      : cardPayment && !selectedCardId
+                        ? "Selecione um cartão salvo antes de confirmar."
+                        : cashPayment && needsChange && !changeValid
+                          ? "Informe um valor de troco igual ou maior que o total."
+                          : "Cadastre um endereço para entrega antes de confirmar."}
             </small>
           )}
         </aside>

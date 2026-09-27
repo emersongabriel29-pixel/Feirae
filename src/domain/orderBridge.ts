@@ -516,8 +516,7 @@ export function resolveRefundDestination(
       );
       const hasPendingExternalRefund = nextRefunds.some(
         (refund) =>
-          refund.externalAmount > 0 &&
-          (refund.status === "pending_choice" || refund.status === "requested"),
+          refund.externalAmount > 0 && (refund.status === "pending_choice" || refund.status === "requested"),
       );
       const hasResolvedRefund = nextRefunds.some(
         (refund) => refund.status === "credited" || refund.destination === "original_payment",

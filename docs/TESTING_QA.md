@@ -32,7 +32,7 @@ npm run build
 | Arquivo                                  |  Testes |
 | ---------------------------------------- | ------: |
 | `src/App.test.tsx`                       |      55 |
-| `src/domain/orderBridge.test.ts`         |     11 |
+| `src/domain/orderBridge.test.ts`         |      11 |
 | `src/domain/feiraeNotifications.test.ts` |       6 |
 | `src/domain/legalTerms.test.ts`          |       8 |
 | `src/domain/customerLegal.test.ts`       |       4 |
@@ -43,7 +43,7 @@ npm run build
 | `src/domain/marketplace.test.ts`         |       4 |
 | `src/domain/session.test.ts`             |       3 |
 | `src/utils.test.ts`                      |       4 |
-| **Total**                                  | **118** |
+| **Total**                                | **118** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 

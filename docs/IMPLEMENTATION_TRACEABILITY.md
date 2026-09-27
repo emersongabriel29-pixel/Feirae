@@ -326,7 +326,6 @@ Limite: a evidência ainda é local. Produção exige persistência server-side 
 - `DeliveryScreens.tsx`: remove banca cancelada de stops, itens e peso da corrida;
 - `REFUND_CANCELLATION_POLICY.md`: política funcional, jurídica e lacunas de PSP/ledger.
 
-
 ### Casos de borda de reembolso — 27/09/2026
 
 - cancelamentos sucessivos de bancas mantêm o pedido em `refund_pending` enquanto existir valor externo ainda aguardando destino/conclusão;
