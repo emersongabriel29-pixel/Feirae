@@ -426,3 +426,37 @@ Em **Criar conta → Cliente**, o formulário mostra um card compacto com a iden
 - texto explícito de que comunicações operacionais não são marketing.
 
 O bloco deve permanecer compacto no celular, com documentos roláveis internamente e sem caixas pré-marcadas.
+
+
+## Pedido mínimo por banca
+
+Não exibir mensagem genérica como **“pedido mínimo do carrinho”**.
+
+### Cliente
+
+Na página da banca:
+
+- mostrar **Pedido mínimo nesta banca: R$ X,XX**; ou
+- mostrar **Esta banca não exige pedido mínimo**.
+
+Na sacola:
+
+- agrupar a validação visual por banca;
+- mostrar quanto existe em produtos daquela banca;
+- mostrar quanto falta;
+- não somar frete/taxas ao progresso do mínimo.
+
+No checkout:
+
+- repetir a situação final após promoções;
+- se bloquear, citar **qual banca**, **quanto falta** e **qual é o mínimo**.
+
+### Feirante
+
+Em **Editar banca**:
+
+- seletor **Sem valor mínimo / Definir valor mínimo**;
+- campo monetário somente quando houver mínimo;
+- informar o teto vigente da plataforma;
+- prévia pública deve refletir a configuração salva.
+
