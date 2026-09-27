@@ -48,7 +48,7 @@ npm run build
 | `src/utils.test.ts`                        |       4 |
 | **Total Vitest**                           | **129** |
 
-Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy.test.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
+Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
 
 ## 3. Cobertura comprovada de App.test.tsx
