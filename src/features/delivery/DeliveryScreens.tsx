@@ -2409,7 +2409,8 @@ export function DeliveryOperations({
                       <span className="eyebrow">Arquivos e validação</span>
                       <h3>Seus documentos</h3>
                       <p>
-                        Os documentos obrigatórios se ajustam aos veículos ativos. Acompanhe cada análise aqui.
+                        Os documentos obrigatórios se ajustam aos veículos ativos. Acompanhe cada análise
+                        aqui.
                       </p>
                     </div>
                     <span className="documents-counter">
