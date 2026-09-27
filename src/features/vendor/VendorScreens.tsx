@@ -266,9 +266,7 @@ export function FeiranteOperations({
   const [legalAcceptances, setLegalAcceptances] = usePersistentState<LegalAcceptance[]>(
     `feirae:vendor-legal-acceptances:${session.email}`,
     seedDemoData
-      ? vendorRequiredTerms.map((term) =>
-          demoLegalAcceptance(term, "feirante", session.name, session.email),
-        )
+      ? vendorRequiredTerms.map((term) => demoLegalAcceptance(term, "feirante", session.name, session.email))
       : [],
   );
   const [stockHistory, setStockHistory] = usePersistentState<
@@ -519,16 +517,10 @@ export function FeiranteOperations({
   const vendorPaidPayout = orders
     .filter((order) => settlementStatus[order.id] === "paid")
     .reduce((sum, order) => sum + order.value, 0);
-  const vendorTermsAccepted = allRequiredTermsAccepted(
-    legalAcceptances,
-    vendorRequiredTerms,
-    "feirante",
-  );
+  const vendorTermsAccepted = allRequiredTermsAccepted(legalAcceptances, vendorRequiredTerms, "feirante");
   const approvalStatus = !vendorTermsAccepted
     ? "Termos pendentes"
-    : documents
-          .filter((document) => document.required)
-          .every((document) => document.status === "approved")
+    : documents.filter((document) => document.required).every((document) => document.status === "approved")
       ? "Aprovado"
       : documents.some((document) => document.status === "correction_required")
         ? "Correção necessária"
@@ -752,9 +744,7 @@ export function FeiranteOperations({
     const nextProduct = {
       ...productDraft,
       id:
-        productEditorId === "new"
-          ? Math.max(0, ...vendorItems.map((item) => item.id)) + 1
-          : productDraft.id,
+        productEditorId === "new" ? Math.max(0, ...vendorItems.map((item) => item.id)) + 1 : productDraft.id,
       active: productDraft.stock > 0 ? productDraft.active : false,
     };
     setVendorItems((current) =>
@@ -2783,8 +2773,8 @@ export function FeiranteOperations({
                   <div>
                     <b>Status do cadastro: {approvalStatus}</b>
                     <p>
-                      Enquanto os termos vigentes não estiverem assinados e os documentos obrigatórios não estiverem
-                      aprovados, a banca não deve vender ou receber repasses no ambiente real.
+                      Enquanto os termos vigentes não estiverem assinados e os documentos obrigatórios não
+                      estiverem aprovados, a banca não deve vender ou receber repasses no ambiente real.
                     </p>
                   </div>
                 </div>
