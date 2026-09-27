@@ -1,6 +1,13 @@
 export const MAX_VENDORS_PER_ORDER = 4;
-export const MIN_VENDOR_ORDER_AMOUNT = 30;
+export const DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT = 30;
+export const MAX_VENDOR_MINIMUM_ORDER_AMOUNT = 100;
+export const MIN_VENDOR_ORDER_AMOUNT = DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT;
 export const MULTI_VENDOR_EXTRA_STOP_FEE = 2.5;
+
+export function normalizeVendorMinimumOrder(value: number | undefined) {
+  if (value === undefined || !Number.isFinite(value)) return DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT;
+  return Math.min(MAX_VENDOR_MINIMUM_ORDER_AMOUNT, Math.max(0, Math.round(value * 100) / 100));
+}
 
 export type MultiVendorCartDecision =
   { allowed: true } | { allowed: false; reason: "different_fair" | "vendor_limit"; message: string };
@@ -8,6 +15,9 @@ export type MultiVendorCartDecision =
 export type VendorOrderSummary = {
   vendorName: string;
   subtotal: number;
+  promotionDiscount: number;
+  eligibleSubtotal: number;
+  minimumOrderAmount: number;
   missingForMinimum: number;
   meetsMinimum: boolean;
 };
@@ -43,6 +53,8 @@ export function validateMultiVendorCart(params: {
 export function vendorOrderSummaries<T extends { id: number; feirante: string; price: number }>(
   items: T[],
   cart: Record<number, number>,
+  minimumByVendor: Record<string, number | undefined> = {},
+  discountByVendor: Record<string, number | undefined> = {},
 ): VendorOrderSummary[] {
   const totals = new Map<string, number>();
 
@@ -54,10 +66,22 @@ export function vendorOrderSummaries<T extends { id: number; feirante: string; p
 
   return Array.from(totals.entries()).map(([vendorName, rawSubtotal]) => {
     const subtotal = Math.round(rawSubtotal * 100) / 100;
-    const missingForMinimum = Math.max(0, Math.round((MIN_VENDOR_ORDER_AMOUNT - subtotal) * 100) / 100);
+    const promotionDiscount = Math.max(
+      0,
+      Math.min(subtotal, Math.round((discountByVendor[vendorName] ?? 0) * 100) / 100),
+    );
+    const eligibleSubtotal = Math.max(0, Math.round((subtotal - promotionDiscount) * 100) / 100);
+    const minimumOrderAmount = normalizeVendorMinimumOrder(minimumByVendor[vendorName]);
+    const missingForMinimum = Math.max(
+      0,
+      Math.round((minimumOrderAmount - eligibleSubtotal) * 100) / 100,
+    );
     return {
       vendorName,
       subtotal,
+      promotionDiscount,
+      eligibleSubtotal,
+      minimumOrderAmount,
       missingForMinimum,
       meetsMinimum: missingForMinimum === 0,
     };
@@ -67,8 +91,10 @@ export function vendorOrderSummaries<T extends { id: number; feirante: string; p
 export function multiVendorMinimumMet<T extends { id: number; feirante: string; price: number }>(
   items: T[],
   cart: Record<number, number>,
+  minimumByVendor: Record<string, number | undefined> = {},
+  discountByVendor: Record<string, number | undefined> = {},
 ) {
-  const summaries = vendorOrderSummaries(items, cart);
+  const summaries = vendorOrderSummaries(items, cart, minimumByVendor, discountByVendor);
   return summaries.length > 0 && summaries.every((summary) => summary.meetsMinimum);
 }
 
