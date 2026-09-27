@@ -297,7 +297,6 @@ Limite: o aceite persiste em `localStorage` no protótipo. Produção precisa de
 
 A mudança é visual/UX e preserva as regras jurídicas e de aprovação implementadas anteriormente.
 
-
 ## Termos do Cliente no cadastro — 27/09/2026
 
 - `customerLegal.ts`: Termos de Uso e Aviso de Privacidade próprios do Cliente;
