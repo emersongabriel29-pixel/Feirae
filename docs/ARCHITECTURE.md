@@ -326,7 +326,6 @@ A sincronização de mudanças possui duas camadas:
 
 Isso reduz o risco de um PR atualizar “qualquer documento” em vez do documento correto para o domínio alterado.
 
-
 ### Splash premium — composição interna
 
 `LaunchExperience.tsx` usa uma cena SVG vetorial com grupos independentes para:
