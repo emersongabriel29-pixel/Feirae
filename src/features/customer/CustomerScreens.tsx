@@ -502,35 +502,35 @@ export function OrdersPage({
           />
         ) : (
           ordered.map((order) => (
-          <article key={order.id} className="order-card">
-            <div>
-              <small>{order.date}</small>
-              <h3>{order.id}</h3>
-              <p>{order.fairName ?? "Compra em múltiplas bancas"}</p>
-              {order.paymentMethod && <small>{order.paymentMethod}</small>}
-            </div>
-            <div className="text-right">
-              <span
-                className={`order-status ${
-                  order.status === "Entregue"
-                    ? "status-success"
-                    : order.status === "Cancelado"
-                      ? "status-danger"
-                      : order.status === "Recebido"
-                        ? "status-warning"
-                        : "status-progress"
-                }`}
-              >
-                {order.status}
-              </span>
-              <strong>{money(order.value)}</strong>
-              <div className="order-actions">
-                <button onClick={() => onTracking(order.id)}>Ver detalhes</button>
-                <button onClick={() => onBuyAgain(order.id)}>Comprar novamente</button>
+            <article key={order.id} className="order-card">
+              <div>
+                <small>{order.date}</small>
+                <h3>{order.id}</h3>
+                <p>{order.fairName ?? "Compra em múltiplas bancas"}</p>
+                {order.paymentMethod && <small>{order.paymentMethod}</small>}
               </div>
-            </div>
-          </article>
-        ))
+              <div className="text-right">
+                <span
+                  className={`order-status ${
+                    order.status === "Entregue"
+                      ? "status-success"
+                      : order.status === "Cancelado"
+                        ? "status-danger"
+                        : order.status === "Recebido"
+                          ? "status-warning"
+                          : "status-progress"
+                  }`}
+                >
+                  {order.status}
+                </span>
+                <strong>{money(order.value)}</strong>
+                <div className="order-actions">
+                  <button onClick={() => onTracking(order.id)}>Ver detalhes</button>
+                  <button onClick={() => onBuyAgain(order.id)}>Comprar novamente</button>
+                </div>
+              </div>
+            </article>
+          ))
         )}
       </div>
     </section>
