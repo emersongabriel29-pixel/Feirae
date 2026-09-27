@@ -1,6 +1,7 @@
 import type { Product } from "../types";
 import { storeIdFor, vendorIdFor } from "./identity";
 import { pickupVerificationCode } from "./fairInternalRouting";
+import { normalizeVendorMinimumOrder } from "./multiVendor";
 
 export type SharedPromotion = {
   id: string;
@@ -34,6 +35,7 @@ export type SharedStore = {
   absorbDeliveryFee: boolean;
   acceptCashOnDelivery: boolean;
   acceptCardOnDelivery: boolean;
+  minimumOrderAmount?: number;
   box?: string;
   corridor?: string;
   sector?: string;
@@ -127,6 +129,7 @@ export function syncVendorMarketplace(input: {
   absorbDeliveryFee: boolean;
   acceptCashOnDelivery: boolean;
   acceptCardOnDelivery: boolean;
+  minimumOrderAmount: number;
   box?: string;
   corridor?: string;
   sector?: string;
@@ -163,6 +166,7 @@ export function syncVendorMarketplace(input: {
     absorbDeliveryFee: input.absorbDeliveryFee,
     acceptCashOnDelivery: input.acceptCashOnDelivery,
     acceptCardOnDelivery: input.acceptCardOnDelivery,
+    minimumOrderAmount: normalizeVendorMinimumOrder(input.minimumOrderAmount),
     box: input.box,
     corridor: input.corridor,
     sector: input.sector,
@@ -288,6 +292,7 @@ export function calculateCheckoutPromotions(
   let promotionDiscount = 0;
   let deliverySubsidy = 0;
   const applied: string[] = [];
+  const vendorPromotionDiscounts: Record<string, number> = {};
 
   for (const store of marketplace.stores) {
     const storeItems = items.filter(
@@ -296,6 +301,7 @@ export function calculateCheckoutPromotions(
     );
     if (!storeItems.length) continue;
     const storeSubtotal = storeItems.reduce((sum, item) => sum + item.price * (cart[item.id] ?? 0), 0);
+    let storePromotionDiscount = 0;
 
     for (const promotion of store.promotions.filter(promotionIsActive)) {
       if (storeSubtotal < (promotion.minimumOrder ?? 0)) continue;
@@ -323,10 +329,14 @@ export function calculateCheckoutPromotions(
         ["percentual", "produtoCategoria", "horario", "combo", "cupom"].includes(promotion.type) &&
         (promotion.discountValue ?? 0) > 0
       ) {
-        promotionDiscount += (targetSubtotal * Math.min(100, promotion.discountValue ?? 0)) / 100;
+        const discount = (targetSubtotal * Math.min(100, promotion.discountValue ?? 0)) / 100;
+        promotionDiscount += discount;
+        storePromotionDiscount += discount;
         applied.push(promotion.name);
       } else if (promotion.type === "valorFixo" && (promotion.discountValue ?? 0) > 0) {
-        promotionDiscount += Math.min(storeSubtotal, promotion.discountValue ?? 0);
+        const discount = Math.min(storeSubtotal, promotion.discountValue ?? 0);
+        promotionDiscount += discount;
+        storePromotionDiscount += discount;
         applied.push(promotion.name);
       } else if (promotion.type === "compreLeve") {
         const pay = Math.max(1, promotion.payQuantity ?? 1);
@@ -335,10 +345,16 @@ export function calculateCheckoutPromotions(
         const freeUnits = Math.floor(quantity / take) * (take - pay);
         if (freeUnits > 0 && targetItems.length) {
           const lowestUnitPrice = Math.min(...targetItems.map((item) => item.price));
-          promotionDiscount += freeUnits * lowestUnitPrice;
+          const discount = freeUnits * lowestUnitPrice;
+          promotionDiscount += discount;
+          storePromotionDiscount += discount;
           applied.push(promotion.name);
         }
       }
+    }
+
+    if (storePromotionDiscount > 0) {
+      vendorPromotionDiscounts[store.name] = Math.round(storePromotionDiscount * 100) / 100;
     }
   }
 
@@ -346,5 +362,6 @@ export function calculateCheckoutPromotions(
     promotionDiscount: Math.round(promotionDiscount * 100) / 100,
     deliverySubsidy: Math.min(calculatedDeliveryFee, Math.round(deliverySubsidy * 100) / 100),
     appliedPromotions: Array.from(new Set(applied)),
+    vendorPromotionDiscounts,
   };
 }
