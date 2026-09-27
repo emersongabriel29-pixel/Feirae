@@ -94,7 +94,6 @@ A implementação usa três ilustrações SVG locais em `public/launch/` e CSS a
 
 Os tempos funcionais permanecem os mesmos: full ~3,3 s, quick ~1,55 s e reduced motion ~650 ms. O som continua desacoplado da renderização e não bloqueia a entrada no aplicativo.
 
-
 ## Correção de regressão — animação contínua
 
 A implementação por três imagens estáticas (`start → market → logo`) foi removida porque não atendia ao conceito aprovado.
