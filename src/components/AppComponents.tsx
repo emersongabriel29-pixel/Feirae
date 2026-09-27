@@ -30,6 +30,11 @@ import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
 import { cartWeight, productWeight } from "../domain/marketplace";
 import type { LegalAcceptance, LegalTerm } from "../domain/legalTerms";
+import {
+  customerPrivacyNotice,
+  customerTermsOfUse,
+  saveCustomerLegalAcceptances,
+} from "../domain/customerLegal";
 
 const roleLabels: Record<Role, string> = {
   customer: "Cliente",
@@ -54,6 +59,9 @@ export function LoginPage({
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedCustomerTerms, setAcceptedCustomerTerms] = useState(false);
+  const [acknowledgedCustomerPrivacy, setAcknowledgedCustomerPrivacy] = useState(false);
+  const [customerOffersOptIn, setCustomerOffersOptIn] = useState(false);
   const [formError, setFormError] = useState("");
   const options: Array<{ role: Role; title: string; text: string; icon: ReactNode }> = [
     {
@@ -80,19 +88,48 @@ export function LoginPage({
     if (formError) setFormError("");
   }
 
+  function resetCustomerLegalChoice() {
+    setAcceptedCustomerTerms(false);
+    setAcknowledgedCustomerPrivacy(false);
+    setCustomerOffersOptIn(false);
+  }
+
   function changeMode(nextMode: "login" | "signup") {
     setMode(nextMode);
     setFormError("");
+    if (nextMode === "login") resetCustomerLegalChoice();
   }
 
   function changeRole(nextRole: Role) {
     setSelectedRole(nextRole);
     setFormError("");
+    resetCustomerLegalChoice();
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    const error = onLogin(selectedRole, email.trim(), name.trim(), password, mode === "signup");
+
+    if (
+      mode === "signup" &&
+      selectedRole === "customer" &&
+      (!acceptedCustomerTerms || !acknowledgedCustomerPrivacy)
+    ) {
+      setFormError("Para criar a conta, leia e confirme os Termos de Uso e o Aviso de Privacidade.");
+      return;
+    }
+
+    const normalizedEmail = email.trim();
+    const normalizedName = name.trim();
+    const error = onLogin(selectedRole, normalizedEmail, normalizedName, password, mode === "signup");
+
+    if (!error && mode === "signup" && selectedRole === "customer") {
+      saveCustomerLegalAcceptances(normalizedName, normalizedEmail);
+      window.localStorage.setItem(
+        `feirae:offers:${normalizedEmail.toLocaleLowerCase("pt-BR")}`,
+        JSON.stringify(customerOffersOptIn),
+      );
+    }
+
     setFormError(error ?? "");
   }
 
@@ -214,6 +251,93 @@ export function LoginPage({
                 </button>
               </span>
             </label>
+            {mode === "signup" && selectedRole === "customer" && (
+              <section className="customer-signup-legal" aria-label="Termos para criar conta de Cliente">
+                <div className="customer-signup-legal-heading">
+                  <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+                  <div>
+                    <b>Antes de criar sua conta</b>
+                    <span>Leia os documentos e confirme somente o que você concorda.</span>
+                  </div>
+                </div>
+
+                {[customerTermsOfUse, customerPrivacyNotice].map((term) => (
+                  <details className="customer-legal-details" key={term.id}>
+                    <summary>{term.title}</summary>
+                    <div className="customer-legal-scroll">
+                      <p className="customer-legal-summary">{term.summary}</p>
+                      {term.sections.map((section) => (
+                        <section key={section.title}>
+                          <h3>{section.title}</h3>
+                          {section.paragraphs?.map((paragraph) => (
+                            <p key={paragraph}>{paragraph}</p>
+                          ))}
+                          {section.bullets && (
+                            <ul>
+                              {section.bullets.map((bullet) => (
+                                <li key={bullet}>{bullet}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </section>
+                      ))}
+                      <div className="customer-legal-references">
+                        <b>Referências oficiais</b>
+                        {term.references.map((reference) => (
+                          <a key={reference.url} href={reference.url} target="_blank" rel="noreferrer">
+                            {reference.label} <ExternalLink size={12} />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </details>
+                ))}
+
+                <div className="customer-legal-checks">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={acceptedCustomerTerms}
+                      onChange={(event) => {
+                        setAcceptedCustomerTerms(event.target.checked);
+                        clearFormError();
+                      }}
+                    />
+                    <span>
+                      Li e aceito os <b>Termos de Uso do Cliente Feiraê</b>.
+                    </span>
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={acknowledgedCustomerPrivacy}
+                      onChange={(event) => {
+                        setAcknowledgedCustomerPrivacy(event.target.checked);
+                        clearFormError();
+                      }}
+                    />
+                    <span>
+                      Li o <b>Aviso de Privacidade</b> e estou ciente de como meus dados são tratados.
+                    </span>
+                  </label>
+                  <label className="optional">
+                    <input
+                      type="checkbox"
+                      checked={customerOffersOptIn}
+                      onChange={(event) => setCustomerOffersOptIn(event.target.checked)}
+                    />
+                    <span>
+                      Quero receber ofertas e novidades do Feiraê. <em>Opcional.</em>
+                    </span>
+                  </label>
+                </div>
+                <p className="customer-legal-note">
+                  Ofertas são opcionais. Comunicações necessárias sobre conta, segurança e pedidos podem
+                  continuar sendo enviadas para executar o serviço.
+                </p>
+              </section>
+            )}
+
             {mode === "signup" && selectedRole === "feirante" && (
               <div className="signup-requirements">
                 <b>Cadastro de feirante</b>

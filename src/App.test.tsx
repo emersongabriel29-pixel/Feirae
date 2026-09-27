@@ -149,6 +149,42 @@ describe("Feiraê customer flow", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("requires customer terms and privacy acknowledgement before creating an account", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^criar conta$/i }));
+    expect(screen.getByText(/antes de criar sua conta/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/termos de uso do cliente feiraê/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/aviso de privacidade do cliente feiraê/i).length).toBeGreaterThan(0);
+
+    fireEvent.change(screen.getByLabelText(/nome completo/i), {
+      target: { value: "Cliente Legal" },
+    });
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "cliente.legal@feirae.app" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "123456" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /criar conta como cliente/i }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/termos de uso e o aviso de privacidade/i);
+
+    fireEvent.click(screen.getByLabelText(/li e aceito os termos de uso do cliente feiraê/i));
+    fireEvent.click(screen.getByLabelText(/li o aviso de privacidade/i));
+    fireEvent.click(screen.getByRole("button", { name: /criar conta como cliente/i }));
+
+    expect(screen.queryByRole("heading", { name: /crie sua conta no feiraê/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /navegação móvel/i })).toBeInTheDocument();
+
+    const raw = window.localStorage.getItem("feirae:customer-legal-acceptances:cliente.legal@feirae.app");
+    expect(raw).not.toBeNull();
+    const acceptances = JSON.parse(raw ?? "[]") as Array<Record<string, string>>;
+    expect(acceptances).toHaveLength(2);
+    expect(acceptances.every((item) => item.method === "checkbox")).toBe(true);
+    expect(window.localStorage.getItem("feirae:offers:cliente.legal@feirae.app")).toBe("false");
+  });
+
   it("applies customer name email and password only when the account form is saved", () => {
     render(<App />);
     loginAs("cliente");
@@ -191,6 +227,9 @@ describe("Feiraê customer flow", () => {
 
     fireEvent.click(screen.getByLabelText(/cards compactos/i));
     expect(document.documentElement).toHaveClass("compact-product-cards");
+    expect(screen.getByRole("heading", { name: /documentos da sua conta/i })).toBeInTheDocument();
+    expect(screen.getByText(/termos de uso do cliente feiraê/i)).toBeInTheDocument();
+    expect(screen.getByText(/aviso de privacidade do cliente feiraê/i)).toBeInTheDocument();
   });
 
   it("keeps featured fairs inside the fairs area", () => {

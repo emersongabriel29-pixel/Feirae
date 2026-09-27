@@ -31,21 +31,22 @@ npm run build
 
 | Arquivo                                  | Testes |
 | ---------------------------------------- | -----: |
-| `src/App.test.tsx`                       |     52 |
+| `src/App.test.tsx`                       |     53 |
 | `src/domain/orderBridge.test.ts`         |      5 |
 | `src/domain/feiraeNotifications.test.ts` |      5 |
 | `src/domain/legalTerms.test.ts`          |      8 |
+| `src/domain/customerLegal.test.ts`       |      4 |
 | `src/domain/marketplaceBridge.test.ts`   |      4 |
 | `src/domain/inventoryBridge.test.ts`     |      3 |
 | `src/domain/localAuth.test.ts`           |      4 |
 | `src/domain/marketplace.test.ts`         |      4 |
 | `src/domain/session.test.ts`             |      3 |
 | `src/utils.test.ts`                      |      4 |
-| **Total**                                | **92** |
+| **Total**                                | **97** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 52 testes cobrem explicitamente:
+Os 53 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -60,6 +61,8 @@ Os 52 testes cobrem explicitamente:
 - mostrar/ocultar senha;
 - senha incorreta;
 - limpar erro antigo ao trocar Entrar/Criar conta, perfil de acesso ou editar o e-mail;
+- bloquear criação de Cliente sem Termos de Uso + Aviso de Privacidade;
+- registrar aceite versionado e manter ofertas como opção separada;
 - alterar nome/e-mail/senha;
 - cards compactos;
 - feiras em área correta;
@@ -128,6 +131,14 @@ Os 52 testes cobrem explicitamente:
 - Entregador recebe linguagem de rota, coleta e conclusão;
 - evento irrelevante para um papel é ignorado.
 
+### customerLegal
+
+- Termos de Uso e Aviso de Privacidade são documentos separados;
+- Aviso distingue execução de contrato, legítimo interesse e consentimento;
+- consentimento genérico é rejeitado;
+- Termos preservam direitos do consumidor e referência ao Decreto nº 7.962/2013;
+- aceite de cadastro é versionado e persistido com fingerprint local.
+
 ### legalTerms
 
 - termo do Feirante contém verdade, CDC, responsabilidade, ética e segurança sanitária;
@@ -167,7 +178,7 @@ Os 52 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 92 testes NÃO comprovam diretamente
+## 5. O que os 97 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 

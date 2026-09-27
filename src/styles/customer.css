@@ -1140,6 +1140,83 @@
   background: var(--fe-green);
   color: white;
 }
+.customer-account-legal {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  border: 1px solid var(--fe-border);
+  border-radius: var(--fe-radius-lg);
+  background: var(--fe-surface);
+  padding: 1rem;
+  box-shadow: var(--fe-shadow-sm);
+}
+.customer-account-legal > div > h3 {
+  margin-top: 0.15rem;
+  color: var(--fe-ink);
+  font-size: 1rem;
+  font-weight: 950;
+}
+.customer-account-legal > div > p {
+  margin-top: 0.2rem;
+  color: var(--fe-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.customer-account-legal details {
+  border: 1px solid var(--fe-border);
+  border-radius: var(--fe-radius-sm);
+  background: var(--fe-surface-soft);
+  overflow: hidden;
+}
+.customer-account-legal summary {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  list-style: none;
+}
+.customer-account-legal summary b,
+.customer-account-legal summary small {
+  display: block;
+}
+.customer-account-legal summary b {
+  color: var(--fe-ink);
+  font-size: 0.74rem;
+}
+.customer-account-legal summary small {
+  margin-top: 0.08rem;
+  color: var(--fe-muted);
+  font-size: 0.62rem;
+}
+.customer-account-legal-body {
+  max-height: 20rem;
+  overflow: auto;
+  border-top: 1px solid var(--fe-border);
+  background: var(--fe-surface);
+  padding: 0.8rem;
+}
+.customer-account-legal-body section + section {
+  margin-top: 0.8rem;
+}
+.customer-account-legal-body h4 {
+  color: var(--fe-ink);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+.customer-account-legal-body p,
+.customer-account-legal-body li {
+  margin-top: 0.28rem;
+  color: var(--fe-muted);
+  font-size: 0.65rem;
+  line-height: 1.5;
+}
+.customer-account-legal-body ul {
+  margin: 0.3rem 0 0 1rem;
+  list-style: disc;
+}
+
 .toggle-row {
   position: relative;
   display: flex;

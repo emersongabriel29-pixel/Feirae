@@ -410,3 +410,19 @@ Em telas pequenas:
 - ações ocupam largura total;
 - orientações usam uma coluna;
 - filtros permanecem horizontais com rolagem.
+
+## Confirmações jurídicas no cadastro do Cliente
+
+O Cliente não recebe a experiência de Documentos dos parceiros.
+
+Em **Criar conta → Cliente**, o formulário mostra um card compacto com a identidade Feiraê:
+
+- título **Antes de criar sua conta**;
+- Termos de Uso expansíveis;
+- Aviso de Privacidade expansível;
+- checkbox obrigatório dos Termos;
+- checkbox obrigatório de ciência do Aviso;
+- checkbox separado e opcional de ofertas/novidades;
+- texto explícito de que comunicações operacionais não são marketing.
+
+O bloco deve permanecer compacto no celular, com documentos roláveis internamente e sem caixas pré-marcadas.
