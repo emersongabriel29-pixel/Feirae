@@ -41,14 +41,13 @@ describe("Feiraê customer flow", () => {
     render(<App />);
     loginAs("cliente");
 
-    const homeNavigation = screen.getByRole("button", { name: /^início$/i });
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    const homeNavigation = within(mobileNavigation).getByRole("button", { name: /^início$/i });
     expect(homeNavigation).toHaveAttribute("aria-current", "page");
 
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
 
-    const productsNavigation = screen.getAllByRole("button", { name: /^produtos$/i }).find(
-      (button) => button.closest("nav")?.getAttribute("aria-label") === "Navegação móvel",
-    );
+    const productsNavigation = within(mobileNavigation).getByRole("button", { name: /^produtos$/i });
     expect(productsNavigation).toHaveAttribute("aria-current", "page");
 
     const allCategory = screen.getByRole("button", { name: /^todos$/i });
