@@ -142,7 +142,8 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 Suite atual:
 
 - 56 testes em `App.test.tsx`;
-- 71 testes de domínio/utilidades;
+- 3 testes do componente de abertura;
+- 68 testes de domínio/utilidades;
 - **127 testes no total**.
 
 CI:
