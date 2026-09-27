@@ -247,7 +247,6 @@ A trava administrativa de ativação/publicação da feira depende do painel de 
 - card **Painel** foi removido da Central do Feirante;
 - no Entregador, **Painel** foi renomeado para **Disponibilidade**.
 
-
 ## Documentos — redesign premium
 
 Feirante e Entregador não usam mais uma lista simples de documentos.
