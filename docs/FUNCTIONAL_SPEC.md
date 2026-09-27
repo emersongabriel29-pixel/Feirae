@@ -225,6 +225,47 @@ Eventos principais:
 
 A etapa operacional ganhou **Avisar chegada** entre iniciar a entrega e confirmar a entrega. Esse evento gera **Pedido chegando** para o Cliente.
 
+## 3.3. Termos jurídicos obrigatórios dos parceiros
+
+A área **Documentos** de Feirante e Entregador inclui termos jurídicos versionados antes dos uploads documentais.
+
+### Feirante
+
+Obrigatórios:
+
+- **Termo de Adesão, Conduta e Responsabilidade do Feirante**;
+- **Aviso de Privacidade e Proteção de Dados — Parceiros Feiraê**.
+
+O termo cobre veracidade, responsabilidade por produtos, CDC, segurança sanitária, estoque/peso, fraude, ética, discriminação, proteção de dados, repasses, suspensão, contestação, responsabilidade civil e autonomia da atividade.
+
+### Entregador
+
+Obrigatórios:
+
+- **Termo de Adesão, Segurança e Conduta do Entregador Parceiro**;
+- **Aviso de Privacidade e Proteção de Dados — Parceiros Feiraê**.
+
+O termo cobre autonomia real, ausência de exclusividade, possibilidade de ficar offline e recusar oferta antes do aceite, segurança viária, moto-frete, veículo, fraude/GPS falso, ética, geolocalização, acidentes, cancelamento, dados e responsabilidade.
+
+### Assinatura
+
+Cada termo registra no protótipo:
+
+- ID e versão;
+- papel;
+- nome digitado;
+- e-mail;
+- data/hora;
+- impressão digital do conteúdo.
+
+Se a versão vigente mudar, a aceitação antiga não libera a operação.
+
+### Aprovação
+
+Feirante e Entregador só podem alcançar **Aprovado** quando todos os termos vigentes obrigatórios estiverem aceitos e os documentos obrigatórios estiverem aprovados.
+
+O armazenamento local atual serve apenas ao protótipo. Produção exige trilha de auditoria server-side, identidade do controlador, Storage privado e revisão jurídica. Ver [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).
+
 ## 4. Cliente — carrinho
 
 O carrinho exibe:

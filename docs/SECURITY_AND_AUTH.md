@@ -271,3 +271,37 @@ Staging só pode ser considerado backend-integrado quando:
 - testes de acesso cruzado passarem.
 
 Matriz completa de gaps: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
+
+## Assinatura e aceite de termos de parceiros
+
+O protótipo implementa aceite versionado para Feirante e Entregador.
+
+Registro local atual:
+
+- termo;
+- versão;
+- papel;
+- nome digitado;
+- e-mail;
+- data/hora;
+- fingerprint do conteúdo.
+
+Isso é suficiente apenas para testar UX e regra de aprovação.
+
+### Requisito de produção
+
+A evidência jurídica não pode depender de `localStorage`, pois o próprio usuário pode alterar dados no navegador.
+
+Produção deve registrar o aceite em backend auditável com:
+
+- account/user ID autenticado;
+- versão e hash integral do termo;
+- timestamp de servidor;
+- método de autenticação;
+- histórico imutável de versões;
+- contexto técnico proporcional ao risco, como IP/user-agent quando houver finalidade, transparência e retenção definidas;
+- nova assinatura quando a versão material mudar.
+
+O texto já aceito não deve ser sobrescrito silenciosamente. Uma nova versão cria um novo registro.
+
+Ver [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).

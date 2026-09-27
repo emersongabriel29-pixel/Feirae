@@ -51,7 +51,8 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou ba
 - horários;
 - promoções;
 - documentos;
-- aprovação local;
+- termos jurídicos versionados e assinatura eletrônica local;
+- aprovação local condicionada aos termos vigentes e documentos;
 - pedidos, inclusive no painel principal;
 - notificações locais/browser de novo pedido, pagamento, coleta, entrega e cancelamento com identidade Feiraê;
 - peso real;
@@ -62,6 +63,7 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou ba
 
 - conta;
 - documentos;
+- termos jurídicos versionados e assinatura eletrônica local;
 - veículos;
 - capacidade;
 - disponibilidade;
@@ -136,9 +138,9 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 
 Suite atual:
 
-- 50 testes em `App.test.tsx`;
-- 32 testes de domínio/utilidades;
-- **82 testes no total**.
+- 52 testes em `App.test.tsx`;
+- 40 testes de domínio/utilidades;
+- **92 testes no total**.
 
 CI:
 
@@ -164,6 +166,7 @@ Design e rastreabilidade:
 - [DATA_MODEL_AND_STATES.md](docs/DATA_MODEL_AND_STATES.md)
 - [FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md)
 - [NOTIFICATIONS.md](docs/NOTIFICATIONS.md)
+- [PARTNER_LEGAL_TERMS.md](docs/PARTNER_LEGAL_TERMS.md)
 
 Admin:
 

@@ -319,3 +319,26 @@ Texto de apoio:
 **Compre de feirantes locais, gerencie sua banca ou faça entregas. Tudo pelo Feiraê.**
 
 “Um aplicativo. Três experiências.” não é mais o título principal da tela de entrada. O objetivo é explicar o propósito do Feiraê antes de descrever sua estrutura interna.
+
+## Termos legais em Documentos
+
+Feirante e Entregador visualizam os termos obrigatórios antes da lista de arquivos.
+
+Cada card jurídico contém:
+
+- ícone de assinatura;
+- título;
+- versão;
+- resumo;
+- status **Assinado**, **Assinatura pendente** ou **Nova versão pendente**;
+- expansão **Ler termo completo**;
+- texto integral em área rolável;
+- links das bases legais consultadas;
+- declarações individuais com checkbox;
+- campo de nome completo;
+- botão **Assinar eletronicamente**;
+- comprovante visual com nome, e-mail, data/hora, versão e fingerprint.
+
+No mobile, o status ocupa linha própria e o texto legal usa rolagem interna para não transformar a página em um bloco interminável.
+
+Não usar um único checkbox “aceito tudo”. Declarações relevantes ficam separadas e marketing/WhatsApp continuam fora do aceite jurídico obrigatório.

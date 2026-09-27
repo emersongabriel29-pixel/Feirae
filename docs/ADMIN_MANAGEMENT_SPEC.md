@@ -424,3 +424,25 @@ Para este painel funcionar ainda faltam migrations para:
 - `admin_audit_log`.
 
 O painel não deve ser construído em cima de constantes hard-coded do frontend.
+
+## Gestão de versões jurídicas
+
+A área de gestão futura precisa tratar termos como documentos versionados, nunca como texto editável que substitui retroativamente o que já foi aceito.
+
+Funções necessárias:
+
+- visualizar versões publicadas;
+- criar nova versão em rascunho;
+- comparar alterações;
+- marcar a partir de quando uma versão entra em vigor;
+- definir quais papéis precisam assinar;
+- exigir nova assinatura quando a alteração for material;
+- consultar quem aceitou cada versão;
+- consultar data/hora e fingerprint do aceite;
+- exportar trilha para auditoria/disputa;
+- impedir exclusão ou edição silenciosa de versão já assinada;
+- suspender a ativação operacional de Feirante/Entregador sem versão vigente aceita.
+
+A publicação de nova versão jurídica deve exigir permissão administrativa específica e gerar evento de auditoria.
+
+Essa gestão **ainda não está implementada no painel runtime**; é contrato obrigatório para a futura área de gestão.
