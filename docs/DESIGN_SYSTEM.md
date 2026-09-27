@@ -504,3 +504,10 @@ Padrão visual obrigatório:
 - evitar aparência infantil, clipart ou emoji;
 - respeitar `prefers-reduced-motion`;
 - não usar MP4 pesado como implementação padrão.
+
+## Padrão visual da splash aprovada — 27/09/2026
+
+Os três arquivos em `public/launch/feirae-splash-*.svg` são a referência operacional da abertura atual. Alterações futuras na splash devem preservar a mesma narrativa visual: **banca surgindo → feira/entrega em movimento → marca final**.
+
+A marca final usa fundo claro, toldo/folhas, nome Feiraê em verde com o **ê** em laranja e a assinatura **“Da feira até você”**. Não substituir esse fechamento por ícone quadrado, card genérico ou outra composição sem nova aprovação visual.
+

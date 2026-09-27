@@ -330,3 +330,16 @@ Correção aplicada:
 - transição final mais próxima do conceito premium aprovado.
 
 Acessibilidade e reduced motion foram preservados.
+
+## Correção da splash contra a referência aprovada — 27/09/2026
+
+A auditoria visual identificou que a splash implementada anteriormente estava funcional, porém era outra composição. Ela foi substituída pelos três quadros que correspondem à referência aprovada: banca em contorno → feira com moto → logo final.
+
+Critérios de revisão visual em aparelho real:
+
+- preencher a tela sem bordas ou recortes indesejados;
+- manter banca, moto e logo legíveis em 360, 390 e 412 px;
+- não exibir o antigo card quadrado de marca;
+- não exibir legenda adicional após o logo;
+- transições não podem piscar o conteúdo do app entre quadros.
+

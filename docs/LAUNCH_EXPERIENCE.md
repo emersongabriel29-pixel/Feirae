@@ -79,3 +79,18 @@ A cena foi refeita para preservar a promessa visual original:
 - quick: ~1,55 s.
 
 A implementação continua vetorial/CSS, sem vídeo pesado ou dependência remota.
+
+## Referência visual aprovada aplicada — 27/09/2026
+
+Esta seção substitui a composição vetorial customizada descrita anteriormente para a splash.
+
+A abertura passa a seguir diretamente os três quadros aprovados pela referência visual:
+
+1. **Início** — fundo verde, banca em contorno luminoso, frutas/verduras e folhas flutuantes.
+2. **Animação** — banca verde e branca completa, produtos, moto de entrega, rota e pin.
+3. **Logo final** — fundo claro, marca Feiraê, assinatura **“Da feira até você”** e produtos na base.
+
+A implementação usa três ilustrações SVG locais em `public/launch/` e CSS apenas para orquestrar a transição entre os quadros. O card quadrado de marca, a legenda extra e a cena alternativa anterior foram removidos da abertura.
+
+Os tempos funcionais permanecem os mesmos: full ~3,3 s, quick ~1,55 s e reduced motion ~650 ms. O som continua desacoplado da renderização e não bloqueia a entrada no aplicativo.
+

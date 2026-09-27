@@ -28,7 +28,7 @@ describe("LaunchExperience", () => {
     vi.useRealTimers();
   });
 
-  it("shows the full launch on the first opening of the day", () => {
+  it("shows the approved three-frame launch on the first opening of the day", () => {
     render(
       <LaunchExperience>
         <div>Aplicativo Feiraê</div>
@@ -37,9 +37,9 @@ describe("LaunchExperience", () => {
 
     const splash = screen.getByRole("status", { name: "Feiraê carregando" });
     expect(splash).toHaveAttribute("data-variant", "full");
-    expect(splash.querySelector(".feirae-launch__stall-outline")).toBeInTheDocument();
-    expect(splash.querySelector(".feirae-launch__moto")).toBeInTheDocument();
-    expect(splash.querySelector(".feirae-launch__pin")).toBeInTheDocument();
+    expect(splash.querySelector('img[src="/launch/feirae-splash-start.svg"]')).toBeInTheDocument();
+    expect(splash.querySelector('img[src="/launch/feirae-splash-market.svg"]')).toBeInTheDocument();
+    expect(splash.querySelector('img[src="/launch/feirae-splash-logo.svg"]')).toBeInTheDocument();
     expect(window.localStorage.getItem(FEIRAE_SPLASH_LAST_FULL_DAY_KEY)).toBe("2026-09-27");
 
     act(() => {
@@ -59,10 +59,10 @@ describe("LaunchExperience", () => {
       </LaunchExperience>,
     );
 
-    expect(screen.getByRole("status", { name: "Feiraê carregando" })).toHaveAttribute(
-      "data-variant",
-      "quick",
-    );
+    const splash = screen.getByRole("status", { name: "Feiraê carregando" });
+    expect(splash).toHaveAttribute("data-variant", "quick");
+    expect(splash.querySelector('img[src="/launch/feirae-splash-market.svg"]')).toBeInTheDocument();
+    expect(splash.querySelector('img[src="/launch/feirae-splash-logo.svg"]')).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(1550);
@@ -71,7 +71,7 @@ describe("LaunchExperience", () => {
     expect(screen.queryByRole("status", { name: "Feiraê carregando" })).not.toBeInTheDocument();
   });
 
-  it("uses the static reduced-motion fallback when requested by the device", () => {
+  it("uses the static final reference frame when reduced motion is requested", () => {
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       value: vi.fn().mockImplementation((query: string) => ({
@@ -92,9 +92,8 @@ describe("LaunchExperience", () => {
       </LaunchExperience>,
     );
 
-    expect(screen.getByRole("status", { name: "Feiraê carregando" })).toHaveAttribute(
-      "data-variant",
-      "reduced",
-    );
+    const splash = screen.getByRole("status", { name: "Feiraê carregando" });
+    expect(splash).toHaveAttribute("data-variant", "reduced");
+    expect(splash.querySelector('img[src="/launch/feirae-splash-logo.svg"]')).toBeInTheDocument();
   });
 });

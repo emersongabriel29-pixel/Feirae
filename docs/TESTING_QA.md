@@ -351,3 +351,17 @@ A política automática não substitui browser E2E, migration tests, RLS tests, 
 - novos tempos full (~3,3 s) e quick (~1,55 s).
 
 Limite mantido: jsdom não prova qualidade visual da animação. A gravação em aparelho real deve continuar sendo usada como validação visual até existir Playwright/regressão por screenshot.
+
+## QA da splash conforme referência aprovada — 27/09/2026
+
+Os 3 testes de `LaunchExperience.test.tsx` passaram a validar os ativos específicos da sequência aprovada:
+
+- `/launch/feirae-splash-start.svg`;
+- `/launch/feirae-splash-market.svg`;
+- `/launch/feirae-splash-logo.svg`;
+- duração full de 3,3 s;
+- duração quick de 1,55 s;
+- quadro final presente no reduced motion.
+
+O teste estrutural evita que a splash volte silenciosamente para a composição anterior. A fidelidade visual final continua exigindo conferência em viewport móvel/aparelho real, pois jsdom não faz regressão por pixel.
+

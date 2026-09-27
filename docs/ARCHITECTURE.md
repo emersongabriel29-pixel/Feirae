@@ -339,3 +339,16 @@ Isso reduz o risco de um PR atualizar “qualquer documento” em vez do documen
 - marca final.
 
 `LaunchExperience.css` controla a linha do tempo por variante `full`, `quick` e `reduced`. A cena não depende de imagem externa, vídeo ou serviço remoto.
+
+### Splash alinhada à referência aprovada — 27/09/2026
+
+A composição visual anterior da splash foi substituída. `LaunchExperience.tsx` agora atua somente como orquestrador dos três quadros aprovados e `LaunchExperience.css` controla as transições.
+
+Fonte visual local:
+
+- `public/launch/feirae-splash-start.svg`;
+- `public/launch/feirae-splash-market.svg`;
+- `public/launch/feirae-splash-logo.svg`.
+
+Não há dependência de CDN, imagem remota ou vídeo. O shell do app continua pré-carregado e oculto até o término do temporizador da variante.
+

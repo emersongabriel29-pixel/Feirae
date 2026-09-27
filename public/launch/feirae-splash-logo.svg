@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" role="img" aria-label="Logo Feiraê, Da feira até você">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fffdf7"/><stop offset="1" stop-color="#f8f3df"/></linearGradient>
+    <linearGradient id="field" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c7d898"/><stop offset="1" stop-color="#e7cf83"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="logoShadow"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0b4f2e" flood-opacity=".10"/></filter>
+  </defs>
+  <rect width="390" height="844" fill="url(#paper)"/>
+  <circle cx="96" cy="202" r="5" fill="#c9cd47" opacity=".8"/>
+  <g fill="#75b948" opacity=".9"><path d="M0 83c40-13 67 7 72 52-41 4-65-14-72-52z"/><path d="M335 111c23-35 55-40 55-40v64c-18 4-36-3-55-24z"/><path d="M344 179c14-25 31-34 46-34v47c-17 3-31-2-46-13z"/></g>
+
+  <g transform="translate(45 200)">
+    <g transform="translate(73 0)">
+      <path d="M75 42c-25-4-39-20-40-47 27 0 43 15 40 47z" fill="#08753f"/><path d="M82 42c2-27 18-42 45-44-1 28-17 43-45 44z" fill="#2c9b4f"/>
+      <path d="M5 85h204l-24-57H29z" fill="#fff4da"/>
+      <path d="M29 28h39L54 85H5z" fill="#0d743f"/><path d="M68 28h38l-5 57H54z" fill="#f7ecd0"/><path d="M106 28h38l4 57h-47z" fill="#17884a"/><path d="M144 28h38l12 57h-46z" fill="#f7ecd0"/><path d="M182 28h3l24 57h-15z" fill="#18894a"/>
+      <path d="M5 85c10 19 36 20 49 0 11 20 35 20 47 0 12 20 35 20 47 0 12 20 35 20 46 0 8 12 18 16 29 12" fill="none" stroke="#096c3b" stroke-width="10" stroke-linecap="round"/>
+    </g>
+
+    <text x="0" y="250" font-family="Trebuchet MS, Arial Rounded MT Bold, Arial, sans-serif" font-size="102" font-weight="900" letter-spacing="-7" fill="#075b35">Feira</text>
+    <text x="232" y="250" font-family="Trebuchet MS, Arial Rounded MT Bold, Arial, sans-serif" font-size="102" font-weight="900" letter-spacing="-6" fill="#f39218">ê</text>
+    <path d="M82 273c68-24 143-25 210 0" fill="none" stroke="#168346" stroke-width="7" stroke-linecap="round"/>
+    <text x="150" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="600" fill="#154b32">Da feira até você</text>
+  </g>
+
+  <g opacity=".25" fill="#708a63"><path d="M0 640c55-45 98-50 151-11 47 35 90 25 137-10 37-27 66-31 102-14v239H0z" fill="url(#field)"/><rect x="300" y="544" width="20" height="92"/><rect x="326" y="520" width="18" height="116"/><rect x="351" y="565" width="16" height="71"/></g>
+
+  <g transform="translate(-20 650)" filter="url(#soft)">
+    <path d="M10 86h190v128H10z" fill="#9a5c2f"/><path d="M10 115h190M10 155h190" stroke="#d19658" stroke-width="8" opacity=".7"/>
+    <g><circle cx="43" cy="64" r="30" fill="#e8422f"/><circle cx="83" cy="74" r="34" fill="#ee4c32"/><circle cx="121" cy="57" r="32" fill="#df3829"/><path d="M35 36c18-19 40-20 61-4M76 41c19-20 39-20 58-5" fill="none" stroke="#267a3e" stroke-width="11" stroke-linecap="round"/></g>
+    <g fill="#3c924b"><path d="M145 67c-3-61 28-91 70-94 20 46 3 84-47 111z"/><path d="M190 80c14-52 48-75 89-61 5 48-22 78-75 82z"/><path d="M127 95c-27-44-18-83 17-106 35 34 33 72-6 111z"/></g>
+  </g>
+  <g transform="translate(275 662)" filter="url(#soft)">
+    <path d="M-7 31c40-2 69 21 88 65-37 7-67-14-88-65z" fill="#f5cb32"/><path d="M10 0c37 1 64 25 78 70-39 4-66-20-78-70z" fill="#ffd83b"/><path d="M31-20c35 8 56 36 61 82-38-4-60-31-61-82z" fill="#f3c129"/><path d="M3 26c4-8 9-12 17-14M18-4c4-7 9-10 15-11M40-25c5-6 10-7 17-5" stroke="#4d7c3d" stroke-width="6" stroke-linecap="round"/></g>
+  <g fill="#4d9a4f"><path d="M20 520c23-21 44-18 59 9-22 17-43 14-59-9z"/><path d="M334 474c23-18 42-13 52 13-22 14-40 9-52-13z"/></g>
+</svg>

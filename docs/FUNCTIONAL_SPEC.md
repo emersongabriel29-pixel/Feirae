@@ -808,3 +808,14 @@ A versão completa deve mostrar, de forma perceptível e nessa ordem:
 8. Feiraê + **Da feira até você**.
 
 Uma versão em que esses elementos aparecem apenas como pequeno ícone central não atende ao critério visual aprovado.
+
+## Aceite visual da abertura — referência aprovada de 27/09/2026
+
+A splash deve reproduzir a sequência aprovada, sem substituir por outra interpretação visual:
+
+- quadro 1: banca em traço luminoso sobre verde, com elementos de feira flutuando;
+- quadro 2: banca completa com produtos + moto de entrega + rota/pin;
+- quadro 3: logo Feiraê em fundo claro + assinatura **“Da feira até você”** + produtos na base.
+
+Não usar na abertura o card quadrado de marca da versão anterior nem adicionar legenda promocional abaixo da cena. O modo rápido preserva a cena de entrega e encerra na mesma marca final; reduced motion exibe diretamente o quadro final.
+
