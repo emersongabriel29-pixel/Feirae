@@ -1,6 +1,6 @@
 # Especificação funcional consolidada — Feiraê
 
-Atualizado em 26/09/2026 após nova auditoria contra o código atual.
+Atualizado em 27/09/2026 após nova auditoria contra o código atual.
 
 ## 1. Regra central
 
@@ -765,3 +765,32 @@ Veja [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).
 Na interface do cliente, campos administrativos incompletos não usam mais os textos “Entrega a configurar” e “Taxa a configurar”; aparecem como indisponíveis no momento.
 
 A regra de **bloquear ativação/publicação de uma feira com configuração obrigatória incompleta** pertence ao painel de gestão. O contrato está em `ADMIN_MANAGEMENT_SPEC.md`; o painel administrativo runtime ainda não existe no repositório e não deve ser documentado como implementado.
+
+
+## Experiência de abertura
+
+Ao iniciar o Feiraê:
+
+- primeira abertura do dia: splash completa de aproximadamente 3,1 s;
+- reabertura no mesmo dia: versão rápida de aproximadamente 1,45 s;
+- `prefers-reduced-motion: reduce`: versão estática curta;
+- falha/bloqueio de áudio não impede acesso ao app;
+- retorno do background não deve criar um novo gate funcional.
+
+A sequência visual comunica feira → produtos → entrega → marca.
+
+A assinatura da splash é **“Da feira até você”**.
+
+A preferência de som é local em `feirae:sound-enabled` e pode ser desativada em Configurações.
+
+Detalhes: [LAUNCH_EXPERIENCE.md](LAUNCH_EXPERIENCE.md).
+
+## Identidade verbal
+
+Para evitar conflito entre mensagens da marca:
+
+- slogan institucional: **A feira do seu jeito**;
+- mensagem de propósito da tela de entrada: **Da banca até você.**;
+- assinatura da experiência de abertura: **Da feira até você**.
+
+Essas três frases possuem funções diferentes e não devem ser trocadas automaticamente entre superfícies.
