@@ -556,6 +556,25 @@ Foto **não é obrigatória hoje**.
 
 Se estoque = 0, o produto é salvo como inativo/esgotado.
 
+## 13.1. Pedido mínimo da banca
+
+Em **Minha banca**, o Feirante pode definir:
+
+- **Sem valor mínimo**; ou
+- **Definir valor mínimo**.
+
+O valor configurado é público para o Cliente na página da banca e usado no carrinho/checkout.
+
+Regras:
+
+- mínimo pertence à banca, não à sacola global;
+- cada banca do pedido é validada individualmente;
+- R$ 0,00 = sem mínimo;
+- protótipo limita configuração a R$ 100,00;
+- valor inválido não é salvo;
+- mudança não reescreve pedido já confirmado;
+- backend real deverá validar a mesma regra server-side.
+
 ## 14. Multi-banca
 
 Regra canônica: [MULTI_VENDOR_ORDERS.md](MULTI_VENDOR_ORDERS.md).
@@ -566,7 +585,13 @@ Regras locais implementadas/testadas:
 
 - uma sacola pertence a uma única feira;
 - até **4 bancas** da mesma feira por pedido no MVP;
-- pedido mínimo de **R$ 30,00 em produtos por banca**, validado no carrinho e novamente no checkout;
+- pedido mínimo **configurável por banca**, não pelo total do carrinho;
+- cada banca pode escolher R$ 0,00 (sem mínimo) ou um valor próprio;
+- teto atual do protótipo: **R$ 100,00 por banca**;
+- bancas estáticas/legadas sem configuração explícita usam R$ 30,00 como fallback;
+- carrinho pré-valida e checkout + criação do pedido revalidam o mínimo de cada banca;
+- frete/taxas/carteira não contam para o mínimo;
+- descontos financiados pela própria banca reduzem o valor de produtos elegível para o mínimo;
 - checkout continua único para o cliente;
 - logística só libera quando todas as bancas estão prontas;
 - peso logístico é a soma dos itens ativos de todas as bancas;
