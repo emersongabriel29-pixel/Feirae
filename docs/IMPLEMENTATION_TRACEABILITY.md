@@ -314,7 +314,6 @@ A mudança é visual/UX e preserva as regras jurídicas e de aprovação impleme
 
 Limite: a evidência ainda é local. Produção exige persistência server-side auditável.
 
-
 ## Multi-banca, mínimo e reembolsos — 27/09/2026
 
 - `multiVendor.ts`: uma feira por sacola, até 4 bancas, mínimo de R$ 30,00 por banca e adicional de R$ 2,50 por coleta extra;

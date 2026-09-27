@@ -1216,9 +1216,7 @@ export function CartDrawer({
                   <span>{summary.vendorName}</span>
                   <b>
                     {money(summary.subtotal)} ·{" "}
-                    {summary.meetsMinimum
-                      ? "mínimo atingido"
-                      : `faltam ${money(summary.missingForMinimum)}`}
+                    {summary.meetsMinimum ? "mínimo atingido" : `faltam ${money(summary.missingForMinimum)}`}
                   </b>
                 </p>
               ))}

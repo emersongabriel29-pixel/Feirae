@@ -47,9 +47,7 @@ function walletCredits(accountKey: string) {
           id: refund.id,
           orderId: order.id,
           amount: Math.round(amount * 100) / 100,
-          label: refund.vendorName
-            ? `Reembolso · ${refund.vendorName}`
-            : "Reembolso de pedido cancelado",
+          label: refund.vendorName ? `Reembolso · ${refund.vendorName}` : "Reembolso de pedido cancelado",
           createdAt: refund.createdAt,
         };
       })

@@ -11,12 +11,7 @@ export type UnifiedOrderStatus =
   | "cancelled";
 
 export type UnifiedPaymentStatus =
-  | "authorized"
-  | "due_on_delivery"
-  | "failed"
-  | "refund_pending"
-  | "partially_refunded"
-  | "refunded";
+  "authorized" | "due_on_delivery" | "failed" | "refund_pending" | "partially_refunded" | "refunded";
 
 export type UnifiedVendorStatus =
   "pending" | "accepted" | "preparing" | "ready" | "collected" | "delivered" | "rejected";
@@ -205,10 +200,9 @@ function normalizeOrder(order: UnifiedOrderRecord): UnifiedOrderRecord {
   const route = order.route
     ? {
         ...order.route,
-        pickupStops: (
-          order.route.pickupStops?.length
-            ? order.route.pickupStops
-            : vendors.map(({ vendorId, storeId, vendorName }) => ({ vendorId, storeId, vendorName }))
+        pickupStops: (order.route.pickupStops?.length
+          ? order.route.pickupStops
+          : vendors.map(({ vendorId, storeId, vendorName }) => ({ vendorId, storeId, vendorName }))
         ).filter((stop) => activeVendorIds.has(stop.vendorId)),
       }
     : undefined;
@@ -366,9 +360,7 @@ export function cancelVendorParticipation(
       const vendor = normalized.vendors?.find((item) => item.vendorId === vendorId);
       if (!vendor || vendor.status === "rejected") return normalized;
 
-      const cancelledItems = normalized.items.filter(
-        (item) => item.vendorId === vendorId && !item.cancelled,
-      );
+      const cancelledItems = normalized.items.filter((item) => item.vendorId === vendorId && !item.cancelled);
       const merchandiseSubtotal =
         normalized.vendorFinancials?.find((item) => item.vendorId === vendorId)?.merchandiseSubtotal ??
         cancelledItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -403,16 +395,10 @@ export function cancelVendorParticipation(
         0,
         (normalized.promotionDiscount ?? 0) - allocatedPromotionDiscount,
       );
-      const nextBeforeWallet = Math.max(
-        0,
-        nextSubtotal - nextPromotionDiscount + nextCustomerDeliveryFee,
-      );
+      const nextBeforeWallet = Math.max(0, nextSubtotal - nextPromotionDiscount + nextCustomerDeliveryFee);
       const previousWalletUsed = normalized.walletUsed ?? 0;
       const nextWalletUsed = Math.min(previousWalletUsed, nextBeforeWallet);
-      const walletRestoreAmount = Math.max(
-        0,
-        Math.round((previousWalletUsed - nextWalletUsed) * 100) / 100,
-      );
+      const walletRestoreAmount = Math.max(0, Math.round((previousWalletUsed - nextWalletUsed) * 100) / 100);
       const nextTotal = Math.max(0, Math.round((nextBeforeWallet - nextWalletUsed) * 100) / 100);
       const externalAmount =
         normalized.paymentStatus === "due_on_delivery"

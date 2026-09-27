@@ -3,8 +3,7 @@ export const MIN_VENDOR_ORDER_AMOUNT = 30;
 export const MULTI_VENDOR_EXTRA_STOP_FEE = 2.5;
 
 export type MultiVendorCartDecision =
-  | { allowed: true }
-  | { allowed: false; reason: "different_fair" | "vendor_limit"; message: string };
+  { allowed: true } | { allowed: false; reason: "different_fair" | "vendor_limit"; message: string };
 
 export type VendorOrderSummary = {
   vendorName: string;
@@ -41,9 +40,10 @@ export function validateMultiVendorCart(params: {
   return { allowed: true };
 }
 
-export function vendorOrderSummaries<
-  T extends { id: number; feirante: string; price: number }
->(items: T[], cart: Record<number, number>): VendorOrderSummary[] {
+export function vendorOrderSummaries<T extends { id: number; feirante: string; price: number }>(
+  items: T[],
+  cart: Record<number, number>,
+): VendorOrderSummary[] {
   const totals = new Map<string, number>();
 
   for (const item of items) {
@@ -54,10 +54,7 @@ export function vendorOrderSummaries<
 
   return Array.from(totals.entries()).map(([vendorName, rawSubtotal]) => {
     const subtotal = Math.round(rawSubtotal * 100) / 100;
-    const missingForMinimum = Math.max(
-      0,
-      Math.round((MIN_VENDOR_ORDER_AMOUNT - subtotal) * 100) / 100,
-    );
+    const missingForMinimum = Math.max(0, Math.round((MIN_VENDOR_ORDER_AMOUNT - subtotal) * 100) / 100);
     return {
       vendorName,
       subtotal,
@@ -67,9 +64,10 @@ export function vendorOrderSummaries<
   });
 }
 
-export function multiVendorMinimumMet<
-  T extends { id: number; feirante: string; price: number }
->(items: T[], cart: Record<number, number>) {
+export function multiVendorMinimumMet<T extends { id: number; feirante: string; price: number }>(
+  items: T[],
+  cart: Record<number, number>,
+) {
   const summaries = vendorOrderSummaries(items, cart);
   return summaries.length > 0 && summaries.every((summary) => summary.meetsMinimum);
 }
@@ -79,9 +77,11 @@ export type VendorFinancialAllocation = VendorOrderSummary & {
   netMerchandise: number;
 };
 
-export function allocatePromotionAcrossVendors<
-  T extends { id: number; feirante: string; price: number }
->(items: T[], cart: Record<number, number>, promotionDiscount: number): VendorFinancialAllocation[] {
+export function allocatePromotionAcrossVendors<T extends { id: number; feirante: string; price: number }>(
+  items: T[],
+  cart: Record<number, number>,
+  promotionDiscount: number,
+): VendorFinancialAllocation[] {
   const summaries = vendorOrderSummaries(items, cart);
   const total = summaries.reduce((sum, item) => sum + item.subtotal, 0);
   if (!summaries.length) return [];
@@ -92,7 +92,7 @@ export function allocatePromotionAcrossVendors<
       index === summaries.length - 1
         ? Math.max(0, Math.round((promotionDiscount - allocated) * 100) / 100)
         : total > 0
-          ? Math.max(0, Math.round((promotionDiscount * (summary.subtotal / total)) * 100) / 100)
+          ? Math.max(0, Math.round(promotionDiscount * (summary.subtotal / total) * 100) / 100)
           : 0;
     allocated += discount;
     return {

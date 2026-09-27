@@ -527,7 +527,7 @@ export function DeliveryOperations({
       return {
         id: order.id,
         fair: order.fairName,
-        bank: (pickupStops.map((stop) => stop.vendorName).join(" + ") || vendorNames.join(" + ")),
+        bank: pickupStops.map((stop) => stop.vendorName).join(" + ") || vendorNames.join(" + "),
         pickupStops,
         region: order.customerCity ?? "Destino",
         customerAddress: order.customerAddress ?? order.customerCity ?? "Destino do cliente",
@@ -796,7 +796,9 @@ export function DeliveryOperations({
         </p>
         <p>
           <span>Bancas</span>
-          <strong>{activePickupStops.length} · {activeDelivery.bank}</strong>
+          <strong>
+            {activePickupStops.length} · {activeDelivery.bank}
+          </strong>
         </p>
         <p>
           <span>Peso</span>
@@ -838,7 +840,9 @@ export function DeliveryOperations({
           <article key={stop.vendorId || `${activeDelivery.id}-stop-${index}`}>
             {stop.collected ? <Check size={18} /> : <MapPin size={18} />}
             <div>
-              <b>{index + 1}. {stop.vendorName}</b>
+              <b>
+                {index + 1}. {stop.vendorName}
+              </b>
               <small>
                 {stop.collected
                   ? "Coleta confirmada"

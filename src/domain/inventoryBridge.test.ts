@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Product } from "../types";
 import { marketplaceProducts } from "./marketplaceBridge";
-import { consumeInventory, releaseInventory, releaseInventoryItems, reserveInventory } from "./inventoryBridge";
+import {
+  consumeInventory,
+  releaseInventory,
+  releaseInventoryItems,
+  reserveInventory,
+} from "./inventoryBridge";
 
 const base: Product[] = [
   {
