@@ -30,7 +30,14 @@ import {
   readStoreByIdentity,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
-import { MAX_VENDORS_PER_ORDER } from "../../domain/multiVendor";
+import {
+  MAX_VENDORS_PER_ORDER,
+  MIN_VENDOR_ORDER_AMOUNT,
+  MULTI_VENDOR_EXTRA_STOP_FEE,
+  calculateMultiVendorDeliveryFee,
+  multiVendorMinimumMet,
+  vendorOrderSummaries,
+} from "../../domain/multiVendor";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
   appendReview,
@@ -729,7 +736,11 @@ export function VendorStore({
           <h2>{vendorName}</h2>
           <p>
             Produtos selecionados direto da feira · {ratingLabel(metrics.rating)} ★ ({metrics.reviewCount}) ·{" "}
-            {minutesLabel(metrics.deliveryMinutes)} · entrega {money(metrics.deliveryFee)}
+            {minutesLabel(metrics.deliveryMinutes)} · entrega a partir de {money(metrics.deliveryFee)}
+          </p>
+          <p>
+            Pedido mínimo nesta banca: <strong>{money(MIN_VENDOR_ORDER_AMOUNT)}</strong>. Em pedidos multi-banca,
+            cada banca precisa atingir esse mínimo.
           </p>
         </div>
         <button
@@ -1288,6 +1299,8 @@ export function Checkout({
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const fairName = items[0]?.fair ?? "Feiraê";
   const vendorCount = new Set(items.map((product) => product.feirante)).size;
+  const vendorMinimums = vendorOrderSummaries(items, cart);
+  const vendorMinimumMet = multiVendorMinimumMet(items, cart);
   const stores = Array.from(
     new Map(
       items.map((item) => {
@@ -1309,7 +1322,9 @@ export function Checkout({
   );
   const hasDeliveryAddress = Boolean(defaultAddress);
   const freightReady = fulfillment === "delivery" && hasDeliveryAddress && deliveryAllowed;
-  const calculatedDeliveryFee = freightReady ? fallbackDeliveryFee : 0;
+  const calculatedDeliveryFee = freightReady
+    ? calculateMultiVendorDeliveryFee(fallbackDeliveryFee, vendorCount)
+    : 0;
   const promotionResult = calculateCheckoutPromotions(items, cart, calculatedDeliveryFee, couponCode);
   const promotionDiscount = promotionResult.promotionDiscount;
   const deliverySubsidy =
@@ -1331,6 +1346,7 @@ export function Checkout({
     !cashPayment || !needsChange || (Number.isFinite(parsedChangeFor) && parsedChangeFor >= total);
   const canConfirm =
     storesOpen &&
+    vendorMinimumMet &&
     (fulfillment === "pickup" ? pickupAllowed : Boolean(defaultAddress) && deliveryAllowed) &&
     (payment !== "Dinheiro na entrega" || cashOnDeliveryAllowed) &&
     (payment !== "Cartão na entrega" || cardOnDeliveryAllowed) &&
@@ -1501,6 +1517,19 @@ export function Checkout({
             )}
           </div>
 
+          <div className="form-card compact">
+            <span className="eyebrow">Pedido mínimo por banca</span>
+            {vendorMinimums.map((summary) => (
+              <p key={summary.vendorName}>
+                <strong>{summary.vendorName}</strong> · {money(summary.subtotal)}{" "}
+                {summary.meetsMinimum
+                  ? "✓ mínimo atingido"
+                  : `· faltam ${money(summary.missingForMinimum)}`}
+              </p>
+            ))}
+            <small>Cada banca precisa somar pelo menos {money(MIN_VENDOR_ORDER_AMOUNT)} em produtos.</small>
+          </div>
+
           {availableWallet > 0 && (
             <div className="form-card compact">
               <Toggle
@@ -1566,6 +1595,16 @@ export function Checkout({
             </p>
             {fulfillment === "delivery" && (
               <>
+                <p>
+                  <span>Frete base</span>
+                  <b>{freightReady ? money(fallbackDeliveryFee) : "A calcular"}</b>
+                </p>
+                {freightReady && vendorCount > 1 && (
+                  <p>
+                    <span>Coletas adicionais ({vendorCount - 1})</span>
+                    <b>{money((vendorCount - 1) * MULTI_VENDOR_EXTRA_STOP_FEE)}</b>
+                  </p>
+                )}
                 <p>
                   <span>Frete estimado</span>
                   <b>{freightReady ? money(calculatedDeliveryFee) : "A calcular"}</b>
@@ -1653,7 +1692,9 @@ export function Checkout({
             <small>
               {!storesOpen
                 ? "Uma das bancas está fechada no momento."
-                : !deliveryAllowed && fulfillment === "delivery"
+                : !vendorMinimumMet
+                  ? `Cada banca precisa atingir o pedido mínimo de ${money(MIN_VENDOR_ORDER_AMOUNT)}.`
+                  : !deliveryAllowed && fulfillment === "delivery"
                   ? "Uma das bancas não aceita entrega."
                   : !pickupAllowed && fulfillment === "pickup"
                     ? "Uma das bancas não aceita retirada."
