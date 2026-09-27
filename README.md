@@ -228,3 +228,5 @@ npm run format:check
 Para afirmar **o que existe hoje**, verificar código + testes + migrations.
 
 Os documentos definem contratos, decisões e lacunas, mas não podem transformar requisito futuro em funcionalidade existente.
+
+<!-- prettier diagnostic branch -->
