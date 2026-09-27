@@ -342,3 +342,72 @@ Cada card jurídico contém:
 No mobile, o status ocupa linha própria e o texto legal usa rolagem interna para não transformar a página em um bloco interminável.
 
 Não usar um único checkbox “aceito tudo”. Declarações relevantes ficam separadas e marketing/WhatsApp continuam fora do aceite jurídico obrigatório.
+
+
+## Central premium de Documentos
+
+A área **Documentos** de Feirante e Entregador usa uma apresentação própria da marca Feiraê, não uma lista genérica.
+
+### Hero da regularização
+
+O topo contém:
+
+- logomarca oficial `feirae-mark.svg`;
+- identificação do papel;
+- título **Documentos e Regularização**;
+- mensagem **Regularize sua conta e opere com segurança no Feiraê.**;
+- marca d’água discreta;
+- status geral;
+- barra de progresso;
+- termos assinados;
+- documentos enviados;
+- documentos aprovados;
+- quantidade de pendências;
+- ação **Ver pendências** quando houver bloqueios.
+
+### Termos
+
+Os termos ficam em bloco próprio com contador de assinaturas. O card jurídico reutiliza a marca Feiraê no ícone e no comprovante de assinatura.
+
+### Documentos
+
+Arquivos ficam em cards individuais, não na lista operacional genérica.
+
+Cada card mostra:
+
+- nome;
+- indicação de obrigatório ou aplicável;
+- descrição;
+- status;
+- timeline **Enviado → Em análise → Aprovado/Correção solicitada**;
+- nome do arquivo;
+- **Visualizar** quando existe arquivo local disponível;
+- **Enviar documento** ou **Atualizar documento**.
+
+Filtros horizontais:
+
+- Todos;
+- Pendentes;
+- Em análise;
+- Aprovados;
+- Correção necessária.
+
+### Orientações
+
+A tela termina com um card **Segurança e transparência**, reforçando:
+
+- documentos verdadeiros e legíveis;
+- LGPD;
+- versionamento dos termos;
+- envio não equivale a aprovação automática.
+
+### Mobile
+
+Em telas pequenas:
+
+- hero vira uma coluna;
+- resumo mantém grade compacta;
+- cabeçalho de cada documento empilha status abaixo do nome;
+- ações ocupam largura total;
+- orientações usam uma coluna;
+- filtros permanecem horizontais com rolagem.
