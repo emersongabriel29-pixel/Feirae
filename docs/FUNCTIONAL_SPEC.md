@@ -766,7 +766,6 @@ Na interface do cliente, campos administrativos incompletos não usam mais os te
 
 A regra de **bloquear ativação/publicação de uma feira com configuração obrigatória incompleta** pertence ao painel de gestão. O contrato está em `ADMIN_MANAGEMENT_SPEC.md`; o painel administrativo runtime ainda não existe no repositório e não deve ser documentado como implementado.
 
-
 ## Experiência de abertura
 
 Ao iniciar o Feiraê:
