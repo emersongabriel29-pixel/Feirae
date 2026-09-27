@@ -1818,14 +1818,17 @@ export function FeiranteOperations({
                       <label>
                         Pedido mínimo
                         <select
-                          value={normalizeVendorMinimumOrder(bankDraft.minimumOrderAmount) > 0 ? "custom" : "none"}
+                          value={
+                            normalizeVendorMinimumOrder(bankDraft.minimumOrderAmount) > 0 ? "custom" : "none"
+                          }
                           onChange={(event) =>
                             setBankDraft((current) => ({
                               ...current,
                               minimumOrderAmount:
                                 event.target.value === "none"
                                   ? 0
-                                  : normalizeVendorMinimumOrder(current.minimumOrderAmount) || DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
+                                  : normalizeVendorMinimumOrder(current.minimumOrderAmount) ||
+                                    DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
                             }))
                           }
                         >
