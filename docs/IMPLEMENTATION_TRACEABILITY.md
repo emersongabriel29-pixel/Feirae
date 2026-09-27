@@ -206,13 +206,13 @@ Não faz:
 
 ## Inicialização, splash e som
 
-| Função | Arquivo | Persistência/estado | Situação |
-| --- | --- | --- | --- |
-| bootstrap visual | `src/main.tsx` + `src/components/LaunchExperience.tsx` | estado React | implementado |
-| animação | `src/components/LaunchExperience.css` | CSS | implementado |
-| última abertura completa | `feirae:splash:last-full-day` | localStorage | local |
-| preferência sonora | `src/domain/feiraeSound.ts` | `feirae:sound-enabled` | local |
-| fallback redução de movimento | `LaunchExperience.tsx` | `prefers-reduced-motion` | implementado |
+| Função                        | Arquivo                                                | Persistência/estado      | Situação     |
+| ----------------------------- | ------------------------------------------------------ | ------------------------ | ------------ |
+| bootstrap visual              | `src/main.tsx` + `src/components/LaunchExperience.tsx` | estado React             | implementado |
+| animação                      | `src/components/LaunchExperience.css`                  | CSS                      | implementado |
+| última abertura completa      | `feirae:splash:last-full-day`                          | localStorage             | local        |
+| preferência sonora            | `src/domain/feiraeSound.ts`                            | `feirae:sound-enabled`   | local        |
+| fallback redução de movimento | `LaunchExperience.tsx`                                 | `prefers-reduced-motion` | implementado |
 
 Limite: navegadores móveis podem bloquear autoplay antes da primeira interação. Isso não bloqueia a entrada no aplicativo.
 
