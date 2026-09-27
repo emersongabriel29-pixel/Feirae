@@ -684,9 +684,9 @@ export function LegalTermSignatureCard({
             />
           </label>
           <p className="legal-signature-note">
-            Ao assinar, o Feiraê registra nome, e-mail, data/hora, versão e impressão digital do conteúdo. A
-            assinatura eletrônica deste protótipo não substitui a infraestrutura de auditoria e identidade que
-            deverá existir no backend de produção.
+            A assinatura será vinculada a {signerEmail}. Ao assinar, o Feiraê registra nome, e-mail, data/hora,
+            versão e impressão digital do conteúdo. A assinatura eletrônica deste protótipo não substitui a
+            infraestrutura de auditoria e identidade que deverá existir no backend de produção.
           </p>
           <button
             type="button"
