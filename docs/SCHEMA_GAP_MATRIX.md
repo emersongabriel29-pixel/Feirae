@@ -292,7 +292,6 @@ Para uma banca/loja operar em uma feira específica, o backend precisa definir a
 - `vendor_stores`
 - catálogo publicado.
 
-
 ## 12.1. Pedido mínimo da banca
 
 A migration `0003_vendor_store_minimum_order.sql` adiciona:
