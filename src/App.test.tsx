@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
+import { cancelVendorParticipation, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
 function loginAs(role: "cliente" | "feirante" | "entregador") {
   fireEvent.click(screen.getByRole("radio", { name: new RegExp(role, "i") }));
@@ -32,7 +32,12 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
     fireEvent.click(screen.getByRole("button", { name: /adicionar planta ornamental/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
-    fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
+    const checkoutButton = screen.getByRole("button", { name: /continuar para checkout/i });
+    expect(checkoutButton).toBeDisabled();
+    expect(screen.getByText(/mínimo de r\$ 30,00 em produtos de cada banca/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /adicionar uma unidade de planta ornamental/i }));
+    expect(checkoutButton).toBeEnabled();
+    fireEvent.click(checkoutButton);
     expect(screen.getByRole("heading", { name: /finalizar pedido/i })).toBeInTheDocument();
     expect(screen.getByText(/frete estimado/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^a calcular$/i).length).toBeGreaterThan(0);
@@ -41,6 +46,19 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
     expect(screen.getByRole("heading", { name: /meus pedidos/i })).toBeInTheDocument();
     expect(screen.getByText(/recebido/i)).toBeInTheDocument();
+  });
+
+  it("shows the R$30 minimum when opening a vendor", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const banksAction = screen.getByText(/^Bancas$/i).closest("button");
+    expect(banksAction).not.toBeNull();
+    fireEvent.click(banksAction as HTMLElement);
+    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
+
+    expect(screen.getByText(/pedido mínimo nesta banca:/i)).toBeInTheDocument();
+    expect(screen.getByText(/R\$ 30,00/i)).toBeInTheDocument();
   });
 
   it("shows the demonstration account identity instead of visitor", () => {
@@ -379,8 +397,12 @@ describe("Feiraê customer flow", () => {
     loginAs("cliente");
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "tomate orgânico" } });
-    fireEvent.click(screen.getByRole("button", { name: /adicionar tomate orgânico/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
+    const addTomato = screen.getByRole("button", { name: /adicionar tomate orgânico/i });
+    fireEvent.click(addTomato);
+    fireEvent.click(addTomato);
+    fireEvent.click(addTomato);
+    fireEvent.click(addTomato);
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 4 unidades/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
 
     expect(screen.getByRole("button", { name: /pix/i })).toBeInTheDocument();
@@ -459,8 +481,10 @@ describe("Feiraê customer flow", () => {
 
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "cesta de frutas" } });
-    fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
+    const addBasket = screen.getByRole("button", { name: /adicionar cesta de frutas/i });
+    fireEvent.click(addBasket);
+    fireEvent.click(addBasket);
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 2 unidades/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
@@ -785,6 +809,68 @@ describe("Feiraê role access", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /confirmar entrega/i }));
     expect(screen.getByText(/nenhuma entrega ativa/i)).toBeInTheDocument();
+  });
+
+  it("updates the active driver route when one bank cancels", () => {
+    window.localStorage.removeItem("feirae:session");
+    window.localStorage.removeItem("feirae:delivery-stage:entregador@feirae.test");
+    window.localStorage.removeItem("feirae:delivery-active:entregador@feirae.test");
+
+    upsertUnifiedOrder({
+      id: "FE-MULTISTOP-CANCEL",
+      createdAt: "2026-09-27T08:00:00-03:00",
+      updatedAt: "2026-09-27T08:05:00-03:00",
+      customerKey: "cliente@feirae.test",
+      fairName: "Feira do Produtor Rural",
+      customerName: "Cliente Multi",
+      customerCity: "Planaltina",
+      customerAddress: "Planaltina, DF",
+      fulfillment: "delivery",
+      paymentMethod: "Pix",
+      paymentStatus: "authorized",
+      subtotal: 70,
+      calculatedDeliveryFee: 12,
+      deliverySubsidy: 0,
+      customerDeliveryFee: 12,
+      total: 82,
+      vendorFinancials: [
+        { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A", merchandiseSubtotal: 35, promotionDiscount: 0, netMerchandise: 35 },
+        { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B", merchandiseSubtotal: 35, promotionDiscount: 0, netMerchandise: 35 },
+      ],
+      deliveryPricing: { baseFee: 9.5, extraStopFee: 2.5, originalVendorCount: 2, currentVendorCount: 2 },
+      items: [
+        { productId: 911, name: "Verduras", vendor: "Banca A", vendorId: "vendor:a", storeId: "store:a", quantity: 1, unit: "un", unitPrice: 35, weightKg: 3 },
+        { productId: 912, name: "Queijo", vendor: "Banca B", vendorId: "vendor:b", storeId: "store:b", quantity: 1, unit: "un", unitPrice: 35, weightKg: 6 },
+      ],
+      vendors: [
+        { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A", status: "ready", productIds: [911] },
+        { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B", status: "ready", productIds: [912] },
+      ],
+      status: "driver_assigned",
+      driver: { driverKey: "entregador@feirae.test", name: "Entregador", vehicle: "Moto com baú", etaMinutes: 20, distanceKm: 8 },
+      route: {
+        toVendorKm: 2,
+        vendorToCustomerKm: 6,
+        totalKm: 8,
+        etaMinutes: 20,
+        source: "osrm",
+        pickupStops: [
+          { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A" },
+          { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B" },
+        ],
+      },
+      events: [],
+    });
+
+    render(<App />);
+    loginAs("entregador");
+    expect(screen.getAllByText(/2 · Banca A \+ Banca B/i).length).toBeGreaterThan(0);
+
+    cancelVendorParticipation("FE-MULTISTOP-CANCEL", "vendor:b", "Sem estoque");
+
+    expect(screen.getAllByText(/1 · Banca A/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/2 · Banca A \+ Banca B/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/3 kg/i).length).toBeGreaterThan(0);
   });
 
   it("clears a stale active-delivery lock after the shared order is cancelled", () => {
