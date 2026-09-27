@@ -269,7 +269,9 @@ export function LoginPage({
                       {term.sections.map((section) => (
                         <section key={section.title}>
                           <h3>{section.title}</h3>
-                          {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                          {section.paragraphs?.map((paragraph) => (
+                            <p key={paragraph}>{paragraph}</p>
+                          ))}
                           {section.bullets && (
                             <ul>
                               {section.bullets.map((bullet) => (
@@ -330,8 +332,8 @@ export function LoginPage({
                   </label>
                 </div>
                 <p className="customer-legal-note">
-                  Ofertas são opcionais. Comunicações necessárias sobre conta, segurança e pedidos podem continuar
-                  sendo enviadas para executar o serviço.
+                  Ofertas são opcionais. Comunicações necessárias sobre conta, segurança e pedidos podem
+                  continuar sendo enviadas para executar o serviço.
                 </p>
               </section>
             )}
