@@ -1,6 +1,6 @@
 # Arquitetura — Feiraê
 
-Atualizado em 26/09/2026 a partir da árvore real de `src/`.
+Atualizado em 27/09/2026 a partir da árvore real de `src/`.
 
 ## 1. Stack instalada
 
@@ -286,3 +286,36 @@ No backend real, o navegador pode pedir uma ação, mas não decidir sozinho:
 
 Mapa por função/chave/tabela:
 [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).
+
+
+## Experiência de inicialização
+
+O bootstrap visual fica fora de `App.tsx` para não misturar a experiência de abertura com regras de marketplace.
+
+Fluxo:
+
+```
+src/main.tsx
+→ LaunchExperience
+→ App
+```
+
+Responsabilidades:
+
+- `src/components/LaunchExperience.tsx`: decide abertura completa, rápida ou reduced motion;
+- `src/components/LaunchExperience.css`: anima banca, produtos, rota, entrega e marca;
+- `src/domain/feiraeSound.ts`: assinatura sonora e preferência local;
+- `src/components/LaunchExperience.test.tsx`: cobre os três modos de abertura.
+
+A splash não é gate de dados nem autenticação. Falha de áudio não pode bloquear o app.
+
+## Arquitetura de governança do repositório
+
+A sincronização de mudanças possui duas camadas:
+
+1. contrato humano em `docs/CHANGE_GOVERNANCE.md`;
+2. política automatizada em `scripts/change-sync-policy.mjs`.
+
+`scripts/check-change-sync.mjs` coleta o diff do PR e delega a avaliação para a política. A própria política possui testes Node em `scripts/change-sync-policy.test.mjs`.
+
+Isso reduz o risco de um PR atualizar “qualquer documento” em vez do documento correto para o domínio alterado.
