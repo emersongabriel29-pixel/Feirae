@@ -99,6 +99,11 @@ Tipos:
 
 ## 3. Gap financeiro multi-banca
 
+Regra operacional canônica: [MULTI_VENDOR_ORDERS.md](MULTI_VENDOR_ORDERS.md).
+
+O frontend agora limita o MVP a 4 bancas por pedido e trata a coleta por banca, mas isso não resolve o split financeiro de produção.
+
+
 Um pedido pode ter N feirantes via `order_vendors`.
 
 Mas `payments` possui apenas um:
