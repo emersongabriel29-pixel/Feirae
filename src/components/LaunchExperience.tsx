@@ -95,7 +95,12 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
           </g>
           <g className="feirae-launch__produce feirae-launch__produce--carrot">
             <path d="M283 93c17 14 14 34-5 52-8-23-7-41 5-52z" fill="#f39a43" />
-            <path d="M280 94c-2-12 3-20 13-25M282 95c8-10 17-12 25-7" stroke="#3d9958" strokeWidth="7" strokeLinecap="round" />
+            <path
+              d="M280 94c-2-12 3-20 13-25M282 95c8-10 17-12 25-7"
+              stroke="#3d9958"
+              strokeWidth="7"
+              strokeLinecap="round"
+            />
           </g>
           <g className="feirae-launch__produce feirae-launch__produce--leaf">
             <path d="M55 174c20-16 39-14 56 6-22 10-41 8-56-6z" fill="#7fc96c" />
@@ -105,7 +110,14 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
           <g className="feirae-launch__bike">
             <circle cx="84" cy="242" r="20" fill="none" stroke="#173d2b" strokeWidth="7" />
             <circle cx="149" cy="242" r="20" fill="none" stroke="#173d2b" strokeWidth="7" />
-            <path d="M84 242l31-32 34 32h-40l-15-42h33" fill="none" stroke="#1d8e53" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M84 242l31-32 34 32h-40l-15-42h33"
+              fill="none"
+              stroke="#1d8e53"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
             <path d="M109 210h30l-6-24h-28z" fill="#236f47" />
             <circle cx="119" cy="173" r="12" fill="#f2bb84" />
             <path d="M104 168c5-14 28-16 33 2l-13 1z" fill="#1f8b52" />
@@ -115,7 +127,10 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
           </g>
 
           <g className="feirae-launch__pin">
-            <path d="M318 198c-13 0-23 10-23 23 0 18 23 39 23 39s23-21 23-39c0-13-10-23-23-23z" fill="#f2a340" />
+            <path
+              d="M318 198c-13 0-23 10-23 23 0 18 23 39 23 39s23-21 23-39c0-13-10-23-23-23z"
+              fill="#f2a340"
+            />
             <circle cx="318" cy="220" r="7" fill="#fff" />
           </g>
         </svg>
