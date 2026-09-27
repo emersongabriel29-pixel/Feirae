@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   appendReview,
   appendSupportTicket,
+  cancelVendorParticipation,
   patchUnifiedOrder,
   patchUnifiedOrderItem,
   patchVendorStatus,
   readUnifiedOrders,
+  resolveRefundDestination,
   upsertUnifiedOrder,
 } from "./orderBridge";
 
@@ -31,6 +33,30 @@ describe("unified order bridge", () => {
       deliverySubsidy: 0,
       customerDeliveryFee: 10,
       total: 60,
+      vendorFinancials: [
+        {
+          vendorId: "vendor:a",
+          storeId: "store:a",
+          vendorName: "Banca A",
+          merchandiseSubtotal: 30,
+          promotionDiscount: 0,
+          netMerchandise: 30,
+        },
+        {
+          vendorId: "vendor:b",
+          storeId: "store:b",
+          vendorName: "Banca B",
+          merchandiseSubtotal: 20,
+          promotionDiscount: 0,
+          netMerchandise: 20,
+        },
+      ],
+      deliveryPricing: {
+        baseFee: 7.5,
+        extraStopFee: 2.5,
+        originalVendorCount: 2,
+        currentVendorCount: 2,
+      },
       items: [
         {
           productId: 1,
@@ -136,6 +162,44 @@ describe("unified order bridge", () => {
       { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A" },
       { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B" },
     ]);
+  });
+
+  it("keeps the remaining bank active and recalculates refund and freight after one bank cancels", () => {
+    seedOrder();
+    patchUnifiedOrder("FE-MULTI", {
+      route: {
+        toVendorKm: 2,
+        vendorToCustomerKm: 5,
+        totalKm: 7,
+        etaMinutes: 25,
+        source: "osrm",
+        pickupStops: [
+          { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A" },
+          { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B" },
+        ],
+      },
+    });
+
+    const result = cancelVendorParticipation("FE-MULTI", "vendor:b", "Sem estoque");
+    const order = readUnifiedOrders()[0];
+
+    expect(result?.orderCancelled).toBe(false);
+    expect(order.status).toBe("received");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:b")?.status).toBe("rejected");
+    expect(order.items.find((item) => item.vendorId === "vendor:b")?.cancelled).toBe(true);
+    expect(order.calculatedDeliveryFee).toBe(7.5);
+    expect(order.customerDeliveryFee).toBe(7.5);
+    expect(order.subtotal).toBe(30);
+    expect(order.total).toBe(37.5);
+    expect(order.refunds?.[0].amount).toBe(22.5);
+    expect(order.refunds?.[0].status).toBe("pending_choice");
+    expect(order.route?.pickupStops?.map((stop) => stop.vendorName)).toEqual(["Banca A"]);
+
+    resolveRefundDestination("FE-MULTI", order.refunds![0].id, "wallet");
+    const resolved = readUnifiedOrders()[0];
+    expect(resolved.refunds?.[0].destination).toBe("wallet");
+    expect(resolved.refunds?.[0].status).toBe("credited");
+    expect(resolved.paymentStatus).toBe("partially_refunded");
   });
 
   it("propagates actual separated weight to logistics", () => {
