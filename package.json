@@ -11,7 +11,7 @@
     "test:watch": "vitest",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
-    "format:check": "cp src/components/LaunchExperience.tsx /tmp/LaunchExperience.before.tsx && prettier --write src/components/LaunchExperience.tsx && diff -u /tmp/LaunchExperience.before.tsx src/components/LaunchExperience.tsx || true && prettier --check .",
+    "format:check": "prettier --check .",
     "check": "npm run lint && npm run test && npm run build",
     "check:sync": "node scripts/check-change-sync.mjs"
   },
