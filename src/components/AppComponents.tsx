@@ -29,7 +29,12 @@ import { fairs } from "../data";
 import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
 import { cartWeight, productWeight } from "../domain/marketplace";
-import { MIN_VENDOR_ORDER_AMOUNT, vendorOrderSummaries } from "../domain/multiVendor";
+import {
+  DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
+  normalizeVendorMinimumOrder,
+  vendorOrderSummaries,
+} from "../domain/multiVendor";
+import { readStoreByIdentity } from "../domain/marketplaceBridge";
 import type { LegalAcceptance, LegalTerm } from "../domain/legalTerms";
 import {
   customerPrivacyNotice,
@@ -1116,8 +1121,21 @@ export function CartDrawer({
   const totalWeight = cartWeight(items, cart);
   const fairName = items[0]?.fair ?? "";
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
-  const vendorSummaries = vendorOrderSummaries(items, cart);
+  const minimumByVendor = Object.fromEntries(
+    Array.from(new Set(items.map((product) => product.feirante))).map((vendorName) => {
+      const item = items.find((product) => product.feirante === vendorName);
+      const store = item ? readStoreByIdentity(item.fair, vendorName) : undefined;
+      return [
+        vendorName,
+        normalizeVendorMinimumOrder(
+          store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
+        ),
+      ];
+    }),
+  );
+  const vendorSummaries = vendorOrderSummaries(items, cart, minimumByVendor);
   const minimumMet = vendorSummaries.every((summary) => summary.meetsMinimum);
+  const firstBlockedMinimum = vendorSummaries.find((summary) => !summary.meetsMinimum);
   return (
     <div
       className="drawer-backdrop"
@@ -1215,12 +1233,17 @@ export function CartDrawer({
                 <p key={summary.vendorName}>
                   <span>{summary.vendorName}</span>
                   <b>
-                    {money(summary.subtotal)} ·{" "}
-                    {summary.meetsMinimum ? "mínimo atingido" : `faltam ${money(summary.missingForMinimum)}`}
+                    {summary.minimumOrderAmount > 0
+                      ? `${money(summary.subtotal)} · ${
+                          summary.meetsMinimum
+                            ? "mínimo atingido"
+                            : `faltam ${money(summary.missingForMinimum)}`
+                        }`
+                      : "sem pedido mínimo"}
                   </b>
                 </p>
               ))}
-              <small>Mínimo de {money(MIN_VENDOR_ORDER_AMOUNT)} em produtos de cada banca.</small>
+              <small>Cada banca define o próprio valor mínimo. Frete e taxas não entram nessa conta.</small>
             </div>
             <p>
               <span>Subtotal</span>
@@ -1229,9 +1252,10 @@ export function CartDrawer({
             <button onClick={onCheckout} disabled={!minimumMet} className="primary-action w-full">
               Continuar para checkout
             </button>
-            {!minimumMet && (
+            {!minimumMet && firstBlockedMinimum && (
               <small>
-                Complete o pedido mínimo de {money(MIN_VENDOR_ORDER_AMOUNT)} em cada banca para continuar.
+                {firstBlockedMinimum.vendorName}: faltam {money(firstBlockedMinimum.missingForMinimum)} para
+                atingir o mínimo de {money(firstBlockedMinimum.minimumOrderAmount)}.
               </small>
             )}
           </div>
