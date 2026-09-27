@@ -343,7 +343,6 @@ No mobile, o status ocupa linha própria e o texto legal usa rolagem interna par
 
 Não usar um único checkbox “aceito tudo”. Declarações relevantes ficam separadas e marketing/WhatsApp continuam fora do aceite jurídico obrigatório.
 
-
 ## Central premium de Documentos
 
 A área **Documentos** de Feirante e Entregador usa uma apresentação própria da marca Feiraê, não uma lista genérica.
