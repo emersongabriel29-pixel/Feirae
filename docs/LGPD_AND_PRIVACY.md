@@ -335,7 +335,6 @@ A Resolução CD/ANPD nº 15/2024 deve orientar o processo de incidentes e a Res
 
 Detalhamento: [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).
 
-
 ## 19. Cliente — ciência do aviso no cadastro
 
 Ao criar uma conta de Cliente, o Feiraê apresenta dois documentos separados:
