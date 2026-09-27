@@ -325,3 +325,18 @@ A sincronização de mudanças possui duas camadas:
 `scripts/check-change-sync.mjs` coleta o diff do PR e delega a avaliação para a política. A própria política possui testes Node em `scripts/change-sync-policy-checks.mjs`.
 
 Isso reduz o risco de um PR atualizar “qualquer documento” em vez do documento correto para o domínio alterado.
+
+
+### Splash premium — composição interna
+
+`LaunchExperience.tsx` usa uma cena SVG vetorial com grupos independentes para:
+
+- banca outline/fill;
+- caixas e produtos;
+- elementos orgânicos flutuantes;
+- rota principal + glow;
+- moto, entregador e rodas;
+- pin;
+- marca final.
+
+`LaunchExperience.css` controla a linha do tempo por variante `full`, `quick` e `reduced`. A cena não depende de imagem externa, vídeo ou serviço remoto.
