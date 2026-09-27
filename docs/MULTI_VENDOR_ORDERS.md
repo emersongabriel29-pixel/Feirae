@@ -10,7 +10,7 @@ Uma sacola pertence a **uma única feira**.
 
 Dentro dessa feira, o cliente pode comprar de várias bancas no mesmo pedido.
 
-No MVP, o limite é de **4 bancas por pedido**.
+No MVP, o limite é de **4 bancas por pedido** e o pedido mínimo é de **R$ 30,00 em produtos por banca**.
 
 O cliente faz um único checkout e enxerga um único pedido Feiraê. Internamente, o pedido mantém uma participação separada para cada banca.
 
@@ -22,6 +22,7 @@ O carrinho:
 - permite produtos de bancas diferentes da mesma feira;
 - permite continuar adicionando itens de uma banca que já está na sacola;
 - bloqueia a entrada de uma quinta banca no mesmo pedido;
+- exige R$ 30,00 em produtos em cada banca antes de liberar o checkout;
 - mantém o peso total como soma dos itens de todas as bancas.
 
 `restoreDemoBasket()` também respeita uma feira por sacola e o limite de 4 bancas.
@@ -38,6 +39,8 @@ O resumo informa:
 - frete e demais ajustes já existentes.
 
 Pagamento continua sendo apresentado como uma única compra para o cliente.
+
+O checkout mostra a situação do mínimo de cada banca e não confirma o pedido enquanto alguma estiver abaixo de R$ 30,00.
 
 ## Preparação
 
@@ -104,6 +107,45 @@ Porém o marketplace atual ainda não persiste coordenadas individuais de cada b
 
 Para otimização real de rota intra-feira, cada banca precisará ter coordenada/posição do box e o roteador deverá receber todos os waypoints.
 
+## Frete multi-banca
+
+O cliente paga **um único frete**, nunca a soma dos fretes de todas as bancas.
+
+Regra MVP:
+
+```
+frete = frete base + R$ 2,50 por banca adicional
+```
+
+O frete base continua vindo da referência logística disponível para a compra. O adicional remunera a complexidade de novas coletas dentro da mesma feira.
+
+Exemplo com frete base de R$ 12,00:
+
+- 1 banca: R$ 12,00;
+- 2 bancas: R$ 14,50;
+- 3 bancas: R$ 17,00;
+- 4 bancas: R$ 19,50.
+
+Antes da produção, o adicional precisa migrar para configuração administrativa/versionada e depois poderá usar distância real entre boxes quando houver coordenadas por banca.
+
+## Cancelamento de uma banca
+
+Se uma banca não puder atender:
+
+- somente aquela participação vira `rejected`;
+- seus itens são retirados da parte ativa do pedido;
+- somente o estoque desses itens é liberado;
+- as demais bancas continuam;
+- o frete é recalculado pela nova quantidade de coletas;
+- o peso e os `pickupStops` da corrida são atualizados;
+- o cliente recebe um ajuste financeiro;
+- valor externo pode voltar ao meio original ou, por escolha expressa, para a Carteira Feiraê;
+- saldo Feiraê previamente usado e que deixou de ser necessário volta automaticamente para a carteira.
+
+Se não restar nenhuma banca, o pedido global é cancelado.
+
+Política detalhada: [REFUND_CANCELLATION_POLICY.md](REFUND_CANCELLATION_POLICY.md).
+
 ## Financeiro
 
 O checkout é único, mas produção precisará de ledger separado por recebedor:
@@ -120,15 +162,9 @@ O protótipo ainda não possui PSP/ledger real.
 
 ## Recusa de uma banca
 
-O comportamento atual continua conservador: a recusa de uma banca encerra o pedido global e gera o estorno local aplicável.
+A recusa de uma banca não encerra mais automaticamente o pedido inteiro. O pedido continua com as demais bancas e só é cancelado globalmente quando nenhuma participação ativa restar.
 
-A evolução planejada é oferecer ao cliente decisão entre:
-
-- continuar sem a banca recusada;
-- aceitar substituição quando aplicável;
-- cancelar tudo.
-
-Essa evolução exige estorno parcial, reserva de estoque parcial e recálculo financeiro por banca e não deve ser simulada como pronta antes do ledger/backend real.
+O protótipo já atualiza o pedido, estoque, frete e rota localmente. O estorno externo continua dependente de PSP/ledger real. Substituição continua sendo tratada no fluxo de item quando aplicável.
 
 ## Arquivos principais
 
