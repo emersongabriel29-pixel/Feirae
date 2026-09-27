@@ -29,23 +29,23 @@ npm run build
 
 ## 2. Contagem atual
 
-| Arquivo                                  |  Testes |
-| ---------------------------------------- | ------: |
-| `src/App.test.tsx`                       |      56 |
+| Arquivo                                    |  Testes |
+| ------------------------------------------ | ------: |
+| `src/App.test.tsx`                         |      56 |
 | `src/components/LaunchExperience.test.tsx` |       3 |
-| `src/domain/orderBridge.test.ts`         |      11 |
-| `src/domain/feiraeNotifications.test.ts` |       6 |
-| `src/domain/legalTerms.test.ts`          |       8 |
-| `src/domain/customerLegal.test.ts`       |       4 |
-| `src/domain/marketplaceBridge.test.ts`   |       5 |
-| `src/domain/multiVendor.test.ts`         |      11 |
-| `src/domain/fairInternalRouting.test.ts` |       4 |
-| `src/domain/inventoryBridge.test.ts`     |       4 |
-| `src/domain/localAuth.test.ts`           |       4 |
-| `src/domain/marketplace.test.ts`         |       4 |
-| `src/domain/session.test.ts`             |       3 |
-| `src/utils.test.ts`                      |       4 |
-| **Total**                                | **127** |
+| `src/domain/orderBridge.test.ts`           |      11 |
+| `src/domain/feiraeNotifications.test.ts`   |       6 |
+| `src/domain/legalTerms.test.ts`            |       8 |
+| `src/domain/customerLegal.test.ts`         |       4 |
+| `src/domain/marketplaceBridge.test.ts`     |       5 |
+| `src/domain/multiVendor.test.ts`           |      11 |
+| `src/domain/fairInternalRouting.test.ts`   |       4 |
+| `src/domain/inventoryBridge.test.ts`       |       4 |
+| `src/domain/localAuth.test.ts`             |       4 |
+| `src/domain/marketplace.test.ts`           |       4 |
+| `src/domain/session.test.ts`               |       3 |
+| `src/utils.test.ts`                        |       4 |
+| **Total**                                  | **127** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
