@@ -425,7 +425,6 @@ Para este painel funcionar ainda faltam migrations para:
 
 O painel não deve ser construído em cima de constantes hard-coded do frontend.
 
-
 ## Gestão de versões jurídicas
 
 A área de gestão futura precisa tratar termos como documentos versionados, nunca como texto editável que substitui retroativamente o que já foi aceito.
