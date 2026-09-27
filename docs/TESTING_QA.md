@@ -50,7 +50,6 @@ npm run build
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
-
 ## 3. Cobertura comprovada de App.test.tsx
 
 Os 58 testes cobrem explicitamente:
@@ -327,7 +326,6 @@ Ainda não há prova automatizada de regressão visual para:
 - contraste calculado por ferramenta automatizada.
 
 Antes de produção, adicionar Playwright (ou equivalente) com screenshots das telas-chave e comparação visual.
-
 
 ## 11. Sincronização mestre — 27/09/2026
 
