@@ -36,14 +36,15 @@ npm run build
 | `src/domain/feiraeNotifications.test.ts` |       6 |
 | `src/domain/legalTerms.test.ts`          |       8 |
 | `src/domain/customerLegal.test.ts`       |       4 |
-| `src/domain/marketplaceBridge.test.ts`   |       4 |
+| `src/domain/marketplaceBridge.test.ts`   |       5 |
 | `src/domain/multiVendor.test.ts`         |       8 |
+| `src/domain/fairInternalRouting.test.ts` |       4 |
 | `src/domain/inventoryBridge.test.ts`     |       4 |
 | `src/domain/localAuth.test.ts`           |       4 |
 | `src/domain/marketplace.test.ts`         |       4 |
 | `src/domain/session.test.ts`             |       3 |
 | `src/utils.test.ts`                      |       4 |
-| **Total**                                | **118** |
+| **Total**                                | **123** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
@@ -161,12 +162,20 @@ Os 55 testes cobrem explicitamente:
 - suporte/avaliações ficam no mesmo pedido;
 - histórico isolado por cliente.
 
+### fairInternalRouting
+
+- otimiza bancas mapeadas a partir da entrada;
+- soma retorno para a saída de referência;
+- usa fallback por setor/corredor/box quando não há X/Y;
+- valida código e payload de confirmação de coleta.
+
 ### marketplaceBridge
 
 - catálogo dinâmico substitui fixture;
 - cupom válido e consumo;
 - Compre X Leve Y;
-- banca não aprovada fica oculta.
+- banca não aprovada fica oculta;
+- posição interna e código de coleta são sincronizados.
 
 ### inventoryBridge
 
@@ -182,7 +191,7 @@ Os 55 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 118 testes NÃO comprovam diretamente
+## 5. O que os 123 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
