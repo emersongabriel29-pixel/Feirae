@@ -145,7 +145,7 @@ Suite atual:
 - 3 testes do componente de abertura;
 - 68 testes de domínio/utilidades;
 - **129 testes Vitest**;
-- 8 testes da política de sincronização do repositório em `scripts/change-sync-policy.test.mjs`.
+- 8 testes da política de sincronização do repositório em `scripts/change-sync-policy-checks.mjs`.
 
 O `npm run check` executa lint, 129 testes Vitest, 8 testes de governança e build.
 
