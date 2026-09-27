@@ -811,7 +811,7 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/nenhuma entrega ativa/i)).toBeInTheDocument();
   });
 
-  it("updates the active driver route when one bank cancels", () => {
+  it("updates the active driver route when one bank cancels", async () => {
     window.localStorage.removeItem("feirae:session");
     window.localStorage.removeItem("feirae:delivery-stage:entregador@feirae.test");
     window.localStorage.removeItem("feirae:delivery-active:entregador@feirae.test");
