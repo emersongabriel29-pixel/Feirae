@@ -344,16 +344,20 @@ export function patchVendorStatus(
   );
 }
 
-export function cancelVendorParticipation(orderId: string, vendorId: string, reason: string) {
+export type VendorCancellationResult = {
+  productIds: number[];
+  refund: UnifiedOrderRefund | null;
+  remainingVendorCount: number;
+  orderCancelled: boolean;
+};
+
+export function cancelVendorParticipation(
+  orderId: string,
+  vendorId: string,
+  reason: string,
+): VendorCancellationResult | null {
   const current = readRawOrders();
-  let result:
-    | {
-        productIds: number[];
-        refund: UnifiedOrderRefund | null;
-        remainingVendorCount: number;
-        orderCancelled: boolean;
-      }
-    | null = null;
+  let result: VendorCancellationResult | null = null;
 
   writeUnifiedOrders(
     current.map((order) => {
