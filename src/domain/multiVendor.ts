@@ -72,10 +72,7 @@ export function vendorOrderSummaries<T extends { id: number; feirante: string; p
     );
     const eligibleSubtotal = Math.max(0, Math.round((subtotal - promotionDiscount) * 100) / 100);
     const minimumOrderAmount = normalizeVendorMinimumOrder(minimumByVendor[vendorName]);
-    const missingForMinimum = Math.max(
-      0,
-      Math.round((minimumOrderAmount - eligibleSubtotal) * 100) / 100,
-    );
+    const missingForMinimum = Math.max(0, Math.round((minimumOrderAmount - eligibleSubtotal) * 100) / 100);
     return {
       vendorName,
       subtotal,
