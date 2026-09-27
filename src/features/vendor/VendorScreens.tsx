@@ -53,7 +53,7 @@ import {
 } from "../../domain/feiraeNotifications";
 import { readSharedStores, readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
 import { pickupVerificationPayload } from "../../domain/fairInternalRouting";
-import { vendorIdFor } from "../../domain/identity";
+import { storeIdFor, vendorIdFor } from "../../domain/identity";
 import { consumeInventory, releaseInventoryItems } from "../../domain/inventoryBridge";
 import { readFileForLocalStorage, storedFileLabel } from "../../domain/storedFile";
 import {
@@ -616,7 +616,9 @@ export function FeiranteOperations({
   ]);
 
   const sharedBankStore = readSharedStores().find((store) => store.accountKey === session.email);
-  const pickupPayload = sharedBankStore?.storeId ? pickupVerificationPayload(sharedBankStore.storeId) : "";
+  const effectiveStoreId =
+    sharedBankStore?.storeId ?? storeIdFor(bankProfile.fairName, session.email || bankProfile.name);
+  const pickupPayload = pickupVerificationPayload(effectiveStoreId);
 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
