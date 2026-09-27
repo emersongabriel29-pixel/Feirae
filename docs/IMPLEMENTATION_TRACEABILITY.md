@@ -208,7 +208,8 @@ Não faz:
 Contagem real:
 
 - `App.test.tsx`: 55;
-- `orderBridge.test.ts`: 9;
+- `LaunchExperience.test.tsx`: 3;
+- `orderBridge.test.ts`: 11;
 - `feiraeNotifications.test.ts`: 6;
 - `legalTerms.test.ts`: 8;
 - `customerLegal.test.ts`: 4;
@@ -220,7 +221,7 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **113**.
+Total: **118**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
@@ -324,3 +325,10 @@ Limite: a evidência ainda é local. Produção exige persistência server-side 
 - `inventoryBridge.ts`: libera somente os itens da banca cancelada;
 - `DeliveryScreens.tsx`: remove banca cancelada de stops, itens e peso da corrida;
 - `REFUND_CANCELLATION_POLICY.md`: política funcional, jurídica e lacunas de PSP/ledger.
+
+
+### Casos de borda de reembolso — 27/09/2026
+
+- cancelamentos sucessivos de bancas mantêm o pedido em `refund_pending` enquanto existir valor externo ainda aguardando destino/conclusão;
+- participação já `collected` ou `delivered` não pode ser cancelada pelo fluxo automático de indisponibilidade da banca;
+- esses casos são cobertos em `orderBridge.test.ts`.
