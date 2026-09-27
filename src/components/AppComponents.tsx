@@ -605,10 +605,10 @@ export function PartnerDocumentsHero({
           <img src="/feirae-mark.svg" alt="Feiraê" />
           <div>
             <span>Feiraê · {roleLabel}</span>
-            <b>Documentos e Regularização</b>
+            <h2>Documentos e Regularização</h2>
           </div>
         </div>
-        <h2>Regularize sua conta e opere com segurança no Feiraê.</h2>
+        <h3>Regularize sua conta e opere com segurança no Feiraê.</h3>
         <p>
           Termos, documentos e aprovação em um só lugar, com transparência sobre o que falta e o que já foi
           validado.
