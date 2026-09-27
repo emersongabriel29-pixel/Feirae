@@ -553,6 +553,7 @@ Regras locais implementadas/testadas:
 
 - uma sacola pertence a uma única feira;
 - até **4 bancas** da mesma feira por pedido no MVP;
+- pedido mínimo de **R$ 30,00 em produtos por banca**, validado no carrinho e novamente no checkout;
 - checkout continua único para o cliente;
 - logística só libera quando todas as bancas estão prontas;
 - peso logístico é a soma dos itens de todas as bancas;
@@ -560,7 +561,9 @@ Regras locais implementadas/testadas:
 - o pedido de retirada só vira entregue após todas as bancas confirmarem a entrega ao cliente;
 - entrega cria `pickupStops` ordenados e o entregador confirma a coleta de cada banca individualmente;
 - o pedido de entrega permanece `driver_assigned` durante as coletas e só vira `collected` após a última banca;
-- acompanhamento do cliente mostra progresso por banca.
+- acompanhamento do cliente mostra progresso por banca;
+- frete multi-banca é único: frete-base + R$ 2,50 por coleta adicional;
+- cancelamento de uma banca remove somente sua participação, recalcula subtotal/frete/peso/rota e preserva as demais bancas.
 
 Fixtures de corrida de demonstração são restritas às contas `@feirae.test`; uma conta real/recém-criada não deve receber ofertas fictícias.
 
@@ -571,7 +574,7 @@ Limitação de geolocalização intra-feira:
 - OSRM continua calculando entregador → feira → cliente;
 - portanto ainda não existe cálculo real de distância entre as bancas dentro da feira.
 
-A recusa de uma banca continua encerrando o pedido global no protótipo; continuidade parcial depende de estorno/reserva/ledger por banca.
+A recusa de uma banca só encerra o pedido global quando nenhuma banca ativa restar. O protótipo registra ajuste/reembolso local; estorno externo continua dependente de PSP/ledger real. Política: [REFUND_CANCELLATION_POLICY.md](REFUND_CANCELLATION_POLICY.md).
 
 ## 15. Entregador — aprovação real do protótipo
 
