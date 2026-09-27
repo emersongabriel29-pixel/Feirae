@@ -238,7 +238,6 @@ Só afirmar após verificar:
 
 Merge sozinho não é evidência.
 
-
 ## 14. Estado do quality gate em 27/09/2026
 
 A `main` possui workflow Quality com:
