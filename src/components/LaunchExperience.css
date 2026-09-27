@@ -228,9 +228,7 @@
 
 @media (min-width: 720px) {
   .feirae-launch {
-    background:
-      radial-gradient(circle at 50% 42%, rgb(111 188 110 / 28%), transparent 30%),
-      #0c4d2c;
+    background: radial-gradient(circle at 50% 42%, rgb(111 188 110 / 28%), transparent 30%), #0c4d2c;
   }
 
   .feirae-launch__phase {

@@ -818,4 +818,3 @@ A splash deve reproduzir a sequência aprovada, sem substituir por outra interpr
 - quadro 3: logo Feiraê em fundo claro + assinatura **“Da feira até você”** + produtos na base.
 
 Não usar na abertura o card quadrado de marca da versão anterior nem adicionar legenda promocional abaixo da cena. O modo rápido preserva a cena de entrega e encerra na mesma marca final; reduced motion exibe diretamente o quadro final.
-

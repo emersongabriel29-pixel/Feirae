@@ -351,4 +351,3 @@ Fonte visual local:
 - `public/launch/feirae-splash-logo.svg`.
 
 Não há dependência de CDN, imagem remota ou vídeo. O shell do app continua pré-carregado e oculto até o término do temporizador da variante.
-

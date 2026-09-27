@@ -93,4 +93,3 @@ A abertura passa a seguir diretamente os três quadros aprovados pela referênci
 A implementação usa três ilustrações SVG locais em `public/launch/` e CSS apenas para orquestrar a transição entre os quadros. O card quadrado de marca, a legenda extra e a cena alternativa anterior foram removidos da abertura.
 
 Os tempos funcionais permanecem os mesmos: full ~3,3 s, quick ~1,55 s e reduced motion ~650 ms. O som continua desacoplado da renderização e não bloqueia a entrada no aplicativo.
-

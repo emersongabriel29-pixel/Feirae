@@ -364,4 +364,3 @@ Os 3 testes de `LaunchExperience.test.tsx` passaram a validar os ativos específ
 - quadro final presente no reduced motion.
 
 O teste estrutural evita que a splash volte silenciosamente para a composição anterior. A fidelidade visual final continua exigindo conferência em viewport móvel/aparelho real, pois jsdom não faz regressão por pixel.
-

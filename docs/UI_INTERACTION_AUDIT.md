@@ -342,4 +342,3 @@ Critérios de revisão visual em aparelho real:
 - não exibir o antigo card quadrado de marca;
 - não exibir legenda adicional após o logo;
 - transições não podem piscar o conteúdo do app entre quadros.
-
