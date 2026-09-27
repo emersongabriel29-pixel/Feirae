@@ -17,9 +17,9 @@
 }
 .role-heading small {
   color: #cce3d2;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
 }
 .role-heading h1 {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
@@ -51,7 +51,8 @@
 .metrics span {
   margin-top: 0.2rem;
   color: var(--fe-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 .status-button {
   border-radius: 999px;
@@ -67,32 +68,44 @@
 }
 .delivery-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.7rem;
-  border-radius: 0.9rem;
-  background: #f4f6f3;
-  padding: 0.8rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.85rem;
+  border: 1px solid var(--fe-border);
+  border-radius: var(--fe-radius-md);
+  background: var(--fe-surface);
+  padding: 0.95rem;
+  box-shadow: var(--fe-shadow-sm);
 }
 .delivery-row > span {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: var(--fe-green-soft);
   color: var(--fe-green);
 }
 .delivery-row b {
   display: block;
-  font-size: 0.76rem;
+  color: var(--fe-ink);
+  font-size: 0.84rem;
+  line-height: 1.35;
 }
 .delivery-row small {
   display: block;
-  margin-top: 0.15rem;
+  margin-top: 0.2rem;
   color: var(--fe-muted);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 .delivery-row button {
-  border-radius: 0.7rem;
+  min-height: var(--fe-touch);
+  border-radius: 0.75rem;
   background: var(--fe-green);
   padding: 0.55rem 0.7rem;
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.76rem;
   font-weight: 850;
 }
 .ops-home,
@@ -119,8 +132,10 @@
 }
 .ops-summary p {
   margin-top: 0.35rem;
+  max-width: 68ch;
   color: var(--fe-muted);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 .operational-onboarding-card {
   display: grid;
@@ -162,7 +177,7 @@
   background: var(--fe-surface-soft);
   padding: 0.35rem 0.55rem;
   color: var(--fe-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 850;
 }
 .onboarding-steps i {
@@ -187,7 +202,7 @@
 }
 .onboarding-action small {
   color: var(--fe-muted);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
 }
 .onboarding-action strong {
   margin-top: 0.1rem;
@@ -317,11 +332,14 @@
 }
 .module-card > span {
   width: fit-content;
+  min-height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
   border-radius: 999px;
   background: var(--fe-green-soft);
   padding: 0.28rem 0.55rem;
   color: var(--fe-green);
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 900;
 }
 .module-card b {
@@ -333,8 +351,8 @@
 .module-card small {
   margin-top: 0.35rem;
   color: var(--fe-muted);
-  font-size: 0.72rem;
-  line-height: 1.35;
+  font-size: 0.76rem;
+  line-height: 1.45;
 }
 .module-card strong {
   display: inline-flex;
@@ -342,7 +360,7 @@
   gap: 0.2rem;
   margin-top: 0.8rem;
   color: var(--fe-green);
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 900;
 }
 .item-actions {
@@ -370,9 +388,10 @@
 }
 .module-header p {
   margin-top: 0.35rem;
+  max-width: 72ch;
   color: var(--fe-muted);
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 .module-kpi-strip {
   display: grid;
@@ -397,10 +416,10 @@
   font-weight: 950;
 }
 .module-kpi-strip span {
-  margin-top: 0.15rem;
+  margin-top: 0.2rem;
   color: var(--fe-muted);
-  font-size: clamp(0.55rem, 2.3vw, 0.68rem);
-  line-height: 1.25;
+  font-size: clamp(0.75rem, 2.3vw, 0.8rem);
+  line-height: 1.35;
 }
 .module-action-row {
   display: flex;
@@ -450,9 +469,10 @@
 .operation-list small,
 .operation-summary p,
 .review-card small {
-  margin-top: 0.15rem;
+  margin-top: 0.2rem;
   color: var(--fe-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 .inventory-dot {
   width: 0.7rem;
@@ -472,7 +492,7 @@
   background: var(--fe-surface-soft);
   padding: 0.5rem 0.7rem;
   color: var(--fe-muted);
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   font-weight: 850;
 }
 .mini-toggle.active {
@@ -574,7 +594,7 @@
   background: var(--fe-surface-soft);
   padding: 0.4rem 0.55rem;
   color: var(--fe-green-dark);
-  font-size: 0.63rem;
+  font-size: 0.72rem;
   font-weight: 900;
   white-space: nowrap;
 }
@@ -593,7 +613,8 @@
   justify-content: space-between;
   gap: 1rem;
   color: var(--fe-muted);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 .finance-breakdown strong {
   color: var(--fe-ink);
@@ -633,7 +654,8 @@
 .timeline-list small {
   margin-top: 0.15rem;
   color: var(--fe-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 .operation-metrics {
   display: grid;
@@ -681,8 +703,10 @@
 }
 .operation-footnote {
   margin-top: 0.8rem;
+  max-width: 72ch;
   color: var(--fe-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 .delivery-hero {
   display: flex;
@@ -1597,5 +1621,41 @@
   }
   .documents-guidance-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+.operation-list article > button,
+.item-actions button,
+.stock-controls button {
+  min-height: var(--fe-touch);
+}
+
+.operation-list article > button:not(:disabled):active,
+.module-card:active,
+.delivery-row button:not(:disabled):active {
+  filter: brightness(0.97);
+}
+
+@media (max-width: 639px) {
+  .delivery-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .delivery-row > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .item-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .item-actions .mini-toggle {
+    flex: 1 1 auto;
+  }
+
+  .finance-breakdown p {
+    align-items: flex-start;
   }
 }
