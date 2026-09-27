@@ -414,9 +414,7 @@ export default function App() {
         const store = product ? readStoreByIdentity(product.fair, vendorName) : undefined;
         return [
           vendorName,
-          normalizeVendorMinimumOrder(
-            store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
-          ),
+          normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT),
         ];
       }),
     );
