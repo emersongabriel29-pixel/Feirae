@@ -302,3 +302,36 @@ Antes de produção, definir procedimento específico para:
 - [ ] contrato com operadores;
 - [ ] resposta a incidente;
 - [ ] revisão jurídica.
+
+
+## 18. Termos, ciência do aviso e assinatura
+
+Feirante e Entregador possuem um **Aviso de Privacidade e Proteção de Dados** versionado dentro da área Documentos.
+
+A assinatura deste aviso registra **ciência e recebimento da informação**. Ela não converte toda operação de tratamento em consentimento.
+
+O produto distingue bases como:
+
+- execução de contrato e procedimentos preliminares;
+- obrigação legal/regulatória;
+- exercício regular de direitos;
+- legítimo interesse com avaliação e salvaguardas;
+- consentimento apenas quando efetivamente necessário.
+
+Marketing, ofertas e WhatsApp comercial permanecem separados e opcionais quando a base adotada exigir escolha do titular.
+
+O protótipo registra termo, versão, nome, e-mail, data/hora e fingerprint do conteúdo em `localStorage`. Isso não é uma trilha probatória suficiente para produção.
+
+Antes de documentos reais:
+
+- identificar razão social/CNPJ/endereço do controlador;
+- publicar contato de privacidade/encarregado aplicável;
+- guardar aceite no backend com timestamp de servidor e auditoria;
+- impedir edição retroativa do documento assinado;
+- manter histórico de versões;
+- aplicar política real de retenção;
+- configurar Storage privado e controle de acesso.
+
+A Resolução CD/ANPD nº 15/2024 deve orientar o processo de incidentes e a Resolução CD/ANPD nº 19/2024 deve ser considerada quando houver transferência internacional.
+
+Detalhamento: [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).
