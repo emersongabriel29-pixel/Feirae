@@ -517,12 +517,13 @@ export function DeliveryOperations({
     )
     .map((order) => {
       const route = order.route!;
-      const vendorNames = Array.from(new Set(order.items.map((item) => item.vendor)));
+      const activeItems = order.items.filter((item) => !item.cancelled);
+      const vendorNames = Array.from(new Set(activeItems.map((item) => item.vendor)));
       const pickupStops = (route.pickupStops ?? []).map((stop) => ({
         ...stop,
         collected: order.vendors?.find((vendor) => vendor.vendorId === stop.vendorId)?.status === "collected",
       }));
-      const weight = order.items.reduce((sum, item) => sum + item.weightKg, 0);
+      const weight = activeItems.reduce((sum, item) => sum + item.weightKg, 0);
       return {
         id: order.id,
         fair: order.fairName,
@@ -542,7 +543,7 @@ export function DeliveryOperations({
         available: order.status === "ready_for_pickup" && !order.driver,
         assignedDriverKey: order.driver?.driverKey,
         weight,
-        items: order.items.map((item) => `${item.quantity}× ${item.name}`),
+        items: activeItems.map((item) => `${item.quantity}× ${item.name}`),
       };
     });
   const sharedIds = new Set(sharedDeliveries.map((delivery) => delivery.id));
