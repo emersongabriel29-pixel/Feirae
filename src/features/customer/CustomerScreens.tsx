@@ -285,7 +285,12 @@ export function FairCard({
   return (
     <article className="fair-card">
       <div className={`fair-cover tone-${index % 3}`}>
-        <span aria-hidden="true">🧺</span>
+        <span className="fair-cover-icon" aria-hidden="true">
+          <Store size={46} strokeWidth={1.7} />
+        </span>
+        <span className="fair-cover-mark" aria-hidden="true">
+          <img src="/feirae-mark.svg" alt="" />
+        </span>
         <small>{fairHoursForName(fair.name).label}</small>
       </div>
       <div className="p-5">
@@ -365,7 +370,13 @@ export function CatalogPage({
       />
       <div className="category-list" aria-label="Categorias">
         {["Todos", ...categories].map((item) => (
-          <button key={item} onClick={() => onCategory(item)} className={category === item ? "active" : ""}>
+          <button
+            key={item}
+            type="button"
+            onClick={() => onCategory(item)}
+            className={category === item ? "active" : ""}
+            aria-pressed={category === item}
+          >
             {item}
           </button>
         ))}
@@ -409,6 +420,7 @@ export function ProductCard({
         className="favorite-button"
         onClick={() => onFavorite(product.id)}
         aria-label={favorite ? `Remover ${product.name} dos favoritos` : `Favoritar ${product.name}`}
+        aria-pressed={favorite}
       >
         <Heart size={17} className={favorite ? "fill-red-500 text-red-500" : ""} />
       </button>
@@ -483,7 +495,13 @@ export function OrdersPage({
     <section className="mx-auto max-w-3xl">
       <PageHeading title="Meus pedidos" subtitle="Ordenados por data e hora mais recentes." />
       <div className="mt-6 space-y-3">
-        {ordered.map((order) => (
+        {ordered.length === 0 ? (
+          <Empty
+            title="Você ainda não fez pedidos"
+            text="Quando você comprar em uma feira, seus pedidos aparecerão aqui em ordem de data e hora."
+          />
+        ) : (
+          ordered.map((order) => (
           <article key={order.id} className="order-card">
             <div>
               <small>{order.date}</small>
@@ -512,7 +530,8 @@ export function OrdersPage({
               </div>
             </div>
           </article>
-        ))}
+        ))
+        )}
       </div>
     </section>
   );
