@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "./App";
 import { cancelVendorParticipation, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
@@ -866,7 +866,9 @@ describe("Feiraê role access", () => {
     loginAs("entregador");
     expect(screen.getAllByText(/2 · Banca A \+ Banca B/i).length).toBeGreaterThan(0);
 
-    cancelVendorParticipation("FE-MULTISTOP-CANCEL", "vendor:b", "Sem estoque");
+    act(() => {
+      cancelVendorParticipation("FE-MULTISTOP-CANCEL", "vendor:b", "Sem estoque");
+    });
 
     expect(screen.getAllByText(/1 · Banca A/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/2 · Banca A \+ Banca B/i)).not.toBeInTheDocument();
