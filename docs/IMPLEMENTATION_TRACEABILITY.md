@@ -203,10 +203,11 @@ Não faz:
 
 Contagem real:
 
-- `App.test.tsx`: 52;
+- `App.test.tsx`: 53;
 - `orderBridge.test.ts`: 5;
 - `feiraeNotifications.test.ts`: 5;
 - `legalTerms.test.ts`: 8;
+- `customerLegal.test.ts`: 4;
 - `marketplaceBridge.test.ts`: 4;
 - `inventoryBridge.test.ts`: 3;
 - `localAuth.test.ts`: 4;
@@ -214,7 +215,7 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **92**.
+Total: **97**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
@@ -295,3 +296,16 @@ Limite: o aceite persiste em `localStorage` no protótipo. Produção precisa de
 - `App.test.tsx`: valida a nova hierarquia, identidade, filtros e textos críticos.
 
 A mudança é visual/UX e preserva as regras jurídicas e de aprovação implementadas anteriormente.
+
+
+## Termos do Cliente no cadastro — 27/09/2026
+
+- `customerLegal.ts`: Termos de Uso e Aviso de Privacidade próprios do Cliente;
+- `LoginPage`: impede cadastro sem aceite dos Termos e ciência do Aviso;
+- ofertas/novidades ficam em checkbox separado, opcional e desmarcado;
+- aceite bem-sucedido registra versões e fingerprint em `feirae:customer-legal-acceptances:<email>`;
+- `SettingsPage`: mantém Termos e Aviso acessíveis após o cadastro;
+- `customerLegal.test.ts`: valida separação de documentos, bases legais, proteção do consumidor e registro do aceite;
+- `App.test.tsx`: valida bloqueio do cadastro sem confirmações e persistência do aceite.
+
+Limite: a evidência ainda é local. Produção exige persistência server-side auditável.
