@@ -38,6 +38,7 @@ import { useUnifiedOrderRevision } from "../../hooks/useUnifiedOrderRevision";
 import { money } from "../../utils";
 import {
   appendReview,
+  cancelVendorParticipation,
   eventNow,
   patchUnifiedOrder,
   patchUnifiedOrderItem,
@@ -52,7 +53,7 @@ import {
 } from "../../domain/feiraeNotifications";
 import { readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
 import { vendorIdFor } from "../../domain/identity";
-import { consumeInventory, releaseInventory } from "../../domain/inventoryBridge";
+import { consumeInventory, releaseInventoryItems } from "../../domain/inventoryBridge";
 import { readFileForLocalStorage, storedFileLabel } from "../../domain/storedFile";
 import {
   allRequiredTermsAccepted,
@@ -712,22 +713,21 @@ export function FeiranteOperations({
   }
 
   function rejectOrder(order: VendorOrder) {
+    const vendorId = order.vendorId ?? vendorIdFor(session.email);
+    const result = cancelVendorParticipation(order.id, vendorId, rejectReason);
     updateOrder(order.id, { status: "rejected", rejectReason });
-    releaseInventory(order.id);
-    patchVendorStatus(
-      order.id,
-      order.vendorId ?? vendorIdFor(session.email),
-      "rejected",
-      eventNow("vendor-rejected", "Pedido cancelado", "vendor", { reason: rejectReason }),
-    );
-    const unified = readUnifiedOrders().find((item) => item.id === order.id);
-    if (unified?.paymentStatus === "authorized") {
-      patchUnifiedOrder(order.id, {
-        paymentStatus: "refunded",
-        refundAmount: unified.total,
-      });
+    if (result?.productIds.length) releaseInventoryItems(order.id, result.productIds);
+
+    if (!result) {
+      showNotice(`Não foi possível localizar a participação desta banca no pedido ${order.id}.`);
+      return;
     }
-    showNotice(`Pedido ${order.id} recusado. Motivo registrado.`);
+
+    showNotice(
+      result.orderCancelled
+        ? `Pedido ${order.id} encerrado porque não restaram bancas ativas.`
+        : `Sua banca saiu do pedido ${order.id}. O restante da compra continua e o cliente foi avisado.`,
+    );
   }
 
   function markReady(order: VendorOrder) {
