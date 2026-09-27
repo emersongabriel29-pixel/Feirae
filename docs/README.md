@@ -64,6 +64,7 @@ Um documento de requisito não é prova de implementação.
 - [ADMIN_MANAGEMENT_SPEC.md](ADMIN_MANAGEMENT_SPEC.md)
 - [ONBOARDING_AND_APPROVAL.md](ONBOARDING_AND_APPROVAL.md)
 - [MONEY_FLOW.md](MONEY_FLOW.md)
+- [REFUND_CANCELLATION_POLICY.md](REFUND_CANCELLATION_POLICY.md) — cancelamento parcial, estorno, carteira e base legal.
 - [LGPD_AND_PRIVACY.md](LGPD_AND_PRIVACY.md)
 
 ## Planejamento
