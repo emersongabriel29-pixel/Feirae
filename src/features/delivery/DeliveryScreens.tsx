@@ -19,6 +19,7 @@ import {
 import {
   Empty,
   FeiraeNotificationCard,
+  LegalTermSignatureCard,
   ModuleHeader,
   OperationalOnboardingCard,
   OperationsMenu,
@@ -48,6 +49,14 @@ import {
   showFeiraeNotification,
 } from "../../domain/feiraeNotifications";
 import { readFileForLocalStorage, storedFileLabel, type StoredFile } from "../../domain/storedFile";
+import {
+  allRequiredTermsAccepted,
+  deliveryRequiredTerms,
+  demoLegalAcceptance,
+  legalTermFingerprint,
+  type LegalAcceptance,
+  type LegalTerm,
+} from "../../domain/legalTerms";
 import {
   appendReview,
   appendSupportTicket,
@@ -264,6 +273,15 @@ export function DeliveryOperations({
       expiresAt: string;
     }[]
   >(`feirae:delivery-documents:${session.email}`, defaultDeliveryDocuments);
+
+  const [legalAcceptances, setLegalAcceptances] = usePersistentState<LegalAcceptance[]>(
+    `feirae:delivery-legal-acceptances:${session.email}`,
+    seedDemoData
+      ? deliveryRequiredTerms.map((term) =>
+          demoLegalAcceptance(term, "delivery", session.name, session.email),
+        )
+      : [],
+  );
 
   useEffect(() => {
     const baseLat = deliveryPreferences.baseLat;
@@ -538,20 +556,27 @@ export function DeliveryOperations({
     ...(hasMotorizedVehicle ? ["cnh", "crlv"] : []),
     ...(hasMoto ? ["motofrete"] : []),
   ];
-  const approvalStatus = requiredDocumentIds.every(
-    (id) => deliveryDocuments.find((document) => document.id === id)?.status === "approved",
-  )
-    ? "Aprovado"
-    : deliveryDocuments.some(
-          (document) =>
-            requiredDocumentIds.includes(document.id) && document.status === "correction_required",
+  const deliveryTermsAccepted = allRequiredTermsAccepted(
+    legalAcceptances,
+    deliveryRequiredTerms,
+    "delivery",
+  );
+  const approvalStatus = !deliveryTermsAccepted
+    ? "Termos pendentes"
+    : requiredDocumentIds.every(
+          (id) => deliveryDocuments.find((document) => document.id === id)?.status === "approved",
         )
-      ? "Correção necessária"
+      ? "Aprovado"
       : deliveryDocuments.some(
-            (document) => requiredDocumentIds.includes(document.id) && document.status === "under_review",
+            (document) =>
+              requiredDocumentIds.includes(document.id) && document.status === "correction_required",
           )
-        ? "Em análise"
-        : "Documentação pendente";
+        ? "Correção necessária"
+        : deliveryDocuments.some(
+              (document) => requiredDocumentIds.includes(document.id) && document.status === "under_review",
+            )
+          ? "Em análise"
+          : "Documentação pendente";
   const pendingAmount =
     deliveryLedger
       .filter((entry) => entry.status === "pending")
@@ -658,6 +683,28 @@ export function DeliveryOperations({
 
     seenDeliveryNotificationKeys.current = currentKeys;
   }, [effectiveAccepted, session.email, unifiedOrderRevision]);
+
+  async function signDeliveryLegalTerm(term: LegalTerm, signerName: string) {
+    const fingerprint = await legalTermFingerprint(term);
+    const acceptance: LegalAcceptance = {
+      termId: term.id,
+      version: term.version,
+      role: "delivery",
+      signerName,
+      signerEmail: session.email,
+      signedAt: new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "medium",
+      }).format(new Date()),
+      fingerprint,
+      method: "typed-name",
+    };
+    setLegalAcceptances((current) => [
+      ...current.filter((item) => !(item.termId === term.id && item.role === "delivery")),
+      acceptance,
+    ]);
+    setIncidentNotice(`${term.title} assinado e registrado.`);
+  }
 
   async function enableFeiraeNotifications() {
     setNotificationPermission(await requestFeiraeNotificationPermission());
@@ -2286,17 +2333,32 @@ export function DeliveryOperations({
                 <ModuleHeader
                   badge={approvalStatus}
                   title="Documentação e aprovação"
-                  description="Criar conta ou enviar documentos não libera corridas. O cadastro precisa ser aprovado."
+                  description="Criar conta, assinar termos ou enviar documentos isoladamente não libera corridas. O cadastro completo precisa ser aprovado."
                 />
                 <div className="region-strip">
                   <Check size={18} />
                   <div>
                     <b>Status: {approvalStatus}</b>
                     <p>
-                      Documentos obrigatórios mudam conforme os veículos ativos. Enquanto a análise não for
-                      aprovada, o entregador não pode ficar online nem aceitar corridas reais.
+                      Os termos vigentes devem estar assinados e os documentos obrigatórios mudam conforme os veículos
+                      ativos. Enquanto o cadastro não estiver aprovado, o entregador não pode ficar online nem
+                      aceitar corridas reais.
                     </p>
                   </div>
+                </div>
+                <div className="legal-terms-stack">
+                  {deliveryRequiredTerms.map((term) => (
+                    <LegalTermSignatureCard
+                      key={term.id}
+                      term={term}
+                      acceptance={legalAcceptances.find(
+                        (item) => item.termId === term.id && item.role === "delivery",
+                      )}
+                      signerName={deliveryAccount.name || session.name}
+                      signerEmail={session.email}
+                      onSign={signDeliveryLegalTerm}
+                    />
+                  ))}
                 </div>
                 <div className="operation-list detailed">
                   {deliveryDocuments.map((document) => {
