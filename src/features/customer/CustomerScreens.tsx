@@ -31,6 +31,7 @@ import {
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
 import { customerPrivacyNotice, customerTermsOfUse } from "../../domain/customerLegal";
+import { FEIRAE_SOUND_ENABLED_KEY, playFeiraeSoundMark } from "../../domain/feiraeSound";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
   appendReview,
@@ -2841,6 +2842,7 @@ export function ChatPage({ onBack }: { onBack: () => void }) {
 export function SettingsPage({ onBack }: { onBack: () => void }) {
   const [offers, setOffers] = usePersistentState(scopedStorageKey("feirae:offers"), true);
   const [orderUpdates, setOrderUpdates] = usePersistentState(scopedStorageKey("feirae:order-updates"), true);
+  const [appSounds, setAppSounds] = usePersistentState(FEIRAE_SOUND_ENABLED_KEY, true);
   const [whatsapp, setWhatsapp] = usePersistentState(scopedStorageKey("feirae:whatsapp"), false);
   const [useGps, setUseGps] = usePersistentState(scopedStorageKey("feirae:gps"), true);
   const [compactCards, setCompactCards] = usePersistentState(scopedStorageKey("feirae:compact-cards"), false);
@@ -2858,6 +2860,15 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
           description="Acompanhar mudanças de status"
           checked={orderUpdates}
           onChange={setOrderUpdates}
+        />
+        <Toggle
+          label="Sons do Feiraê"
+          description="Assinatura sonora da abertura e efeitos de confirmação. Ao ativar, você ouve uma prévia."
+          checked={appSounds}
+          onChange={(enabled) => {
+            setAppSounds(enabled);
+            if (enabled) void playFeiraeSoundMark();
+          }}
         />
         <Toggle
           label="Autorizo receber mensagens do Feiraê via WhatsApp"
