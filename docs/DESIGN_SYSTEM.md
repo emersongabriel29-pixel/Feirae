@@ -464,7 +464,6 @@ Em **Editar banca**:
 - informar o teto vigente da plataforma;
 - prévia pública deve refletir a configuração salva.
 
-
 ## Polimento UI/UX Pro Max — 27/09/2026
 
 Regras incorporadas ao sistema:
