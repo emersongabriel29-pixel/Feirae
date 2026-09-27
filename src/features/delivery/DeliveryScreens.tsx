@@ -9,7 +9,6 @@ import {
   MapPin,
   Package,
   Plus,
-  QrCode,
   Star,
   Trash2,
   Truck,
