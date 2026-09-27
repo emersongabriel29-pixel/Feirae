@@ -294,7 +294,6 @@ No backend real, o navegador pode pedir uma ação, mas não decidir sozinho:
 Mapa por função/chave/tabela:
 [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).
 
-
 ## Experiência de inicialização
 
 O bootstrap visual fica fora de `App.tsx` para não misturar a experiência de abertura com regras de marketplace.
