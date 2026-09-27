@@ -765,17 +765,18 @@ export function DeliveryOperations({
       (delivery.assignedDriverKey === session.email && delivery.available === false),
   );
   const activePickupStops = activeDelivery?.pickupStops ?? [];
-  const deliveryStages = activeDelivery
-    ? [
-        ...activePickupStops.flatMap((stop) => [
-          `Ir para ${stop.vendorName}`,
-          `Confirmar coleta — ${stop.vendorName}`,
-        ]),
-        "Iniciar entrega",
-        "Avisar chegada",
-        "Confirmar entrega",
-      ]
-    : ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Avisar chegada", "Confirmar entrega"];
+  const deliveryStages =
+    activeDelivery && activePickupStops.length > 1
+      ? [
+          ...activePickupStops.flatMap((stop) => [
+            `Ir para ${stop.vendorName}`,
+            `Confirmar coleta — ${stop.vendorName}`,
+          ]),
+          "Iniciar entrega",
+          "Avisar chegada",
+          "Confirmar entrega",
+        ]
+      : ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Avisar chegada", "Confirmar entrega"];
   const currentStage = Math.min(stage, Math.max(0, deliveryStages.length - 1));
   const pickupStagesLength = activePickupStops.length * 2;
   const currentPickupStop =
