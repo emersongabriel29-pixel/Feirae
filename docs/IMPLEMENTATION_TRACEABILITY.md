@@ -220,7 +220,7 @@ Limite: navegadores móveis podem bloquear autoplay antes da primeira interaçã
 
 - `scripts/check-change-sync.mjs`: lê o diff do PR;
 - `scripts/change-sync-policy.mjs`: matriz semântica por domínio;
-- `scripts/change-sync-policy.test.mjs`: 8 testes Node da própria política;
+- `scripts/change-sync-policy-checks.mjs`: 8 testes Node da própria política;
 - `docs/CHANGE_GOVERNANCE.md`: contrato humano de impacto.
 
 ## Testes atuais
@@ -244,7 +244,7 @@ Contagem real:
 
 Total Vitest: **129**.
 
-Governança adicional: `scripts/change-sync-policy.test.mjs` possui **8 testes Node** para a política de sincronização.
+Governança adicional: `scripts/change-sync-policy-checks.mjs` possui **8 testes Node** para a política de sincronização.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
