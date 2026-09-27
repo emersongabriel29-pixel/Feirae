@@ -30,9 +30,10 @@ export async function playFeiraeSoundMark() {
       return false;
     }
 
-    const master = context.createGain();
-    master.gain.setValueAtTime(0.16, context.currentTime);
-    master.connect(context.destination);
+    const activeContext = context;
+    const master = activeContext.createGain();
+    master.gain.setValueAtTime(0.16, activeContext.currentTime);
+    master.connect(activeContext.destination);
 
     const notes = [
       { frequency: 659.25, offset: 0, duration: 0.22 },
@@ -40,13 +41,13 @@ export async function playFeiraeSoundMark() {
       { frequency: 987.77, offset: 0.34, duration: 0.4 },
     ];
 
-    const start = context.currentTime + 0.02;
+    const start = activeContext.currentTime + 0.02;
     let ended = 0;
 
     for (const note of notes) {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      const filter = context.createBiquadFilter();
+      const oscillator = activeContext.createOscillator();
+      const gain = activeContext.createGain();
+      const filter = activeContext.createBiquadFilter();
       const at = start + note.offset;
 
       oscillator.type = note.offset === 0.34 ? "sine" : "triangle";
@@ -70,8 +71,8 @@ export async function playFeiraeSoundMark() {
         "ended",
         () => {
           ended += 1;
-          if (ended === notes.length && context?.state !== "closed") {
-            void context.close();
+          if (ended === notes.length && activeContext.state !== "closed") {
+            void activeContext.close();
           }
         },
         { once: true },
