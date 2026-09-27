@@ -751,7 +751,10 @@ export function FeiranteOperations({
     }
     const nextProduct = {
       ...productDraft,
-      id: productEditorId === "new" ? Date.now() : productDraft.id,
+      id:
+        productEditorId === "new"
+          ? Math.max(0, ...vendorItems.map((item) => item.id)) + 1
+          : productDraft.id,
       active: productDraft.stock > 0 ? productDraft.active : false,
     };
     setVendorItems((current) =>
@@ -836,7 +839,14 @@ export function FeiranteOperations({
     }
     const next = {
       ...promotionDraft,
-      id: promotionEditingId ?? String(Date.now()),
+      id:
+        promotionEditingId ??
+        `promo-${
+          Math.max(
+            0,
+            ...promotions.map((promotion) => Number(promotion.id.match(/^promo-(\d+)$/)?.[1] ?? 0)),
+          ) + 1
+        }`,
       vendorPaysDelivery: promotionDraft.type === "freteGratis" ? true : promotionDraft.vendorPaysDelivery,
     };
     setPromotions((current) =>
