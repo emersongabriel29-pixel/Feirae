@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import {
   FeiraeNotificationCard,
+  LegalTermSignatureCard,
   ModuleHeader,
   OperationalOnboardingCard,
   OperationsMenu,
@@ -50,6 +51,14 @@ import { readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketp
 import { vendorIdFor } from "../../domain/identity";
 import { consumeInventory, releaseInventory } from "../../domain/inventoryBridge";
 import { readFileForLocalStorage, storedFileLabel } from "../../domain/storedFile";
+import {
+  allRequiredTermsAccepted,
+  demoLegalAcceptance,
+  legalTermFingerprint,
+  vendorRequiredTerms,
+  type LegalAcceptance,
+  type LegalTerm,
+} from "../../domain/legalTerms";
 import {
   initialBankProfile,
   initialVendorDocuments,
@@ -253,6 +262,14 @@ export function FeiranteOperations({
           status: "pending" as const,
           fileName: "",
         })),
+  );
+  const [legalAcceptances, setLegalAcceptances] = usePersistentState<LegalAcceptance[]>(
+    `feirae:vendor-legal-acceptances:${session.email}`,
+    seedDemoData
+      ? vendorRequiredTerms.map((term) =>
+          demoLegalAcceptance(term, "feirante", session.name, session.email),
+        )
+      : [],
   );
   const [stockHistory, setStockHistory] = usePersistentState<
     { id: string; product: string; delta: number; reason: string; createdAt: string }[]
@@ -502,15 +519,22 @@ export function FeiranteOperations({
   const vendorPaidPayout = orders
     .filter((order) => settlementStatus[order.id] === "paid")
     .reduce((sum, order) => sum + order.value, 0);
-  const approvalStatus = documents
-    .filter((document) => document.required)
-    .every((document) => document.status === "approved")
-    ? "Aprovado"
-    : documents.some((document) => document.status === "correction_required")
-      ? "Correção necessária"
-      : documents.some((document) => document.status === "under_review")
-        ? "Em análise"
-        : "Documentação pendente";
+  const vendorTermsAccepted = allRequiredTermsAccepted(
+    legalAcceptances,
+    vendorRequiredTerms,
+    "feirante",
+  );
+  const approvalStatus = !vendorTermsAccepted
+    ? "Termos pendentes"
+    : documents
+          .filter((document) => document.required)
+          .every((document) => document.status === "approved")
+      ? "Aprovado"
+      : documents.some((document) => document.status === "correction_required")
+        ? "Correção necessária"
+        : documents.some((document) => document.status === "under_review")
+          ? "Em análise"
+          : "Documentação pendente";
   const vendorProfileReady = Boolean(
     bankProfile.name.trim() && bankProfile.fairName.trim() && bankProfile.box.trim(),
   );
@@ -591,6 +615,28 @@ export function FeiranteOperations({
       badge: approvalStatus,
     },
   };
+
+  async function signVendorLegalTerm(term: LegalTerm, signerName: string) {
+    const fingerprint = await legalTermFingerprint(term);
+    const acceptance: LegalAcceptance = {
+      termId: term.id,
+      version: term.version,
+      role: "feirante",
+      signerName,
+      signerEmail: session.email,
+      signedAt: new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "medium",
+      }).format(new Date()),
+      fingerprint,
+      method: "typed-name",
+    };
+    setLegalAcceptances((current) => [
+      ...current.filter((item) => !(item.termId === term.id && item.role === "feirante")),
+      acceptance,
+    ]);
+    showNotice(`${term.title} assinado e registrado.`);
+  }
 
   function showNotice(message: string) {
     setNotice(message);
@@ -2720,17 +2766,31 @@ export function FeiranteOperations({
                 <ModuleHeader
                   badge={approvalStatus}
                   title="Documentação e aprovação"
-                  description="Enviar arquivo não aprova o cadastro. Documentos ficam em análise até a validação."
+                  description="Termos obrigatórios precisam ser assinados e documentos ficam em análise até a validação."
                 />
                 <div className="region-strip">
                   <Check size={18} />
                   <div>
                     <b>Status do cadastro: {approvalStatus}</b>
                     <p>
-                      Enquanto os documentos obrigatórios não estiverem aprovados, a banca não deve vender ou
-                      receber repasses no ambiente real.
+                      Enquanto os termos vigentes não estiverem assinados e os documentos obrigatórios não estiverem
+                      aprovados, a banca não deve vender ou receber repasses no ambiente real.
                     </p>
                   </div>
+                </div>
+                <div className="legal-terms-stack">
+                  {vendorRequiredTerms.map((term) => (
+                    <LegalTermSignatureCard
+                      key={term.id}
+                      term={term}
+                      acceptance={legalAcceptances.find(
+                        (item) => item.termId === term.id && item.role === "feirante",
+                      )}
+                      signerName={vendorAccount.name || session.name}
+                      signerEmail={session.email}
+                      onSign={signVendorLegalTerm}
+                    />
+                  ))}
                 </div>
                 <div className="operation-list detailed">
                   {documents.map((document) => (
