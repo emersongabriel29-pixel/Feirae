@@ -213,15 +213,16 @@ Contagem real:
 - `feiraeNotifications.test.ts`: 6;
 - `legalTerms.test.ts`: 8;
 - `customerLegal.test.ts`: 4;
-- `marketplaceBridge.test.ts`: 4;
+- `marketplaceBridge.test.ts`: 5;
 - `multiVendor.test.ts`: 8;
+- `fairInternalRouting.test.ts`: 4;
 - `inventoryBridge.test.ts`: 4;
 - `localAuth.test.ts`: 4;
 - `marketplace.test.ts`: 4;
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **118**.
+Total: **123**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
@@ -331,3 +332,17 @@ Limite: a evidência ainda é local. Produção exige persistência server-side 
 - cancelamentos sucessivos de bancas mantêm o pedido em `refund_pending` enquanto existir valor externo ainda aguardando destino/conclusão;
 - participação já `collected` ou `delivered` não pode ser cancelada pelo fluxo automático de indisponibilidade da banca;
 - esses casos são cobertos em `orderBridge.test.ts`.
+
+
+## Roteamento interno de feira — 27/09/2026
+
+- `VendorBankProfile`: setor, corredor, box e posição interna X/Y;
+- `marketplaceBridge.ts`: publica posição interna e código de coleta da banca;
+- `fairInternalRouting.ts`: otimização das bancas a partir da entrada, distância interna, ETA a pé e fallback por setor/corredor/box;
+- `DeliveryScreens.tsx`: origem GPS do entregador → feira, percurso interno, saída → cliente;
+- `orderBridge.ts`: `pickupStops` enriquecidos e métricas internas persistidas;
+- coleta com código/QR: valida o `storeId` esperado antes da confirmação quando existe `pickupCode`;
+- fallback de leitura: câmera/arquivo com `BarcodeDetector` ou digitação do código;
+- documentação canônica: `INTERNAL_FAIR_ROUTING.md`.
+
+Limites ainda reais: mapa cartesiano sem grafo de obstáculos, entrada/saída distintas ainda não cadastradas e token QR de produção ainda precisa de backend antifraude.
