@@ -830,8 +830,7 @@
   border: 1px solid var(--fe-border);
   border-radius: var(--fe-radius-lg);
   background:
-    radial-gradient(circle at 96% 4%, rgba(223, 243, 107, 0.16), transparent 8rem),
-    var(--fe-surface);
+    radial-gradient(circle at 96% 4%, rgba(223, 243, 107, 0.16), transparent 8rem), var(--fe-surface);
   padding: clamp(0.9rem, 2.5vw, 1.15rem);
   box-shadow: var(--fe-shadow-sm);
 }
