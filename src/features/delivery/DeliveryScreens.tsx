@@ -65,6 +65,7 @@ import {
   appendSupportTicket,
   eventNow,
   patchUnifiedOrder,
+  patchVendorStatus,
   readUnifiedOrders,
 } from "../../domain/orderBridge";
 
@@ -334,6 +335,9 @@ export function DeliveryOperations({
               totalKm: Math.round((toVendor.distanceKm + toCustomer.distanceKm) * 10) / 10,
               etaMinutes: toVendor.durationMinutes + toCustomer.durationMinutes,
               source: "osrm",
+              pickupStops: (order.vendors ?? [])
+                .filter((vendor) => vendor.status !== "rejected")
+                .map(({ vendorId, storeId, vendorName }) => ({ vendorId, storeId, vendorName })),
             },
           },
           eventNow("route-updated", "Rota calculada", "system"),
@@ -513,15 +517,21 @@ export function DeliveryOperations({
     )
     .map((order) => {
       const route = order.route!;
-      const vendorNames = Array.from(new Set(order.items.map((item) => item.vendor)));
-      const weight = order.items.reduce((sum, item) => sum + item.weightKg, 0);
+      const activeItems = order.items.filter((item) => !item.cancelled);
+      const vendorNames = Array.from(new Set(activeItems.map((item) => item.vendor)));
+      const pickupStops = (route.pickupStops ?? []).map((stop) => ({
+        ...stop,
+        collected: order.vendors?.find((vendor) => vendor.vendorId === stop.vendorId)?.status === "collected",
+      }));
+      const weight = activeItems.reduce((sum, item) => sum + item.weightKg, 0);
       return {
         id: order.id,
         fair: order.fairName,
-        bank: vendorNames.join(" + "),
+        bank: (pickupStops.map((stop) => stop.vendorName).join(" + ") || vendorNames.join(" + ")),
+        pickupStops,
         region: order.customerCity ?? "Destino",
         customerAddress: order.customerAddress ?? order.customerCity ?? "Destino do cliente",
-        route: `${order.fairName} → ${order.customerCity ?? "cliente"}`,
+        route: `${pickupStops.map((stop) => stop.vendorName).join(" → ") || order.fairName} → ${order.customerCity ?? "cliente"}`,
         toBankKm: route.toVendorKm,
         bankToCustomerKm: route.vendorToCustomerKm,
         totalDistanceKm: route.totalKm,
@@ -533,7 +543,7 @@ export function DeliveryOperations({
         available: order.status === "ready_for_pickup" && !order.driver,
         assignedDriverKey: order.driver?.driverKey,
         weight,
-        items: order.items.map((item) => `${item.quantity}× ${item.name}`),
+        items: activeItems.map((item) => `${item.quantity}× ${item.name}`),
       };
     });
   const sharedIds = new Set(sharedDeliveries.map((delivery) => delivery.id));
@@ -546,6 +556,14 @@ export function DeliveryOperations({
           paymentMethod: "Pago no aplicativo",
           changeFor: undefined as number | undefined,
           assignedDriverKey: undefined as string | undefined,
+          pickupStops: [
+            {
+              vendorId: "",
+              storeId: "",
+              vendorName: delivery.bank,
+              collected: false,
+            },
+          ],
         }))
     : [];
   const deliveries = [...sharedDeliveries, ...fixtureDeliveries];
@@ -742,18 +760,29 @@ export function DeliveryOperations({
   async function enableFeiraeNotifications() {
     setNotificationPermission(await requestFeiraeNotificationPermission());
   }
-  const deliveryStages = [
-    "Ir para a banca",
-    "Confirmar coleta",
-    "Iniciar entrega",
-    "Avisar chegada",
-    "Confirmar entrega",
-  ];
   const activeDelivery = deliveries.find(
     (delivery) =>
       delivery.id === effectiveAccepted ||
       (delivery.assignedDriverKey === session.email && delivery.available === false),
   );
+  const activePickupStops = activeDelivery?.pickupStops ?? [];
+  const deliveryStages =
+    activeDelivery && activePickupStops.length > 1
+      ? [
+          ...activePickupStops.flatMap((stop) => [
+            `Ir para ${stop.vendorName}`,
+            `Confirmar coleta — ${stop.vendorName}`,
+          ]),
+          "Iniciar entrega",
+          "Avisar chegada",
+          "Confirmar entrega",
+        ]
+      : ["Ir para a banca", "Confirmar coleta", "Iniciar entrega", "Avisar chegada", "Confirmar entrega"];
+  const currentStage = Math.min(stage, Math.max(0, deliveryStages.length - 1));
+  const pickupStagesLength = activePickupStops.length * 2;
+  const currentPickupStop =
+    currentStage < pickupStagesLength ? activePickupStops[Math.floor(currentStage / 2)] : undefined;
+  const headingToPickup = currentStage < pickupStagesLength;
   const activeDeliveryVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
   const activeDeliverySection = activeDelivery ? (
     <section className="active-delivery">
@@ -766,8 +795,8 @@ export function DeliveryOperations({
           <strong>{activeDelivery.fair}</strong>
         </p>
         <p>
-          <span>Banca</span>
-          <strong>{activeDelivery.bank}</strong>
+          <span>Bancas</span>
+          <strong>{activePickupStops.length} · {activeDelivery.bank}</strong>
         </p>
         <p>
           <span>Peso</span>
@@ -805,6 +834,21 @@ export function DeliveryOperations({
         )}
       </div>
       <div className="operation-list detailed">
+        {activePickupStops.map((stop, index) => (
+          <article key={stop.vendorId || `${activeDelivery.id}-stop-${index}`}>
+            {stop.collected ? <Check size={18} /> : <MapPin size={18} />}
+            <div>
+              <b>{index + 1}. {stop.vendorName}</b>
+              <small>
+                {stop.collected
+                  ? "Coleta confirmada"
+                  : currentPickupStop?.vendorName === stop.vendorName
+                    ? "Próxima parada"
+                    : "Aguardando coleta"}
+              </small>
+            </div>
+          </article>
+        ))}
         {activeDelivery.items.map((item) => (
           <article key={item}>
             <Package />
@@ -815,9 +859,9 @@ export function DeliveryOperations({
           </article>
         ))}
       </div>
-      <div className="delivery-progress" aria-label={`Etapa ${stage + 1} de ${deliveryStages.length}`}>
+      <div className="delivery-progress" aria-label={`Etapa ${currentStage + 1} de ${deliveryStages.length}`}>
         {deliveryStages.map((label, index) => (
-          <span className={index <= stage ? "done" : ""} key={label}>
+          <span className={index <= currentStage ? "done" : ""} key={label}>
             {index + 1}
           </span>
         ))}
@@ -826,33 +870,55 @@ export function DeliveryOperations({
         <button
           onClick={() =>
             onMap(
-              stage <= 1
-                ? `${activeDelivery.bank}, ${activeDelivery.fair}, DF`
+              headingToPickup && currentPickupStop
+                ? `${currentPickupStop.vendorName}, ${activeDelivery.fair}, DF`
                 : activeDelivery.customerAddress,
             )
           }
           className="secondary-action"
         >
-          <MapPin size={17} /> {stage <= 1 ? "Rota até a banca" : "Rota até o cliente"}
+          <MapPin size={17} /> {headingToPickup ? "Rota até a próxima banca" : "Rota até o cliente"}
         </button>
         <button
           className="primary-action"
           onClick={() => {
-            if (stage === 1) {
-              patchUnifiedOrder(
-                activeDelivery.id,
-                { status: "collected" },
-                eventNow("collected", "Pedido coletado", "delivery"),
-              );
-              setStage(2);
-            } else if (stage === 2) {
+            if (currentStage < pickupStagesLength) {
+              const stopIndex = Math.floor(currentStage / 2);
+              const stop = activePickupStops[stopIndex];
+              const confirmingPickup = currentStage % 2 === 1;
+
+              if (confirmingPickup && stop) {
+                if (stop.vendorId) {
+                  patchVendorStatus(
+                    activeDelivery.id,
+                    stop.vendorId,
+                    "collected",
+                    eventNow(
+                      `pickup-collected-${stop.vendorId}`,
+                      `Coleta confirmada — ${stop.vendorName}`,
+                      "delivery",
+                    ),
+                  );
+                }
+
+                if (stopIndex === activePickupStops.length - 1) {
+                  patchUnifiedOrder(
+                    activeDelivery.id,
+                    { status: "collected" },
+                    eventNow("collected", "Todas as bancas coletadas", "delivery"),
+                  );
+                }
+              }
+
+              setStage(currentStage + 1);
+            } else if (currentStage === pickupStagesLength) {
               patchUnifiedOrder(
                 activeDelivery.id,
                 { status: "out_for_delivery" },
                 eventNow("out-for-delivery", "A caminho do cliente", "delivery"),
               );
-              setStage(3);
-            } else if (stage === 3) {
+              setStage(currentStage + 1);
+            } else if (currentStage === pickupStagesLength + 1) {
               const unified = readUnifiedOrders().find((order) => order.id === activeDelivery.id);
               patchUnifiedOrder(
                 activeDelivery.id,
@@ -863,8 +929,8 @@ export function DeliveryOperations({
                 },
                 eventNow("approaching", "Pedido chegando", "delivery"),
               );
-              setStage(4);
-            } else if (stage === deliveryStages.length - 1) {
+              setStage(currentStage + 1);
+            } else if (currentStage === deliveryStages.length - 1) {
               consumeInventory(activeDelivery.id);
               const unified = readUnifiedOrders().find((order) => order.id === activeDelivery.id);
               patchUnifiedOrder(
@@ -893,7 +959,7 @@ export function DeliveryOperations({
             } else setStage((value) => value + 1);
           }}
         >
-          {deliveryStages[stage]} <ChevronRight size={17} />
+          {deliveryStages[currentStage]} <ChevronRight size={17} />
         </button>
       </div>
       <div className="cancel-panel">
@@ -1015,7 +1081,7 @@ export function DeliveryOperations({
                     {delivery.items.length} item(ns)
                   </small>
                   <small>
-                    Até a banca {delivery.toBankKm.toLocaleString("pt-BR")} km · banca → cliente{" "}
+                    Até a feira {delivery.toBankKm.toLocaleString("pt-BR")} km · feira → cliente{" "}
                     {delivery.bankToCustomerKm.toLocaleString("pt-BR")} km · total{" "}
                     {delivery.totalDistanceKm.toLocaleString("pt-BR")} km · {delivery.etaMinutes} min
                   </small>
