@@ -177,9 +177,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.queryByRole("heading", { name: /crie sua conta no feiraê/i })).not.toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: /navegação móvel/i })).toBeInTheDocument();
 
-    const raw = window.localStorage.getItem(
-      "feirae:customer-legal-acceptances:cliente.legal@feirae.app",
-    );
+    const raw = window.localStorage.getItem("feirae:customer-legal-acceptances:cliente.legal@feirae.app");
     expect(raw).not.toBeNull();
     const acceptances = JSON.parse(raw ?? "[]") as Array<Record<string, string>>;
     expect(acceptances).toHaveLength(2);
