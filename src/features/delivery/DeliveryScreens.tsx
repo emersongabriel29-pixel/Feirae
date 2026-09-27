@@ -556,11 +556,7 @@ export function DeliveryOperations({
     ...(hasMotorizedVehicle ? ["cnh", "crlv"] : []),
     ...(hasMoto ? ["motofrete"] : []),
   ];
-  const deliveryTermsAccepted = allRequiredTermsAccepted(
-    legalAcceptances,
-    deliveryRequiredTerms,
-    "delivery",
-  );
+  const deliveryTermsAccepted = allRequiredTermsAccepted(legalAcceptances, deliveryRequiredTerms, "delivery");
   const approvalStatus = !deliveryTermsAccepted
     ? "Termos pendentes"
     : requiredDocumentIds.every(
@@ -2340,9 +2336,9 @@ export function DeliveryOperations({
                   <div>
                     <b>Status: {approvalStatus}</b>
                     <p>
-                      Os termos vigentes devem estar assinados e os documentos obrigatórios mudam conforme os veículos
-                      ativos. Enquanto o cadastro não estiver aprovado, o entregador não pode ficar online nem
-                      aceitar corridas reais.
+                      Os termos vigentes devem estar assinados e os documentos obrigatórios mudam conforme os
+                      veículos ativos. Enquanto o cadastro não estiver aprovado, o entregador não pode ficar
+                      online nem aceitar corridas reais.
                     </p>
                   </div>
                 </div>
