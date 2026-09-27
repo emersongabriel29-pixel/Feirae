@@ -343,7 +343,6 @@ Critérios de revisão visual em aparelho real:
 - não exibir legenda adicional após o logo;
 - transições não podem piscar o conteúdo do app entre quadros.
 
-
 ## Regressão corrigida — splash estática
 
 Foi identificada e removida uma regressão em que a abertura premium havia sido substituída por três SVGs estáticos em sequência.
