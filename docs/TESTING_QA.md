@@ -364,3 +364,7 @@ Os 3 testes de `LaunchExperience.test.tsx` passaram a validar os ativos específ
 - quadro final presente no reduced motion.
 
 O teste estrutural evita que a splash volte silenciosamente para a composição anterior. A fidelidade visual final continua exigindo conferência em viewport móvel/aparelho real, pois jsdom não faz regressão por pixel.
+
+## Proteção contra regressão da splash estática
+
+O teste de `LaunchExperience` valida a presença estrutural da banca, moto e pin na cena contínua. Os antigos SVGs estáticos de `public/launch/` foram removidos e não fazem mais parte da implementação.

@@ -351,3 +351,9 @@ Fonte visual local:
 - `public/launch/feirae-splash-logo.svg`.
 
 Não há dependência de CDN, imagem remota ou vídeo. O shell do app continua pré-carregado e oculto até o término do temporizador da variante.
+
+### Regra de implementação da splash
+
+A splash premium não deve ser implementada como slideshow de imagens prontas.
+
+A fonte canônica é a cena SVG inline de `LaunchExperience.tsx`, animada por grupos via `LaunchExperience.css`. Isso permite movimento contínuo e independente de banca, produtos, rota, moto, rodas, pin e marca.

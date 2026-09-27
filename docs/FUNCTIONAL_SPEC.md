@@ -818,3 +818,13 @@ A splash deve reproduzir a sequência aprovada, sem substituir por outra interpr
 - quadro 3: logo Feiraê em fundo claro + assinatura **“Da feira até você”** + produtos na base.
 
 Não usar na abertura o card quadrado de marca da versão anterior nem adicionar legenda promocional abaixo da cena. O modo rápido preserva a cena de entrega e encerra na mesma marca final; reduced motion exibe diretamente o quadro final.
+
+### Não conformidade proibida na abertura
+
+Não atende ao requisito aprovado:
+
+- trocar apenas imagens estáticas;
+- aplicar apenas fade/zoom entre três frames;
+- simular movimento sem animar os elementos da cena.
+
+A abertura completa deve ser contínua e mostrar movimento real dos elementos descritos no critério visual.

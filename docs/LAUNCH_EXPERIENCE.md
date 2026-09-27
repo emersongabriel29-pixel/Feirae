@@ -93,3 +93,20 @@ A abertura passa a seguir diretamente os três quadros aprovados pela referênci
 A implementação usa três ilustrações SVG locais em `public/launch/` e CSS apenas para orquestrar a transição entre os quadros. O card quadrado de marca, a legenda extra e a cena alternativa anterior foram removidos da abertura.
 
 Os tempos funcionais permanecem os mesmos: full ~3,3 s, quick ~1,55 s e reduced motion ~650 ms. O som continua desacoplado da renderização e não bloqueia a entrada no aplicativo.
+
+## Correção de regressão — animação contínua
+
+A implementação por três imagens estáticas (`start → market → logo`) foi removida porque não atendia ao conceito aprovado.
+
+A abertura volta a ser uma única cena vetorial contínua, com elementos independentes realmente animados:
+
+- contorno da banca sendo desenhado;
+- banca preenchendo e ganhando profundidade;
+- produtos surgindo em camadas;
+- rota sendo traçada;
+- moto/entregador atravessando a cena;
+- rodas girando;
+- pin aparecendo com bounce;
+- cena saindo antes da entrada da marca.
+
+Os SVGs estáticos de `public/launch/` foram removidos para evitar regressão futura.
