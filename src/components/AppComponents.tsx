@@ -1127,9 +1127,7 @@ export function CartDrawer({
       const store = item ? readStoreByIdentity(item.fair, vendorName) : undefined;
       return [
         vendorName,
-        normalizeVendorMinimumOrder(
-          store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
-        ),
+        normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT),
       ];
     }),
   );
