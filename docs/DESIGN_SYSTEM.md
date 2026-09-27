@@ -1,6 +1,6 @@
 # Design system e layout — Feiraê
 
-Atualizado em 26/09/2026 após auditoria visual e de responsividade.
+Atualizado em 27/09/2026 após auditoria visual, UI/UX Pro Max e Sincronização Mestre.
 
 ## Objetivo
 
@@ -41,6 +41,11 @@ Arquivo: `src/styles/tokens.css`.
 - `--fe-shadow-sm`;
 - `--fe-shadow-card`;
 - `--fe-shadow-raised`.
+
+### Foco
+
+- `--fe-focus`: cor de foco de alto contraste;
+- `:focus-visible` usa outline + halo leve, sem depender apenas de cor de fundo.
 
 ### Toque
 
@@ -458,3 +463,27 @@ Em **Editar banca**:
 - campo monetário somente quando houver mínimo;
 - informar o teto vigente da plataforma;
 - prévia pública deve refletir a configuração salva.
+
+## Polimento UI/UX Pro Max — 27/09/2026
+
+Regras incorporadas ao sistema:
+
+- ícones estruturais devem preferir Lucide/vetor da marca;
+- capa de feira pode usar `Store` + marca Feiraê em vez de emoji;
+- navegação móvel deve marcar destino atual com `aria-current="page"`;
+- filtros/toggles selecionáveis devem usar `aria-pressed` quando semanticamente apropriado;
+- ações recorrentes usam `--fe-touch`;
+- microtextos funcionais não devem cair abaixo da faixa legível definida nos estilos atuais;
+- cards operacionais de Feirante/Entregador compartilham borda, radius, elevação e hierarquia;
+- drawer da sacola usa `overscroll-behavior: contain`;
+- ações críticas em mobile podem ocupar largura total quando não houver espaço seguro.
+
+## Identidade verbal oficial por superfície
+
+As frases não são sinônimos:
+
+- **A feira do seu jeito** — slogan institucional;
+- **Da banca até você.** — mensagem de propósito da tela de entrada;
+- **Da feira até você** — assinatura da splash/abertura.
+
+Ao criar nova superfície, escolher a frase pelo papel acima, evitando criar uma quarta assinatura concorrente.

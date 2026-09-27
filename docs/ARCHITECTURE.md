@@ -1,6 +1,6 @@
 # Arquitetura — Feiraê
 
-Atualizado em 26/09/2026 a partir da árvore real de `src/`.
+Atualizado em 27/09/2026 a partir da árvore real de `src/`.
 
 ## 1. Stack instalada
 
@@ -81,12 +81,18 @@ Modelo:
 
 Arquivos existentes:
 
+- `customerLegal.ts`: Termos/Aviso do Cliente e versionamento de aceite;
 - `fairHours.ts`: agenda verificada/parcial das feiras;
+- `fairInternalRouting.ts`: ordenação interna de boxes/paradas e confirmação de coleta;
+- `feiraeNotifications.ts`: matriz/eventos de notificação por papel;
+- `feiraeSound.ts`: assinatura sonora e preferência local;
 - `identity.ts`: IDs derivados do protótipo;
 - `inventoryBridge.ts`: reserva/liberação/consumo;
+- `legalTerms.ts`: termos versionados de Feirante/Entregador;
 - `localAuth.ts`: credenciais locais;
 - `marketplace.ts`: peso, veículo e métricas;
 - `marketplaceBridge.ts`: banca/produto/promoção compartilhados;
+- `multiVendor.ts`: mínimo por banca, limite de bancas, alocação e frete multi-banca;
 - `operations.ts`: utilidades operacionais;
 - `orderBridge.ts`: pedido unificado;
 - `routing.ts`: Nominatim + OSRM;
@@ -101,6 +107,7 @@ Arquivos existentes:
 - `useAppNavigation.ts`;
 - `useDemoCart.ts`;
 - `useDemoSession.ts`;
+- `useMarketplaceRevision.ts`;
 - `useToast.ts`;
 - `useUnifiedOrderRevision.ts`.
 
@@ -286,3 +293,35 @@ No backend real, o navegador pode pedir uma ação, mas não decidir sozinho:
 
 Mapa por função/chave/tabela:
 [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md).
+
+## Experiência de inicialização
+
+O bootstrap visual fica fora de `App.tsx` para não misturar a experiência de abertura com regras de marketplace.
+
+Fluxo:
+
+```
+src/main.tsx
+→ LaunchExperience
+→ App
+```
+
+Responsabilidades:
+
+- `src/components/LaunchExperience.tsx`: decide abertura completa, rápida ou reduced motion;
+- `src/components/LaunchExperience.css`: anima banca, produtos, rota, entrega e marca;
+- `src/domain/feiraeSound.ts`: assinatura sonora e preferência local;
+- `src/components/LaunchExperience.test.tsx`: cobre os três modos de abertura.
+
+A splash não é gate de dados nem autenticação. Falha de áudio não pode bloquear o app.
+
+## Arquitetura de governança do repositório
+
+A sincronização de mudanças possui duas camadas:
+
+1. contrato humano em `docs/CHANGE_GOVERNANCE.md`;
+2. política automatizada em `scripts/change-sync-policy.mjs`.
+
+`scripts/check-change-sync.mjs` coleta o diff do PR e delega a avaliação para a política. A própria política possui testes Node em `scripts/change-sync-policy-checks.mjs`.
+
+Isso reduz o risco de um PR atualizar “qualquer documento” em vez do documento correto para o domínio alterado.

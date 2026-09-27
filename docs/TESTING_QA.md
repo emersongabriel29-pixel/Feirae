@@ -1,6 +1,6 @@
 # Testes e QA — Feiraê
 
-Atualizado em 26/09/2026 com contagem e nomes reais da suite.
+Atualizado em 27/09/2026 com contagem e nomes reais da suite.
 
 ## 1. Pipeline atual
 
@@ -17,13 +17,14 @@ npm run check:sync   # somente em pull_request, com BASE_SHA/HEAD_SHA
 npm run format:check
 ```
 
-`check:sync` não mede cobertura. Ele verifica uma regra mínima de manutenção: mudanças de comportamento em `src/` devem vir com teste alterado e mudanças de código/config/schema devem vir com documentação revisada.
+`check:sync` não mede cobertura. Ele aplica a matriz semântica de `scripts/change-sync-policy.mjs`: mudanças de comportamento em `src/` exigem teste, testes exigem `TESTING_QA.md` e domínios como UI/UX, migrations, splash/som, pedidos e notificações exigem seus documentos específicos.
 
 `npm run check` executa:
 
 ```bash
 npm run lint
 npm run test
+npm run test:sync-policy
 npm run build
 ```
 
@@ -31,7 +32,7 @@ npm run build
 
 | Arquivo                                    |  Testes |
 | ------------------------------------------ | ------: |
-| `src/App.test.tsx`                         |      56 |
+| `src/App.test.tsx`                         |      58 |
 | `src/components/LaunchExperience.test.tsx` |       3 |
 | `src/domain/orderBridge.test.ts`           |      11 |
 | `src/domain/feiraeNotifications.test.ts`   |       6 |
@@ -45,11 +46,13 @@ npm run build
 | `src/domain/marketplace.test.ts`           |       4 |
 | `src/domain/session.test.ts`               |       3 |
 | `src/utils.test.ts`                        |       4 |
-| **Total**                                  | **127** |
+| **Total Vitest**                           | **129** |
+
+Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 56 testes cobrem explicitamente:
+Os 58 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -206,7 +209,7 @@ Os 56 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 127 testes NÃO comprovam diretamente
+## 5. O que os 129 testes Vitest NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -243,7 +246,7 @@ Portanto não há evidência automatizada atual de:
 
 Criar suite de banco descartável para:
 
-- migrations 0001/0002 + migrations novas;
+- migrations 0001/0002/0003 + migrations futuras;
 - constraints;
 - enum de estados;
 - RLS por papel;
@@ -323,3 +326,17 @@ Ainda não há prova automatizada de regressão visual para:
 - contraste calculado por ferramenta automatizada.
 
 Antes de produção, adicionar Playwright (ou equivalente) com screenshots das telas-chave e comparação visual.
+
+## 11. Sincronização mestre — 27/09/2026
+
+Após a revisão do repositório completo:
+
+- Vitest: **129/129**;
+- arquivos de teste Vitest: **14/14**;
+- política de sincronização: **8/8** testes Node;
+- lint: obrigatório no `npm run check`;
+- build TypeScript/Vite: obrigatório no `npm run check`;
+- Prettier: obrigatório no workflow Quality;
+- `check:sync`: executado em pull requests com regras semânticas por domínio.
+
+A política automática não substitui browser E2E, migration tests, RLS tests, concorrência ou regressão visual.

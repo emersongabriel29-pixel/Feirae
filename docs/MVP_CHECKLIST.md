@@ -1,6 +1,6 @@
 # Checklist de MVP — Feiraê
 
-Atualizado em 26/09/2026 após auditoria contra o código e schema.
+Atualizado em 27/09/2026 após auditoria contra o código e schema.
 
 Legenda:
 
@@ -98,6 +98,7 @@ Legenda:
 
 - [x] migration 0001;
 - [x] migration 0002;
+- [x] migration 0003 — `vendor_stores.minimum_order_amount`;
 - [ ] instalar/conectar cliente Supabase;
 - [ ] criar config Supabase;
 - [ ] aplicar migrations em banco de desenvolvimento;
@@ -166,7 +167,8 @@ Legenda:
 
 ## Qualidade
 
-- [x] 69 testes;
+- [x] 129 testes Vitest;
+- [x] 8 testes da política de sincronização;
 - [x] ESLint;
 - [x] TypeScript build;
 - [x] Prettier;

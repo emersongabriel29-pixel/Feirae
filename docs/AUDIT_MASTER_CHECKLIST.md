@@ -1,6 +1,6 @@
 # Checklist Mestre de Auditorias — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 27/09/2026.
 
 Este documento é a fonte oficial de acompanhamento das auditorias do Feiraê. A regra é executar **uma auditoria por vez**, concluir correções, testes, documentação e CI daquela rodada e só então iniciar a seguinte.
 
@@ -15,66 +15,66 @@ Este documento é a fonte oficial de acompanhamento das auditorias do Feiraê. A
 
 ## Checklist oficial
 
-| Nº  | Auditoria                                                                          | Status     | Última execução | Achados                             | Corrigidos          | Bloqueios                                            | PR / CI                |
-| --- | ---------------------------------------------------------------------------------- | ---------- | --------------- | ----------------------------------- | ------------------- | ---------------------------------------------------- | ---------------------- |
-| 1   | Fluxos ponta a ponta                                                               | CONCLUÍDA  | 26/09/2026      | 21 jornadas classificadas           | 4 falhas corrigidas | Backend, admin, multi-stop, PSP/ledger, suporte real | #20 · CI verde · 73/73 |
-| 2   | Botões e ações                                                                     | PRÓXIMA    | —               | —                                   | —                   | —                                                    | —                      |
-| 3   | Formulários e campos                                                               | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 4   | Design e layout                                                                    | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 5   | UX/usabilidade                                                                     | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 6   | Mobile e responsividade                                                            | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 7   | Navegação                                                                          | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 8   | Cadastro e login                                                                   | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 9   | Onboarding                                                                         | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 10  | Papéis e permissões                                                                | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 11  | Aprovação e documentação                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 12  | Gestão/administração                                                               | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 13  | Feiras                                                                             | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 14  | Bancas/lojas                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 15  | Produtos                                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 16  | Catálogo e busca                                                                   | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 17  | Carrinho                                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 18  | Checkout                                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 19  | Pagamentos                                                                         | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 20  | Taxas                                                                              | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 21  | Financeiro do feirante                                                             | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 22  | Financeiro do entregador                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 23  | Financeiro da plataforma                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 24  | Pedidos                                                                            | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 25  | Logística                                                                          | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 26  | Entregadores                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 27  | Distribuição de corridas                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 28  | Rastreamento                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 29  | Cancelamentos                                                                      | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 30  | Avaliações                                                                         | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 31  | Notificações                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 32  | WhatsApp                                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 33  | Geolocalização                                                                     | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 34  | Regras de negócio                                                                  | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 35  | Estados e status                                                                   | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 36  | Tratamento de erros                                                                | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 37  | Estados vazios                                                                     | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 38  | Dados fictícios/mockados                                                           | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 39  | Banco de dados                                                                     | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 40  | Segurança                                                                          | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 41  | Privacidade e LGPD                                                                 | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 42  | Código                                                                             | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 43  | Arquitetura                                                                        | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 44  | APIs e integrações                                                                 | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 45  | Performance                                                                        | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 46  | Acessibilidade                                                                     | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 47  | Testes                                                                             | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 48  | QA/regressão                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 49  | Documentação                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 50  | Sincronização projeto × documentação                                               | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 51  | Logs e histórico                                                                   | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 52  | Observabilidade                                                                    | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 53  | Configuração                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 54  | Deploy/produção                                                                    | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 55  | Consistência geral                                                                 | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 56  | Produto                                                                            | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 57  | Prontidão para produção                                                            | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| MÃE | Rastreabilidade requisito → tela → ação → regra → banco → permissão → docs → teste | CONTÍNUA   | 26/09/2026      | Mantida durante todas as auditorias | —                   | Depende dos resultados das auditorias 1–57           | Checklist Mestre       |
+| Nº  | Auditoria                                                                          | Status     | Última execução | Achados                        | Corrigidos            | Bloqueios                                            | PR / CI                |
+| --- | ---------------------------------------------------------------------------------- | ---------- | --------------- | ------------------------------ | --------------------- | ---------------------------------------------------- | ---------------------- |
+| 1   | Fluxos ponta a ponta                                                               | CONCLUÍDA  | 26/09/2026      | 21 jornadas classificadas      | 4 falhas corrigidas   | Backend, admin, multi-stop, PSP/ledger, suporte real | #20 · CI verde · 73/73 |
+| 2   | Botões e ações                                                                     | PRÓXIMA    | —               | —                              | —                     | —                                                    | —                      |
+| 3   | Formulários e campos                                                               | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 4   | Design e layout                                                                    | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 5   | UX/usabilidade                                                                     | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 6   | Mobile e responsividade                                                            | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 7   | Navegação                                                                          | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 8   | Cadastro e login                                                                   | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 9   | Onboarding                                                                         | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 10  | Papéis e permissões                                                                | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 11  | Aprovação e documentação                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 12  | Gestão/administração                                                               | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 13  | Feiras                                                                             | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 14  | Bancas/lojas                                                                       | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 15  | Produtos                                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 16  | Catálogo e busca                                                                   | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 17  | Carrinho                                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 18  | Checkout                                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 19  | Pagamentos                                                                         | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 20  | Taxas                                                                              | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 21  | Financeiro do feirante                                                             | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 22  | Financeiro do entregador                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 23  | Financeiro da plataforma                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 24  | Pedidos                                                                            | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 25  | Logística                                                                          | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 26  | Entregadores                                                                       | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 27  | Distribuição de corridas                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 28  | Rastreamento                                                                       | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 29  | Cancelamentos                                                                      | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 30  | Avaliações                                                                         | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 31  | Notificações                                                                       | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 32  | WhatsApp                                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 33  | Geolocalização                                                                     | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 34  | Regras de negócio                                                                  | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 35  | Estados e status                                                                   | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 36  | Tratamento de erros                                                                | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 37  | Estados vazios                                                                     | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 38  | Dados fictícios/mockados                                                           | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 39  | Banco de dados                                                                     | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 40  | Segurança                                                                          | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 41  | Privacidade e LGPD                                                                 | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 42  | Código                                                                             | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 43  | Arquitetura                                                                        | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 44  | APIs e integrações                                                                 | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 45  | Performance                                                                        | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 46  | Acessibilidade                                                                     | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 47  | Testes                                                                             | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 48  | QA/regressão                                                                       | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 49  | Documentação                                                                       | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 50  | Sincronização projeto × documentação                                               | CONCLUÍDA  | 27/09/2026      | 6 divergências principais      | 6 corrigidas          | Backend/E2E/deploy fora do escopo                    | master-sync · CI       |
+| 51  | Logs e histórico                                                                   | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 52  | Observabilidade                                                                    | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 53  | Configuração                                                                       | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 54  | Deploy/produção                                                                    | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 55  | Consistência geral                                                                 | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 56  | Produto                                                                            | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| 57  | Prontidão para produção                                                            | AGUARDANDO | —               | —                              | —                     | —                                                    | —                      |
+| MÃE | Rastreabilidade requisito → tela → ação → regra → banco → permissão → docs → teste | CONTÍNUA   | 27/09/2026      | Sincronização Mestre executada | Docs/CI sincronizados | Backend/E2E/deploy continuam pendentes               | master-sync · CI       |
 
 ## Auditoria 1 — registro fechado
 
@@ -106,6 +106,36 @@ Bloqueios de produção identificados e mantidos como pendência rastreável:
 - rota multi-banca com múltiplas paradas;
 - PSP, ledger, estorno e conciliação;
 - operação real de tickets de suporte.
+
+## Sincronização Mestre — 27/09/2026
+
+A auditoria-mãe e a Auditoria 50 foram executadas por solicitação explícita. As demais auditorias numeradas continuam aguardando sua rodada formal.
+
+Achados corrigidos:
+
+1. contagem documental de testes estava em 69/73/127 enquanto a suíte atual possui 129 testes Vitest;
+2. migration 0003 não aparecia em todos os documentos de schema/deploy;
+3. splash e identidade sonora estavam isoladas da arquitetura/especificação principal;
+4. UI/UX Pro Max não havia sido propagado para `UI_INTERACTION_AUDIT.md` e `DESIGN_SYSTEM.md`;
+5. identidade verbal foi normalizada por superfície;
+6. o CI aceitava “qualquer documento” sem exigir o documento correto do domínio.
+
+Proteção adicionada:
+
+- `scripts/change-sync-policy.mjs`;
+- 8 testes Node da política;
+- exigência de documentação específica por domínio;
+- `TESTING_QA.md` obrigatório quando testes mudarem.
+
+Pendências que **não** foram marcadas como concluídas por esta sincronização:
+
+- auditorias formais 2–57;
+- Supabase/backend;
+- RLS;
+- PSP/ledger;
+- admin runtime;
+- browser E2E/regressão visual;
+- staging/deploy/observabilidade.
 
 ## Próxima execução
 

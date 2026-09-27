@@ -1,6 +1,6 @@
 # Revisão técnica formal — Feiraê
 
-Atualizado em 26/09/2026 após auditoria código ↔ docs ↔ SQL.
+Atualizado em 27/09/2026 após auditoria código ↔ docs ↔ SQL.
 
 ## Estado real
 
@@ -16,7 +16,7 @@ Pontos fortes atuais:
 - documentos;
 - promoções;
 - avaliações;
-- CI com 69 testes;
+- CI com 129 testes Vitest + 8 testes da política de sincronização;
 - migrations base.
 
 A dívida principal está na transição para fonte de verdade server-side.
@@ -183,7 +183,7 @@ Antes de staging, separar claramente:
 
 ## P2 — E2E em jsdom
 
-69 testes são bons para regressão funcional, mas não são browser E2E.
+129 testes Vitest são uma base boa para regressão funcional, mas não são browser E2E.
 
 Falta:
 
@@ -211,3 +211,17 @@ Detalhes:
 
 - [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md)
 - [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md)
+
+## Sincronização de repositório — 27/09/2026
+
+Foi executada uma revisão transversal de código, testes, documentação, migrations, segurança, integrações, administração e deploy.
+
+Correções estruturais desta rodada:
+
+- contagens de teste normalizadas para 129 Vitest;
+- migration 0003 propagada aos documentos de schema/deploy;
+- splash e identidade sonora adicionadas à arquitetura/rastreabilidade;
+- UI/UX Pro Max propagado para auditoria de interação e design system;
+- política automática de sincronização tornou-se específica por domínio e ganhou testes próprios.
+
+A principal dívida técnica continua sendo a transição do protótipo local para backend compartilhado com RLS, transações, Storage, pagamentos, gestão e E2E.

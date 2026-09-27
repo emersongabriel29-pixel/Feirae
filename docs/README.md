@@ -1,6 +1,6 @@
 # Documentação do Feiraê
 
-Atualizado em 26/09/2026 após segunda auditoria código ↔ testes ↔ migrations.
+Atualizado em 27/09/2026 após Sincronização Mestre código ↔ testes ↔ migrations ↔ UI/UX ↔ deploy.
 
 ## Regra de interpretação
 
@@ -50,6 +50,8 @@ Um documento de requisito não é prova de implementação.
 - [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md) — botões/campos/edição.
 - [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) — identidade, tokens, responsividade e regras de layout.
 - [UI_UX_PRO_MAX.md](UI_UX_PRO_MAX.md) — skill UI/UX Pro Max v2.15.0 instalada para GitHub Copilot.
+- [UI_UX_PRO_MAX_GUARDRAILS.md](UI_UX_PRO_MAX_GUARDRAILS.md) — regras de preservação e revisão tela por tela.
+- [LAUNCH_EXPERIENCE.md](LAUNCH_EXPERIENCE.md) — splash animada, fallback, frequência e identidade sonora.
 - [PRODUCT_MEASUREMENT_MATRIX.md](PRODUCT_MEASUREMENT_MATRIX.md) — campos/categorias/unidades reais.
 - [FAIR_HOURS.md](FAIR_HOURS.md) — feiras e fontes.
 

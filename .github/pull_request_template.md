@@ -33,10 +33,15 @@ Se algum item não se aplica, explique abaixo.
 
 ## Documentação atualizada
 
-Liste os arquivos, por exemplo:
+Liste os arquivos afetados. O CI cobra documentos específicos conforme o domínio.
 
-- `docs/FUNCTIONAL_SPEC.md`
-- `docs/IMPLEMENTATION_TRACEABILITY.md`
+Exemplos:
+
+- UI/UX → `docs/UI_INTERACTION_AUDIT.md` + `docs/DESIGN_SYSTEM.md`
+- testes → `docs/TESTING_QA.md`
+- migration → `docs/SCHEMA_GAP_MATRIX.md` + `docs/DATA_MODEL_AND_STATES.md` + `docs/IMPLEMENTATION_TRACEABILITY.md` + `docs/DEPLOYMENT_AND_ENVIRONMENTS.md`
+- splash/som → `docs/LAUNCH_EXPERIENCE.md` + `docs/ARCHITECTURE.md` + `docs/FUNCTIONAL_SPEC.md`
+- pedido/estoque/carteira → `docs/FUNCTIONAL_SPEC.md` + `docs/IMPLEMENTATION_TRACEABILITY.md`
 
 ## Testes
 
