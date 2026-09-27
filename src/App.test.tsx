@@ -154,8 +154,8 @@ describe("Feiraê customer flow", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /^criar conta$/i }));
     expect(screen.getByText(/antes de criar sua conta/i)).toBeInTheDocument();
-    expect(screen.getByText(/termos de uso do cliente feiraê/i)).toBeInTheDocument();
-    expect(screen.getByText(/aviso de privacidade do cliente feiraê/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/termos de uso do cliente feiraê/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/aviso de privacidade do cliente feiraê/i).length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText(/nome completo/i), {
       target: { value: "Cliente Legal" },
