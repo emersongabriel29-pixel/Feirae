@@ -1,6 +1,6 @@
 # Auditoria de botões, campos e edição — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 27/09/2026.
 
 ## Correções já aplicadas
 
@@ -265,3 +265,44 @@ Checklist da tela:
 - [x] CTA explícito para enviar/atualizar;
 - [x] card final de segurança/LGPD;
 - [x] responsividade mobile.
+
+
+## UI/UX Pro Max — revisão sincronizada em 27/09/2026
+
+A revisão visual mais recente foi comparada novamente contra os componentes reais.
+
+### Cliente
+
+- Home usa composição vetorial da marca em vez de emoji estrutural;
+- capas de feira usam ícone vetorial e marca Feiraê;
+- categoria selecionada e favorito expõem `aria-pressed`;
+- navegação móvel expõe `aria-current="page"`;
+- Pedidos possui estado vazio explícito;
+- ações de sacola e formulários possuem alvos de toque maiores;
+- CTAs reorganizam em telas estreitas.
+
+### Feirante
+
+- banca aberta/fechada expõe estado pressionado;
+- fallback visual da banca usa vetor;
+- cards, métricas e listas operacionais usam hierarquia compartilhada;
+- feedbacks importantes usam região de status acessível.
+
+### Entregador
+
+- disponibilidade expõe `aria-pressed`;
+- filtros de ajuda expõem seleção;
+- cards de corrida reorganizam ações no mobile;
+- feedbacks de protocolo/conta usam status acessível.
+
+### Acessibilidade transversal
+
+- foco usa token `--fe-focus`;
+- `scroll-padding-top` evita foco escondido sob header;
+- `touch-action: manipulation` nos controles;
+- `100dvh` em telas cheias;
+- reduced motion continua obrigatório.
+
+### Limite
+
+Essa revisão continua sem prova de layout em browser real. Browser E2E/regressão visual permanece pendente.
