@@ -49,6 +49,7 @@ import {
 } from "./domain/marketplaceBridge";
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
+import { MULTI_VENDOR_EXTRA_STOP_FEE, allocatePromotionAcrossVendors, multiVendorMinimumMet } from "./domain/multiVendor";
 import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 import {
@@ -400,6 +401,10 @@ export default function App() {
       changeFor?: number;
     },
   ) {
+    if (!multiVendorMinimumMet(cartProducts, cart)) {
+      notify("Cada banca precisa atingir o pedido mínimo de R$ 30,00 antes de confirmar.");
+      return;
+    }
     const id = `FE-${String(Date.now()).slice(-8)}`;
     const reservation = reserveInventory(id, products, cart);
     if (!reservation.ok) {
@@ -454,6 +459,32 @@ export default function App() {
       deliverySubsidy: details.deliverySubsidy,
       customerDeliveryFee: details.customerDeliveryFee,
       total,
+      vendorFinancials: allocatePromotionAcrossVendors(
+        cartProducts,
+        cart,
+        details.promotionDiscount,
+      ).map((summary) => {
+        const product = cartProducts.find((item) => item.feirante === summary.vendorName)!;
+        return {
+          vendorId: product.vendorId ?? vendorIdFor(product.feirante),
+          storeId: product.storeId ?? storeIdFor(product.fair, product.feirante),
+          vendorName: summary.vendorName,
+          merchandiseSubtotal: summary.subtotal,
+          promotionDiscount: summary.promotionDiscount,
+          netMerchandise: summary.netMerchandise,
+        };
+      }),
+      deliveryPricing: {
+        baseFee: Math.max(
+          0,
+          details.calculatedDeliveryFee -
+            Math.max(0, new Set(cartProducts.map((product) => product.feirante)).size - 1) *
+              MULTI_VENDOR_EXTRA_STOP_FEE,
+        ),
+        extraStopFee: MULTI_VENDOR_EXTRA_STOP_FEE,
+        originalVendorCount: new Set(cartProducts.map((product) => product.feirante)).size,
+        currentVendorCount: new Set(cartProducts.map((product) => product.feirante)).size,
+      },
       items: cartProducts.map((product) => ({
         productId: product.id,
         name: product.name,
