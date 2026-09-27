@@ -101,6 +101,12 @@ describe("Feiraê role notification messages", () => {
     );
   });
 
+  it("notifies customer and driver when only one bank leaves a multi-bank order", () => {
+    const partial = event("vendor-cancelled-partial", "Banca B saiu do pedido");
+    expect(orderEventNotification("customer", order, partial)?.title).toBe("Uma banca saiu do pedido");
+    expect(orderEventNotification("delivery", order, partial)?.title).toBe("Rota atualizada");
+  });
+
   it("ignores events that are not useful for the selected role", () => {
     expect(orderEventNotification("customer", order, event("route-updated", "Rota calculada"))).toBeNull();
   });
