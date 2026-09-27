@@ -24,7 +24,7 @@ function localDayKey(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
-export function getLaunchVariant(date = new Date()): SplashVariant {
+function getLaunchVariant(date = new Date()): SplashVariant {
   if (typeof window === "undefined") return "reduced";
 
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
