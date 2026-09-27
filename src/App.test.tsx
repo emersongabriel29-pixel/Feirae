@@ -642,7 +642,8 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/documentos aprovados/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /^pendentes$/i }));
-    expect(screen.getByText(/permissão\/autorização da banca ou box/i)).toBeInTheDocument();
+    expect(screen.getByText(/licença\/registro sanitário/i)).toBeInTheDocument();
+    expect(screen.queryByText(/permissão\/autorização da banca ou box/i)).not.toBeInTheDocument();
   });
 
   it("does not auto-approve a real vendor when document storage is missing", () => {
