@@ -81,12 +81,18 @@ Modelo:
 
 Arquivos existentes:
 
+- `customerLegal.ts`: Termos/Aviso do Cliente e versionamento de aceite;
 - `fairHours.ts`: agenda verificada/parcial das feiras;
+- `fairInternalRouting.ts`: ordenação interna de boxes/paradas e confirmação de coleta;
+- `feiraeNotifications.ts`: matriz/eventos de notificação por papel;
+- `feiraeSound.ts`: assinatura sonora e preferência local;
 - `identity.ts`: IDs derivados do protótipo;
 - `inventoryBridge.ts`: reserva/liberação/consumo;
+- `legalTerms.ts`: termos versionados de Feirante/Entregador;
 - `localAuth.ts`: credenciais locais;
 - `marketplace.ts`: peso, veículo e métricas;
 - `marketplaceBridge.ts`: banca/produto/promoção compartilhados;
+- `multiVendor.ts`: mínimo por banca, limite de bancas, alocação e frete multi-banca;
 - `operations.ts`: utilidades operacionais;
 - `orderBridge.ts`: pedido unificado;
 - `routing.ts`: Nominatim + OSRM;
@@ -101,6 +107,7 @@ Arquivos existentes:
 - `useAppNavigation.ts`;
 - `useDemoCart.ts`;
 - `useDemoSession.ts`;
+- `useMarketplaceRevision.ts`;
 - `useToast.ts`;
 - `useUnifiedOrderRevision.ts`.
 
