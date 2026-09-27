@@ -2115,7 +2115,11 @@ export function DeliveryOperations({
                     </article>
                   ))}
                 </div>
-                {incidentNotice && <p className="inline-success" role="status">{incidentNotice}</p>}
+                {incidentNotice && (
+                  <p className="inline-success" role="status">
+                    {incidentNotice}
+                  </p>
+                )}
               </>
             ) : active === "Notificações" ? (
               <>
@@ -2554,7 +2558,11 @@ export function DeliveryOperations({
                       {accountError}
                     </p>
                   )}
-                  {accountSaved && <p className="inline-success" role="status">Dados da conta salvos neste dispositivo.</p>}
+                  {accountSaved && (
+                    <p className="inline-success" role="status">
+                      Dados da conta salvos neste dispositivo.
+                    </p>
+                  )}
                   <div className="module-action-row">
                     <button type="submit" className="primary-action">
                       Salvar alterações
