@@ -32,7 +32,12 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
     fireEvent.click(screen.getByRole("button", { name: /adicionar planta ornamental/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
-    fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
+    const checkoutButton = screen.getByRole("button", { name: /continuar para checkout/i });
+    expect(checkoutButton).toBeDisabled();
+    expect(screen.getByText(/mínimo de r\$ 30,00 em produtos de cada banca/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /adicionar uma unidade de planta ornamental/i }));
+    expect(checkoutButton).toBeEnabled();
+    fireEvent.click(checkoutButton);
     expect(screen.getByRole("heading", { name: /finalizar pedido/i })).toBeInTheDocument();
     expect(screen.getByText(/frete estimado/i)).toBeInTheDocument();
     expect(screen.getByText(/1 de até 4/i)).toBeInTheDocument();
@@ -341,8 +346,12 @@ describe("Feiraê customer flow", () => {
     loginAs("cliente");
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "tomate orgânico" } });
-    fireEvent.click(screen.getByRole("button", { name: /adicionar tomate orgânico/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
+    const addTomato = screen.getByRole("button", { name: /adicionar tomate orgânico/i });
+    fireEvent.click(addTomato);
+    fireEvent.click(addTomato);
+    fireEvent.click(addTomato);
+    fireEvent.click(addTomato);
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 4 unidades/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
 
     expect(screen.getByRole("button", { name: /pix/i })).toBeInTheDocument();
@@ -421,8 +430,10 @@ describe("Feiraê customer flow", () => {
 
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "cesta de frutas" } });
-    fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
+    const addBasket = screen.getByRole("button", { name: /adicionar cesta de frutas/i });
+    fireEvent.click(addBasket);
+    fireEvent.click(addBasket);
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 2 unidades/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
