@@ -4,6 +4,7 @@ import { cartSubtotal } from "../utils";
 import { usePersistentState } from "../usePersistentState";
 import { marketplaceProducts } from "../domain/marketplaceBridge";
 import { scopedStorageKey } from "../domain/storage";
+import { MAX_VENDORS_PER_ORDER, validateMultiVendorCart } from "../domain/multiVendor";
 
 export function useDemoCart(notify: (message: string) => void) {
   const catalog = marketplaceProducts(products);
@@ -19,11 +20,16 @@ export function useDemoCart(notify: (message: string) => void) {
     if (!product) return;
 
     setCart((current) => {
-      const currentProduct = catalog.find((item) => current[item.id]);
-      if (currentProduct && currentProduct.fair !== product.fair) {
-        notify(
-          `Sua sacola é da ${currentProduct.fair}. Finalize ou esvazie a sacola antes de comprar na ${product.fair}.`,
-        );
+      const currentProducts = catalog.filter((item) => current[item.id]);
+      const currentProduct = currentProducts[0];
+      const decision = validateMultiVendorCart({
+        currentFairName: currentProduct?.fair,
+        currentVendorNames: currentProducts.map((item) => item.feirante),
+        nextFairName: product.fair,
+        nextVendorName: product.feirante,
+      });
+      if (!decision.allowed) {
+        notify(decision.message);
         return current;
       }
 
@@ -46,11 +52,20 @@ export function useDemoCart(notify: (message: string) => void) {
   }
 
   function restoreDemoBasket(items: Array<{ productId: number; quantity: number }> = []) {
-    const restored = items.reduce<Record<number, number>>((next, item) => {
+    const restored: Record<number, number> = {};
+    let fairName = "";
+    const vendors = new Set<string>();
+
+    for (const item of items) {
       const product = catalog.find((candidate) => candidate.id === item.productId);
-      if (product?.stock) next[item.productId] = Math.min(item.quantity, product.stock);
-      return next;
-    }, {});
+      if (!product?.stock) continue;
+      if (!fairName) fairName = product.fair;
+      if (product.fair !== fairName) continue;
+      if (!vendors.has(product.feirante) && vendors.size >= MAX_VENDORS_PER_ORDER) continue;
+      vendors.add(product.feirante);
+      restored[item.productId] = Math.min(item.quantity, product.stock);
+    }
+
     if (Object.keys(restored).length) setCart(restored);
   }
 
