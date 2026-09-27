@@ -204,11 +204,30 @@ Não faz:
 - assinatura;
 - upload remoto.
 
+## Inicialização, splash e som
+
+| Função | Arquivo | Persistência/estado | Situação |
+| --- | --- | --- | --- |
+| bootstrap visual | `src/main.tsx` + `src/components/LaunchExperience.tsx` | estado React | implementado |
+| animação | `src/components/LaunchExperience.css` | CSS | implementado |
+| última abertura completa | `feirae:splash:last-full-day` | localStorage | local |
+| preferência sonora | `src/domain/feiraeSound.ts` | `feirae:sound-enabled` | local |
+| fallback redução de movimento | `LaunchExperience.tsx` | `prefers-reduced-motion` | implementado |
+
+Limite: navegadores móveis podem bloquear autoplay antes da primeira interação. Isso não bloqueia a entrada no aplicativo.
+
+## Governança automática
+
+- `scripts/check-change-sync.mjs`: lê o diff do PR;
+- `scripts/change-sync-policy.mjs`: matriz semântica por domínio;
+- `scripts/change-sync-policy.test.mjs`: 8 testes Node da própria política;
+- `docs/CHANGE_GOVERNANCE.md`: contrato humano de impacto.
+
 ## Testes atuais
 
 Contagem real:
 
-- `App.test.tsx`: 56;
+- `App.test.tsx`: 58;
 - `LaunchExperience.test.tsx`: 3;
 - `orderBridge.test.ts`: 11;
 - `feiraeNotifications.test.ts`: 6;
@@ -223,7 +242,9 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **127**.
+Total Vitest: **129**.
+
+Governança adicional: `scripts/change-sync-policy.test.mjs` possui **8 testes Node** para a política de sincronização.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
