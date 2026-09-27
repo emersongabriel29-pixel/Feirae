@@ -626,11 +626,13 @@ describe("Feiraê role access", () => {
 
     expect(
       screen.getByRole("heading", {
+        level: 3,
         name: /termo de adesão, conduta e responsabilidade do feirante/i,
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
+        level: 3,
         name: /aviso de privacidade e proteção de dados/i,
       }),
     ).toBeInTheDocument();
@@ -896,11 +898,13 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/^termos pendentes$/i)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
+        level: 3,
         name: /termo de adesão, segurança e conduta do entregador parceiro/i,
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
+        level: 3,
         name: /aviso de privacidade e proteção de dados/i,
       }),
     ).toBeInTheDocument();
