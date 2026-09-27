@@ -37,10 +37,13 @@ describe("LaunchExperience", () => {
 
     const splash = screen.getByRole("status", { name: "Feiraê carregando" });
     expect(splash).toHaveAttribute("data-variant", "full");
+    expect(splash.querySelector(".feirae-launch__stall-outline")).toBeInTheDocument();
+    expect(splash.querySelector(".feirae-launch__moto")).toBeInTheDocument();
+    expect(splash.querySelector(".feirae-launch__pin")).toBeInTheDocument();
     expect(window.localStorage.getItem(FEIRAE_SPLASH_LAST_FULL_DAY_KEY)).toBe("2026-09-27");
 
     act(() => {
-      vi.advanceTimersByTime(3100);
+      vi.advanceTimersByTime(3300);
     });
 
     expect(screen.queryByRole("status", { name: "Feiraê carregando" })).not.toBeInTheDocument();
@@ -62,7 +65,7 @@ describe("LaunchExperience", () => {
     );
 
     act(() => {
-      vi.advanceTimersByTime(1450);
+      vi.advanceTimersByTime(1550);
     });
 
     expect(screen.queryByRole("status", { name: "Feiraê carregando" })).not.toBeInTheDocument();
