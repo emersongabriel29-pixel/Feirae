@@ -66,7 +66,7 @@ Este documento é a fonte oficial de acompanhamento das auditorias do Feiraê. A
 | 47  | Testes                                                                             | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 48  | QA/regressão                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 49  | Documentação                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| 50  | Sincronização projeto × documentação                                               | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
+| 50  | Sincronização projeto × documentação                                               | CONCLUÍDA  | 27/09/2026      | 6 divergências principais            | 6 corrigidas        | Backend/E2E/deploy fora do escopo                    | master-sync · CI       |
 | 51  | Logs e histórico                                                                   | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 52  | Observabilidade                                                                    | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 53  | Configuração                                                                       | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
@@ -109,7 +109,7 @@ Bloqueios de produção identificados e mantidos como pendência rastreável:
 
 ## Sincronização Mestre — 27/09/2026
 
-A auditoria-mãe foi executada transversalmente por solicitação explícita, sem encerrar artificialmente as auditorias numeradas que ainda aguardam sua rodada formal.
+A auditoria-mãe e a Auditoria 50 foram executadas por solicitação explícita. As demais auditorias numeradas continuam aguardando sua rodada formal.
 
 Achados corrigidos:
 
