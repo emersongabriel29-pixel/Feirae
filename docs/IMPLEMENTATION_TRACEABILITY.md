@@ -283,7 +283,6 @@ Limite mantido: receber alertas quando o aplicativo está totalmente fechado em 
 
 Limite: o aceite persiste em `localStorage` no protótipo. Produção precisa de evidência server-side auditável e identificação jurídica completa do controlador/operador do Feiraê.
 
-
 ## Central premium de Documentos — 27/09/2026
 
 - `PartnerDocumentsHero`: hero com logomarca, marca d’água, status, progresso e resumo de regularização;
