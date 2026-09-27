@@ -43,6 +43,7 @@ Um documento de requisito não é prova de implementação.
 - [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido e entrega.
 - [NOTIFICATIONS.md](NOTIFICATIONS.md) — alertas operacionais, identidade Feiraê e limite do Web Push atual.
 - [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md) — termos de Feirante/Entregador, LGPD, assinatura e base legal.
+- [CUSTOMER_LEGAL_TERMS.md](CUSTOMER_LEGAL_TERMS.md) — Termos de Uso, Aviso de Privacidade e aceite no cadastro do Cliente.
 - [END_TO_END_AUDIT.md](END_TO_END_AUDIT.md) — implementado x testado x pendente.
 - [UI_INTERACTION_AUDIT.md](UI_INTERACTION_AUDIT.md) — botões/campos/edição.
 - [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) — identidade, tokens, responsividade e regras de layout.
