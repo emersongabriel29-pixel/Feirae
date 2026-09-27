@@ -94,6 +94,22 @@ function customerOrderNotification(
       url: "/#/cliente/pedidos",
     };
   }
+  if (event.key === "vendor-cancelled-partial") {
+    return {
+      title: "Uma banca saiu do pedido",
+      body: orderBody(order, `${event.label}. O restante da compra continua; confira o reembolso.`),
+      tag: `feirae-customer-${order.id}-vendor-partial-cancel`,
+      url: "/#/cliente/pedidos",
+    };
+  }
+  if (event.key === "vendor-cancelled-order") {
+    return {
+      title: "Pedido encerrado",
+      body: orderBody(order, event.reason || "a última banca ativa cancelou a participação"),
+      tag: `feirae-customer-${order.id}-vendor-order-cancel`,
+      url: "/#/cliente/pedidos",
+    };
+  }
   if (["cancelled", "vendor-rejected"].includes(event.key)) {
     return {
       title: "Pedido cancelado",
@@ -247,6 +263,20 @@ function deliveryOrderNotification(
       title: "Entrega concluída",
       body: orderBody(order, "ganho liberado conforme as regras de repasse"),
       tag: `feirae-delivery-${order.id}-delivered`,
+    };
+  }
+  if (event.key === "vendor-cancelled-partial") {
+    return {
+      title: "Rota atualizada",
+      body: orderBody(order, `${event.label}. A coleta dessa banca foi removida da corrida.`),
+      tag: `feirae-delivery-${order.id}-vendor-partial-cancel`,
+    };
+  }
+  if (event.key === "vendor-cancelled-order") {
+    return {
+      title: "Corrida encerrada",
+      body: orderBody(order, "não restaram bancas ativas neste pedido"),
+      tag: `feirae-delivery-${order.id}-vendor-order-cancel`,
     };
   }
   if (["cancelled", "vendor-rejected"].includes(event.key)) {
