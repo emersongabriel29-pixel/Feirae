@@ -1346,6 +1346,7 @@ export function Checkout({
       deliverySubsidy: number;
       customerDeliveryFee: number;
       promotionDiscount: number;
+      vendorPromotionDiscounts: Record<string, number>;
       walletUsed: number;
       appliedPromotions: string[];
       whatsappConsent: boolean;
@@ -1772,6 +1773,7 @@ export function Checkout({
                 deliverySubsidy,
                 customerDeliveryFee,
                 promotionDiscount,
+                vendorPromotionDiscounts: promotionResult.vendorPromotionDiscounts,
                 walletUsed,
                 appliedPromotions: promotionResult.appliedPromotions,
                 whatsappConsent,
