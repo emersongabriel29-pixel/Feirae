@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { MAX_VENDORS_PER_ORDER, validateMultiVendorCart } from "./multiVendor";
+import {
+  MAX_VENDORS_PER_ORDER,
+  MIN_VENDOR_ORDER_AMOUNT,
+  MULTI_VENDOR_EXTRA_STOP_FEE,
+  calculateMultiVendorDeliveryFee,
+  multiVendorMinimumMet,
+  validateMultiVendorCart,
+  vendorOrderSummaries,
+} from "./multiVendor";
 
 describe("multiVendor", () => {
   it("allows multiple vendors from the same fair", () => {
@@ -44,5 +52,35 @@ describe("multiVendor", () => {
         nextVendorName: "Banca 4",
       }),
     ).toEqual({ allowed: true });
+  });
+
+  it("requires at least R$ 30 from every vendor", () => {
+    const items = [
+      { id: 1, feirante: "Banca A", price: 20 },
+      { id: 2, feirante: "Banca B", price: 15 },
+    ];
+    const cart = { 1: 2, 2: 1 };
+    const summaries = vendorOrderSummaries(items, cart);
+
+    expect(MIN_VENDOR_ORDER_AMOUNT).toBe(30);
+    expect(summaries).toEqual([
+      { vendorName: "Banca A", subtotal: 40, missingForMinimum: 0, meetsMinimum: true },
+      { vendorName: "Banca B", subtotal: 15, missingForMinimum: 15, meetsMinimum: false },
+    ]);
+    expect(multiVendorMinimumMet(items, cart)).toBe(false);
+  });
+
+  it("accepts checkout when every vendor reaches the minimum", () => {
+    const items = [
+      { id: 1, feirante: "Banca A", price: 30 },
+      { id: 2, feirante: "Banca B", price: 10 },
+    ];
+    expect(multiVendorMinimumMet(items, { 1: 1, 2: 3 })).toBe(true);
+  });
+
+  it("charges one base freight plus a small extra-stop fee for each additional vendor", () => {
+    expect(MULTI_VENDOR_EXTRA_STOP_FEE).toBe(2.5);
+    expect(calculateMultiVendorDeliveryFee(12, 1)).toBe(12);
+    expect(calculateMultiVendorDeliveryFee(12, 3)).toBe(17);
   });
 });
