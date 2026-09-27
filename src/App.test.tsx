@@ -53,9 +53,9 @@ describe("Feiraê customer flow", () => {
     const allCategory = screen.getByRole("button", { name: /^todos$/i });
     expect(allCategory).toHaveAttribute("aria-pressed", "true");
 
-    const fruitCategory = screen.getByRole("button", { name: /^frutas$/i });
-    fireEvent.click(fruitCategory);
-    expect(fruitCategory).toHaveAttribute("aria-pressed", "true");
+    const produceCategory = screen.getByRole("button", { name: /^hortifruti$/i });
+    fireEvent.click(produceCategory);
+    expect(produceCategory).toHaveAttribute("aria-pressed", "true");
     expect(allCategory).toHaveAttribute("aria-pressed", "false");
   });
 
