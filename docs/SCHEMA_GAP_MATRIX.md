@@ -1,8 +1,8 @@
 # Matriz de lacunas entre frontend e schema — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 27/09/2026.
 
-Este documento registra somente divergências concretas entre o código atual e as migrations `0001_feirae_core.sql` / `0002_feirae_operations.sql`.
+Este documento registra somente divergências concretas entre o código atual e as migrations `0001_feirae_core.sql`, `0002_feirae_operations.sql` e `0003_vendor_store_minimum_order.sql`.
 
 ## 1. Papéis
 
@@ -380,7 +380,7 @@ Exemplos de gaps:
 - `orders`: cliente possui SELECT, mas criação/mutação segura não está modelada;
 - `onboarding_documents`: usuário envia/edita seus documentos, mas não há policy administrativa documentada para revisão/aprovação.
 
-## Próxima migration recomendada
+## Próxima migration recomendada após a 0003
 
 A próxima migration não deve ser genérica. Ela precisa, no mínimo:
 
