@@ -32,17 +32,17 @@ npm run build
 | Arquivo                                  | Testes |
 | ---------------------------------------- | -----: |
 | `src/App.test.tsx`                       |     53 |
-| `src/domain/orderBridge.test.ts`         |      7 |
-| `src/domain/multiVendor.test.ts`         |      4 |
+| `src/domain/orderBridge.test.ts`         |      8 |
+| `src/domain/multiVendor.test.ts`         |      7 |
 | `src/domain/feiraeNotifications.test.ts` |      5 |
 | `src/domain/legalTerms.test.ts`          |      8 |
 | `src/domain/marketplaceBridge.test.ts`   |      4 |
-| `src/domain/inventoryBridge.test.ts`     |      3 |
+| `src/domain/inventoryBridge.test.ts`     |      4 |
 | `src/domain/localAuth.test.ts`           |      4 |
 | `src/domain/marketplace.test.ts`         |      4 |
 | `src/domain/session.test.ts`             |      3 |
 | `src/utils.test.ts`                      |      4 |
-| **Total**                                | **99** |
+| **Total**                                | **104** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
@@ -51,6 +51,7 @@ Os 53 testes cobrem explicitamente:
 ### Cliente
 
 - abrir catálogo e acessar Início pela navegação principal;
+- bloquear checkout abaixo de R$ 30,00 por banca e liberar ao atingir o mínimo;
 - concluir checkout demo;
 - não incluir frete no total antes de existir endereço de entrega;
 - ocultar ferramentas de busca/localização fora das telas de descoberta;
@@ -146,6 +147,7 @@ Os 53 testes cobrem explicitamente:
 - retirada multi-banca só conclui após todas as bancas confirmarem;
 - entrega multi-banca mantém status global até a última coleta;
 - `pickupStops` são derivados/persistidos na rota;
+- cancelamento de uma banca preserva as demais, recalcula frete/total e cria reembolso parcial;
 - peso real propaga;
 - suporte/avaliações ficam no mesmo pedido;
 - histórico isolado por cliente.
@@ -155,7 +157,10 @@ Os 53 testes cobrem explicitamente:
 - aceita várias bancas da mesma feira;
 - bloqueia mistura de feiras;
 - limita o MVP a quatro bancas;
-- continua permitindo itens de uma banca que já está na sacola.
+- continua permitindo itens de uma banca que já está na sacola;
+- exige R$ 30,00 por banca;
+- calcula frete-base + R$ 2,50 por parada extra;
+- aloca desconto por banca para ajuste parcial.
 
 ### marketplaceBridge
 
@@ -167,6 +172,7 @@ Os 53 testes cobrem explicitamente:
 ### inventoryBridge
 
 - reservar/liberar;
+- liberar apenas os itens de uma banca cancelada;
 - não liberar depois de consumir;
 - rejeitar excesso de estoque.
 
@@ -177,7 +183,7 @@ Os 53 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 99 testes NÃO comprovam diretamente
+## 5. O que os 104 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
