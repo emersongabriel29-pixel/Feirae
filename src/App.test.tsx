@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
+import { cancelVendorParticipation, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
 function loginAs(role: "cliente" | "feirante" | "entregador") {
   fireEvent.click(screen.getByRole("radio", { name: new RegExp(role, "i") }));
@@ -47,6 +47,19 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
     expect(screen.getByRole("heading", { name: /meus pedidos/i })).toBeInTheDocument();
     expect(screen.getByText(/recebido/i)).toBeInTheDocument();
+  });
+
+  it("shows the R$30 minimum when opening a vendor", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const banksAction = screen.getByText(/^Bancas$/i).closest("button");
+    expect(banksAction).not.toBeNull();
+    fireEvent.click(banksAction as HTMLElement);
+    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
+
+    expect(screen.getByText(/pedido mínimo nesta banca:/i)).toBeInTheDocument();
+    expect(screen.getByText(/R\$ 30,00/i)).toBeInTheDocument();
   });
 
   it("shows the demonstration account identity instead of visitor", () => {
@@ -851,6 +864,113 @@ describe("Feiraê role access", () => {
     expect(order?.status).toBe("collected");
     expect(order?.vendors?.every((vendor) => vendor.status === "collected")).toBe(true);
     expect(screen.getByRole("button", { name: /iniciar entrega/i })).toBeInTheDocument();
+  });
+
+  it("updates the active driver route when one bank cancels", () => {
+    window.localStorage.removeItem("feirae:session");
+    window.localStorage.removeItem("feirae:delivery-stage:entregador@feirae.test");
+    window.localStorage.removeItem("feirae:delivery-active:entregador@feirae.test");
+
+    upsertUnifiedOrder({
+      id: "FE-MULTISTOP-CANCEL",
+      createdAt: "2026-09-27T08:00:00-03:00",
+      updatedAt: "2026-09-27T08:05:00-03:00",
+      customerKey: "cliente@feirae.test",
+      fairName: "Feira do Produtor Rural",
+      customerName: "Cliente Multi",
+      customerCity: "Planaltina",
+      customerAddress: "Planaltina, DF",
+      fulfillment: "delivery",
+      paymentMethod: "Pix",
+      paymentStatus: "authorized",
+      subtotal: 70,
+      calculatedDeliveryFee: 12,
+      deliverySubsidy: 0,
+      customerDeliveryFee: 12,
+      total: 82,
+      vendorFinancials: [
+        {
+          vendorId: "vendor:a",
+          storeId: "store:a",
+          vendorName: "Banca A",
+          merchandiseSubtotal: 35,
+          promotionDiscount: 0,
+          netMerchandise: 35,
+        },
+        {
+          vendorId: "vendor:b",
+          storeId: "store:b",
+          vendorName: "Banca B",
+          merchandiseSubtotal: 35,
+          promotionDiscount: 0,
+          netMerchandise: 35,
+        },
+      ],
+      deliveryPricing: {
+        baseFee: 9.5,
+        extraStopFee: 2.5,
+        originalVendorCount: 2,
+        currentVendorCount: 2,
+      },
+      items: [
+        {
+          productId: 911,
+          name: "Verduras",
+          vendor: "Banca A",
+          vendorId: "vendor:a",
+          storeId: "store:a",
+          quantity: 1,
+          unit: "un",
+          unitPrice: 35,
+          weightKg: 3,
+        },
+        {
+          productId: 912,
+          name: "Queijo",
+          vendor: "Banca B",
+          vendorId: "vendor:b",
+          storeId: "store:b",
+          quantity: 1,
+          unit: "un",
+          unitPrice: 35,
+          weightKg: 6,
+        },
+      ],
+      vendors: [
+        { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A", status: "ready", productIds: [911] },
+        { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B", status: "ready", productIds: [912] },
+      ],
+      status: "driver_assigned",
+      driver: {
+        driverKey: "entregador@feirae.test",
+        name: "Entregador",
+        vehicle: "Moto com baú",
+        etaMinutes: 20,
+        distanceKm: 8,
+      },
+      route: {
+        toVendorKm: 2,
+        vendorToCustomerKm: 6,
+        totalKm: 8,
+        etaMinutes: 20,
+        source: "osrm",
+        pickupStops: [
+          { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A" },
+          { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B" },
+        ],
+      },
+      events: [],
+    });
+
+    render(<App />);
+    loginAs("entregador");
+    expect(screen.getAllByText(/2 · Banca A \+ Banca B/i).length).toBeGreaterThan(0);
+
+    cancelVendorParticipation("FE-MULTISTOP-CANCEL", "vendor:b", "Sem estoque");
+
+    expect(screen.getAllByText(/1 · Banca A/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/2 · Banca A \+ Banca B/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/3 kg/i).length).toBeGreaterThan(0);
   });
 
   it("clears a stale active-delivery lock after the shared order is cancelled", () => {
