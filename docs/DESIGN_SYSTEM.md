@@ -487,3 +487,21 @@ As frases não são sinônimos:
 - **Da feira até você** — assinatura da splash/abertura.
 
 Ao criar nova superfície, escolher a frase pelo papel acima, evitando criar uma quarta assinatura concorrente.
+
+
+## Splash premium
+
+A abertura não deve ser tratada como um ícone animado isolado.
+
+Padrão visual obrigatório:
+
+- ilustração central em escala dominante no mobile;
+- profundidade por camadas, sombra e halo;
+- banca detalhada como protagonista;
+- elementos de feira entram antes da entrega;
+- entrega deve ser reconhecível como moto/entregador;
+- rota deve comunicar deslocamento;
+- marca só assume o centro depois que a cena termina;
+- evitar aparência infantil, clipart ou emoji;
+- respeitar `prefers-reduced-motion`;
+- não usar MP4 pesado como implementação padrão.
