@@ -1,6 +1,6 @@
 # Segurança e autenticação — Feiraê
 
-Atualizado em 26/09/2026 com auditoria direta das migrations 0001/0002.
+Atualizado em 27/09/2026 com auditoria direta das migrations 0001/0002/0003/0003.
 
 ## 1. Autenticação atual
 
