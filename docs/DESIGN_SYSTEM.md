@@ -511,7 +511,6 @@ Os três arquivos em `public/launch/feirae-splash-*.svg` são a referência oper
 
 A marca final usa fundo claro, toldo/folhas, nome Feiraê em verde com o **ê** em laranja e a assinatura **“Da feira até você”**. Não substituir esse fechamento por ícone quadrado, card genérico ou outra composição sem nova aprovação visual.
 
-
 ### Regra adicional da abertura
 
 A splash do Feiraê não pode ser reduzida a frames estáticos com transição. O movimento deve acontecer dentro da própria cena, mantendo a sensação de construção da feira e deslocamento da entrega.
