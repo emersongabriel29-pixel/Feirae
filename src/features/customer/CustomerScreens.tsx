@@ -2899,7 +2899,9 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
               {term.sections.map((section) => (
                 <section key={section.title}>
                   <h4>{section.title}</h4>
-                  {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                  {section.paragraphs?.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
                   {section.bullets && (
                     <ul>
                       {section.bullets.map((bullet) => (
