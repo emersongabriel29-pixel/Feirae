@@ -46,6 +46,7 @@ import {
   patchUnifiedOrder,
   patchUnifiedOrderItem,
   readUnifiedOrders,
+  resolveRefundDestination,
 } from "../../domain/orderBridge";
 import {
   feiraeNotificationPermission,
@@ -801,6 +802,7 @@ export function DeliveryTracking({
 
   const unifiedOrder = readUnifiedOrders().find((item) => item.id === order.id);
   const vendorStates = unifiedOrder?.vendors ?? [];
+  const refunds = unifiedOrder?.refunds ?? [];
   const readyVendorCount = vendorStates.filter((vendor) =>
     ["ready", "collected", "delivered"].includes(vendor.status),
   ).length;
@@ -994,6 +996,56 @@ export function DeliveryTracking({
                   </article>
                 ))}
               </div>
+            </div>
+          )}
+          {refunds.length > 0 && (
+            <div className="surface-card">
+              <span className="eyebrow">Ajustes e reembolsos</span>
+              {refunds.map((refund) => (
+                <div className="timeline-item" key={refund.id}>
+                  <Wallet size={17} />
+                  <div>
+                    <b>
+                      {refund.vendorName ? `${refund.vendorName} saiu do pedido` : "Reembolso do pedido"} ·{" "}
+                      {money(refund.amount)}
+                    </b>
+                    <small>
+                      Motivo: {refund.reason}. Produtos: {money(refund.merchandiseAmount)}
+                      {refund.deliveryAmount > 0 ? ` · ajuste de frete: ${money(refund.deliveryAmount)}` : ""}
+                    </small>
+                    {refund.walletRestoreAmount > 0 && (
+                      <small>{money(refund.walletRestoreAmount)} de saldo usado foi devolvido à carteira.</small>
+                    )}
+                    {refund.externalAmount > 0 && refund.status === "pending_choice" && (
+                      <div className="module-action-row">
+                        <button
+                          className="secondary-action"
+                          onClick={() =>
+                            resolveRefundDestination(order.id, refund.id, "original_payment")
+                          }
+                        >
+                          Estornar no pagamento
+                        </button>
+                        <button
+                          className="primary-action"
+                          onClick={() => resolveRefundDestination(order.id, refund.id, "wallet")}
+                        >
+                          Receber na carteira Feiraê
+                        </button>
+                      </div>
+                    )}
+                    {refund.status === "requested" && (
+                      <small>Estorno solicitado no meio de pagamento original. A conclusão depende do PSP.</small>
+                    )}
+                    {refund.status === "credited" && refund.destination === "wallet" && (
+                      <small>Crédito disponibilizado na carteira Feiraê.</small>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <p>
+                Total atual do pedido: <strong>{money(unifiedOrder?.total ?? order.value)}</strong>
+              </p>
             </div>
           )}
           {order.fulfillment === "delivery" && ["Coleta", "Em rota", "Entregue"].includes(order.status) && (
