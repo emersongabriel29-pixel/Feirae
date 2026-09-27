@@ -339,7 +339,7 @@ export const deliveryPartnerTerm: LegalTerm = {
       title: "7. Regras específicas para moto-frete",
       paragraphs: [
         "Quando a entrega remunerada for realizada com motocicleta ou motoneta, aplicam-se as exigências legais específicas de moto-frete vigentes no local da operação.",
-        "O texto vigente da Lei nº 12.009/2009 volta a exigir, após o encerramento da vigência da MP nº 1.360/2026, requisitos como idade mínima de 21 anos, habilitação por pelo menos dois anos na categoria, curso especializado nos termos da regulamentação do Contran e colete de segurança com dispositivos retrorrefletivos.",
+        "A Lei nº 12.009/2009, em seu texto vigente consultado em 26/09/2026, exige para a atividade abrangida requisitos como idade mínima de 21 anos, habilitação por pelo menos dois anos na categoria, curso especializado nos termos da regulamentação do Contran e colete de segurança com dispositivos retrorrefletivos.",
       ],
       bullets: [
         "A motocicleta/motoneta de moto-frete deve atender às exigências do art. 139-A do CTB introduzidas pela Lei nº 12.009/2009, incluindo autorização do órgão de trânsito competente, categoria de aluguel e equipamentos obrigatórios previstos em lei/regulamentação.",
