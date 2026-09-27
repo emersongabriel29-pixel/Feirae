@@ -545,23 +545,33 @@ Se estoque = 0, o produto é salvo como inativo/esgotado.
 
 ## 14. Multi-banca
 
+Regra canônica: [MULTI_VENDOR_ORDERS.md](MULTI_VENDOR_ORDERS.md).
+
 Pedido unificado mantém uma lista de bancas e seus estados.
 
-Regras locais testadas:
+Regras locais implementadas/testadas:
 
+- uma sacola pertence a uma única feira;
+- até **4 bancas** da mesma feira por pedido no MVP;
+- checkout continua único para o cliente;
 - logística só libera quando todas as bancas estão prontas;
+- peso logístico é a soma dos itens de todas as bancas;
 - retirada multi-banca mantém o pedido aberto após a primeira banca;
-- o pedido de retirada só vira entregue após todas as bancas confirmarem a entrega ao cliente.
+- o pedido de retirada só vira entregue após todas as bancas confirmarem a entrega ao cliente;
+- entrega cria `pickupStops` ordenados e o entregador confirma a coleta de cada banca individualmente;
+- o pedido de entrega permanece `driver_assigned` durante as coletas e só vira `collected` após a última banca;
+- acompanhamento do cliente mostra progresso por banca.
 
 Fixtures de corrida de demonstração são restritas às contas `@feirae.test`; uma conta real/recém-criada não deve receber ofertas fictícias.
 
-Limitação atual de rota:
+Limitação de geolocalização intra-feira:
 
-- a corrida agrega nomes de várias bancas;
-- o modelo de rota ainda usa uma origem de feira/banca e destino do cliente;
-- **não existe otimização de múltiplas paradas entre bancas**.
+- a sequência operacional de paradas já existe;
+- o marketplace ainda não persiste coordenadas individuais de cada banca/box;
+- OSRM continua calculando entregador → feira → cliente;
+- portanto ainda não existe cálculo real de distância entre as bancas dentro da feira.
 
-Produção precisa modelar stops.
+A recusa de uma banca continua encerrando o pedido global no protótipo; continuidade parcial depende de estorno/reserva/ledger por banca.
 
 ## 15. Entregador — aprovação real do protótipo
 
