@@ -563,19 +563,53 @@ export default function App() {
     );
     const unifiedOrder = readUnifiedOrders(session?.email).find((order) => order.id === orderId);
     releaseInventory(orderId);
-    const shouldRefund = unifiedOrder?.paymentStatus === "authorized";
+    const externalRefund =
+      unifiedOrder?.paymentStatus === "authorized" ||
+      unifiedOrder?.paymentStatus === "partially_refunded" ||
+      unifiedOrder?.paymentStatus === "refund_pending"
+        ? (unifiedOrder.total ?? 0)
+        : 0;
+    const walletRestore = unifiedOrder?.walletUsed ?? 0;
+    const refundAmount = Math.round((externalRefund + walletRestore) * 100) / 100;
+    const refund =
+      unifiedOrder && refundAmount > 0
+        ? {
+            id: `refund-${orderId}-full-${Date.now()}`,
+            reason,
+            merchandiseAmount: Math.max(
+              0,
+              Math.round(
+                (unifiedOrder.subtotal - (unifiedOrder.promotionDiscount ?? 0)) * 100,
+              ) / 100,
+            ),
+            deliveryAmount: unifiedOrder.customerDeliveryFee,
+            externalAmount: externalRefund,
+            walletRestoreAmount: walletRestore,
+            amount: refundAmount,
+            status: externalRefund > 0 ? ("pending_choice" as const) : ("credited" as const),
+            createdAt: new Date().toISOString(),
+          }
+        : null;
     patchUnifiedOrder(
       orderId,
       {
         status: "cancelled",
         cancelReason: reason,
         cancelDetails: details,
-        paymentStatus: shouldRefund ? "refunded" : unifiedOrder?.paymentStatus,
-        refundAmount: shouldRefund ? unifiedOrder?.total : unifiedOrder?.refundAmount,
+        total: 0,
+        walletUsed: 0,
+        paymentStatus:
+          externalRefund > 0
+            ? "refund_pending"
+            : walletRestore > 0
+              ? "refunded"
+              : unifiedOrder?.paymentStatus,
+        refundAmount: Math.round(((unifiedOrder?.refundAmount ?? 0) + refundAmount) * 100) / 100,
+        refunds: refund ? [...(unifiedOrder?.refunds ?? []), refund] : unifiedOrder?.refunds,
       },
       eventNow(
         "cancelled",
-        shouldRefund ? "Pedido cancelado · reembolso liberado" : "Pedido cancelado",
+        refund ? "Pedido cancelado · escolha o destino do reembolso" : "Pedido cancelado",
         "customer",
         { reason, details },
       ),
