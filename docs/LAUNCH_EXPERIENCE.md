@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-A abertura apresenta a proposta do Feiraê em poucos segundos: a banca ganha vida, os produtos aparecem, a entrega entra em movimento e a marca encerra a sequência com o slogan **“Da feira até você”**.
+A abertura apresenta a proposta do Feiraê em poucos segundos: a banca ganha vida, os produtos aparecem, a entrega entra em movimento e a marca encerra a sequência com a assinatura de abertura **“Da feira até você”**.
 
 ## Comportamento
 
@@ -19,7 +19,7 @@ A abertura apresenta a proposta do Feiraê em poucos segundos: a banca ganha vid
 4. Moto cruza a cena acompanhada pela rota.
 5. Pin de localização encerra o percurso.
 6. A cena é substituída pela marca Feiraê.
-7. Slogan final: **“Da feira até você”**.
+7. Assinatura final da abertura: **“Da feira até você”**.
 
 ## Identidade sonora
 
@@ -51,3 +51,12 @@ A reprodução no carregamento é feita em modo best-effort. Navegadores móveis
 ## Manutenção
 
 A chave `feirae:splash:last-full-day` registra a última data em que a animação completa foi exibida. Para testar manualmente a abertura completa novamente, remova essa chave do armazenamento local do navegador.
+
+
+## Relação com a identidade verbal
+
+- slogan institucional: **A feira do seu jeito**;
+- mensagem da tela de entrada: **Da banca até você.**;
+- assinatura desta splash: **Da feira até você**.
+
+A splash não redefine o slogan institucional; usa uma assinatura específica para comunicar feira + entrega.
