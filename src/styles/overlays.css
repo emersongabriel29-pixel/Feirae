@@ -24,7 +24,7 @@
 }
 .drawer-header small {
   color: var(--fe-green);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 900;
   letter-spacing: 0.12em;
 }
@@ -34,8 +34,8 @@
 }
 .drawer-header > button {
   display: grid;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: var(--fe-touch);
+  height: var(--fe-touch);
   place-items: center;
   border-radius: var(--fe-radius-sm);
   background: #f0f2ef;
@@ -62,7 +62,8 @@
 }
 .cart-item small {
   color: var(--fe-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 .cart-item strong {
   margin-top: 0.25rem;
@@ -80,8 +81,8 @@
 }
 .cart-item > div > div button {
   display: grid;
-  width: 1.7rem;
-  height: 1.7rem;
+  width: var(--fe-touch);
+  height: var(--fe-touch);
   place-items: center;
   border-radius: 0.45rem;
   background: #f1f4f0;
@@ -97,7 +98,12 @@
   font-weight: 800;
 }
 .cart-item > button {
-  color: #8a4d4d;
+  display: grid;
+  width: var(--fe-touch);
+  height: var(--fe-touch);
+  place-items: center;
+  border-radius: 0.7rem;
+  color: var(--fe-danger);
 }
 .repeat-order-button {
   display: grid;
@@ -120,7 +126,7 @@
 }
 .repeat-order-button small {
   color: var(--fe-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 .drawer-footer {
@@ -149,7 +155,8 @@
 }
 .empty-state p {
   max-width: 360px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 .toast {
   position: fixed;
@@ -193,9 +200,16 @@
   border-radius: 0.8rem;
   color: var(--fe-muted);
 }
+.mobile-nav-icon {
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border-radius: 0.6rem;
+}
 .mobile-nav button svg {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
 }
 .mobile-nav button span {
   font-size: 0.62rem;
@@ -213,4 +227,34 @@
 .mobile-nav button span {
   font-size: 0.75rem;
   line-height: 1.1;
+}
+
+.mobile-nav button[aria-current="page"] .mobile-nav-icon {
+  background: var(--fe-green);
+  color: white;
+  box-shadow: 0 6px 14px rgba(23, 107, 58, 0.18);
+}
+
+.cart-drawer {
+  overscroll-behavior: contain;
+}
+
+.drawer-body {
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 479px) {
+  .drawer-header,
+  .drawer-footer {
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+
+  .drawer-body {
+    padding: 0.9rem;
+  }
+
+  .cart-item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
 }

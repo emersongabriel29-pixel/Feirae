@@ -1279,8 +1279,16 @@ export function MobileNavigation({
   return (
     <nav className="mobile-nav" aria-label="Navegação móvel">
       {items.map(([item, label, icon]) => (
-        <button key={item} onClick={() => onTab(item)} className={active === item ? "active" : ""}>
-          {icon}
+        <button
+          key={item}
+          type="button"
+          onClick={() => onTab(item)}
+          className={active === item ? "active" : ""}
+          aria-current={active === item ? "page" : undefined}
+        >
+          <span className="mobile-nav-icon" aria-hidden="true">
+            {icon}
+          </span>
           <span>{label}</span>
         </button>
       ))}
@@ -1356,7 +1364,7 @@ export function QuickAction({
   onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="quick-action">
+    <button type="button" onClick={onClick} className="quick-action">
       <span aria-hidden="true">{icon}</span>
       <b>{title}</b>
       <small>{text}</small>
@@ -1413,8 +1421,10 @@ export function Choice({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
+      aria-pressed={active}
       className={active ? "choice active" : disabled ? "choice disabled" : "choice"}
     >
       <span>{icon}</span>

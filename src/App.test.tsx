@@ -26,6 +26,39 @@ describe("Feiraê customer flow", () => {
     expect(window.location.hash).toBe("#/cliente/produtos");
   });
 
+  it("keeps the Feiraê home identity in vector artwork", () => {
+    const { container } = render(<App />);
+    loginAs("cliente");
+
+    expect(container.querySelector(".hero-illustration__brand img")).toHaveAttribute(
+      "src",
+      "/feirae-mark.svg",
+    );
+    expect(container.querySelectorAll(".hero-illustration__icon")).toHaveLength(3);
+  });
+
+  it("exposes selected navigation and category states accessibly", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    const homeNavigation = within(mobileNavigation).getByRole("button", { name: /^início$/i });
+    expect(homeNavigation).toHaveAttribute("aria-current", "page");
+
+    fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
+
+    const productsNavigation = within(mobileNavigation).getByRole("button", { name: /^produtos$/i });
+    expect(productsNavigation).toHaveAttribute("aria-current", "page");
+
+    const allCategory = screen.getByRole("button", { name: /^todos$/i });
+    expect(allCategory).toHaveAttribute("aria-pressed", "true");
+
+    const produceCategory = screen.getByRole("button", { name: /^hortifruti$/i });
+    fireEvent.click(produceCategory);
+    expect(produceCategory).toHaveAttribute("aria-pressed", "true");
+    expect(allCategory).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("completes the local demo checkout without leaving a blank screen", () => {
     render(<App />);
     loginAs("cliente");

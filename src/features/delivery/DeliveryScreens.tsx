@@ -1385,6 +1385,7 @@ export function DeliveryOperations({
                     }}
                     disabled={approvalStatus !== "Aprovado"}
                     className={availableNow ? "status-button active" : "status-button"}
+                    aria-pressed={availableNow}
                   >
                     {approvalStatus === "Aprovado"
                       ? online
@@ -1769,6 +1770,7 @@ export function DeliveryOperations({
                     <button
                       className={availableNow ? "status-button active" : "status-button"}
                       disabled={approvalStatus !== "Aprovado"}
+                      aria-pressed={availableNow}
                       onClick={() => setOnline((value) => !value)}
                     >
                       {online ? "Desligar" : "Ligar"}
@@ -2113,7 +2115,11 @@ export function DeliveryOperations({
                     </article>
                   ))}
                 </div>
-                {incidentNotice && <p className="inline-success">{incidentNotice}</p>}
+                {incidentNotice && (
+                  <p className="inline-success" role="status">
+                    {incidentNotice}
+                  </p>
+                )}
               </>
             ) : active === "Notificações" ? (
               <>
@@ -2180,6 +2186,7 @@ export function DeliveryOperations({
                     <button
                       key={item}
                       className={helpTopic === item ? "status-button active" : "status-button"}
+                      aria-pressed={helpTopic === item}
                       onClick={() => {
                         setHelpTopic(item);
                         setHelpProtocol("");
@@ -2235,7 +2242,7 @@ export function DeliveryOperations({
                     Abrir atendimento
                   </button>
                   {helpProtocol && (
-                    <p className="inline-success">
+                    <p className="inline-success" role="status">
                       Protocolo {helpProtocol} aberto para {helpTopic}.
                     </p>
                   )}
@@ -2551,7 +2558,11 @@ export function DeliveryOperations({
                       {accountError}
                     </p>
                   )}
-                  {accountSaved && <p className="inline-success">Dados da conta salvos neste dispositivo.</p>}
+                  {accountSaved && (
+                    <p className="inline-success" role="status">
+                      Dados da conta salvos neste dispositivo.
+                    </p>
+                  )}
                   <div className="module-action-row">
                     <button type="submit" className="primary-action">
                       Salvar alterações

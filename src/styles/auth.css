@@ -1,6 +1,6 @@
 .login-page {
   display: grid;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--fe-surface);
 }
 .login-showcase {
@@ -17,11 +17,13 @@
   color: white;
 }
 .login-showcase::after {
-  content: "🧺";
+  content: "";
   position: absolute;
-  right: -1rem;
-  bottom: -3rem;
-  font-size: clamp(8rem, 30vw, 17rem);
+  right: clamp(-2rem, -2vw, -0.5rem);
+  bottom: clamp(-3.5rem, -5vw, -1.5rem);
+  width: clamp(11rem, 30vw, 18rem);
+  aspect-ratio: 1;
+  background: url("/feirae-mark.svg") center / contain no-repeat;
   opacity: 0.1;
   rotate: -8deg;
 }
@@ -70,7 +72,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.09);
   padding: 0.45rem 0.7rem;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 800;
   backdrop-filter: blur(7px);
 }
@@ -143,7 +145,8 @@
 .role-options small {
   margin-top: 0.15rem;
   color: var(--fe-muted);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 .role-options i {
   display: grid;
@@ -168,7 +171,7 @@
   display: grid;
   gap: 0.35rem;
   color: var(--fe-muted);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 850;
 }
 .login-form input {
@@ -185,15 +188,15 @@
 }
 .password-field input {
   width: 100%;
-  padding-right: 3rem;
+  padding-right: 3.4rem;
 }
 .password-field button {
   position: absolute;
   right: 0.35rem;
   top: 50%;
   display: grid;
-  width: 2.35rem;
-  height: 2.35rem;
+  width: var(--fe-touch);
+  height: var(--fe-touch);
   translate: 0 -50%;
   place-items: center;
   border-radius: 0.65rem;
@@ -205,7 +208,7 @@
 .demo-notice {
   margin-top: 0.8rem;
   color: var(--fe-muted);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   line-height: 1.5;
   text-align: center;
 }
@@ -265,8 +268,8 @@
 .customer-signup-legal-heading span {
   margin-top: 0.1rem;
   color: var(--fe-muted);
-  font-size: 0.67rem;
-  line-height: 1.35;
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 .customer-legal-details {
   border: 1px solid var(--fe-border);
@@ -278,7 +281,7 @@
   cursor: pointer;
   padding: 0.7rem 0.75rem;
   color: var(--fe-green-dark);
-  font-size: 0.71rem;
+  font-size: 0.78rem;
   font-weight: 900;
 }
 .customer-legal-scroll {
@@ -292,15 +295,15 @@
 }
 .customer-legal-scroll h3 {
   color: var(--fe-ink);
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   font-weight: 950;
 }
 .customer-legal-scroll p,
 .customer-legal-scroll li {
   margin-top: 0.3rem;
   color: var(--fe-muted);
-  font-size: 0.66rem;
-  line-height: 1.5;
+  font-size: 0.75rem;
+  line-height: 1.55;
 }
 .customer-legal-scroll ul {
   margin: 0.3rem 0 0 1rem;
@@ -327,7 +330,7 @@
   align-items: center;
   gap: 0.25rem;
   color: var(--fe-green-dark);
-  font-size: 0.64rem;
+  font-size: 0.74rem;
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -346,8 +349,8 @@
   background: var(--fe-surface);
   padding: 0.65rem;
   color: var(--fe-ink);
-  font-size: 0.68rem;
-  line-height: 1.4;
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 .customer-legal-checks label.optional {
   background: transparent;
@@ -371,7 +374,7 @@
 }
 .customer-legal-note {
   color: var(--fe-muted);
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   line-height: 1.4;
 }
 
@@ -460,6 +463,9 @@
   color: var(--fe-muted);
 }
 .desktop-nav {
+  display: inline-flex;
+  min-height: var(--fe-touch);
+  align-items: center;
   border-radius: var(--fe-radius-sm);
   padding: 0.6rem 0.8rem;
   color: var(--fe-text-soft);
@@ -474,8 +480,8 @@
 .icon-button {
   position: relative;
   display: grid;
-  width: 2.65rem;
-  height: 2.65rem;
+  width: var(--fe-touch);
+  height: var(--fe-touch);
   place-items: center;
   border: 1px solid var(--fe-border);
   border-radius: 0.9rem;
@@ -507,7 +513,7 @@
 .cart-button {
   position: relative;
   display: flex;
-  min-height: 2.65rem;
+  min-height: var(--fe-touch);
   align-items: center;
   gap: 0.5rem;
   border-radius: 0.9rem;
@@ -534,7 +540,7 @@
   display: flex;
   width: 100%;
   grid-column: 1 / -1;
-  min-height: 2.85rem;
+  min-height: 3rem;
   align-items: center;
   gap: 0.6rem;
   border: 1px solid var(--fe-border);
