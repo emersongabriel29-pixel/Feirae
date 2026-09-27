@@ -1410,7 +1410,8 @@ export function Checkout({
     minimumByVendor,
     promotionResult.vendorPromotionDiscounts,
   );
-  const vendorMinimumMet = vendorMinimums.length > 0 && vendorMinimums.every((summary) => summary.meetsMinimum);
+  const vendorMinimumMet =
+    vendorMinimums.length > 0 && vendorMinimums.every((summary) => summary.meetsMinimum);
   const blockedMinimum = vendorMinimums.find((summary) => !summary.meetsMinimum);
   const promotionDiscount = promotionResult.promotionDiscount;
   const deliverySubsidy =
