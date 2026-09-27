@@ -770,8 +770,8 @@ A regra de **bloquear ativação/publicação de uma feira com configuração ob
 
 Ao iniciar o Feiraê:
 
-- primeira abertura do dia: splash completa de aproximadamente 3,1 s;
-- reabertura no mesmo dia: versão rápida de aproximadamente 1,45 s;
+- primeira abertura do dia: splash completa de aproximadamente 3,3 s;
+- reabertura no mesmo dia: versão rápida de aproximadamente 1,55 s;
 - `prefers-reduced-motion: reduce`: versão estática curta;
 - falha/bloqueio de áudio não impede acesso ao app;
 - retorno do background não deve criar um novo gate funcional.
@@ -793,3 +793,19 @@ Para evitar conflito entre mensagens da marca:
 - assinatura da experiência de abertura: **Da feira até você**.
 
 Essas três frases possuem funções diferentes e não devem ser trocadas automaticamente entre superfícies.
+
+
+### Critério visual da abertura
+
+A versão completa deve mostrar, de forma perceptível e nessa ordem:
+
+1. banca sendo desenhada;
+2. banca ganhando cor/profundidade;
+3. produtos/folhagens aparecendo;
+4. rota surgindo;
+5. moto/entregador atravessando a cena;
+6. pin de localização;
+7. saída da cena;
+8. Feiraê + **Da feira até você**.
+
+Uma versão em que esses elementos aparecem apenas como pequeno ícone central não atende ao critério visual aprovado.
