@@ -205,7 +205,6 @@ Foram adicionados:
 
 Regra: toda alteração deve avaliar impacto em código, interface, testes, documentação, schema, segurança, integrações, LGPD, administração e deploy. O que for afetado deve ser atualizado no mesmo PR.
 
-
 ## Sincronização Mestre — 27/09/2026
 
 Uma nova auditoria transversal encontrou documentação que havia ficado atrás do código, apesar do CI verde.
