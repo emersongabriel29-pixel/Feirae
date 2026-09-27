@@ -341,7 +341,6 @@ Após a revisão do repositório completo:
 
 A política automática não substitui browser E2E, migration tests, RLS tests, concorrência ou regressão visual.
 
-
 ## QA da splash premium — 27/09/2026
 
 `LaunchExperience.test.tsx` continua com 3 testes e agora também verifica a presença estrutural de:
