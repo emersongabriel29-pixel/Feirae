@@ -1077,8 +1077,7 @@
   border: 1px solid var(--fe-border);
   border-radius: var(--fe-radius-md);
   background:
-    radial-gradient(circle at 100% 0%, rgba(223, 243, 107, 0.1), transparent 7rem),
-    var(--fe-surface-soft);
+    radial-gradient(circle at 100% 0%, rgba(223, 243, 107, 0.1), transparent 7rem), var(--fe-surface-soft);
   padding: 0.85rem;
 }
 .document-file-icon {
@@ -1215,9 +1214,7 @@
   margin-top: 1.25rem;
   border: 1px solid color-mix(in srgb, var(--fe-green) 18%, var(--fe-border));
   border-radius: var(--fe-radius-lg);
-  background:
-    linear-gradient(135deg, rgba(223, 243, 107, 0.12), transparent 48%),
-    var(--fe-surface);
+  background: linear-gradient(135deg, rgba(223, 243, 107, 0.12), transparent 48%), var(--fe-surface);
   padding: clamp(0.9rem, 2.5vw, 1.15rem);
   box-shadow: var(--fe-shadow-sm);
 }
