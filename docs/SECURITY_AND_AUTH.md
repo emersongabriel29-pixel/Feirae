@@ -272,7 +272,6 @@ Staging só pode ser considerado backend-integrado quando:
 
 Matriz completa de gaps: [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
-
 ## Assinatura e aceite de termos de parceiros
 
 O protótipo implementa aceite versionado para Feirante e Entregador.
