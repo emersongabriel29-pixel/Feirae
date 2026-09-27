@@ -611,10 +611,12 @@ describe("Feiraê role access", () => {
     loginAs("feirante");
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
-    expect(screen.getByText(/termos obrigatórios precisam ser assinados/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /documentos e regularização/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /regularize sua conta e opere com segurança/i })).toBeInTheDocument();
     expect(screen.getByText(/permissão\/autorização da banca ou box/i)).toBeInTheDocument();
     expect(screen.getAllByText(/pendente de envio/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/termos vigentes.*documentos obrigatórios/i)).toBeInTheDocument();
+    expect(screen.getByText(/segurança e transparência/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^pendentes$/i })).toBeInTheDocument();
   });
 
   it("shows the feirante legal term and LGPD notice inside Documents", () => {
@@ -633,6 +635,12 @@ describe("Feiraê role access", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getAllByText(/^assinado$/i).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByAltText("Feiraê")).toBeInTheDocument();
+    expect(screen.getByText(/termos assinados/i)).toBeInTheDocument();
+    expect(screen.getByText(/documentos aprovados/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^pendentes$/i }));
+    expect(screen.getByText(/permissão\/autorização da banca ou box/i)).toBeInTheDocument();
   });
 
   it("does not auto-approve a real vendor when document storage is missing", () => {
@@ -665,7 +673,8 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /entrar como feirante/i }));
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
-    expect(screen.getByText(/status do cadastro: termos pendentes/i)).toBeInTheDocument();
+    expect(screen.getByText(/status do cadastro/i)).toBeInTheDocument();
+    expect(screen.getByText(/^termos pendentes$/i)).toBeInTheDocument();
   });
 
   it("opens the delivery experience selected at login", () => {
@@ -856,11 +865,13 @@ describe("Feiraê role access", () => {
     loginAs("entregador");
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
-    expect(screen.getByRole("heading", { name: /documentação e aprovação/i })).toBeInTheDocument();
-    expect(screen.getByText(/criar conta, assinar termos ou enviar documentos/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /documentos e regularização/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /regularize sua conta e opere com segurança/i })).toBeInTheDocument();
     expect(screen.getByText(/curso\/autorização de motofrete/i)).toBeInTheDocument();
     expect(screen.getByText(/cnh compatível e válida/i)).toBeInTheDocument();
     expect(screen.getByText(/crlv-e do veículo/i)).toBeInTheDocument();
+    expect(screen.getByText(/arquivos e validação/i)).toBeInTheDocument();
+    expect(screen.getByText(/importante antes de enviar/i)).toBeInTheDocument();
   });
 
   it("blocks a new delivery account until current legal terms are signed", () => {
@@ -881,7 +892,8 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /criar conta como entregador/i }));
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
-    expect(screen.getByText(/status: termos pendentes/i)).toBeInTheDocument();
+    expect(screen.getByText(/status do cadastro/i)).toBeInTheDocument();
+    expect(screen.getByText(/^termos pendentes$/i)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         name: /termo de adesão, segurança e conduta do entregador parceiro/i,
