@@ -173,7 +173,6 @@ Tipos mínimos:
 
 Alterar regra nunca reescreve pedidos antigos. Pedido guarda snapshot da regra aplicada.
 
-
 ## Pedido mínimo por banca
 
 O modelo funcional é **mínimo por banca**, não mínimo global por carrinho.
