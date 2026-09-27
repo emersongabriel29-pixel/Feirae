@@ -35,6 +35,7 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     expect(screen.getByRole("heading", { name: /finalizar pedido/i })).toBeInTheDocument();
     expect(screen.getByText(/frete estimado/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 de até 4/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^a calcular$/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/o frete só entra no total depois que um endereço/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
@@ -746,6 +747,99 @@ describe("Feiraê role access", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /confirmar entrega/i }));
     expect(screen.getByText(/nenhuma entrega ativa/i)).toBeInTheDocument();
+  });
+
+  it("collects a multi-vendor delivery one bank at a time", () => {
+    window.localStorage.removeItem("feirae:session");
+    window.localStorage.removeItem("feirae:delivery-stage:entregador@feirae.test");
+    window.localStorage.removeItem("feirae:delivery-active:entregador@feirae.test");
+
+    upsertUnifiedOrder({
+      id: "FE-MULTISTOP-UI",
+      createdAt: "2026-09-27T08:00:00-03:00",
+      updatedAt: "2026-09-27T08:05:00-03:00",
+      customerKey: "cliente@feirae.test",
+      fairName: "Feira do Produtor Rural",
+      customerName: "Cliente Multi",
+      customerCity: "Planaltina",
+      customerAddress: "Planaltina, DF",
+      fulfillment: "delivery",
+      paymentMethod: "Pix",
+      paymentStatus: "authorized",
+      subtotal: 70,
+      calculatedDeliveryFee: 12,
+      deliverySubsidy: 0,
+      customerDeliveryFee: 12,
+      total: 82,
+      items: [
+        {
+          productId: 901,
+          name: "Verduras",
+          vendor: "Banca A",
+          vendorId: "vendor:a",
+          storeId: "store:a",
+          quantity: 1,
+          unit: "un",
+          unitPrice: 30,
+          weightKg: 3,
+        },
+        {
+          productId: 902,
+          name: "Queijo",
+          vendor: "Banca B",
+          vendorId: "vendor:b",
+          storeId: "store:b",
+          quantity: 1,
+          unit: "un",
+          unitPrice: 40,
+          weightKg: 2,
+        },
+      ],
+      vendors: [
+        { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A", status: "ready", productIds: [901] },
+        { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B", status: "ready", productIds: [902] },
+      ],
+      status: "driver_assigned",
+      driver: {
+        driverKey: "entregador@feirae.test",
+        name: "Entregador",
+        vehicle: "Moto com baú",
+        etaMinutes: 20,
+        distanceKm: 8,
+      },
+      route: {
+        toVendorKm: 2,
+        vendorToCustomerKm: 6,
+        totalKm: 8,
+        etaMinutes: 20,
+        source: "osrm",
+        pickupStops: [
+          { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A" },
+          { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B" },
+        ],
+      },
+      events: [],
+    });
+
+    render(<App />);
+    loginAs("entregador");
+
+    expect(screen.getByRole("button", { name: /ir para banca a/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /ir para banca a/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirmar coleta.*banca a/i }));
+
+    let order = readUnifiedOrders().find((item) => item.id === "FE-MULTISTOP-UI");
+    expect(order?.status).toBe("driver_assigned");
+    expect(order?.vendors?.find((vendor) => vendor.vendorId === "vendor:a")?.status).toBe("collected");
+    expect(order?.vendors?.find((vendor) => vendor.vendorId === "vendor:b")?.status).toBe("ready");
+
+    fireEvent.click(screen.getByRole("button", { name: /ir para banca b/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirmar coleta.*banca b/i }));
+
+    order = readUnifiedOrders().find((item) => item.id === "FE-MULTISTOP-UI");
+    expect(order?.status).toBe("collected");
+    expect(order?.vendors?.every((vendor) => vendor.status === "collected")).toBe(true);
+    expect(screen.getByRole("button", { name: /iniciar entrega/i })).toBeInTheDocument();
   });
 
   it("clears a stale active-delivery lock after the shared order is cancelled", () => {
