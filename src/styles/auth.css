@@ -230,6 +230,152 @@
   color: var(--fe-green);
   box-shadow: 0 4px 14px rgba(30, 45, 34, 0.08);
 }
+.customer-signup-legal {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--fe-green) 18%, var(--fe-border));
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 96% 4%, rgba(223, 243, 107, 0.12), transparent 7rem),
+    var(--fe-surface-soft);
+  padding: 0.85rem;
+}
+.customer-signup-legal-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.customer-signup-legal-heading img {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border: 1px solid var(--fe-border);
+  border-radius: 0.75rem;
+  background: white;
+  padding: 0.25rem;
+}
+.customer-signup-legal-heading b,
+.customer-signup-legal-heading span {
+  display: block;
+}
+.customer-signup-legal-heading b {
+  color: var(--fe-ink);
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+.customer-signup-legal-heading span {
+  margin-top: 0.1rem;
+  color: var(--fe-muted);
+  font-size: 0.67rem;
+  line-height: 1.35;
+}
+.customer-legal-details {
+  border: 1px solid var(--fe-border);
+  border-radius: 0.75rem;
+  background: var(--fe-surface);
+  overflow: hidden;
+}
+.customer-legal-details summary {
+  cursor: pointer;
+  padding: 0.7rem 0.75rem;
+  color: var(--fe-green-dark);
+  font-size: 0.71rem;
+  font-weight: 900;
+}
+.customer-legal-scroll {
+  max-height: 16rem;
+  overflow: auto;
+  border-top: 1px solid var(--fe-border);
+  padding: 0.75rem;
+}
+.customer-legal-scroll section + section {
+  margin-top: 0.85rem;
+}
+.customer-legal-scroll h3 {
+  color: var(--fe-ink);
+  font-size: 0.74rem;
+  font-weight: 950;
+}
+.customer-legal-scroll p,
+.customer-legal-scroll li {
+  margin-top: 0.3rem;
+  color: var(--fe-muted);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+.customer-legal-scroll ul {
+  margin: 0.3rem 0 0 1rem;
+  list-style: disc;
+}
+.customer-legal-summary {
+  margin-top: 0 !important;
+  color: var(--fe-ink) !important;
+  font-weight: 800;
+}
+.customer-legal-references {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--fe-border);
+  padding-top: 0.7rem;
+}
+.customer-legal-references b {
+  color: var(--fe-ink);
+  font-size: 0.68rem;
+}
+.customer-legal-references a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--fe-green-dark);
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.customer-legal-checks {
+  display: grid;
+  gap: 0.5rem;
+}
+.customer-legal-checks label {
+  display: flex;
+  grid-template-columns: none;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border: 1px solid var(--fe-border);
+  border-radius: 0.75rem;
+  background: var(--fe-surface);
+  padding: 0.65rem;
+  color: var(--fe-ink);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+.customer-legal-checks label.optional {
+  background: transparent;
+}
+.customer-legal-checks input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  min-height: 0;
+  flex: none;
+  margin-top: 0.1rem;
+  padding: 0;
+  accent-color: var(--fe-green);
+}
+.customer-legal-checks b {
+  color: var(--fe-green-dark);
+}
+.customer-legal-checks em {
+  color: var(--fe-muted);
+  font-style: normal;
+  font-weight: 700;
+}
+.customer-legal-note {
+  color: var(--fe-muted);
+  font-size: 0.62rem;
+  line-height: 1.4;
+}
+
 .signup-requirements {
   border: 1px solid var(--fe-border);
   border-radius: 0.9rem;
