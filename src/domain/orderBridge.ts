@@ -14,6 +14,7 @@ export type UnifiedPaymentStatus =
   | "authorized"
   | "due_on_delivery"
   | "failed"
+  | "refund_pending"
   | "partially_refunded"
   | "refunded";
 
@@ -453,6 +454,16 @@ export function cancelVendorParticipation(orderId: string, vendorId: string, rea
         deliverySubsidy: nextDeliverySubsidy,
         customerDeliveryFee: nextCustomerDeliveryFee,
         total: nextTotal,
+        paymentStatus:
+          normalized.paymentStatus === "due_on_delivery"
+            ? normalized.paymentStatus
+            : externalAmount > 0
+              ? "refund_pending"
+              : walletRestoreAmount > 0
+                ? orderCancelled
+                  ? "refunded"
+                  : "partially_refunded"
+                : normalized.paymentStatus,
         refundAmount: Math.round(((normalized.refundAmount ?? 0) + amount) * 100) / 100,
         refunds: refund ? [...(normalized.refunds ?? []), refund] : normalized.refunds,
         deliveryPricing: deliveryPricing
@@ -488,18 +499,28 @@ export function resolveRefundDestination(
     current.map((order) => {
       if (order.id !== orderId) return order;
       const normalized = normalizeOrder(order);
+      const target = (normalized.refunds ?? []).find((refund) => refund.id === refundId);
+      const nextRefunds = (normalized.refunds ?? []).map((refund) =>
+        refund.id === refundId && refund.status === "pending_choice"
+          ? {
+              ...refund,
+              destination,
+              status: destination === "wallet" ? ("credited" as const) : ("requested" as const),
+            }
+          : refund,
+      );
       return {
         ...normalized,
         updatedAt: new Date().toISOString(),
-        refunds: (normalized.refunds ?? []).map((refund) =>
-          refund.id === refundId && refund.status === "pending_choice"
-            ? {
-                ...refund,
-                destination,
-                status: destination === "wallet" ? ("credited" as const) : ("requested" as const),
-              }
-            : refund,
-        ),
+        refunds: nextRefunds,
+        paymentStatus:
+          destination === "wallet" && target?.status === "pending_choice"
+            ? normalized.status === "cancelled"
+              ? "refunded"
+              : "partially_refunded"
+            : destination === "original_payment"
+              ? "refund_pending"
+              : normalized.paymentStatus,
         events: [
           ...normalized.events,
           eventNow(
