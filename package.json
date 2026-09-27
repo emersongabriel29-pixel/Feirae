@@ -9,10 +9,11 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:sync-policy": "node --test scripts/change-sync-policy.test.mjs",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint && npm run test && npm run build",
+    "check": "npm run lint && npm run test && npm run test:sync-policy && npm run build",
     "check:sync": "node scripts/check-change-sync.mjs"
   },
   "dependencies": {
