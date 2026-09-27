@@ -203,9 +203,10 @@ Não faz:
 
 Contagem real:
 
-- `App.test.tsx`: 50;
+- `App.test.tsx`: 52;
 - `orderBridge.test.ts`: 5;
 - `feiraeNotifications.test.ts`: 5;
+- `legalTerms.test.ts`: 8;
 - `marketplaceBridge.test.ts`: 4;
 - `inventoryBridge.test.ts`: 3;
 - `localAuth.test.ts`: 4;
@@ -213,7 +214,7 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **82**.
+Total: **92**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
@@ -266,3 +267,19 @@ Limite: o repositório ainda não possui backend que persista `PushSubscription`
 - `App.test.tsx`: cobre card do Cliente e a nova etapa de chegada.
 
 Limite mantido: receber alertas quando o aplicativo está totalmente fechado em outro aparelho ainda depende do backend real enviar Web Push para a assinatura persistida.
+
+
+## Termos jurídicos e assinatura dos parceiros — 26/09/2026
+
+- `legalTerms.ts`: termos completos e versionados para Feirante e Entregador, além do Aviso de Privacidade/LGPD;
+- `LegalTermSignatureCard`: leitura integral, referências oficiais, declarações individuais, nome digitado e prova do aceite;
+- `VendorScreens.tsx`: termos aparecem em Documentos e passam a compor o status de aprovação do Feirante;
+- `DeliveryScreens.tsx`: termos aparecem em Documentos e passam a compor o status de aprovação do Entregador;
+- versão antiga não satisfaz a aprovação: o parceiro precisa aceitar a versão vigente;
+- `legalTermFingerprint()`: gera impressão digital do conteúdo;
+- contas demo recebem aceite seed para preservar cenários existentes; contas reais novas começam com **Termos pendentes**;
+- `legalTerms.test.ts`: valida conteúdo mínimo jurídico, moto-frete, LGPD, versionamento, isolamento por papel e fingerprint;
+- `App.test.tsx`: valida presença dos termos no Feirante e bloqueio por termos pendentes no Entregador;
+- `PARTNER_LEGAL_TERMS.md`: consolida a base legal federal e os requisitos que ainda dependem do backend/assessoria jurídica.
+
+Limite: o aceite persiste em `localStorage` no protótipo. Produção precisa de evidência server-side auditável e identificação jurídica completa do controlador/operador do Feiraê.
