@@ -306,7 +306,6 @@ A revisão visual mais recente foi comparada novamente contra os componentes rea
 
 Essa revisão continua sem prova de layout em browser real. Browser E2E/regressão visual permanece pendente.
 
-
 ## Correção da splash após vídeo — 27/09/2026
 
 A inspeção da gravação em aparelho real identificou divergência entre o conceito aprovado e a primeira versão implementada.
