@@ -39,6 +39,12 @@ export type UnifiedOrderVendor = {
   productIds: number[];
 };
 
+export type UnifiedPickupStop = {
+  vendorId: string;
+  storeId: string;
+  vendorName: string;
+};
+
 export type UnifiedOrderEvent = {
   key: string;
   label: string;
@@ -112,6 +118,7 @@ export type UnifiedOrderRecord = {
     totalKm: number;
     etaMinutes: number;
     source: "routing_provider" | "local_fixture" | "osrm";
+    pickupStops?: UnifiedPickupStop[];
   };
   events: UnifiedOrderEvent[];
   supportTickets?: UnifiedSupportTicket[];
@@ -152,8 +159,21 @@ function normalizeOrder(order: UnifiedOrderRecord): UnifiedOrderRecord {
           productIds: items.filter((item) => item.vendorId === vendorId).map((item) => item.productId),
         };
       });
+  const route = order.route
+    ? {
+        ...order.route,
+        pickupStops:
+          order.route.pickupStops?.length
+            ? order.route.pickupStops
+            : vendors
+                .filter((vendor) => vendor.status !== "rejected")
+                .map(({ vendorId, storeId, vendorName }) => ({ vendorId, storeId, vendorName })),
+      }
+    : undefined;
+
   return {
     ...order,
+    route,
     paymentStatus:
       order.paymentStatus ??
       (order.paymentMethod?.toLocaleLowerCase("pt-BR").includes("entrega")
