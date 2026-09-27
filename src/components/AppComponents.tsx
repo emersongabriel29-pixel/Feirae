@@ -780,6 +780,15 @@ export function LegalTermSignatureCard({
       <details className="legal-term-details">
         <summary>Ler termo completo</summary>
         <div className="legal-term-scroll">
+          <header className="legal-document-sheet-header">
+            <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+            <div>
+              <span>Feiraê · Documento jurídico</span>
+              <h4>{term.title}</h4>
+              <p>Versão {term.version} · leitura e aceite vinculados à sua conta.</p>
+            </div>
+          </header>
+
           {term.sections.map((section) => (
             <section key={section.title}>
               <h4>{section.title}</h4>
@@ -808,6 +817,13 @@ export function LegalTermSignatureCard({
               ))}
             </ul>
           </section>
+
+          <footer className="legal-document-sheet-footer">
+            <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+            <span>
+              Feiraê · {term.title} · versão {term.version}
+            </span>
+          </footer>
         </div>
       </details>
 
