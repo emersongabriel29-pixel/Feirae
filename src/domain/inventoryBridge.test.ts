@@ -1,18 +1,36 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Product } from "../types";
 import { marketplaceProducts } from "./marketplaceBridge";
-import { consumeInventory, releaseInventory, reserveInventory } from "./inventoryBridge";
+import {
+  consumeInventory,
+  releaseInventory,
+  releaseInventoryItems,
+  reserveInventory,
+} from "./inventoryBridge";
 
 const base: Product[] = [
   {
     id: 101,
     name: "Produto teste",
-    feirante: "Banca Teste",
+    feirante: "Banca A",
     fair: "Feira Teste",
     price: 10,
     category: "Outros",
     emoji: "🧺",
     stock: 3,
+    unit: "un",
+    weightKg: 1,
+    volume: "leve",
+  },
+  {
+    id: 102,
+    name: "Produto banca B",
+    feirante: "Banca B",
+    fair: "Feira Teste",
+    price: 20,
+    category: "Outros",
+    emoji: "🧺",
+    stock: 4,
     unit: "un",
     weightKg: 1,
     volume: "leve",
@@ -32,6 +50,21 @@ describe("inventory bridge", () => {
 
     releaseInventory("FE-STOCK");
     expect(marketplaceProducts(base)[0].stock).toBe(3);
+  });
+
+  it("releases only the cancelled vendor items in a multi-vendor reservation", () => {
+    expect(reserveInventory("FE-PARTIAL", base, { 101: 2, 102: 3 }).ok).toBe(true);
+    expect(marketplaceProducts(base).find((item) => item.id === 101)?.stock).toBe(1);
+    expect(marketplaceProducts(base).find((item) => item.id === 102)?.stock).toBe(1);
+
+    releaseInventoryItems("FE-PARTIAL", [102]);
+
+    expect(marketplaceProducts(base).find((item) => item.id === 101)?.stock).toBe(1);
+    expect(marketplaceProducts(base).find((item) => item.id === 102)?.stock).toBe(4);
+
+    consumeInventory("FE-PARTIAL");
+    releaseInventory("FE-PARTIAL");
+    expect(marketplaceProducts(base).find((item) => item.id === 101)?.stock).toBe(1);
   });
 
   it("does not release stock after consumption", () => {
