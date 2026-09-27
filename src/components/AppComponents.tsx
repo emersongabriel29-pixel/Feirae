@@ -7,6 +7,8 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  ExternalLink,
+  FileSignature,
   Home,
   LocateFixed,
   LogOut,
@@ -25,6 +27,7 @@ import { fairs } from "../data";
 import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
 import { cartWeight, productWeight } from "../domain/marketplace";
+import type { LegalAcceptance, LegalTerm } from "../domain/legalTerms";
 
 const roleLabels: Record<Role, string> = {
   customer: "Cliente",
@@ -556,6 +559,145 @@ export function OperationalOnboardingCard({
           {action} <ChevronRight size={16} />
         </button>
       </div>
+    </section>
+  );
+}
+
+export function LegalTermSignatureCard({
+  term,
+  acceptance,
+  signerName,
+  signerEmail,
+  onSign,
+}: {
+  term: LegalTerm;
+  acceptance?: LegalAcceptance;
+  signerName: string;
+  signerEmail: string;
+  onSign: (term: LegalTerm, signerName: string) => Promise<void> | void;
+}) {
+  const currentAcceptance = acceptance?.version === term.version ? acceptance : undefined;
+  const [typedName, setTypedName] = useState(currentAcceptance?.signerName ?? signerName);
+  const [confirmed, setConfirmed] = useState<boolean[]>(term.declarations.map(() => false));
+  const [signing, setSigning] = useState(false);
+  const allConfirmed = confirmed.length > 0 && confirmed.every(Boolean);
+
+  async function sign() {
+    if (!typedName.trim() || !allConfirmed || signing) return;
+    setSigning(true);
+    try {
+      await onSign(term, typedName.trim());
+    } finally {
+      setSigning(false);
+    }
+  }
+
+  return (
+    <section className="legal-term-card" aria-label={term.title}>
+      <div className="legal-term-heading">
+        <span className="legal-term-icon" aria-hidden="true">
+          <FileSignature size={21} />
+        </span>
+        <div>
+          <span className="eyebrow">Termo obrigatório · versão {term.version}</span>
+          <h3>{term.title}</h3>
+          <p>{term.summary}</p>
+        </div>
+        <span className={currentAcceptance ? "document-status status-approved" : "document-status status-review"}>
+          {currentAcceptance ? "Assinado" : acceptance ? "Nova versão pendente" : "Assinatura pendente"}
+        </span>
+      </div>
+
+      <details className="legal-term-details">
+        <summary>Ler termo completo</summary>
+        <div className="legal-term-scroll">
+          {term.sections.map((section) => (
+            <section key={section.title}>
+              <h4>{section.title}</h4>
+              {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              {section.bullets && (
+                <ul>
+                  {section.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))}
+
+          <section>
+            <h4>Bases legais e regulatórias consultadas</h4>
+            <ul className="legal-reference-list">
+              {term.references.map((reference) => (
+                <li key={reference.url}>
+                  <a href={reference.url} target="_blank" rel="noreferrer">
+                    {reference.label} <ExternalLink size={13} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </details>
+
+      {currentAcceptance ? (
+        <div className="legal-signature-proof">
+          <Check size={18} />
+          <div>
+            <b>Assinado eletronicamente por {currentAcceptance.signerName}</b>
+            <small>
+              {currentAcceptance.signerEmail} · {currentAcceptance.signedAt} · versão {currentAcceptance.version}
+            </small>
+            <small>Impressão digital: {currentAcceptance.fingerprint.slice(0, 20)}…</small>
+          </div>
+        </div>
+      ) : (
+        <div className="legal-signature-form">
+          {acceptance && (
+            <p className="inline-warning">
+              O texto foi atualizado. Leia a versão {term.version} e assine novamente para continuar regular.
+            </p>
+          )}
+          <div className="legal-declarations">
+            {term.declarations.map((declaration, index) => (
+              <label key={declaration}>
+                <input
+                  type="checkbox"
+                  checked={confirmed[index] ?? false}
+                  onChange={(event) =>
+                    setConfirmed((current) =>
+                      current.map((value, itemIndex) => (itemIndex === index ? event.target.checked : value)),
+                    )
+                  }
+                />
+                <span>{declaration}</span>
+              </label>
+            ))}
+          </div>
+          <label>
+            Nome completo para assinatura eletrônica
+            <input
+              value={typedName}
+              onChange={(event) => setTypedName(event.target.value)}
+              autoComplete="name"
+              placeholder="Digite seu nome completo"
+            />
+          </label>
+          <p className="legal-signature-note">
+            Ao assinar, o Feiraê registra nome, e-mail, data/hora, versão e impressão digital do conteúdo. A
+            assinatura eletrônica deste protótipo não substitui a infraestrutura de auditoria e identidade que
+            deverá existir no backend de produção.
+          </p>
+          <button
+            type="button"
+            className="primary-action"
+            disabled={!typedName.trim() || !allConfirmed || signing}
+            onClick={() => void sign()}
+          >
+            <FileSignature size={17} /> {signing ? "Registrando assinatura..." : "Assinar eletronicamente"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
