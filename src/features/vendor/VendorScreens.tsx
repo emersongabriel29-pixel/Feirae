@@ -31,6 +31,11 @@ import {
 import { fairs } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
 import { vehicleRules } from "../../domain/marketplace";
+import {
+  DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
+  MAX_VENDOR_MINIMUM_ORDER_AMOUNT,
+  normalizeVendorMinimumOrder,
+} from "../../domain/multiVendor";
 import { vendorModuleDetails } from "../../domain/operations";
 import type { DemoSession } from "../../types";
 import { usePersistentState } from "../../usePersistentState";
@@ -585,6 +590,7 @@ export function FeiranteOperations({
       absorbDeliveryFee: deliverySettings.absorbDeliveryFee,
       acceptCashOnDelivery: deliverySettings.acceptCashOnDelivery,
       acceptCardOnDelivery: deliverySettings.acceptCardOnDelivery,
+      minimumOrderAmount: normalizeVendorMinimumOrder(bankProfile.minimumOrderAmount),
       box: bankProfile.box,
       corridor: bankProfile.corridor,
       sector: bankProfile.sector,
@@ -601,6 +607,7 @@ export function FeiranteOperations({
     bankProfile.internalX,
     bankProfile.internalY,
     bankProfile.name,
+    bankProfile.minimumOrderAmount,
     bankProfile.reference,
     bankProfile.sector,
     deliverySettings.absorbDeliveryFee,
@@ -1681,7 +1688,21 @@ export function FeiranteOperations({
                     className="form-card"
                     onSubmit={(event) => {
                       event.preventDefault();
-                      setBankProfile({ ...bankDraft });
+                      const minimumOrderAmount = Number(bankDraft.minimumOrderAmount ?? 0);
+                      if (
+                        !Number.isFinite(minimumOrderAmount) ||
+                        minimumOrderAmount < 0 ||
+                        minimumOrderAmount > MAX_VENDOR_MINIMUM_ORDER_AMOUNT
+                      ) {
+                        showNotice(
+                          `O pedido mínimo deve ficar entre R$ 0,00 e ${money(MAX_VENDOR_MINIMUM_ORDER_AMOUNT)}.`,
+                        );
+                        return;
+                      }
+                      setBankProfile({
+                        ...bankDraft,
+                        minimumOrderAmount: normalizeVendorMinimumOrder(minimumOrderAmount),
+                      });
                       setBankEditing(false);
                       showNotice("Dados da banca salvos.");
                     }}
@@ -1793,6 +1814,47 @@ export function FeiranteOperations({
                         placeholder="Ex.: hortifruti, orgânicos, cestas"
                       />
                     </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label>
+                        Pedido mínimo
+                        <select
+                          value={normalizeVendorMinimumOrder(bankDraft.minimumOrderAmount) > 0 ? "custom" : "none"}
+                          onChange={(event) =>
+                            setBankDraft((current) => ({
+                              ...current,
+                              minimumOrderAmount:
+                                event.target.value === "none"
+                                  ? 0
+                                  : normalizeVendorMinimumOrder(current.minimumOrderAmount) || DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
+                            }))
+                          }
+                        >
+                          <option value="none">Sem valor mínimo</option>
+                          <option value="custom">Definir valor mínimo</option>
+                        </select>
+                      </label>
+                      {normalizeVendorMinimumOrder(bankDraft.minimumOrderAmount) > 0 && (
+                        <label>
+                          Valor mínimo por pedido
+                          <input
+                            type="number"
+                            min="0"
+                            max={MAX_VENDOR_MINIMUM_ORDER_AMOUNT}
+                            step="0.01"
+                            value={bankDraft.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT}
+                            onChange={(event) =>
+                              setBankDraft((current) => ({
+                                ...current,
+                                minimumOrderAmount: Number(event.target.value),
+                              }))
+                            }
+                          />
+                          <small>
+                            Máximo permitido pela plataforma: {money(MAX_VENDOR_MINIMUM_ORDER_AMOUNT)}.
+                          </small>
+                        </label>
+                      )}
+                    </div>
                     <label>
                       Ponto de referência
                       <input
@@ -1917,6 +1979,14 @@ export function FeiranteOperations({
                           {bankProfile.reference || "sem referência"}
                         </p>
                         <p>{bankProfile.categories}</p>
+                        <p>
+                          Pedido mínimo:{" "}
+                          <strong>
+                            {normalizeVendorMinimumOrder(bankProfile.minimumOrderAmount) > 0
+                              ? money(normalizeVendorMinimumOrder(bankProfile.minimumOrderAmount))
+                              : "sem valor mínimo"}
+                          </strong>
+                        </p>
                         <p>
                           Localização interna: {bankProfile.sector || "setor não informado"} · corredor{" "}
                           {bankProfile.corridor || "—"} · box {bankProfile.box || "—"}
