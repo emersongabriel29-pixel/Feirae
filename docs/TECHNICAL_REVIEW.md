@@ -212,7 +212,6 @@ Detalhes:
 - [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md)
 - [IMPLEMENTATION_TRACEABILITY.md](IMPLEMENTATION_TRACEABILITY.md)
 
-
 ## Sincronização de repositório — 27/09/2026
 
 Foi executada uma revisão transversal de código, testes, documentação, migrations, segurança, integrações, administração e deploy.
