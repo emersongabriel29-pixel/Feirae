@@ -4,7 +4,7 @@
 
 Marketplace de feiras com três experiências: Cliente, Feirante e Entregador.
 
-## Estado real do repositório — 26/09/2026
+## Estado real do repositório — 27/09/2026
 
 O código atual é um **protótipo funcional integrado no mesmo navegador**.
 
@@ -141,16 +141,20 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 
 Suite atual:
 
-- 56 testes em `App.test.tsx`;
+- 58 testes em `App.test.tsx`;
 - 3 testes do componente de abertura;
 - 68 testes de domínio/utilidades;
-- **127 testes no total**.
+- **129 testes Vitest**;
+- 8 testes da política de sincronização do repositório em `scripts/change-sync-policy.test.mjs`.
+
+O `npm run check` executa lint, 129 testes Vitest, 8 testes de governança e build.
 
 CI:
 
 ```bash
 npm ci
 npm run check
+npm run check:sync   # em PR, com BASE_SHA/HEAD_SHA
 npm run format:check
 ```
 
