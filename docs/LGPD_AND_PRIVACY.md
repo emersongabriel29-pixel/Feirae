@@ -303,7 +303,6 @@ Antes de produção, definir procedimento específico para:
 - [ ] resposta a incidente;
 - [ ] revisão jurídica.
 
-
 ## 18. Termos, ciência do aviso e assinatura
 
 Feirante e Entregador possuem um **Aviso de Privacidade e Proteção de Dados** versionado dentro da área Documentos.
