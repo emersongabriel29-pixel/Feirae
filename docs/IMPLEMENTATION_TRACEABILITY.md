@@ -26,20 +26,20 @@ Este documento responde: “onde cada função realmente vive hoje?”.
 
 ## Feirante
 
-| Função             | Arquivo             | Chave local                                  | SQL                                  |
-| ------------------ | ------------------- | -------------------------------------------- | ------------------------------------ |
-| conta              | `VendorScreens.tsx` | `feirae:vendor-account:<email>`              | `vendor_profiles` incompleto         |
+| Função             | Arquivo             | Chave local                                  | SQL                                      |
+| ------------------ | ------------------- | -------------------------------------------- | ---------------------------------------- |
+| conta              | `VendorScreens.tsx` | `feirae:vendor-account:<email>`              | `vendor_profiles` incompleto             |
 | banca              | `VendorScreens.tsx` | `feirae:vendor-bank:<email>`                 | `vendor_stores` + `minimum_order_amount` |
-| produtos           | `VendorScreens.tsx` | `feirae:vendor-products:<email>`             | `products`                           |
-| estoque/histórico  | `VendorScreens.tsx` | `feirae:vendor-stock-history:<email>`        | reserva/histórico ausentes           |
-| promoções          | `VendorScreens.tsx` | `feirae:vendor-promotions:<email>`           | `promotions` incompleto              |
-| horários           | `VendorScreens.tsx` | `feirae:vendor-schedule:<email>`             | `vendor_stores.custom_opening_hours` |
-| usar horário feira | `VendorScreens.tsx` | `feirae:vendor-use-fair-hours:<email>`       | decisão futura                       |
-| entrega/retirada   | `VendorScreens.tsx` | `feirae:vendor-delivery-settings:<email>`    | colunas em `vendor_stores`           |
-| documentos         | `VendorScreens.tsx` | `feirae:vendor-documents:<email>`            | `onboarding_documents`               |
-| pedidos            | `VendorScreens.tsx` | `feirae:vendor-orders:<email>` + orderBridge | `order_vendors`                      |
-| financeiro         | `VendorScreens.tsx` | `feirae:vendor-settlements:<email>`          | `payouts` + ledger faltante          |
-| avaliações         | `VendorScreens.tsx` | `feirae:vendor-reviews:<email>`              | `order_reviews`                      |
+| produtos           | `VendorScreens.tsx` | `feirae:vendor-products:<email>`             | `products`                               |
+| estoque/histórico  | `VendorScreens.tsx` | `feirae:vendor-stock-history:<email>`        | reserva/histórico ausentes               |
+| promoções          | `VendorScreens.tsx` | `feirae:vendor-promotions:<email>`           | `promotions` incompleto                  |
+| horários           | `VendorScreens.tsx` | `feirae:vendor-schedule:<email>`             | `vendor_stores.custom_opening_hours`     |
+| usar horário feira | `VendorScreens.tsx` | `feirae:vendor-use-fair-hours:<email>`       | decisão futura                           |
+| entrega/retirada   | `VendorScreens.tsx` | `feirae:vendor-delivery-settings:<email>`    | colunas em `vendor_stores`               |
+| documentos         | `VendorScreens.tsx` | `feirae:vendor-documents:<email>`            | `onboarding_documents`                   |
+| pedidos            | `VendorScreens.tsx` | `feirae:vendor-orders:<email>` + orderBridge | `order_vendors`                          |
+| financeiro         | `VendorScreens.tsx` | `feirae:vendor-settlements:<email>`          | `payouts` + ledger faltante              |
+| avaliações         | `VendorScreens.tsx` | `feirae:vendor-reviews:<email>`              | `order_reviews`                          |
 
 ## Entregador
 
@@ -346,7 +346,6 @@ Limite: a evidência ainda é local. Produção exige persistência server-side 
 - documentação canônica: `INTERNAL_FAIR_ROUTING.md`.
 
 Limites ainda reais: mapa cartesiano sem grafo de obstáculos, entrada/saída distintas ainda não cadastradas e token QR de produção ainda precisa de backend antifraude.
-
 
 ## Pedido mínimo configurável por banca — 27/09/2026
 
