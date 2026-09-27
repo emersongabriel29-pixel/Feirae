@@ -32,7 +32,7 @@ npm run build
 | Arquivo                                  |  Testes |
 | ---------------------------------------- | ------: |
 | `src/App.test.tsx`                       |      55 |
-| `src/domain/orderBridge.test.ts`         |       9 |
+| `src/domain/orderBridge.test.ts`         |     11 |
 | `src/domain/feiraeNotifications.test.ts` |       6 |
 | `src/domain/legalTerms.test.ts`          |       8 |
 | `src/domain/customerLegal.test.ts`       |       4 |
@@ -43,7 +43,7 @@ npm run build
 | `src/domain/marketplace.test.ts`         |       4 |
 | `src/domain/session.test.ts`             |       3 |
 | `src/utils.test.ts`                      |       4 |
-| **Total**                                | **113** |
+| **Total**                                  | **118** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
@@ -182,7 +182,7 @@ Os 55 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 113 testes NÃO comprovam diretamente
+## 5. O que os 118 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
