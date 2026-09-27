@@ -77,7 +77,6 @@ Descontos e promoções financiados pela própria banca reduzem o valor de merca
 
 O carrinho faz uma pré-validação com os valores disponíveis naquele momento. O checkout faz a validação final após as promoções aplicáveis.
 
-
 ## Configuração pelo Feirante
 
 Em **Minha banca → Editar banca**, o Feirante escolhe:
