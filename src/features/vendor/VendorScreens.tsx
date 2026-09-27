@@ -10,6 +10,7 @@ import {
   Package,
   Plus,
   Star,
+  Store,
   Truck,
   Trash2,
   Upload,
@@ -986,7 +987,7 @@ export function FeiranteOperations({
       subtitle="Gerencie pedidos, banca, produtos, horários, promoções e financeiro."
       onBack={onBack}
     >
-      {notice && <p className="inline-success">{notice}</p>}
+      {notice && <p className="inline-success" role="status" aria-live="polite">{notice}</p>}
 
       {active === "Central" ? (
         <div className="ops-home">
@@ -1938,7 +1939,7 @@ export function FeiranteOperations({
                         {bankProfile.logoDataUrl ? (
                           <img src={bankProfile.logoDataUrl} alt="" className="bank-logo-preview" />
                         ) : (
-                          "🥬"
+                          <Store size={28} aria-hidden="true" />
                         )}
                       </span>
                       <div>
@@ -1951,6 +1952,7 @@ export function FeiranteOperations({
                         className={storeOpen ? "status-button active" : "status-button"}
                         onClick={() => setStoreOpen((value) => !value)}
                         disabled={approvalStatus !== "Aprovado"}
+                        aria-pressed={effectiveStoreOpen}
                       >
                         {effectiveStoreOpen ? "Aberta agora" : "Fechada"}
                       </button>
@@ -2939,7 +2941,7 @@ export function FeiranteOperations({
                       {accountError}
                     </p>
                   )}
-                  {accountSaved && <p className="inline-success">Alterações salvas.</p>}
+                  {accountSaved && <p className="inline-success" role="status">Alterações salvas.</p>}
                   <div className="module-action-row">
                     <button className="primary-action" type="submit">
                       <Edit3 size={17} /> Salvar alterações
