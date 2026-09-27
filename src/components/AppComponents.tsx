@@ -635,15 +635,21 @@ export function PartnerDocumentsHero({
         </div>
         <div className="documents-summary-grid">
           <div>
-            <span>{termsSigned}/{termsTotal}</span>
+            <span>
+              {termsSigned}/{termsTotal}
+            </span>
             <small>Termos assinados</small>
           </div>
           <div>
-            <span>{documentsSent}/{documentsTotal}</span>
+            <span>
+              {documentsSent}/{documentsTotal}
+            </span>
             <small>Documentos enviados</small>
           </div>
           <div>
-            <span>{documentsApproved}/{documentsTotal}</span>
+            <span>
+              {documentsApproved}/{documentsTotal}
+            </span>
             <small>Documentos aprovados</small>
           </div>
           <div>
@@ -711,11 +717,15 @@ export function DocumentsGuidanceCard({ roleLabel }: { roleLabel: string }) {
       <div className="documents-guidance-grid">
         <p>
           <FileCheck2 size={17} />
-          <span>Envie arquivos legíveis, verdadeiros e atualizados. Informações falsas podem suspender a conta.</span>
+          <span>
+            Envie arquivos legíveis, verdadeiros e atualizados. Informações falsas podem suspender a conta.
+          </span>
         </p>
         <p>
           <ShieldCheck size={17} />
-          <span>Seus dados devem ser tratados conforme a LGPD e usados somente para finalidades informadas.</span>
+          <span>
+            Seus dados devem ser tratados conforme a LGPD e usados somente para finalidades informadas.
+          </span>
         </p>
         <p>
           <FileSignature size={17} />
@@ -723,7 +733,9 @@ export function DocumentsGuidanceCard({ roleLabel }: { roleLabel: string }) {
         </p>
         <p>
           <Check size={17} />
-          <span>O envio não aprova automaticamente o cadastro de {roleLabel.toLocaleLowerCase("pt-BR")}.</span>
+          <span>
+            O envio não aprova automaticamente o cadastro de {roleLabel.toLocaleLowerCase("pt-BR")}.
+          </span>
         </p>
       </div>
     </section>
