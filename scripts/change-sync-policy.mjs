@@ -5,7 +5,10 @@ const isDoc = (file) =>
   file === ".github/pull_request_template.md";
 
 const isTest = (file) =>
-  /(?:\.test\.|\.spec\.)/.test(file) || file.startsWith("tests/") || file.startsWith("e2e/");
+  /(?:\.test\.|\.spec\.)/.test(file) ||
+  file.startsWith("tests/") ||
+  file.startsWith("e2e/") ||
+  file === "scripts/change-sync-policy-checks.mjs";
 
 const hasAny = (files, predicates) =>
   files.some((file) => predicates.some((predicate) => predicate(file)));
