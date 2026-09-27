@@ -3,6 +3,7 @@ import {
   MAX_VENDORS_PER_ORDER,
   MIN_VENDOR_ORDER_AMOUNT,
   MULTI_VENDOR_EXTRA_STOP_FEE,
+  allocatePromotionAcrossVendors,
   calculateMultiVendorDeliveryFee,
   multiVendorMinimumMet,
   validateMultiVendorCart,
@@ -76,6 +77,19 @@ describe("multiVendor", () => {
       { id: 2, feirante: "Banca B", price: 10 },
     ];
     expect(multiVendorMinimumMet(items, { 1: 1, 2: 3 })).toBe(true);
+  });
+
+  it("allocates promotion discount across vendors for partial refund accounting", () => {
+    const items = [
+      { id: 1, feirante: "Banca A", price: 60 },
+      { id: 2, feirante: "Banca B", price: 40 },
+    ];
+    const allocation = allocatePromotionAcrossVendors(items, { 1: 1, 2: 1 }, 10);
+
+    expect(allocation).toEqual([
+      expect.objectContaining({ vendorName: "Banca A", promotionDiscount: 6, netMerchandise: 54 }),
+      expect.objectContaining({ vendorName: "Banca B", promotionDiscount: 4, netMerchandise: 36 }),
+    ]);
   });
 
   it("charges one base freight plus a small extra-stop fee for each additional vendor", () => {
