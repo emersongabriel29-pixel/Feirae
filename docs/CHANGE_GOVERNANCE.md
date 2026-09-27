@@ -261,4 +261,4 @@ Em pull requests, o CI verifica automaticamente regras mínimas e regras semânt
 - Auth/termos/dados pessoais exigem `SECURITY_AND_AUTH.md` e `LGPD_AND_PRIVACY.md`;
 - workflow/config de deploy exige atualização de `DEPLOYMENT_AND_ENVIRONMENTS.md`.
 
-A política vive em `scripts/change-sync-policy.mjs` e possui testes em `scripts/change-sync-policy.test.mjs`. Ela continua sendo uma barreira automática, não substitui a revisão humana da matriz de impacto.
+A política vive em `scripts/change-sync-policy.mjs` e possui testes em `scripts/change-sync-policy-checks.mjs`. Ela continua sendo uma barreira automática, não substitui a revisão humana da matriz de impacto.
