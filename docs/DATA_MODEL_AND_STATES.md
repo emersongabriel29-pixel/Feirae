@@ -1,6 +1,6 @@
 # Modelo de dados e estados — Feiraê
 
-Atualizado em 26/09/2026 após comparação direta entre frontend e migrations.
+Atualizado em 27/09/2026 após comparação direta entre frontend e migrations.
 
 Este documento não descreve apenas o modelo desejado. Ele separa **implementado no frontend**, **existente no SQL** e **lacuna**.
 
@@ -304,6 +304,16 @@ Normalizar antes da integração.
 - `payouts`
 - `wallet_entries`
 
+### Migration 0003
+
+Não cria entidade nova. Altera `vendor_stores` com:
+
+- `minimum_order_amount numeric(12,2) not null default 0`;
+- constraint de R$ 0,00 a R$ 100,00;
+- `0` representa banca sem pedido mínimo.
+
+A regra ainda precisa de validação server-side, snapshot no pedido e política administrativa persistida antes de produção.
+
 ## 9. Entidades citadas no produto, mas ausentes no SQL
 
 Ainda não existem:
@@ -427,7 +437,7 @@ Cada ação valida:
 - idempotência;
 - evento.
 
-## 16. Próxima migration
+## 16. Próxima migration após a 0003
 
 A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md), principalmente:
 
