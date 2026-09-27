@@ -32,6 +32,7 @@ npm run build
 | Arquivo                                  |  Testes |
 | ---------------------------------------- | ------: |
 | `src/App.test.tsx`                       |      56 |
+| `src/components/LaunchExperience.test.tsx` |       3 |
 | `src/domain/orderBridge.test.ts`         |      11 |
 | `src/domain/feiraeNotifications.test.ts` |       6 |
 | `src/domain/legalTerms.test.ts`          |       8 |
