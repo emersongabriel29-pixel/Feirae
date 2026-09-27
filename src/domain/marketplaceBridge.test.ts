@@ -42,6 +42,7 @@ describe("marketplace bridge", () => {
       absorbDeliveryFee: false,
       acceptCashOnDelivery: true,
       acceptCardOnDelivery: true,
+      minimumOrderAmount: 25,
       promotions: [],
       products: [
         {
@@ -62,6 +63,7 @@ describe("marketplace bridge", () => {
     expect(catalog[0].name).toBe("Cesta premium");
     expect(catalog[0].price).toBe(45);
     expect(catalog[0].stock).toBe(4);
+    expect(readSharedStores()[0].minimumOrderAmount).toBe(25);
   });
 
   it("persists internal stall position and pickup verification code", () => {
@@ -139,7 +141,9 @@ describe("marketplace bridge", () => {
 
     const items = marketplaceProducts(base);
     expect(calculateCheckoutPromotions(items, { 1: 1 }, 10, "ERRADO").promotionDiscount).toBe(0);
-    expect(calculateCheckoutPromotions(items, { 1: 1 }, 10, "FEIRA10").promotionDiscount).toBe(3);
+    const couponResult = calculateCheckoutPromotions(items, { 1: 1 }, 10, "FEIRA10");
+    expect(couponResult.promotionDiscount).toBe(3);
+    expect(couponResult.vendorPromotionDiscounts).toEqual({ "Banca A": 3 });
 
     registerPromotionUsage(["Cupom 10"]);
     const result = calculateCheckoutPromotions(items, { 1: 1 }, 10, "FEIRA10");
