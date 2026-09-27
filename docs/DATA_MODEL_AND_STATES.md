@@ -188,6 +188,31 @@ incident
 
 Esses valores ainda não estão implementados como constraint SQL.
 
+## 5.1. Rota interna da feira
+
+O pedido unificado pode persistir em `route.pickupStops[]`:
+
+- `vendorId`;
+- `storeId`;
+- `vendorName`;
+- `sector`;
+- `corridor`;
+- `box`;
+- `reference`;
+- `internalX` / `internalY`;
+- `sequence`;
+- `internalDistanceFromPreviousMeters`;
+- `pickupCode`.
+
+A rota também pode guardar:
+
+- `internalDistanceMeters`;
+- `internalEtaMinutes`;
+- `internalRouteStrategy`;
+- latitude/longitude da origem GPS do entregador usada no cálculo.
+
+O marketplace local da banca sincroniza os mesmos dados físicos para que a logística consiga montar a rota sem depender do GPS para distinguir boxes próximos.
+
 ## 6. Aprovação documental
 
 Frontend de documentos usa:
