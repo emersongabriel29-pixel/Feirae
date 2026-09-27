@@ -52,7 +52,6 @@ A reprodução no carregamento é feita em modo best-effort. Navegadores móveis
 
 A chave `feirae:splash:last-full-day` registra a última data em que a animação completa foi exibida. Para testar manualmente a abertura completa novamente, remova essa chave do armazenamento local do navegador.
 
-
 ## Relação com a identidade verbal
 
 - slogan institucional: **A feira do seu jeito**;
