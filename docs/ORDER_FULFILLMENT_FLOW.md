@@ -88,6 +88,7 @@ Regras implementadas/testadas:
 
 - uma sacola não mistura feiras;
 - o MVP aceita até 4 bancas da mesma feira;
+- cada banca precisa atingir pedido mínimo de R$ 30,00 em produtos antes do checkout;
 - pedido não vira `ready_for_pickup` até todas as bancas necessárias estarem prontas;
 - em **retirada multi-banca**, a confirmação de uma banca marca somente aquela participação como `delivered`;
 - o pedido global permanece `ready_for_pickup` enquanto existir banca pronta ainda não retirada;
@@ -96,7 +97,10 @@ Regras implementadas/testadas:
 - cada coleta muda apenas aquela banca para `collected`;
 - o pedido global só muda de `driver_assigned` para `collected` após a última coleta;
 - o peso usado para compatibilidade de veículo soma todos os itens do pedido;
-- a reserva de estoque só é consumida no encerramento global da retirada/entrega.
+- a reserva de estoque só é consumida no encerramento global da retirada/entrega;
+- se uma banca cancelar, somente seus itens/reserva são liberados; as demais bancas continuam;
+- a rota e o peso do entregador são atualizados para excluir a banca cancelada;
+- o frete único é recalculado conforme o número restante de coletas.
 
 A oferta e a rota operacional podem representar:
 
@@ -105,6 +109,8 @@ Banca A → Banca B → Banca C → cliente
 ```
 
 Limitação atual: sem coordenadas individuais de box/banca, a geometria OSRM continua sendo entregador → feira → cliente. Os `pickupStops` são reais no fluxo operacional, mas ainda não representam distância intra-feira otimizada.
+
+Frete MVP: frete-base + R$ 2,50 por banca adicional. Política de ajustes e reembolsos: [REFUND_CANCELLATION_POLICY.md](REFUND_CANCELLATION_POLICY.md).
 
 ## 7. Pronto para coleta
 
