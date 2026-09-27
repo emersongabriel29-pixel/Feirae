@@ -358,7 +358,14 @@ export function cancelVendorParticipation(
       if (order.id !== orderId) return order;
       const normalized = normalizeOrder(order);
       const vendor = normalized.vendors?.find((item) => item.vendorId === vendorId);
-      if (!vendor || vendor.status === "rejected") return normalized;
+      if (
+        !vendor ||
+        vendor.status === "rejected" ||
+        vendor.status === "collected" ||
+        vendor.status === "delivered"
+      ) {
+        return normalized;
+      }
 
       const cancelledItems = normalized.items.filter((item) => item.vendorId === vendorId && !item.cancelled);
       const merchandiseSubtotal =
@@ -507,18 +514,28 @@ export function resolveRefundDestination(
             }
           : refund,
       );
+      const hasPendingExternalRefund = nextRefunds.some(
+        (refund) =>
+          refund.externalAmount > 0 &&
+          (refund.status === "pending_choice" || refund.status === "requested"),
+      );
+      const hasResolvedRefund = nextRefunds.some(
+        (refund) => refund.status === "credited" || refund.destination === "original_payment",
+      );
       return {
         ...normalized,
         updatedAt: new Date().toISOString(),
         refunds: nextRefunds,
         paymentStatus:
-          destination === "wallet" && target?.status === "pending_choice"
-            ? normalized.status === "cancelled"
-              ? "refunded"
-              : "partially_refunded"
-            : destination === "original_payment"
+          target?.status !== "pending_choice"
+            ? normalized.paymentStatus
+            : hasPendingExternalRefund
               ? "refund_pending"
-              : normalized.paymentStatus,
+              : normalized.status === "cancelled"
+                ? "refunded"
+                : hasResolvedRefund
+                  ? "partially_refunded"
+                  : normalized.paymentStatus,
         events: [
           ...normalized.events,
           eventNow(
