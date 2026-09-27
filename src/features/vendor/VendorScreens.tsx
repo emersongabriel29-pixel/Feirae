@@ -2841,7 +2841,9 @@ export function FeiranteOperations({
                     <div>
                       <span className="eyebrow">Arquivos e validação</span>
                       <h3>Seus documentos</h3>
-                      <p>Envie arquivos legíveis. Acompanhe a análise e corrija somente o que for solicitado.</p>
+                      <p>
+                        Envie arquivos legíveis. Acompanhe a análise e corrija somente o que for solicitado.
+                      </p>
                     </div>
                     <span className="documents-counter">
                       {vendorDocumentsApproved}/{vendorRequiredDocuments.length} aprovados
