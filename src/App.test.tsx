@@ -37,6 +37,29 @@ describe("Feiraê customer flow", () => {
     expect(container.querySelectorAll(".hero-illustration__icon")).toHaveLength(3);
   });
 
+  it("exposes selected navigation and category states accessibly", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const homeNavigation = screen.getByRole("button", { name: /^início$/i });
+    expect(homeNavigation).toHaveAttribute("aria-current", "page");
+
+    fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
+
+    const productsNavigation = screen.getAllByRole("button", { name: /^produtos$/i }).find(
+      (button) => button.closest("nav")?.getAttribute("aria-label") === "Navegação móvel",
+    );
+    expect(productsNavigation).toHaveAttribute("aria-current", "page");
+
+    const allCategory = screen.getByRole("button", { name: /^todos$/i });
+    expect(allCategory).toHaveAttribute("aria-pressed", "true");
+
+    const fruitCategory = screen.getByRole("button", { name: /^frutas$/i });
+    fireEvent.click(fruitCategory);
+    expect(fruitCategory).toHaveAttribute("aria-pressed", "true");
+    expect(allCategory).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("completes the local demo checkout without leaving a blank screen", () => {
     render(<App />);
     loginAs("cliente");
