@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
-import { filterProducts, sortFairsByDistance } from "./utils";
+import { filterProducts, money, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
 import { CartDrawer, Header, LoginPage, MobileNavigation } from "./components/AppComponents";
 import {
