@@ -41,7 +41,8 @@ Um documento de requisito não é prova de implementação.
 
 - [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) — comportamento atual e limites.
 - [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido e entrega.
-- [MULTI_VENDOR_ORDERS.md](MULTI_VENDOR_ORDERS.md) — regra oficial de sacola por feira, mínimo por banca, frete e coleta multi-stop.
+- [MULTI_VENDOR_ORDERS.md](MULTI_VENDOR_ORDERS.md)
+- [INTERNAL_FAIR_ROUTING.md](INTERNAL_FAIR_ROUTING.md) — GPS externo, mapa interno de boxes e confirmação de coleta. — regra oficial de sacola por feira, mínimo por banca, frete e coleta multi-stop.
 - [NOTIFICATIONS.md](NOTIFICATIONS.md) — alertas operacionais, identidade Feiraê e limite do Web Push atual.
 - [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md) — termos de Feirante/Entregador, LGPD, assinatura e base legal.
 - [CUSTOMER_LEGAL_TERMS.md](CUSTOMER_LEGAL_TERMS.md) — Termos de Uso, Aviso de Privacidade e aceite no cadastro do Cliente.

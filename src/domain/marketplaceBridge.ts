@@ -1,5 +1,6 @@
 import type { Product } from "../types";
 import { storeIdFor, vendorIdFor } from "./identity";
+import { pickupVerificationCode } from "./fairInternalRouting";
 
 export type SharedPromotion = {
   id: string;
@@ -33,6 +34,13 @@ export type SharedStore = {
   absorbDeliveryFee: boolean;
   acceptCashOnDelivery: boolean;
   acceptCardOnDelivery: boolean;
+  box?: string;
+  corridor?: string;
+  sector?: string;
+  reference?: string;
+  internalX?: number | null;
+  internalY?: number | null;
+  pickupCode?: string;
   promotions: SharedPromotion[];
   aliases?: string[];
   updatedAt: string;
@@ -119,6 +127,12 @@ export function syncVendorMarketplace(input: {
   absorbDeliveryFee: boolean;
   acceptCashOnDelivery: boolean;
   acceptCardOnDelivery: boolean;
+  box?: string;
+  corridor?: string;
+  sector?: string;
+  reference?: string;
+  internalX?: number | null;
+  internalY?: number | null;
   promotions: SharedPromotion[];
   products: Array<{
     id: number;
@@ -149,6 +163,13 @@ export function syncVendorMarketplace(input: {
     absorbDeliveryFee: input.absorbDeliveryFee,
     acceptCashOnDelivery: input.acceptCashOnDelivery,
     acceptCardOnDelivery: input.acceptCardOnDelivery,
+    box: input.box,
+    corridor: input.corridor,
+    sector: input.sector,
+    reference: input.reference,
+    internalX: input.internalX ?? null,
+    internalY: input.internalY ?? null,
+    pickupCode: pickupVerificationCode(storeId),
     promotions: input.promotions,
     aliases: Array.from(
       new Set(

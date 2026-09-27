@@ -46,6 +46,15 @@ export type UnifiedPickupStop = {
   vendorId: string;
   storeId: string;
   vendorName: string;
+  sector?: string;
+  corridor?: string;
+  box?: string;
+  reference?: string;
+  internalX?: number | null;
+  internalY?: number | null;
+  sequence?: number;
+  internalDistanceFromPreviousMeters?: number;
+  pickupCode?: string;
 };
 
 export type UnifiedOrderEvent = {
@@ -154,6 +163,11 @@ export type UnifiedOrderRecord = {
     etaMinutes: number;
     source: "routing_provider" | "local_fixture" | "osrm";
     pickupStops?: UnifiedPickupStop[];
+    internalDistanceMeters?: number;
+    internalEtaMinutes?: number;
+    internalRouteStrategy?: "internal_map" | "corridor_box_fallback" | "mixed";
+    driverOriginLat?: number;
+    driverOriginLng?: number;
   };
   events: UnifiedOrderEvent[];
   supportTickets?: UnifiedSupportTicket[];

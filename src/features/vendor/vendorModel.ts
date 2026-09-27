@@ -51,9 +51,12 @@ export type VendorBankProfile = {
   name: string;
   description: string;
   fairName: string;
+  sector: string;
   box: string;
   corridor: string;
   reference: string;
+  internalX: number | null;
+  internalY: number | null;
   categories: string;
   phone: string;
   whatsapp: string;
@@ -355,9 +358,12 @@ export function newVendorBankProfile(name: string): VendorBankProfile {
     name: name ? `Banca de ${name}` : "Minha banca",
     description: "",
     fairName: "Feira do Produtor Rural",
+    sector: "",
     box: "",
     corridor: "",
     reference: "",
+    internalX: null,
+    internalY: null,
     categories: "",
     phone: "",
     whatsapp: "",
@@ -370,9 +376,12 @@ export const initialBankProfile: VendorBankProfile = {
   name: "Sítio da Vó",
   description: "Hortifruti, cestas e produtos selecionados.",
   fairName: "Feira do Produtor Rural",
+  sector: "Hortifruti",
   box: "18",
-  corridor: "",
+  corridor: "A",
   reference: "Próximo à entrada principal",
+  internalX: 18,
+  internalY: 8,
   categories: "Hortifruti, orgânicos e cestas",
   phone: "",
   whatsapp: "",

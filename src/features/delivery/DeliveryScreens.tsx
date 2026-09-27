@@ -31,6 +31,8 @@ import {
 import { deliveryModuleDetails } from "../../domain/operations";
 import { fairs } from "../../data";
 import { drivingRoute, geocodeAddress } from "../../domain/routing";
+import { readSharedStores } from "../../domain/marketplaceBridge";
+import { optimizeInternalFairRoute, pickupCodeMatches } from "../../domain/fairInternalRouting";
 import {
   isValidBrazilianPlate,
   normalizePlate,
@@ -67,6 +69,7 @@ import {
   patchUnifiedOrder,
   patchVendorStatus,
   readUnifiedOrders,
+  type UnifiedPickupStop,
 } from "../../domain/orderBridge";
 
 export function DeliveryOperations({
@@ -123,6 +126,9 @@ export function DeliveryOperations({
   );
   const [, setRouteRevision] = useState(0);
   const [stage, setStage] = usePersistentState<number>(`feirae:delivery-stage:${session.email}`, 0);
+  const [pickupCodeInput, setPickupCodeInput] = useState("");
+  const [pickupCodeError, setPickupCodeError] = useState("");
+  const [qrScanNotice, setQrScanNotice] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [cancelDetails, setCancelDetails] = useState("");
   const [deliveryCancellationLog, setDeliveryCancellationLog] = usePersistentState<
@@ -300,7 +306,10 @@ export function DeliveryOperations({
         (order) =>
           order.fulfillment === "delivery" &&
           ["ready_for_pickup", "driver_assigned"].includes(order.status) &&
-          !order.route,
+          (!order.route ||
+            order.route.internalRouteStrategy === undefined ||
+            order.route.driverOriginLat !== baseLat ||
+            order.route.driverOriginLng !== baseLng),
       );
       if (!pending.length) return;
 
@@ -326,21 +335,46 @@ export function DeliveryOperations({
         const toCustomer = await drivingRoute(fairPoint, customerPoint);
         if (!toVendor || !toCustomer || cancelled) continue;
 
+        const stores = readSharedStores();
+        const internalRoute = optimizeInternalFairRoute(
+          (order.vendors ?? [])
+            .filter((vendor) => vendor.status !== "rejected")
+            .map(({ vendorId, storeId, vendorName }) => {
+              const store = stores.find((candidate) => candidate.storeId === storeId);
+              return {
+                vendorId,
+                storeId,
+                vendorName,
+                sector: store?.sector,
+                corridor: store?.corridor,
+                box: store?.box,
+                reference: store?.reference,
+                internalX: store?.internalX,
+                internalY: store?.internalY,
+                pickupCode: store?.pickupCode,
+              };
+            }),
+        );
+        const internalKm = internalRoute.distanceMeters / 1000;
+
         patchUnifiedOrder(
           order.id,
           {
             route: {
               toVendorKm: toVendor.distanceKm,
               vendorToCustomerKm: toCustomer.distanceKm,
-              totalKm: Math.round((toVendor.distanceKm + toCustomer.distanceKm) * 10) / 10,
-              etaMinutes: toVendor.durationMinutes + toCustomer.durationMinutes,
+              totalKm: Math.round((toVendor.distanceKm + internalKm + toCustomer.distanceKm) * 10) / 10,
+              etaMinutes: toVendor.durationMinutes + internalRoute.etaMinutes + toCustomer.durationMinutes,
               source: "osrm",
-              pickupStops: (order.vendors ?? [])
-                .filter((vendor) => vendor.status !== "rejected")
-                .map(({ vendorId, storeId, vendorName }) => ({ vendorId, storeId, vendorName })),
+              pickupStops: internalRoute.stops,
+              internalDistanceMeters: internalRoute.distanceMeters,
+              internalEtaMinutes: internalRoute.etaMinutes,
+              internalRouteStrategy: internalRoute.strategy,
+              driverOriginLat: baseLat!,
+              driverOriginLng: baseLng!,
             },
           },
-          eventNow("route-updated", "Rota calculada", "system"),
+          eventNow("route-updated", "Rota calculada com percurso interno da feira", "system"),
         );
       }
       if (!cancelled) setRouteRevision((value) => value + 1);
@@ -517,25 +551,33 @@ export function DeliveryOperations({
     )
     .map((order) => {
       const route = order.route!;
+      const fair = fairs.find((item) => item.name === order.fairName);
       const activeItems = order.items.filter((item) => !item.cancelled);
       const vendorNames = Array.from(new Set(activeItems.map((item) => item.vendor)));
-      const pickupStops = (route.pickupStops ?? []).map((stop) => ({
-        ...stop,
-        collected: order.vendors?.find((vendor) => vendor.vendorId === stop.vendorId)?.status === "collected",
-      }));
+      const pickupStops: Array<UnifiedPickupStop & { collected: boolean }> = (route.pickupStops ?? []).map(
+        (stop) => ({
+          ...stop,
+          collected:
+            order.vendors?.find((vendor) => vendor.vendorId === stop.vendorId)?.status === "collected",
+        }),
+      );
       const weight = activeItems.reduce((sum, item) => sum + item.weightKg, 0);
       return {
         id: order.id,
         fair: order.fairName,
+        fairAddress: fair?.address ?? order.fairName,
         bank: pickupStops.map((stop) => stop.vendorName).join(" + ") || vendorNames.join(" + "),
         pickupStops,
         region: order.customerCity ?? "Destino",
         customerAddress: order.customerAddress ?? order.customerCity ?? "Destino do cliente",
-        route: `${pickupStops.map((stop) => stop.vendorName).join(" → ") || order.fairName} → ${order.customerCity ?? "cliente"}`,
+        route: `Entrada da feira → ${pickupStops.map((stop) => stop.vendorName).join(" → ") || order.fairName} → saída → ${order.customerCity ?? "cliente"}`,
         toBankKm: route.toVendorKm,
         bankToCustomerKm: route.vendorToCustomerKm,
         totalDistanceKm: route.totalKm,
         etaMinutes: route.etaMinutes,
+        internalDistanceMeters: route.internalDistanceMeters ?? 0,
+        internalEtaMinutes: route.internalEtaMinutes ?? 0,
+        internalRouteStrategy: route.internalRouteStrategy,
         fee: money(order.calculatedDeliveryFee),
         feeAmount: order.calculatedDeliveryFee,
         paymentMethod: order.paymentMethod,
@@ -563,7 +605,11 @@ export function DeliveryOperations({
               vendorName: delivery.bank,
               collected: false,
             },
-          ],
+          ] as Array<UnifiedPickupStop & { collected: boolean }>,
+          fairAddress: delivery.fair,
+          internalDistanceMeters: 0,
+          internalEtaMinutes: 0,
+          internalRouteStrategy: "corridor_box_fallback" as const,
         }))
     : [];
   const deliveries = [...sharedDeliveries, ...fixtureDeliveries];
@@ -760,6 +806,39 @@ export function DeliveryOperations({
   async function enableFeiraeNotifications() {
     setNotificationPermission(await requestFeiraeNotificationPermission());
   }
+
+  async function readPickupQr(file: File) {
+    setQrScanNotice("");
+    const Detector = (
+      window as unknown as {
+        BarcodeDetector?: new (options: { formats: string[] }) => {
+          detect: (source: ImageBitmap) => Promise<Array<{ rawValue?: string }>>;
+        };
+      }
+    ).BarcodeDetector;
+
+    if (!Detector || typeof createImageBitmap !== "function") {
+      setQrScanNotice("Leitura automática de QR indisponível neste navegador. Digite o código da banca.");
+      return;
+    }
+
+    try {
+      const image = await createImageBitmap(file);
+      const detector = new Detector({ formats: ["qr_code"] });
+      const values = await detector.detect(image);
+      image.close();
+      const value = values.find((item) => item.rawValue)?.rawValue;
+      if (!value) {
+        setQrScanNotice("Nenhum QR reconhecido na imagem.");
+        return;
+      }
+      setPickupCodeInput(value);
+      setPickupCodeError("");
+      setQrScanNotice("QR lido. Confira e confirme a coleta.");
+    } catch {
+      setQrScanNotice("Não foi possível ler o QR. Use o código impresso como alternativa.");
+    }
+  }
   const activeDelivery = deliveries.find(
     (delivery) =>
       delivery.id === effectiveAccepted ||
@@ -835,6 +914,19 @@ export function DeliveryOperations({
           </p>
         )}
       </div>
+      <div className="surface-card">
+        <span className="eyebrow">Percurso dentro da feira</span>
+        <h3>Entrada → {activePickupStops.map((stop) => stop.vendorName).join(" → ") || "banca"} → saída</h3>
+        <p>
+          {activeDelivery.internalDistanceMeters > 0
+            ? `${activeDelivery.internalDistanceMeters} m internos · cerca de ${activeDelivery.internalEtaMinutes} min a pé.`
+            : "Sem coordenadas internas suficientes: usando setor, corredor e box como orientação."}
+        </p>
+        <small>
+          GPS é usado para chegar à feira e depois para seguir ao cliente. Entre bancas, o Feiraê usa o mapa
+          interno para evitar depender da precisão do GPS em poucos metros.
+        </small>
+      </div>
       <div className="operation-list detailed">
         {activePickupStops.map((stop, index) => (
           <article key={stop.vendorId || `${activeDelivery.id}-stop-${index}`}>
@@ -849,6 +941,12 @@ export function DeliveryOperations({
                   : currentPickupStop?.vendorName === stop.vendorName
                     ? "Próxima parada"
                     : "Aguardando coleta"}
+                {stop.sector || stop.corridor || stop.box
+                  ? ` · ${stop.sector || "setor"} · corredor ${stop.corridor || "—"} · box ${stop.box || "—"}`
+                  : ""}
+                {typeof stop.internalDistanceFromPreviousMeters === "number"
+                  ? ` · ${stop.internalDistanceFromPreviousMeters} m desde a parada anterior`
+                  : ""}
               </small>
             </div>
           </article>
@@ -870,18 +968,50 @@ export function DeliveryOperations({
           </span>
         ))}
       </div>
+      {currentStage < pickupStagesLength && currentStage % 2 === 1 && currentPickupStop?.pickupCode && (
+        <div className="surface-card">
+          <span className="eyebrow">Confirmar banca</span>
+          <h3>
+            {currentPickupStop.sector || "Setor"} · corredor {currentPickupStop.corridor || "—"} · box{" "}
+            {currentPickupStop.box || "—"}
+          </h3>
+          <p>Leia o QR fixado na banca ou informe o código impresso antes de confirmar a coleta.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label>
+              Código/QR lido
+              <input
+                value={pickupCodeInput}
+                onChange={(event) => {
+                  setPickupCodeInput(event.target.value);
+                  setPickupCodeError("");
+                }}
+                placeholder="FEIRAE-..."
+              />
+            </label>
+            <label>
+              Ler QR pela câmera
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void readPickupQr(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+          {pickupCodeError && <p className="inline-error">{pickupCodeError}</p>}
+          {qrScanNotice && <small>{qrScanNotice}</small>}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         <button
-          onClick={() =>
-            onMap(
-              headingToPickup && currentPickupStop
-                ? `${currentPickupStop.vendorName}, ${activeDelivery.fair}, DF`
-                : activeDelivery.customerAddress,
-            )
-          }
+          onClick={() => onMap(headingToPickup ? activeDelivery.fairAddress : activeDelivery.customerAddress)}
           className="secondary-action"
         >
-          <MapPin size={17} /> {headingToPickup ? "Rota até a próxima banca" : "Rota até o cliente"}
+          <MapPin size={17} /> {headingToPickup ? "GPS até a entrada da feira" : "GPS até o cliente"}
         </button>
         <button
           className="primary-action"
@@ -892,6 +1022,15 @@ export function DeliveryOperations({
               const confirmingPickup = currentStage % 2 === 1;
 
               if (confirmingPickup && stop) {
+                if (stop.pickupCode && !pickupCodeMatches(stop.storeId, pickupCodeInput)) {
+                  setPickupCodeError(
+                    "Código da banca não confere. Leia o QR correto ou digite o código impresso.",
+                  );
+                  return;
+                }
+                setPickupCodeError("");
+                setPickupCodeInput("");
+                setQrScanNotice("");
                 if (stop.vendorId) {
                   patchVendorStatus(
                     activeDelivery.id,
@@ -1604,7 +1743,7 @@ export function DeliveryOperations({
                               ...current,
                               baseLat: coords.latitude,
                               baseLng: coords.longitude,
-                              baseLabel: "Localização atual atualizada",
+                              baseLabel: `Localização atual · ${coords.accuracy.toFixed(0)} m de precisão`,
                             })),
                           () =>
                             setDeliveryPreferences((current) => ({

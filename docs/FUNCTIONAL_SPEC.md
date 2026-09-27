@@ -580,12 +580,17 @@ Regras locais implementadas/testadas:
 
 Fixtures de corrida de demonstração são restritas às contas `@feirae.test`; uma conta real/recém-criada não deve receber ofertas fictícias.
 
-Limitação de geolocalização intra-feira:
+Roteamento intra-feira implementado no protótipo:
 
-- a sequência operacional de paradas já existe;
-- o marketplace ainda não persiste coordenadas individuais de cada banca/box;
-- OSRM continua calculando entregador → feira → cliente;
-- portanto ainda não existe cálculo real de distância entre as bancas dentro da feira.
+- a localização atual do entregador é a origem do trecho externo até a feira;
+- cada banca pode persistir setor/pavilhão, corredor/ala, box e posição interna X/Y;
+- `pickupStops` são reordenados por proximidade quando existem posições internas;
+- distância/ETA internos são somados à corrida;
+- bancas sem X/Y usam setor/corredor/box como fallback;
+- confirmação de coleta pode exigir código/QR da banca;
+- OSRM continua responsável apenas pelos trechos dirigíveis externos.
+
+Limites: a planta ainda não modela obstáculos/corredores como grafo, entrada/saída ainda usam o ponto geográfico de referência da feira e QR antifraude real depende de backend. Ver [INTERNAL_FAIR_ROUTING.md](INTERNAL_FAIR_ROUTING.md).
 
 A recusa de uma banca só encerra o pedido global quando nenhuma banca ativa restar. O protótipo registra ajuste/reembolso local; estorno externo continua dependente de PSP/ledger real. Política: [REFUND_CANCELLATION_POLICY.md](REFUND_CANCELLATION_POLICY.md).
 
