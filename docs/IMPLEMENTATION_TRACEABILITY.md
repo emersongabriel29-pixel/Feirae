@@ -268,7 +268,6 @@ Limite: o repositório ainda não possui backend que persista `PushSubscription`
 
 Limite mantido: receber alertas quando o aplicativo está totalmente fechado em outro aparelho ainda depende do backend real enviar Web Push para a assinatura persistida.
 
-
 ## Termos jurídicos e assinatura dos parceiros — 26/09/2026
 
 - `legalTerms.ts`: termos completos e versionados para Feirante e Entregador, além do Aviso de Privacidade/LGPD;
