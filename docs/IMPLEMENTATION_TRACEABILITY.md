@@ -282,3 +282,16 @@ Limite mantido: receber alertas quando o aplicativo está totalmente fechado em 
 - `PARTNER_LEGAL_TERMS.md`: consolida a base legal federal e os requisitos que ainda dependem do backend/assessoria jurídica.
 
 Limite: o aceite persiste em `localStorage` no protótipo. Produção precisa de evidência server-side auditável e identificação jurídica completa do controlador/operador do Feiraê.
+
+## Central premium de Documentos — 27/09/2026
+
+- `PartnerDocumentsHero`: hero com logomarca, marca d’água, status, progresso e resumo de regularização;
+- `DocumentStatusTimeline`: histórico visual por documento;
+- `DocumentsGuidanceCard`: orientações de segurança, verdade, LGPD e aprovação;
+- `LegalTermSignatureCard`: identidade Feiraê reforçada no termo e no comprovante;
+- `VendorScreens.tsx`: filtros, progresso, preview e cards documentais do Feirante;
+- `DeliveryScreens.tsx`: mesma arquitetura visual, respeitando documentos obrigatórios conforme veículo;
+- `operations.css`: layout responsivo premium de Documentos;
+- `App.test.tsx`: valida a nova hierarquia, identidade, filtros e textos críticos.
+
+A mudança é visual/UX e preserva as regras jurídicas e de aprovação implementadas anteriormente.

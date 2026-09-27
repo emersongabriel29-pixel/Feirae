@@ -266,6 +266,27 @@ Feirante e Entregador só podem alcançar **Aprovado** quando todos os termos vi
 
 O armazenamento local atual serve apenas ao protótipo. Produção exige trilha de auditoria server-side, identidade do controlador, Storage privado e revisão jurídica. Ver [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).
 
+## 3.4. Experiência de Documentos e Regularização
+
+A tela **Documentos** é uma central de regularização compartilhada por Feirante e Entregador.
+
+Ela apresenta:
+
+- identidade visual Feiraê e logomarca;
+- status de aprovação;
+- percentual calculado a partir de termos vigentes aceitos + documentos obrigatórios aprovados;
+- contadores de termos, enviados, aprovados e pendências;
+- termos obrigatórios em bloco separado;
+- filtros por estado documental;
+- timeline da análise de cada arquivo;
+- visualização local de arquivo quando disponível;
+- envio/substituição;
+- orientações de segurança, LGPD, veracidade e aprovação.
+
+O botão **Ver pendências** altera o filtro documental para **Pendentes**, sem esconder os termos obrigatórios.
+
+O progresso é informativo e não substitui a regra de aprovação: a operação só é liberada quando os requisitos de negócio realmente estiverem satisfeitos.
+
 ## 4. Cliente — carrinho
 
 O carrinho exibe:

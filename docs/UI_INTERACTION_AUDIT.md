@@ -246,3 +246,22 @@ A trava administrativa de ativação/publicação da feira depende do painel de 
 - Entregador com cadastro pendente recebe bloco prioritário **Complete seu cadastro para entregar**;
 - card **Painel** foi removido da Central do Feirante;
 - no Entregador, **Painel** foi renomeado para **Disponibilidade**.
+
+## Documentos — redesign premium
+
+Feirante e Entregador não usam mais uma lista simples de documentos.
+
+Checklist da tela:
+
+- [x] logomarca Feiraê no cabeçalho;
+- [x] mensagem de confiança/regularização;
+- [x] status e progresso visíveis sem rolar;
+- [x] contadores de termos e documentos;
+- [x] ação rápida para pendências;
+- [x] termos separados dos arquivos;
+- [x] filtros por situação;
+- [x] timeline por documento;
+- [x] preview quando o arquivo local está disponível;
+- [x] CTA explícito para enviar/atualizar;
+- [x] card final de segurança/LGPD;
+- [x] responsividade mobile.

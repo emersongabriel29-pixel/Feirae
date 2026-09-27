@@ -17,10 +17,13 @@ import {
   XCircle,
 } from "lucide-react";
 import {
+  DocumentStatusTimeline,
+  DocumentsGuidanceCard,
   Empty,
   FeiraeNotificationCard,
   LegalTermSignatureCard,
   ModuleHeader,
+  PartnerDocumentsHero,
   OperationalOnboardingCard,
   OperationsMenu,
   Panel,
@@ -125,6 +128,7 @@ export function DeliveryOperations({
     { id: string; deliveryId: string; reason: string; details: string; createdAt: string }[]
   >(`feirae:delivery-cancellations:${session.email}`, []);
   const [active, setActive] = useState("Central");
+  const [documentFilter, setDocumentFilter] = useState("Todos");
   const [notificationPermission, setNotificationPermission] = useState(feiraeNotificationPermission());
   const seenOfferIds = useRef<Set<string> | null>(null);
   const seenDeliveryNotificationKeys = useRef<Set<string> | null>(null);
@@ -573,6 +577,39 @@ export function DeliveryOperations({
             )
           ? "Em análise"
           : "Documentação pendente";
+  const deliveryRequiredDocuments = deliveryDocuments.filter((document) =>
+    requiredDocumentIds.includes(document.id),
+  );
+  const deliveryTermsSigned = deliveryRequiredTerms.filter((term) =>
+    legalAcceptances.some(
+      (acceptance) =>
+        acceptance.termId === term.id &&
+        acceptance.role === "delivery" &&
+        acceptance.version === term.version,
+    ),
+  ).length;
+  const deliveryDocumentsSent = deliveryRequiredDocuments.filter((document) =>
+    Boolean(document.fileName),
+  ).length;
+  const deliveryDocumentsApproved = deliveryRequiredDocuments.filter(
+    (document) => document.status === "approved",
+  ).length;
+  const deliveryPendingCount =
+    deliveryRequiredTerms.length -
+    deliveryTermsSigned +
+    deliveryRequiredDocuments.filter((document) => document.status !== "approved").length;
+  const deliveryDocumentProgress = Math.round(
+    ((deliveryTermsSigned + deliveryDocumentsApproved) /
+      Math.max(1, deliveryRequiredTerms.length + deliveryRequiredDocuments.length)) *
+      100,
+  );
+  const filteredDeliveryDocuments = deliveryDocuments.filter((document) => {
+    if (documentFilter === "Pendentes") return document.status === "pending";
+    if (documentFilter === "Em análise") return document.status === "under_review";
+    if (documentFilter === "Aprovados") return document.status === "approved";
+    if (documentFilter === "Correção necessária") return document.status === "correction_required";
+    return true;
+  });
   const pendingAmount =
     deliveryLedger
       .filter((entry) => entry.status === "pending")
@@ -2326,107 +2363,172 @@ export function DeliveryOperations({
               </>
             ) : active === "Documentos" ? (
               <>
-                <ModuleHeader
-                  badge={approvalStatus}
-                  title="Documentação e aprovação"
-                  description="Criar conta, assinar termos ou enviar documentos isoladamente não libera corridas. O cadastro completo precisa ser aprovado."
+                <PartnerDocumentsHero
+                  roleLabel="Entregador"
+                  status={approvalStatus}
+                  progress={deliveryDocumentProgress}
+                  termsSigned={deliveryTermsSigned}
+                  termsTotal={deliveryRequiredTerms.length}
+                  documentsSent={deliveryDocumentsSent}
+                  documentsApproved={deliveryDocumentsApproved}
+                  documentsTotal={deliveryRequiredDocuments.length}
+                  pendingCount={deliveryPendingCount}
+                  onShowPending={() => setDocumentFilter("Pendentes")}
                 />
-                <div className="region-strip">
-                  <Check size={18} />
-                  <div>
-                    <b>Status: {approvalStatus}</b>
-                    <p>
-                      Os termos vigentes devem estar assinados e os documentos obrigatórios mudam conforme os
-                      veículos ativos. Enquanto o cadastro não estiver aprovado, o entregador não pode ficar
-                      online nem aceitar corridas reais.
-                    </p>
+
+                <section className="documents-section-block">
+                  <div className="documents-section-heading">
+                    <div>
+                      <span className="eyebrow">Termos jurídicos e privacidade</span>
+                      <h3>Termos obrigatórios</h3>
+                      <p>Leia as regras de segurança, autonomia, responsabilidade e LGPD antes de operar.</p>
+                    </div>
+                    <span className="documents-counter">
+                      {deliveryTermsSigned}/{deliveryRequiredTerms.length} assinados
+                    </span>
                   </div>
-                </div>
-                <div className="legal-terms-stack">
-                  {deliveryRequiredTerms.map((term) => (
-                    <LegalTermSignatureCard
-                      key={term.id}
-                      term={term}
-                      acceptance={legalAcceptances.find(
-                        (item) => item.termId === term.id && item.role === "delivery",
-                      )}
-                      signerName={deliveryAccount.name || session.name}
-                      signerEmail={session.email}
-                      onSign={signDeliveryLegalTerm}
-                    />
-                  ))}
-                </div>
-                <div className="operation-list detailed">
-                  {deliveryDocuments.map((document) => {
-                    const requiredNow = requiredDocumentIds.includes(document.id);
-                    return (
-                      <article key={document.id}>
-                        <Upload />
-                        <div>
-                          <b>
-                            {document.name} · {requiredNow ? "obrigatório agora" : "não obrigatório agora"}
-                          </b>
-                          <small>{document.description}</small>
-                          {document.fileName && (
-                            <small>
-                              Arquivo: {document.file ? storedFileLabel(document.file) : document.fileName}
-                            </small>
-                          )}
-                        </div>
-                        <div className="item-actions">
-                          <span
-                            className={`document-status ${
-                              document.status === "approved"
-                                ? "status-approved"
-                                : document.status === "under_review"
-                                  ? "status-review"
-                                  : document.status === "correction_required"
-                                    ? "status-error"
-                                    : ""
-                            }`}
-                          >
-                            {document.status === "approved"
-                              ? "Aprovado"
-                              : document.status === "under_review"
-                                ? "Em análise"
-                                : document.status === "correction_required"
-                                  ? "Correção necessária"
-                                  : "Pendente de envio"}
-                          </span>
-                          <label className="mini-toggle">
-                            {document.fileName ? "Substituir" : "Enviar"}
-                            <input
-                              type="file"
-                              accept=".pdf,image/*"
-                              hidden
-                              onChange={(event) => {
-                                const file = event.target.files?.[0];
-                                if (!file) return;
-                                void readFileForLocalStorage(file)
-                                  .then((stored) => {
-                                    setDeliveryDocuments((current) =>
-                                      current.map((item) =>
-                                        item.id === document.id
-                                          ? {
-                                              ...item,
-                                              fileName: stored.name,
-                                              file: stored,
-                                              status: "under_review",
-                                            }
-                                          : item,
-                                      ),
-                                    );
-                                    if (requiredNow) setOnline(false);
-                                  })
-                                  .catch((error: Error) => setIncidentNotice(error.message));
-                              }}
+                  <div className="legal-terms-stack">
+                    {deliveryRequiredTerms.map((term) => (
+                      <LegalTermSignatureCard
+                        key={term.id}
+                        term={term}
+                        acceptance={legalAcceptances.find(
+                          (item) => item.termId === term.id && item.role === "delivery",
+                        )}
+                        signerName={deliveryAccount.name || session.name}
+                        signerEmail={session.email}
+                        onSign={signDeliveryLegalTerm}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                <section className="documents-section-block" id="delivery-document-files">
+                  <div className="documents-section-heading">
+                    <div>
+                      <span className="eyebrow">Arquivos e validação</span>
+                      <h3>Seus documentos</h3>
+                      <p>
+                        Os documentos obrigatórios se ajustam aos veículos ativos. Acompanhe cada análise
+                        aqui.
+                      </p>
+                    </div>
+                    <span className="documents-counter">
+                      {deliveryDocumentsApproved}/{deliveryRequiredDocuments.length} aprovados
+                    </span>
+                  </div>
+
+                  <div className="document-filter-row" aria-label="Filtrar documentos">
+                    {["Todos", "Pendentes", "Em análise", "Aprovados", "Correção necessária"].map(
+                      (filter) => (
+                        <button
+                          type="button"
+                          key={filter}
+                          className={documentFilter === filter ? "active" : ""}
+                          onClick={() => setDocumentFilter(filter)}
+                        >
+                          {filter}
+                        </button>
+                      ),
+                    )}
+                  </div>
+
+                  <div className="documents-card-list">
+                    {filteredDeliveryDocuments.map((document) => {
+                      const requiredNow = requiredDocumentIds.includes(document.id);
+                      return (
+                        <article className="document-file-card" key={document.id}>
+                          <div className="document-file-icon">
+                            <Upload />
+                          </div>
+                          <div className="document-file-content">
+                            <div className="document-file-heading">
+                              <div>
+                                <b>{document.name}</b>
+                                <small>{requiredNow ? "Obrigatório agora" : "Não obrigatório agora"}</small>
+                              </div>
+                              <span
+                                className={`document-status ${
+                                  document.status === "approved"
+                                    ? "status-approved"
+                                    : document.status === "under_review"
+                                      ? "status-review"
+                                      : document.status === "correction_required"
+                                        ? "status-error"
+                                        : ""
+                                }`}
+                              >
+                                {document.status === "approved"
+                                  ? "Aprovado"
+                                  : document.status === "under_review"
+                                    ? "Em análise"
+                                    : document.status === "correction_required"
+                                      ? "Correção necessária"
+                                      : "Pendente de envio"}
+                              </span>
+                            </div>
+                            <p>{document.description}</p>
+                            <DocumentStatusTimeline
+                              status={document.status}
+                              fileName={document.file ? storedFileLabel(document.file) : document.fileName}
                             />
-                          </label>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
+                            <div className="document-file-actions">
+                              {document.file?.dataUrl && (
+                                <a
+                                  className="secondary-action"
+                                  href={document.file.dataUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Visualizar
+                                </a>
+                              )}
+                              <label className="primary-action document-upload-action">
+                                {document.fileName ? "Atualizar documento" : "Enviar documento"}
+                                <input
+                                  type="file"
+                                  accept=".pdf,image/*"
+                                  hidden
+                                  onChange={(event) => {
+                                    const file = event.target.files?.[0];
+                                    if (!file) return;
+                                    void readFileForLocalStorage(file)
+                                      .then((stored) => {
+                                        setDeliveryDocuments((current) =>
+                                          current.map((item) =>
+                                            item.id === document.id
+                                              ? {
+                                                  ...item,
+                                                  fileName: stored.name,
+                                                  file: stored,
+                                                  status: "under_review",
+                                                }
+                                              : item,
+                                          ),
+                                        );
+                                        if (requiredNow) setOnline(false);
+                                      })
+                                      .catch((error: Error) => setIncidentNotice(error.message));
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+
+                  {filteredDeliveryDocuments.length === 0 && (
+                    <div className="documents-filter-empty">
+                      <Check size={20} />
+                      <b>Nenhum documento neste filtro.</b>
+                      <span>Escolha outra situação para continuar acompanhando seu cadastro.</span>
+                    </div>
+                  )}
+                </section>
+
+                <DocumentsGuidanceCard roleLabel="Entregador" />
               </>
             ) : active === "Vantagens" ? (
               <>

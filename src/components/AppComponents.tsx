@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
+  FileCheck2,
   FileSignature,
   Home,
   LocateFixed,
@@ -17,6 +18,7 @@ import {
   Package,
   Plus,
   Search,
+  ShieldCheck,
   ShoppingBag,
   Store,
   Trash2,
@@ -563,6 +565,183 @@ export function OperationalOnboardingCard({
   );
 }
 
+export function PartnerDocumentsHero({
+  roleLabel,
+  status,
+  progress,
+  termsSigned,
+  termsTotal,
+  documentsSent,
+  documentsApproved,
+  documentsTotal,
+  pendingCount,
+  onShowPending,
+}: {
+  roleLabel: string;
+  status: string;
+  progress: number;
+  termsSigned: number;
+  termsTotal: number;
+  documentsSent: number;
+  documentsApproved: number;
+  documentsTotal: number;
+  pendingCount: number;
+  onShowPending: () => void;
+}) {
+  const statusTone =
+    status === "Aprovado"
+      ? "approved"
+      : status === "Correção necessária"
+        ? "error"
+        : status === "Em análise"
+          ? "review"
+          : "pending";
+
+  return (
+    <section className="documents-brand-hero" aria-label="Documentos e Regularização">
+      <img className="documents-brand-watermark" src="/feirae-mark.svg" alt="" aria-hidden="true" />
+      <div className="documents-brand-copy">
+        <div className="documents-brand-mark">
+          <img src="/feirae-mark.svg" alt="Feiraê" />
+          <div>
+            <span>Feiraê · {roleLabel}</span>
+            <h2>Documentos e Regularização</h2>
+          </div>
+        </div>
+        <h3>Regularize sua conta e opere com segurança no Feiraê.</h3>
+        <p>
+          Termos, documentos e aprovação em um só lugar, com transparência sobre o que falta e o que já foi
+          validado.
+        </p>
+      </div>
+
+      <div className="documents-status-panel">
+        <div className="documents-status-row">
+          <div>
+            <small>Status do cadastro</small>
+            <strong className={`documents-status-value is-${statusTone}`}>{status}</strong>
+          </div>
+          <span>{progress}%</span>
+        </div>
+        <div
+          className="documents-progress"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+          aria-label="Progresso da regularização"
+        >
+          <i style={{ width: `${progress}%` }} />
+        </div>
+        <div className="documents-summary-grid">
+          <div>
+            <span>
+              {termsSigned}/{termsTotal}
+            </span>
+            <small>Termos assinados</small>
+          </div>
+          <div>
+            <span>
+              {documentsSent}/{documentsTotal}
+            </span>
+            <small>Documentos enviados</small>
+          </div>
+          <div>
+            <span>
+              {documentsApproved}/{documentsTotal}
+            </span>
+            <small>Documentos aprovados</small>
+          </div>
+          <div>
+            <span>{pendingCount}</span>
+            <small>Pendências</small>
+          </div>
+        </div>
+        {pendingCount > 0 ? (
+          <button type="button" className="documents-pending-action" onClick={onShowPending}>
+            Ver pendências <ChevronRight size={16} />
+          </button>
+        ) : (
+          <div className="documents-complete-message">
+            <ShieldCheck size={17} />
+            <span>Cadastro documental em dia.</span>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export function DocumentStatusTimeline({
+  status,
+  fileName,
+  correctionReason,
+}: {
+  status: "pending" | "under_review" | "approved" | "correction_required";
+  fileName?: string;
+  correctionReason?: string;
+}) {
+  const steps =
+    status === "pending"
+      ? ["Pendente de envio"]
+      : status === "under_review"
+        ? ["Enviado", "Em análise"]
+        : status === "approved"
+          ? ["Enviado", "Analisado", "Aprovado"]
+          : ["Enviado", "Analisado", "Correção solicitada"];
+
+  return (
+    <div className={`document-timeline status-${status}`} aria-label="Histórico de análise">
+      {steps.map((step, index) => (
+        <span key={step} className={index === steps.length - 1 ? "current" : ""}>
+          <i>{index + 1}</i>
+          {step}
+        </span>
+      ))}
+      {fileName && <small>Arquivo atual: {fileName}</small>}
+      {correctionReason && <small className="timeline-correction">Motivo: {correctionReason}</small>}
+    </div>
+  );
+}
+
+export function DocumentsGuidanceCard({ roleLabel }: { roleLabel: string }) {
+  return (
+    <section className="documents-guidance-card">
+      <div className="documents-guidance-title">
+        <ShieldCheck size={22} />
+        <div>
+          <span className="eyebrow">Segurança e transparência</span>
+          <h3>Importante antes de enviar</h3>
+        </div>
+      </div>
+      <div className="documents-guidance-grid">
+        <p>
+          <FileCheck2 size={17} />
+          <span>
+            Envie arquivos legíveis, verdadeiros e atualizados. Informações falsas podem suspender a conta.
+          </span>
+        </p>
+        <p>
+          <ShieldCheck size={17} />
+          <span>
+            Seus dados devem ser tratados conforme a LGPD e usados somente para finalidades informadas.
+          </span>
+        </p>
+        <p>
+          <FileSignature size={17} />
+          <span>Termos vigentes precisam estar assinados; nova versão pode exigir novo aceite.</span>
+        </p>
+        <p>
+          <Check size={17} />
+          <span>
+            O envio não aprova automaticamente o cadastro de {roleLabel.toLocaleLowerCase("pt-BR")}.
+          </span>
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export function LegalTermSignatureCard({
   term,
   acceptance,
@@ -596,7 +775,7 @@ export function LegalTermSignatureCard({
     <section className="legal-term-card" aria-label={term.title}>
       <div className="legal-term-heading">
         <span className="legal-term-icon" aria-hidden="true">
-          <FileSignature size={21} />
+          <img src="/feirae-mark.svg" alt="" />
         </span>
         <div>
           <span className="eyebrow">Termo obrigatório · versão {term.version}</span>
@@ -613,6 +792,15 @@ export function LegalTermSignatureCard({
       <details className="legal-term-details">
         <summary>Ler termo completo</summary>
         <div className="legal-term-scroll">
+          <header className="legal-document-sheet-header">
+            <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+            <div>
+              <span>Feiraê · Documento jurídico</span>
+              <h4>{term.title}</h4>
+              <p>Versão {term.version} · leitura e aceite vinculados à sua conta.</p>
+            </div>
+          </header>
+
           {term.sections.map((section) => (
             <section key={section.title}>
               <h4>{section.title}</h4>
@@ -641,12 +829,19 @@ export function LegalTermSignatureCard({
               ))}
             </ul>
           </section>
+
+          <footer className="legal-document-sheet-footer">
+            <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+            <span>
+              Feiraê · {term.title} · versão {term.version}
+            </span>
+          </footer>
         </div>
       </details>
 
       {currentAcceptance ? (
         <div className="legal-signature-proof">
-          <Check size={18} />
+          <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
           <div>
             <b>Assinado eletronicamente por {currentAcceptance.signerName}</b>
             <small>
