@@ -1,6 +1,6 @@
-# Status da documentação — segunda auditoria
+# Status da documentação — auditoria contínua
 
-Atualizado em 26/09/2026.
+Atualizado em 27/09/2026.
 
 ## Motivo da segunda auditoria
 
@@ -11,9 +11,9 @@ A segunda auditoria comparou diretamente:
 - frontend;
 - domain bridges;
 - tipos;
-- migrations 0001/0002;
+- migrations 0001/0002/0003;
 - policies RLS;
-- 69 testes;
+- 129 testes Vitest;
 - package.json;
 - workflow de CI.
 
@@ -204,3 +204,32 @@ Foram adicionados:
 - etapa de CI para pull requests.
 
 Regra: toda alteração deve avaliar impacto em código, interface, testes, documentação, schema, segurança, integrações, LGPD, administração e deploy. O que for afetado deve ser atualizado no mesmo PR.
+
+
+## Sincronização Mestre — 27/09/2026
+
+Uma nova auditoria transversal encontrou documentação que havia ficado atrás do código, apesar do CI verde.
+
+Correções aplicadas:
+
+- README, QA, rastreabilidade, checklist e revisão técnica atualizados para **129 testes Vitest**;
+- a migration `0003_vendor_store_minimum_order.sql` foi propagada para modelo de dados, schema gap, deploy e checklist;
+- splash e identidade sonora foram incluídas em arquitetura, especificação e rastreabilidade;
+- a revisão UI/UX Pro Max foi propagada para `UI_INTERACTION_AUDIT.md` e `DESIGN_SYSTEM.md`;
+- a auditoria-mãe foi atualizada;
+- `check-change-sync.mjs` passou a exigir documentos específicos por domínio;
+- a política de sincronização ganhou **8 testes Node** próprios.
+
+### Limite conhecido
+
+A automação consegue verificar presença dos documentos corretos no PR, mas não prova que o texto está semanticamente perfeito. Revisão humana continua obrigatória.
+
+### Pendências técnicas que permanecem reais
+
+- Supabase/backend compartilhado;
+- RLS completa;
+- Storage;
+- PSP/webhooks/ledger;
+- admin runtime;
+- browser E2E/regressão visual;
+- staging/deploy/observabilidade.
