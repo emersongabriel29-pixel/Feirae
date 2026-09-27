@@ -603,7 +603,9 @@ export function LegalTermSignatureCard({
           <h3>{term.title}</h3>
           <p>{term.summary}</p>
         </div>
-        <span className={currentAcceptance ? "document-status status-approved" : "document-status status-review"}>
+        <span
+          className={currentAcceptance ? "document-status status-approved" : "document-status status-review"}
+        >
           {currentAcceptance ? "Assinado" : acceptance ? "Nova versão pendente" : "Assinatura pendente"}
         </span>
       </div>
@@ -614,7 +616,9 @@ export function LegalTermSignatureCard({
           {term.sections.map((section) => (
             <section key={section.title}>
               <h4>{section.title}</h4>
-              {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              {section.paragraphs?.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
               {section.bullets && (
                 <ul>
                   {section.bullets.map((bullet) => (
@@ -646,7 +650,8 @@ export function LegalTermSignatureCard({
           <div>
             <b>Assinado eletronicamente por {currentAcceptance.signerName}</b>
             <small>
-              {currentAcceptance.signerEmail} · {currentAcceptance.signedAt} · versão {currentAcceptance.version}
+              {currentAcceptance.signerEmail} · {currentAcceptance.signedAt} · versão{" "}
+              {currentAcceptance.version}
             </small>
             <small>Impressão digital: {currentAcceptance.fingerprint.slice(0, 20)}…</small>
           </div>
@@ -684,9 +689,9 @@ export function LegalTermSignatureCard({
             />
           </label>
           <p className="legal-signature-note">
-            A assinatura será vinculada a {signerEmail}. Ao assinar, o Feiraê registra nome, e-mail, data/hora,
-            versão e impressão digital do conteúdo. A assinatura eletrônica deste protótipo não substitui a
-            infraestrutura de auditoria e identidade que deverá existir no backend de produção.
+            A assinatura será vinculada a {signerEmail}. Ao assinar, o Feiraê registra nome, e-mail,
+            data/hora, versão e impressão digital do conteúdo. A assinatura eletrônica deste protótipo não
+            substitui a infraestrutura de auditoria e identidade que deverá existir no backend de produção.
           </p>
           <button
             type="button"
