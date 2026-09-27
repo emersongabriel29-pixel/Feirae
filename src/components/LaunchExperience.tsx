@@ -107,24 +107,44 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
               <path d="M235 65h40l9 70h-46z" fill="#ffffff" />
               <path d="M275 65h38l23 70h-52z" fill="#17804a" />
 
-              <path className="feirae-launch__awning-shadow" d="M90 135c11 17 41 18 52 0 12 18 35 18 46 0 13 18 37 18 50 0 13 18 36 18 46 0 13 18 40 17 51 0z" fill="#0d6538" opacity="0.18" />
+              <path
+                className="feirae-launch__awning-shadow"
+                d="M90 135c11 17 41 18 52 0 12 18 35 18 46 0 13 18 37 18 50 0 13 18 36 18 46 0 13 18 40 17 51 0z"
+                fill="#0d6538"
+                opacity="0.18"
+              />
 
               <rect x="135" y="218" width="69" height="50" rx="7" fill="url(#crateWood)" />
               <rect x="217" y="218" width="69" height="50" rx="7" fill="url(#crateWood)" />
-              <path d="M142 231h55M142 246h55M224 231h55M224 246h55" stroke="#dca66a" strokeWidth="4" opacity="0.52" />
+              <path
+                d="M142 231h55M142 246h55M224 231h55M224 246h55"
+                stroke="#dca66a"
+                strokeWidth="4"
+                opacity="0.52"
+              />
 
               <g className="feirae-launch__crate-produce feirae-launch__crate-produce--left">
                 <circle cx="151" cy="222" r="10" fill="#ef5147" />
                 <circle cx="171" cy="220" r="11" fill="#f36c43" />
                 <circle cx="191" cy="224" r="9" fill="#ed3f36" />
-                <path d="M143 218c9-12 17-14 25-8M164 216c8-12 18-14 29-7" stroke="#4b9b55" strokeWidth="5" strokeLinecap="round" />
+                <path
+                  d="M143 218c9-12 17-14 25-8M164 216c8-12 18-14 29-7"
+                  stroke="#4b9b55"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
               </g>
 
               <g className="feirae-launch__crate-produce feirae-launch__crate-produce--right">
                 <ellipse cx="231" cy="221" rx="10" ry="8" fill="#f6c548" />
                 <ellipse cx="251" cy="218" rx="11" ry="9" fill="#f39b43" />
                 <ellipse cx="273" cy="223" rx="10" ry="9" fill="#f3d15e" />
-                <path d="M226 214c7-9 13-12 20-9M247 210c8-9 15-10 23-6" stroke="#4c9f58" strokeWidth="5" strokeLinecap="round" />
+                <path
+                  d="M226 214c7-9 13-12 20-9M247 210c8-9 15-10 23-6"
+                  stroke="#4c9f58"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
               </g>
 
               <g className="feirae-launch__greens">
@@ -150,15 +170,26 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
           </g>
           <g className="feirae-launch__floating-produce feirae-launch__floating-produce--carrot">
             <path d="M361 108c20 15 18 40-7 62-9-29-6-51 7-62z" fill="#f39a43" />
-            <path d="M357 108c-2-15 4-25 17-30M360 110c11-12 21-14 31-8" stroke="#4ca65a" strokeWidth="8" strokeLinecap="round" />
+            <path
+              d="M357 108c-2-15 4-25 17-30M360 110c11-12 21-14 31-8"
+              stroke="#4ca65a"
+              strokeWidth="8"
+              strokeLinecap="round"
+            />
           </g>
           <g className="feirae-launch__floating-produce feirae-launch__floating-produce--leaf">
             <path d="M69 209c27-18 51-14 71 12-31 12-55 8-71-12z" fill="#8bcf72" />
             <path d="M78 208c21 2 38 7 51 15" stroke="#2e7f4b" strokeWidth="4" strokeLinecap="round" />
           </g>
-          <g className="feirae-launch__spark feirae-launch__spark--one"><circle cx="95" cy="94" r="4" fill="#dff36b" /></g>
-          <g className="feirae-launch__spark feirae-launch__spark--two"><circle cx="338" cy="188" r="5" fill="#fff4b1" /></g>
-          <g className="feirae-launch__spark feirae-launch__spark--three"><circle cx="72" cy="255" r="3" fill="#ffffff" /></g>
+          <g className="feirae-launch__spark feirae-launch__spark--one">
+            <circle cx="95" cy="94" r="4" fill="#dff36b" />
+          </g>
+          <g className="feirae-launch__spark feirae-launch__spark--two">
+            <circle cx="338" cy="188" r="5" fill="#fff4b1" />
+          </g>
+          <g className="feirae-launch__spark feirae-launch__spark--three">
+            <circle cx="72" cy="255" r="3" fill="#ffffff" />
+          </g>
 
           <g className="feirae-launch__moto" filter="url(#softShadow)">
             <g className="feirae-launch__wheel feirae-launch__wheel--back">
@@ -169,14 +200,31 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
             <g className="feirae-launch__wheel feirae-launch__wheel--front">
               <circle cx="186" cy="303" r="25" fill="#173d2b" />
               <circle cx="186" cy="303" r="15" fill="#d7e5d9" />
-              <path d="M186 288v30M171 303h30M175 292l22 22M197 292l-22 22" stroke="#71887b" strokeWidth="2" />
+              <path
+                d="M186 288v30M171 303h30M175 292l22 22M197 292l-22 22"
+                stroke="#71887b"
+                strokeWidth="2"
+              />
             </g>
 
-            <path d="M105 299l32-41h32l17 41h-53l-21-48h36" fill="none" stroke="url(#motoGreen)" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M105 299l32-41h32l17 41h-53l-21-48h36"
+              fill="none"
+              stroke="url(#motoGreen)"
+              strokeWidth="11"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
             <path d="M128 261h45l-8-31h-43z" fill="#106b3b" />
             <path d="M168 256h28l15 19h-34z" fill="#2dad63" />
             <rect x="173" y="218" width="50" height="43" rx="8" fill="#f0c74e" />
-            <path d="M183 229h30M183 238h24" stroke="#2e7b48" strokeWidth="4" strokeLinecap="round" opacity="0.72" />
+            <path
+              d="M183 229h30M183 238h24"
+              stroke="#2e7b48"
+              strokeWidth="4"
+              strokeLinecap="round"
+              opacity="0.72"
+            />
 
             <circle cx="142" cy="205" r="15" fill="#efbd8b" />
             <path d="M125 201c5-18 35-21 41 2l-18 2z" fill="#17804a" />
@@ -190,7 +238,10 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
           </g>
 
           <g className="feirae-launch__pin">
-            <path d="M391 231c-15 0-27 12-27 27 0 22 27 47 27 47s27-25 27-47c0-15-12-27-27-27z" fill="#f2a340" />
+            <path
+              d="M391 231c-15 0-27 12-27 27 0 22 27 47 27 47s27-25 27-47c0-15-12-27-27-27z"
+              fill="#f2a340"
+            />
             <circle cx="391" cy="257" r="9" fill="#fff" />
             <circle cx="391" cy="257" r="4" fill="#de8e2b" />
           </g>
