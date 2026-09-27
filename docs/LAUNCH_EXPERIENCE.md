@@ -60,7 +60,6 @@ A chave `feirae:splash:last-full-day` registra a última data em que a animaçã
 
 A splash não redefine o slogan institucional; usa uma assinatura específica para comunicar feira + entrega.
 
-
 ## Revisão premium após validação em vídeo — 27/09/2026
 
 A gravação real em celular mostrou que a primeira implementação estava funcional, porém visualmente simplificada demais em relação ao conceito aprovado.
