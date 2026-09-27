@@ -432,7 +432,15 @@ export function cancelVendorParticipation(orderId: string, vendorId: string, rea
             }
           : null;
 
-      const nextStatus = overallVendorStatus(normalized, vendors);
+      const derivedStatus = overallVendorStatus(normalized, vendors);
+      const remainingVendors = vendors.filter((item) => item.status !== "rejected");
+      const nextStatus =
+        normalized.fulfillment === "delivery" &&
+        normalized.status === "driver_assigned" &&
+        remainingVendors.length > 0 &&
+        remainingVendors.every((item) => item.status === "collected")
+          ? ("collected" as const)
+          : derivedStatus;
       const orderCancelled = nextStatus === "cancelled";
       result = {
         productIds: vendor.productIds,
