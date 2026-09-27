@@ -612,7 +612,9 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
     expect(screen.getByRole("heading", { name: /documentos e regularização/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /regularize sua conta e opere com segurança/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /regularize sua conta e opere com segurança/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/permissão\/autorização da banca ou box/i)).toBeInTheDocument();
     expect(screen.getAllByText(/pendente de envio/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/segurança e transparência/i)).toBeInTheDocument();
@@ -869,7 +871,9 @@ describe("Feiraê role access", () => {
     fireEvent.click(screen.getByRole("button", { name: /^documentos$/i }));
 
     expect(screen.getByRole("heading", { name: /documentos e regularização/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /regularize sua conta e opere com segurança/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /regularize sua conta e opere com segurança/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/curso\/autorização de motofrete/i)).toBeInTheDocument();
     expect(screen.getByText(/cnh compatível e válida/i)).toBeInTheDocument();
     expect(screen.getByText(/crlv-e do veículo/i)).toBeInTheDocument();
