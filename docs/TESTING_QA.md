@@ -340,3 +340,15 @@ Após a revisão do repositório completo:
 - `check:sync`: executado em pull requests com regras semânticas por domínio.
 
 A política automática não substitui browser E2E, migration tests, RLS tests, concorrência ou regressão visual.
+
+
+## QA da splash premium — 27/09/2026
+
+`LaunchExperience.test.tsx` continua com 3 testes e agora também verifica a presença estrutural de:
+
+- contorno da banca;
+- moto/entregador;
+- pin de localização;
+- novos tempos full (~3,3 s) e quick (~1,55 s).
+
+Limite mantido: jsdom não prova qualidade visual da animação. A gravação em aparelho real deve continuar sendo usada como validação visual até existir Playwright/regressão por screenshot.
