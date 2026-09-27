@@ -30,6 +30,7 @@ import {
   readStoreByIdentity,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
+import { customerPrivacyNotice, customerTermsOfUse } from "../../domain/customerLegal";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
   appendReview,
@@ -2877,6 +2878,41 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
           onChange={setCompactCards}
         />
       </div>
+
+      <section className="customer-account-legal max-w-2xl">
+        <div>
+          <span className="eyebrow">Termos e privacidade</span>
+          <h3>Documentos da sua conta</h3>
+          <p>Consulte a qualquer momento as versões atuais usadas no cadastro do Cliente.</p>
+        </div>
+        {[customerTermsOfUse, customerPrivacyNotice].map((term) => (
+          <details key={term.id}>
+            <summary>
+              <span>
+                <b>{term.title}</b>
+                <small>Versão {term.version}</small>
+              </span>
+              <ChevronRight size={16} />
+            </summary>
+            <div className="customer-account-legal-body">
+              <p>{term.summary}</p>
+              {term.sections.map((section) => (
+                <section key={section.title}>
+                  <h4>{section.title}</h4>
+                  {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                  {section.bullets && (
+                    <ul>
+                      {section.bullets.map((bullet) => (
+                        <li key={bullet}>{bullet}</li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              ))}
+            </div>
+          </details>
+        ))}
+      </section>
     </Panel>
   );
 }
