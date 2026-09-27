@@ -10,7 +10,16 @@ Uma sacola pertence a **uma única feira**.
 
 Dentro dessa feira, o cliente pode comprar de várias bancas no mesmo pedido.
 
-No MVP, o limite é de **4 bancas por pedido** e o pedido mínimo é de **R$ 30,00 em produtos por banca**.
+No MVP, o limite é de **4 bancas por pedido**. O pedido mínimo é **configurado por banca**, não pelo carrinho inteiro.
+
+Cada banca pode:
+
+- operar **sem pedido mínimo**;
+- definir seu próprio valor mínimo;
+- no protótipo atual, usar no máximo **R$ 100,00**;
+- bancas antigas/estáticas sem configuração explícita usam **R$ 30,00 como fallback de compatibilidade**.
+
+O teto de R$ 100,00 é uma política central do protótipo e deverá migrar para configuração administrativa versionada antes da produção.
 
 O cliente faz um único checkout e enxerga um único pedido Feiraê. Internamente, o pedido mantém uma participação separada para cada banca.
 
@@ -22,7 +31,9 @@ O carrinho:
 - permite produtos de bancas diferentes da mesma feira;
 - permite continuar adicionando itens de uma banca que já está na sacola;
 - bloqueia a entrada de uma quinta banca no mesmo pedido;
-- exige R$ 30,00 em produtos em cada banca antes de liberar o checkout;
+- exige que **cada banca presente** atinja o próprio mínimo antes de liberar o checkout;
+- não bloqueia por valor global da sacola;
+- banca configurada com R$ 0,00 não exige mínimo;
 - mantém o peso total como soma dos itens de todas as bancas.
 
 `restoreDemoBasket()` também respeita uma feira por sacola e o limite de 4 bancas.
@@ -40,9 +51,48 @@ O resumo informa:
 
 Pagamento continua sendo apresentado como uma única compra para o cliente.
 
-O checkout mostra a situação do mínimo de cada banca e não confirma o pedido enquanto alguma estiver abaixo de R$ 30,00.
+O checkout mostra, para cada banca:
 
-O mínimo considera o subtotal de produtos da banca antes de frete e antes de cupom geral do carrinho. Assim, uma banca que atingiu R$ 30,00 em produtos não deixa de cumprir o mínimo apenas porque o cliente recebeu desconto promocional.
+- mínimo configurado;
+- subtotal de produtos;
+- valor de produtos considerado para o mínimo;
+- quanto falta, quando aplicável;
+- indicação de **sem pedido mínimo** quando o valor for R$ 0,00.
+
+A regra é validada novamente no checkout e imediatamente antes da criação do pedido.
+
+### O que entra no pedido mínimo
+
+Entram apenas os **produtos daquela banca**.
+
+Não entram:
+
+- frete;
+- taxa da plataforma;
+- taxa de pagamento;
+- gorjeta;
+- créditos da carteira.
+
+Descontos e promoções financiados pela própria banca reduzem o valor de mercadorias considerado para o mínimo. Exemplo: banca com mínimo de R$ 40,00, produtos de R$ 45,00 e desconto da própria banca de R$ 10,00 → valor elegível de R$ 35,00 → faltam R$ 5,00.
+
+O carrinho faz uma pré-validação com os valores disponíveis naquele momento. O checkout faz a validação final após as promoções aplicáveis.
+
+
+## Configuração pelo Feirante
+
+Em **Minha banca → Editar banca**, o Feirante escolhe:
+
+- **Sem valor mínimo**; ou
+- **Definir valor mínimo**.
+
+Quando define um valor:
+
+- o campo aceita centavos;
+- o valor precisa ficar entre R$ 0,00 e R$ 100,00 no protótipo;
+- a informação é publicada junto com os dados da banca;
+- a página pública da banca informa o mínimo antes da compra.
+
+A alteração vale para novos checkouts. Pedido já confirmado preserva seus snapshots financeiros e não deve ser reescrito retroativamente.
 
 ## Preparação
 
