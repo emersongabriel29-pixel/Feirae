@@ -26,6 +26,17 @@ describe("Feiraê customer flow", () => {
     expect(window.location.hash).toBe("#/cliente/produtos");
   });
 
+  it("keeps the Feiraê home identity in vector artwork", () => {
+    const { container } = render(<App />);
+    loginAs("cliente");
+
+    expect(container.querySelector(".hero-illustration__brand img")).toHaveAttribute(
+      "src",
+      "/feirae-mark.svg",
+    );
+    expect(container.querySelectorAll(".hero-illustration__icon")).toHaveLength(3);
+  });
+
   it("completes the local demo checkout without leaving a blank screen", () => {
     render(<App />);
     loginAs("cliente");
