@@ -320,7 +320,6 @@ Texto de apoio:
 
 “Um aplicativo. Três experiências.” não é mais o título principal da tela de entrada. O objetivo é explicar o propósito do Feiraê antes de descrever sua estrutura interna.
 
-
 ## Termos legais em Documentos
 
 Feirante e Entregador visualizam os termos obrigatórios antes da lista de arquivos.
