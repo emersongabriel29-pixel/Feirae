@@ -55,11 +55,7 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
 
       <div className="feirae-launch__scene" aria-hidden="true">
         <svg className="feirae-launch__art" viewBox="0 0 360 300">
-          <path
-            className="feirae-launch__route"
-            d="M38 245 C108 210 178 266 326 220"
-            fill="none"
-          />
+          <path className="feirae-launch__route" d="M38 245 C108 210 178 266 326 220" fill="none" />
 
           <g className="feirae-launch__stall-fill">
             <rect x="88" y="116" width="154" height="101" rx="12" fill="#f4e3be" />
