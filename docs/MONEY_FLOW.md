@@ -101,7 +101,7 @@ Tipos:
 
 Regra operacional canônica: [MULTI_VENDOR_ORDERS.md](MULTI_VENDOR_ORDERS.md).
 
-O frontend agora limita o MVP a 4 bancas por pedido e trata a coleta por banca, mas isso não resolve o split financeiro de produção.
+O frontend agora limita o MVP a 4 bancas por pedido, exige R$ 30,00 por banca, trata a coleta por banca e registra ajustes parciais. Isso ainda não resolve o split financeiro de produção.
 
 
 Um pedido pode ter N feirantes via `order_vendors`.
@@ -276,18 +276,29 @@ O sistema precisa guardar lançamentos separados. Um único `vendor_amount = 130
 
 ## 13. Cancelamento e estorno
 
-Antes da coleta, o protótipo:
+Política funcional: [REFUND_CANCELLATION_POLICY.md](REFUND_CANCELLATION_POLICY.md).
 
-- cancela;
-- libera estoque;
-- cria reembolso local quando aplicável.
+O protótipo diferencia:
 
-Produção precisa:
+- cancelamento total;
+- cancelamento parcial de uma banca;
+- redução de valor ainda não cobrado;
+- restauração de saldo Feiraê;
+- valor externo aguardando escolha de destino;
+- crédito local em carteira;
+- solicitação local de estorno no meio original.
+
+Em cancelamento parcial, mercadoria, desconto atribuído, frete, peso, estoque e rota são recalculados sem encerrar as demais bancas.
+
+Produção ainda precisa:
 
 - chamar PSP;
-- aguardar/registrar status do estorno;
-- lançar reversões no ledger;
-- lidar com estorno parcial por banca/item.
+- persistir ledger por recebedor;
+- aguardar/registrar webhook do estorno;
+- lançar reversões idempotentes;
+- conciliar;
+- lidar com disputa/chargeback;
+- registrar SLA real por meio de pagamento.
 
 ## 14. Repasse
 
