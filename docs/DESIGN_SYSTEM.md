@@ -411,7 +411,6 @@ Em telas pequenas:
 - orientações usam uma coluna;
 - filtros permanecem horizontais com rolagem.
 
-
 ## Confirmações jurídicas no cadastro do Cliente
 
 O Cliente não recebe a experiência de Documentos dos parceiros.
