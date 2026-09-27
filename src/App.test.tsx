@@ -174,7 +174,8 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByLabelText(/li o aviso de privacidade/i));
     fireEvent.click(screen.getByRole("button", { name: /criar conta como cliente/i }));
 
-    expect(screen.getByRole("heading", { name: /olá, cliente legal/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /crie sua conta no feiraê/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /navegação móvel/i })).toBeInTheDocument();
 
     const raw = window.localStorage.getItem(
       "feirae:customer-legal-acceptances:cliente.legal@feirae.app",
