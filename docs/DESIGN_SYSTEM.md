@@ -488,7 +488,6 @@ As frases não são sinônimos:
 
 Ao criar nova superfície, escolher a frase pelo papel acima, evitando criar uma quarta assinatura concorrente.
 
-
 ## Splash premium
 
 A abertura não deve ser tratada como um ícone animado isolado.
