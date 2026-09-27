@@ -17,13 +17,14 @@ npm run check:sync   # somente em pull_request, com BASE_SHA/HEAD_SHA
 npm run format:check
 ```
 
-`check:sync` não mede cobertura. Ele verifica uma regra mínima de manutenção: mudanças de comportamento em `src/` devem vir com teste alterado e mudanças de código/config/schema devem vir com documentação revisada.
+`check:sync` não mede cobertura. Ele aplica a matriz semântica de `scripts/change-sync-policy.mjs`: mudanças de comportamento em `src/` exigem teste, testes exigem `TESTING_QA.md` e domínios como UI/UX, migrations, splash/som, pedidos e notificações exigem seus documentos específicos.
 
 `npm run check` executa:
 
 ```bash
 npm run lint
 npm run test
+npm run test:sync-policy
 npm run build
 ```
 
@@ -246,7 +247,7 @@ Portanto não há evidência automatizada atual de:
 
 Criar suite de banco descartável para:
 
-- migrations 0001/0002 + migrations novas;
+- migrations 0001/0002/0003 + migrations futuras;
 - constraints;
 - enum de estados;
 - RLS por papel;
