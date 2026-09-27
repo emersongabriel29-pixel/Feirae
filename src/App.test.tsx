@@ -614,9 +614,7 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/termos obrigatórios precisam ser assinados/i)).toBeInTheDocument();
     expect(screen.getByText(/permissão\/autorização da banca ou box/i)).toBeInTheDocument();
     expect(screen.getAllByText(/pendente de envio/i).length).toBeGreaterThan(0);
-    expect(
-      screen.getByText(/termos vigentes.*documentos obrigatórios/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/termos vigentes.*documentos obrigatórios/i)).toBeInTheDocument();
   });
 
   it("shows the feirante legal term and LGPD notice inside Documents", () => {
