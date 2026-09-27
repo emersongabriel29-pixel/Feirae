@@ -42,6 +42,8 @@ Pagamento continua sendo apresentado como uma única compra para o cliente.
 
 O checkout mostra a situação do mínimo de cada banca e não confirma o pedido enquanto alguma estiver abaixo de R$ 30,00.
 
+O mínimo considera o subtotal de produtos da banca antes de frete e antes de cupom geral do carrinho. Assim, uma banca que atingiu R$ 30,00 em produtos não deixa de cumprir o mínimo apenas porque o cliente recebeu desconto promocional.
+
 ## Preparação
 
 Cada banca controla apenas a própria participação.
