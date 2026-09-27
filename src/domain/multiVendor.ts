@@ -74,6 +74,35 @@ export function multiVendorMinimumMet<
   return summaries.length > 0 && summaries.every((summary) => summary.meetsMinimum);
 }
 
+export type VendorFinancialAllocation = VendorOrderSummary & {
+  promotionDiscount: number;
+  netMerchandise: number;
+};
+
+export function allocatePromotionAcrossVendors<
+  T extends { id: number; feirante: string; price: number }
+>(items: T[], cart: Record<number, number>, promotionDiscount: number): VendorFinancialAllocation[] {
+  const summaries = vendorOrderSummaries(items, cart);
+  const total = summaries.reduce((sum, item) => sum + item.subtotal, 0);
+  if (!summaries.length) return [];
+
+  let allocated = 0;
+  return summaries.map((summary, index) => {
+    const discount =
+      index === summaries.length - 1
+        ? Math.max(0, Math.round((promotionDiscount - allocated) * 100) / 100)
+        : total > 0
+          ? Math.max(0, Math.round((promotionDiscount * (summary.subtotal / total)) * 100) / 100)
+          : 0;
+    allocated += discount;
+    return {
+      ...summary,
+      promotionDiscount: discount,
+      netMerchandise: Math.max(0, Math.round((summary.subtotal - discount) * 100) / 100),
+    };
+  });
+}
+
 export function calculateMultiVendorDeliveryFee(baseDeliveryFee: number, vendorCount: number) {
   const safeBase = Math.max(0, baseDeliveryFee);
   const additionalStops = Math.max(0, vendorCount - 1);
