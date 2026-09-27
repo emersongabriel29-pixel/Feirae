@@ -623,9 +623,7 @@ export function hasCurrentLegalAcceptance(
 ) {
   return acceptances.some(
     (acceptance) =>
-      acceptance.termId === term.id &&
-      acceptance.version === term.version &&
-      acceptance.role === role,
+      acceptance.termId === term.id && acceptance.version === term.version && acceptance.role === role,
   );
 }
 
