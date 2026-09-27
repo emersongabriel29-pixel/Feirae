@@ -37,6 +37,7 @@
 }
 .section-heading > button {
   display: flex;
+  min-height: var(--fe-touch);
   align-items: center;
   gap: 0.25rem;
   color: var(--fe-green);
@@ -89,43 +90,69 @@
   display: none;
   width: 245px;
   height: 245px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(223, 243, 107, 0.15), transparent 48%),
+    rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(7px);
 }
-.hero-illustration strong {
+.hero-illustration__brand {
   position: absolute;
   left: 50%;
   top: 50%;
+  display: grid;
+  width: 6.4rem;
+  height: 6.4rem;
   translate: -50% -50%;
-  font-size: 7rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 18px 38px rgba(0, 40, 22, 0.22);
 }
-.hero-illustration span {
+.hero-illustration__brand img {
+  width: 4.8rem;
+  height: 4.8rem;
+}
+.hero-illustration__icon {
   position: absolute;
+  z-index: 1;
   display: grid;
   width: 3.5rem;
   height: 3.5rem;
   place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 1.1rem;
-  background: rgba(255, 255, 255, 0.88);
-  font-size: 2rem;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--fe-green);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
 }
-.hero-illustration span:nth-child(1) {
+.hero-illustration__icon--store {
   left: -1rem;
   top: 4rem;
-  rotate: -10deg;
+  rotate: -8deg;
 }
-.hero-illustration span:nth-child(2) {
+.hero-illustration__icon--bike {
   right: -0.5rem;
   top: 1.5rem;
-  rotate: 8deg;
+  rotate: 7deg;
 }
-.hero-illustration span:nth-child(3) {
+.hero-illustration__icon--location {
   right: 0;
   bottom: 1.5rem;
-  rotate: -5deg;
+  rotate: -4deg;
+}
+.hero-illustration__route {
+  position: absolute;
+  left: 2rem;
+  right: 2rem;
+  bottom: 3.6rem;
+  height: 4.5rem;
+  border-bottom: 2px dashed rgba(223, 243, 107, 0.65);
+  border-radius: 0 0 50% 50%;
+  rotate: -7deg;
 }
 .primary-action,
 .secondary-action {
@@ -1343,4 +1370,30 @@ html.compact-product-cards .product-card .stock {
 }
 .mini-product-art > img {
   min-height: 6.5rem;
+}
+
+.primary-action:active:not(:disabled),
+.secondary-action:active:not(:disabled),
+.quick-action:active:not(:disabled) {
+  filter: brightness(0.97);
+}
+
+@media (hover: hover) {
+  .hero-illustration__icon {
+    transition:
+      translate 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .hero-illustration:hover .hero-illustration__icon--store {
+    translate: -2px -2px;
+  }
+
+  .hero-illustration:hover .hero-illustration__icon--bike {
+    translate: 3px -2px;
+  }
+
+  .hero-illustration:hover .hero-illustration__icon--location {
+    translate: 2px 2px;
+  }
 }
