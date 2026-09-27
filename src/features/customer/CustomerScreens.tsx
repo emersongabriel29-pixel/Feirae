@@ -30,6 +30,14 @@ import {
   readStoreByIdentity,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
+import {
+  MAX_VENDORS_PER_ORDER,
+  MIN_VENDOR_ORDER_AMOUNT,
+  MULTI_VENDOR_EXTRA_STOP_FEE,
+  calculateMultiVendorDeliveryFee,
+  multiVendorMinimumMet,
+  vendorOrderSummaries,
+} from "../../domain/multiVendor";
 import { customerPrivacyNotice, customerTermsOfUse } from "../../domain/customerLegal";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
@@ -39,6 +47,7 @@ import {
   patchUnifiedOrder,
   patchUnifiedOrderItem,
   readUnifiedOrders,
+  resolveRefundDestination,
 } from "../../domain/orderBridge";
 import {
   feiraeNotificationPermission,
@@ -729,7 +738,11 @@ export function VendorStore({
           <h2>{vendorName}</h2>
           <p>
             Produtos selecionados direto da feira · {ratingLabel(metrics.rating)} ★ ({metrics.reviewCount}) ·{" "}
-            {minutesLabel(metrics.deliveryMinutes)} · entrega {money(metrics.deliveryFee)}
+            {minutesLabel(metrics.deliveryMinutes)} · entrega a partir de {money(metrics.deliveryFee)}
+          </p>
+          <p>
+            Pedido mínimo nesta banca: <strong>{money(MIN_VENDOR_ORDER_AMOUNT)}</strong>. Em pedidos multi-banca,
+            cada banca precisa atingir esse mínimo.
           </p>
         </div>
         <button
@@ -789,6 +802,14 @@ export function DeliveryTracking({
   >(scopedStorageKey("feirae:customer-reviews"), []);
 
   const unifiedOrder = readUnifiedOrders().find((item) => item.id === order.id);
+  const vendorStates = unifiedOrder?.vendors ?? [];
+  const refunds = unifiedOrder?.refunds ?? [];
+  const readyVendorCount = vendorStates.filter((vendor) =>
+    ["ready", "collected", "delivered"].includes(vendor.status),
+  ).length;
+  const collectedVendorCount = vendorStates.filter((vendor) =>
+    ["collected", "delivered"].includes(vendor.status),
+  ).length;
   const statusConfig: Record<
     DemoOrder["status"],
     { title: string; description: string; activeStep: number }
@@ -944,6 +965,88 @@ export function DeliveryTracking({
           </div>
           <h2>{config.title}</h2>
           <p>{config.description}</p>
+          {vendorStates.length > 1 && (
+            <div className="surface-card">
+              <span className="eyebrow">Pedido multi-banca</span>
+              <h3>{vendorStates.length} bancas na mesma feira</h3>
+              <p>
+                {order.fulfillment === "delivery" && unifiedOrder?.driver
+                  ? `${collectedVendorCount}/${vendorStates.length} coletas confirmadas pelo entregador.`
+                  : `${readyVendorCount}/${vendorStates.length} bancas prontas.`}
+              </p>
+              <div className="operation-list detailed">
+                {vendorStates.map((vendor, index) => (
+                  <article key={vendor.vendorId}>
+                    {["collected", "delivered"].includes(vendor.status) ? <Check size={17} /> : <Store size={17} />}
+                    <div>
+                      <b>{index + 1}. {vendor.vendorName}</b>
+                      <small>
+                        {vendor.status === "pending"
+                          ? "Aguardando confirmação"
+                          : vendor.status === "accepted" || vendor.status === "preparing"
+                            ? "Em preparação"
+                            : vendor.status === "ready"
+                              ? "Pronta para coleta"
+                              : vendor.status === "collected"
+                                ? "Coleta confirmada"
+                                : vendor.status === "delivered"
+                                  ? "Concluída"
+                                  : "Recusada"}
+                      </small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+          {refunds.length > 0 && (
+            <div className="surface-card">
+              <span className="eyebrow">Ajustes e reembolsos</span>
+              {refunds.map((refund) => (
+                <div className="timeline-item" key={refund.id}>
+                  <Wallet size={17} />
+                  <div>
+                    <b>
+                      {refund.vendorName ? `${refund.vendorName} saiu do pedido` : "Reembolso do pedido"} ·{" "}
+                      {money(refund.amount)}
+                    </b>
+                    <small>
+                      Motivo: {refund.reason}. Produtos: {money(refund.merchandiseAmount)}
+                      {refund.deliveryAmount > 0 ? ` · ajuste de frete: ${money(refund.deliveryAmount)}` : ""}
+                    </small>
+                    {refund.walletRestoreAmount > 0 && (
+                      <small>{money(refund.walletRestoreAmount)} de saldo usado foi devolvido à carteira.</small>
+                    )}
+                    {refund.externalAmount > 0 && refund.status === "pending_choice" && (
+                      <div className="module-action-row">
+                        <button
+                          className="secondary-action"
+                          onClick={() => resolveRefundDestination(order.id, refund.id, "original_payment")}
+                        >
+                          Estornar no pagamento
+                        </button>
+                        <button
+                          className="primary-action"
+                          onClick={() => resolveRefundDestination(order.id, refund.id, "wallet")}
+                        >
+                          Receber na carteira Feiraê
+                        </button>
+                      </div>
+                    )}
+                    {refund.status === "requested" && (
+                      <small>Estorno solicitado no meio de pagamento original. A conclusão depende do PSP.</small>
+                    )}
+                    {refund.status === "credited" && refund.destination === "wallet" && (
+                      <small>Crédito disponibilizado na carteira Feiraê.</small>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <p>
+                Total atual do pedido: <strong>{money(unifiedOrder?.total ?? order.value)}</strong>
+              </p>
+            </div>
+          )}
           {order.fulfillment === "delivery" && ["Coleta", "Em rota", "Entregue"].includes(order.status) && (
             <div className="surface-card">
               <span className="eyebrow">Entrega</span>
@@ -1246,6 +1349,9 @@ export function Checkout({
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const fairName = items[0]?.fair ?? "Feiraê";
+  const vendorCount = new Set(items.map((product) => product.feirante)).size;
+  const vendorMinimums = vendorOrderSummaries(items, cart);
+  const vendorMinimumMet = multiVendorMinimumMet(items, cart);
   const stores = Array.from(
     new Map(
       items.map((item) => {
@@ -1267,7 +1373,9 @@ export function Checkout({
   );
   const hasDeliveryAddress = Boolean(defaultAddress);
   const freightReady = fulfillment === "delivery" && hasDeliveryAddress && deliveryAllowed;
-  const calculatedDeliveryFee = freightReady ? fallbackDeliveryFee : 0;
+  const calculatedDeliveryFee = freightReady
+    ? calculateMultiVendorDeliveryFee(fallbackDeliveryFee, vendorCount)
+    : 0;
   const promotionResult = calculateCheckoutPromotions(items, cart, calculatedDeliveryFee, couponCode);
   const promotionDiscount = promotionResult.promotionDiscount;
   const deliverySubsidy =
@@ -1289,6 +1397,7 @@ export function Checkout({
     !cashPayment || !needsChange || (Number.isFinite(parsedChangeFor) && parsedChangeFor >= total);
   const canConfirm =
     storesOpen &&
+    vendorMinimumMet &&
     (fulfillment === "pickup" ? pickupAllowed : Boolean(defaultAddress) && deliveryAllowed) &&
     (payment !== "Dinheiro na entrega" || cashOnDeliveryAllowed) &&
     (payment !== "Cartão na entrega" || cardOnDeliveryAllowed) &&
@@ -1459,6 +1568,19 @@ export function Checkout({
             )}
           </div>
 
+          <div className="form-card compact">
+            <span className="eyebrow">Pedido mínimo por banca</span>
+            {vendorMinimums.map((summary) => (
+              <p key={summary.vendorName}>
+                <strong>{summary.vendorName}</strong> · {money(summary.subtotal)}{" "}
+                {summary.meetsMinimum
+                  ? "✓ mínimo atingido"
+                  : `· faltam ${money(summary.missingForMinimum)}`}
+              </p>
+            ))}
+            <small>Cada banca precisa somar pelo menos {money(MIN_VENDOR_ORDER_AMOUNT)} em produtos.</small>
+          </div>
+
           {availableWallet > 0 && (
             <div className="form-card compact">
               <Toggle
@@ -1511,6 +1633,10 @@ export function Checkout({
               <b>{fairName}</b>
             </p>
             <p>
+              <span>Bancas</span>
+              <b>{vendorCount} de até {MAX_VENDORS_PER_ORDER}</b>
+            </p>
+            <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>
             </p>
@@ -1520,6 +1646,16 @@ export function Checkout({
             </p>
             {fulfillment === "delivery" && (
               <>
+                <p>
+                  <span>Frete base</span>
+                  <b>{freightReady ? money(fallbackDeliveryFee) : "A calcular"}</b>
+                </p>
+                {freightReady && vendorCount > 1 && (
+                  <p>
+                    <span>Coletas adicionais ({vendorCount - 1})</span>
+                    <b>{money((vendorCount - 1) * MULTI_VENDOR_EXTRA_STOP_FEE)}</b>
+                  </p>
+                )}
                 <p>
                   <span>Frete estimado</span>
                   <b>{freightReady ? money(calculatedDeliveryFee) : "A calcular"}</b>
@@ -1607,7 +1743,9 @@ export function Checkout({
             <small>
               {!storesOpen
                 ? "Uma das bancas está fechada no momento."
-                : !deliveryAllowed && fulfillment === "delivery"
+                : !vendorMinimumMet
+                  ? `Cada banca precisa atingir o pedido mínimo de ${money(MIN_VENDOR_ORDER_AMOUNT)}.`
+                  : !deliveryAllowed && fulfillment === "delivery"
                   ? "Uma das bancas não aceita entrega."
                   : !pickupAllowed && fulfillment === "pickup"
                     ? "Uma das bancas não aceita retirada."
