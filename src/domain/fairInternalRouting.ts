@@ -62,9 +62,9 @@ export function optimizeInternalFairRoute(
   entrance: InternalFairPoint = { x: 0, y: 0 },
 ): InternalFairRoute {
   const mapped = stops.filter(hasInternalPoint);
-  const unmapped = stops.filter((stop) => !hasInternalPoint(stop)).sort((a, b) =>
-    fallbackKey(a).localeCompare(fallbackKey(b), "pt-BR"),
-  );
+  const unmapped = stops
+    .filter((stop) => !hasInternalPoint(stop))
+    .sort((a, b) => fallbackKey(a).localeCompare(fallbackKey(b), "pt-BR"));
 
   const remaining = [...mapped];
   const ordered: InternalPickupStop[] = [];
@@ -111,12 +111,7 @@ export function optimizeInternalFairRoute(
     etaMinutes: mappedStops ? Math.max(1, Math.ceil(roundedDistance / WALKING_METERS_PER_MINUTE)) : 0,
     mappedStops,
     unmappedStops,
-    strategy:
-      mappedStops && unmappedStops
-        ? "mixed"
-        : mappedStops
-          ? "internal_map"
-          : "corridor_box_fallback",
+    strategy: mappedStops && unmappedStops ? "mixed" : mappedStops ? "internal_map" : "corridor_box_fallback",
   };
 }
 

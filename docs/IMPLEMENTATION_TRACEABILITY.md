@@ -333,7 +333,6 @@ Limite: a evidência ainda é local. Produção exige persistência server-side 
 - participação já `collected` ou `delivered` não pode ser cancelada pelo fluxo automático de indisponibilidade da banca;
 - esses casos são cobertos em `orderBridge.test.ts`.
 
-
 ## Roteamento interno de feira — 27/09/2026
 
 - `VendorBankProfile`: setor, corredor, box e posição interna X/Y;

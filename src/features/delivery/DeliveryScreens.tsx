@@ -32,10 +32,7 @@ import { deliveryModuleDetails } from "../../domain/operations";
 import { fairs } from "../../data";
 import { drivingRoute, geocodeAddress } from "../../domain/routing";
 import { readSharedStores } from "../../domain/marketplaceBridge";
-import {
-  optimizeInternalFairRoute,
-  pickupCodeMatches,
-} from "../../domain/fairInternalRouting";
+import { optimizeInternalFairRoute, pickupCodeMatches } from "../../domain/fairInternalRouting";
 import {
   isValidBrazilianPlate,
   normalizePlate,
@@ -366,10 +363,8 @@ export function DeliveryOperations({
             route: {
               toVendorKm: toVendor.distanceKm,
               vendorToCustomerKm: toCustomer.distanceKm,
-              totalKm:
-                Math.round((toVendor.distanceKm + internalKm + toCustomer.distanceKm) * 10) / 10,
-              etaMinutes:
-                toVendor.durationMinutes + internalRoute.etaMinutes + toCustomer.durationMinutes,
+              totalKm: Math.round((toVendor.distanceKm + internalKm + toCustomer.distanceKm) * 10) / 10,
+              etaMinutes: toVendor.durationMinutes + internalRoute.etaMinutes + toCustomer.durationMinutes,
               source: "osrm",
               pickupStops: internalRoute.stops,
               internalDistanceMeters: internalRoute.distanceMeters,
@@ -559,10 +554,13 @@ export function DeliveryOperations({
       const fair = fairs.find((item) => item.name === order.fairName);
       const activeItems = order.items.filter((item) => !item.cancelled);
       const vendorNames = Array.from(new Set(activeItems.map((item) => item.vendor)));
-      const pickupStops: Array<UnifiedPickupStop & { collected: boolean }> = (route.pickupStops ?? []).map((stop) => ({
-        ...stop,
-        collected: order.vendors?.find((vendor) => vendor.vendorId === stop.vendorId)?.status === "collected",
-      }));
+      const pickupStops: Array<UnifiedPickupStop & { collected: boolean }> = (route.pickupStops ?? []).map(
+        (stop) => ({
+          ...stop,
+          collected:
+            order.vendors?.find((vendor) => vendor.vendorId === stop.vendorId)?.status === "collected",
+        }),
+      );
       const weight = activeItems.reduce((sum, item) => sum + item.weightKg, 0);
       return {
         id: order.id,
@@ -918,9 +916,7 @@ export function DeliveryOperations({
       </div>
       <div className="surface-card">
         <span className="eyebrow">Percurso dentro da feira</span>
-        <h3>
-          Entrada → {activePickupStops.map((stop) => stop.vendorName).join(" → ") || "banca"} → saída
-        </h3>
+        <h3>Entrada → {activePickupStops.map((stop) => stop.vendorName).join(" → ") || "banca"} → saída</h3>
         <p>
           {activeDelivery.internalDistanceMeters > 0
             ? `${activeDelivery.internalDistanceMeters} m internos · cerca de ${activeDelivery.internalEtaMinutes} min a pé.`
@@ -972,55 +968,47 @@ export function DeliveryOperations({
           </span>
         ))}
       </div>
-      {currentStage < pickupStagesLength &&
-        currentStage % 2 === 1 &&
-        currentPickupStop?.pickupCode && (
-          <div className="surface-card">
-            <span className="eyebrow">Confirmar banca</span>
-            <h3>
-              {currentPickupStop.sector || "Setor"} · corredor {currentPickupStop.corridor || "—"} · box{" "}
-              {currentPickupStop.box || "—"}
-            </h3>
-            <p>Leia o QR fixado na banca ou informe o código impresso antes de confirmar a coleta.</p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label>
-                Código/QR lido
-                <input
-                  value={pickupCodeInput}
-                  onChange={(event) => {
-                    setPickupCodeInput(event.target.value);
-                    setPickupCodeError("");
-                  }}
-                  placeholder="FEIRAE-..."
-                />
-              </label>
-              <label>
-                Ler QR pela câmera
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) void readPickupQr(file);
-                    event.currentTarget.value = "";
-                  }}
-                />
-              </label>
-            </div>
-            {pickupCodeError && <p className="inline-error">{pickupCodeError}</p>}
-            {qrScanNotice && <small>{qrScanNotice}</small>}
+      {currentStage < pickupStagesLength && currentStage % 2 === 1 && currentPickupStop?.pickupCode && (
+        <div className="surface-card">
+          <span className="eyebrow">Confirmar banca</span>
+          <h3>
+            {currentPickupStop.sector || "Setor"} · corredor {currentPickupStop.corridor || "—"} · box{" "}
+            {currentPickupStop.box || "—"}
+          </h3>
+          <p>Leia o QR fixado na banca ou informe o código impresso antes de confirmar a coleta.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label>
+              Código/QR lido
+              <input
+                value={pickupCodeInput}
+                onChange={(event) => {
+                  setPickupCodeInput(event.target.value);
+                  setPickupCodeError("");
+                }}
+                placeholder="FEIRAE-..."
+              />
+            </label>
+            <label>
+              Ler QR pela câmera
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void readPickupQr(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
           </div>
-        )}
+          {pickupCodeError && <p className="inline-error">{pickupCodeError}</p>}
+          {qrScanNotice && <small>{qrScanNotice}</small>}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         <button
-          onClick={() =>
-            onMap(
-              headingToPickup
-                ? activeDelivery.fairAddress
-                : activeDelivery.customerAddress,
-            )
-          }
+          onClick={() => onMap(headingToPickup ? activeDelivery.fairAddress : activeDelivery.customerAddress)}
           className="secondary-action"
         >
           <MapPin size={17} /> {headingToPickup ? "GPS até a entrada da feira" : "GPS até o cliente"}
@@ -1035,7 +1023,9 @@ export function DeliveryOperations({
 
               if (confirmingPickup && stop) {
                 if (stop.pickupCode && !pickupCodeMatches(stop.storeId, pickupCodeInput)) {
-                  setPickupCodeError("Código da banca não confere. Leia o QR correto ou digite o código impresso.");
+                  setPickupCodeError(
+                    "Código da banca não confere. Leia o QR correto ou digite o código impresso.",
+                  );
                   return;
                 }
                 setPickupCodeError("");

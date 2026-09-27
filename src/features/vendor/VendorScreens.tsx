@@ -1530,8 +1530,8 @@ export function FeiranteOperations({
                     <div className="surface-card">
                       <span className="eyebrow">Localização para coleta</span>
                       <h3>
-                        {bankProfile.sector || "Setor não informado"} · corredor {bankProfile.corridor || "—"} · box{" "}
-                        {bankProfile.box || "—"}
+                        {bankProfile.sector || "Setor não informado"} · corredor {bankProfile.corridor || "—"}{" "}
+                        · box {bankProfile.box || "—"}
                       </h3>
                       <p>
                         {bankProfile.internalX !== null && bankProfile.internalY !== null
@@ -1543,8 +1543,8 @@ export function FeiranteOperations({
                           <b>Código/QR de coleta</b>
                           <code>{pickupPayload}</code>
                           <small>
-                            Este conteúdo identifica a banca na confirmação da coleta. O QR visual pode ser impresso
-                            a partir deste payload quando o gerador/scanner for conectado.
+                            Este conteúdo identifica a banca na confirmação da coleta. O QR visual pode ser
+                            impresso a partir deste payload quando o gerador/scanner for conectado.
                           </small>
                         </>
                       )}
@@ -1923,8 +1923,8 @@ export function FeiranteOperations({
                         </p>
                         {bankProfile.internalX !== null && bankProfile.internalY !== null && (
                           <small>
-                            Mapa interno: X {bankProfile.internalX} m · Y {bankProfile.internalY} m a partir da
-                            entrada principal.
+                            Mapa interno: X {bankProfile.internalX} m · Y {bankProfile.internalY} m a partir
+                            da entrada principal.
                           </small>
                         )}
                       </div>
