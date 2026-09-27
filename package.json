@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:sync-policy": "node --test scripts/change-sync-policy.test.mjs",
+    "test:sync-policy": "node --test scripts/change-sync-policy-checks.mjs",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
