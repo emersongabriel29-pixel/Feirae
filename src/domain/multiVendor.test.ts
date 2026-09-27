@@ -97,11 +97,13 @@ describe("multiVendor", () => {
     const minimums = { "Banca A": 40, "Banca B": 10, "Banca C": 0 };
     const summaries = vendorOrderSummaries(items, { 1: 2, 2: 1, 3: 1 }, minimums);
 
-    expect(summaries.map(({ vendorName, minimumOrderAmount, meetsMinimum }) => ({
-      vendorName,
-      minimumOrderAmount,
-      meetsMinimum,
-    }))).toEqual([
+    expect(
+      summaries.map(({ vendorName, minimumOrderAmount, meetsMinimum }) => ({
+        vendorName,
+        minimumOrderAmount,
+        meetsMinimum,
+      })),
+    ).toEqual([
       { vendorName: "Banca A", minimumOrderAmount: 40, meetsMinimum: true },
       { vendorName: "Banca B", minimumOrderAmount: 10, meetsMinimum: false },
       { vendorName: "Banca C", minimumOrderAmount: 0, meetsMinimum: true },
