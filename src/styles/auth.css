@@ -236,8 +236,7 @@
   border: 1px solid color-mix(in srgb, var(--fe-green) 18%, var(--fe-border));
   border-radius: 1rem;
   background:
-    radial-gradient(circle at 96% 4%, rgba(223, 243, 107, 0.12), transparent 7rem),
-    var(--fe-surface-soft);
+    radial-gradient(circle at 96% 4%, rgba(223, 243, 107, 0.12), transparent 7rem), var(--fe-surface-soft);
   padding: 0.85rem;
 }
 .customer-signup-legal-heading {
