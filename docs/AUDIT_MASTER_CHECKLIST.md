@@ -1,6 +1,6 @@
 # Checklist Mestre de Auditorias — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 27/09/2026.
 
 Este documento é a fonte oficial de acompanhamento das auditorias do Feiraê. A regra é executar **uma auditoria por vez**, concluir correções, testes, documentação e CI daquela rodada e só então iniciar a seguinte.
 
@@ -74,7 +74,7 @@ Este documento é a fonte oficial de acompanhamento das auditorias do Feiraê. A
 | 55  | Consistência geral                                                                 | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 56  | Produto                                                                            | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
 | 57  | Prontidão para produção                                                            | AGUARDANDO | —               | —                                   | —                   | —                                                    | —                      |
-| MÃE | Rastreabilidade requisito → tela → ação → regra → banco → permissão → docs → teste | CONTÍNUA   | 26/09/2026      | Mantida durante todas as auditorias | —                   | Depende dos resultados das auditorias 1–57           | Checklist Mestre       |
+| MÃE | Rastreabilidade requisito → tela → ação → regra → banco → permissão → docs → teste | CONTÍNUA   | 27/09/2026      | Sincronização Mestre executada       | Docs/CI sincronizados | Backend/E2E/deploy continuam pendentes                | master-sync · CI       |
 
 ## Auditoria 1 — registro fechado
 
@@ -106,6 +106,36 @@ Bloqueios de produção identificados e mantidos como pendência rastreável:
 - rota multi-banca com múltiplas paradas;
 - PSP, ledger, estorno e conciliação;
 - operação real de tickets de suporte.
+
+## Sincronização Mestre — 27/09/2026
+
+A auditoria-mãe foi executada transversalmente por solicitação explícita, sem encerrar artificialmente as auditorias numeradas que ainda aguardam sua rodada formal.
+
+Achados corrigidos:
+
+1. contagem documental de testes estava em 69/73/127 enquanto a suíte atual possui 129 testes Vitest;
+2. migration 0003 não aparecia em todos os documentos de schema/deploy;
+3. splash e identidade sonora estavam isoladas da arquitetura/especificação principal;
+4. UI/UX Pro Max não havia sido propagado para `UI_INTERACTION_AUDIT.md` e `DESIGN_SYSTEM.md`;
+5. identidade verbal foi normalizada por superfície;
+6. o CI aceitava “qualquer documento” sem exigir o documento correto do domínio.
+
+Proteção adicionada:
+
+- `scripts/change-sync-policy.mjs`;
+- 8 testes Node da política;
+- exigência de documentação específica por domínio;
+- `TESTING_QA.md` obrigatório quando testes mudarem.
+
+Pendências que **não** foram marcadas como concluídas por esta sincronização:
+
+- auditorias formais 2–57;
+- Supabase/backend;
+- RLS;
+- PSP/ledger;
+- admin runtime;
+- browser E2E/regressão visual;
+- staging/deploy/observabilidade.
 
 ## Próxima execução
 
