@@ -3,3 +3,5 @@ dist
 coverage
 package-lock.json
 
+# Hand-authored SVG animation choreography; formatting is intentionally stable.
+src/components/LaunchExperience.tsx
