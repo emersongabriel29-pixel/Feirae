@@ -129,7 +129,7 @@ export function syncVendorMarketplace(input: {
   absorbDeliveryFee: boolean;
   acceptCashOnDelivery: boolean;
   acceptCardOnDelivery: boolean;
-  minimumOrderAmount: number;
+  minimumOrderAmount?: number;
   box?: string;
   corridor?: string;
   sector?: string;
