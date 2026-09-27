@@ -299,8 +299,33 @@
 .fair-cover.tone-2 {
   background: linear-gradient(145deg, #cae7d2, #eff8ed);
 }
-.fair-cover span {
-  font-size: 4.5rem;
+.fair-cover-icon {
+  display: grid;
+  width: 4.6rem;
+  height: 4.6rem;
+  place-items: center;
+  border: 1px solid rgba(23, 107, 58, 0.12);
+  border-radius: 1.4rem;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--fe-green);
+  box-shadow: 0 14px 28px rgba(30, 45, 34, 0.08);
+  backdrop-filter: blur(6px);
+}
+.fair-cover-mark {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.8rem;
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.78);
+  opacity: 0.72;
+}
+.fair-cover-mark img {
+  width: 2rem;
+  height: 2rem;
 }
 .fair-cover small {
   position: absolute;
@@ -311,8 +336,9 @@
   background: rgba(255, 255, 255, 0.88);
   padding: 0.35rem 0.6rem;
   color: var(--fe-green-dark);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 850;
+  line-height: 1.35;
   text-align: right;
   backdrop-filter: blur(5px);
 }
@@ -329,12 +355,12 @@
   display: grid;
   gap: 0.35rem;
   color: var(--fe-muted);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 850;
 }
 .region-selector select,
 .cancel-panel select {
-  min-height: 2.7rem;
+  min-height: 3rem;
   border: 1px solid var(--fe-border);
   border-radius: 0.8rem;
   background: var(--fe-surface);
@@ -565,12 +591,13 @@
 .category-list button,
 .module-tabs button {
   flex: none;
+  min-height: var(--fe-touch);
   border: 1px solid var(--fe-border);
   border-radius: 999px;
   background: var(--fe-surface);
   padding: 0.55rem 0.85rem;
   color: var(--fe-text-soft);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 800;
 }
 .category-list button.active,
@@ -593,7 +620,7 @@
 .order-card small,
 .order-card p {
   color: var(--fe-muted);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
 }
 .order-card h3 {
   margin: 0.15rem 0;
@@ -610,7 +637,7 @@
   background: var(--fe-green-soft);
   padding: 0.25rem 0.55rem;
   color: var(--fe-green);
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 850;
 }
 .order-card strong {
@@ -618,8 +645,11 @@
 }
 .order-card button,
 .text-button {
+  display: inline-flex;
+  min-height: var(--fe-touch);
+  align-items: center;
   color: var(--fe-green);
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 850;
 }
 .order-actions {
@@ -631,7 +661,7 @@
 .order-actions button:last-child {
   border-radius: 999px;
   background: var(--fe-green-soft);
-  padding: 0.35rem 0.55rem;
+  padding: 0.5rem 0.7rem;
 }
 .profile-hero {
   display: flex;
@@ -694,13 +724,15 @@
 .profile-link small {
   margin-top: 0.15rem;
   color: var(--fe-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 .profile-link > svg {
   color: #98a39d;
 }
 .back-button {
   display: inline-flex;
+  min-height: var(--fe-touch);
   align-items: center;
   gap: 0.35rem;
   margin-bottom: 1rem;
@@ -798,7 +830,7 @@
 }
 .timeline-item small {
   color: var(--fe-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .choice {
@@ -820,7 +852,8 @@
 }
 .choice small {
   color: var(--fe-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 .choice.active {
   border-color: #4b9363;
@@ -1029,7 +1062,7 @@
 .form-card input,
 .form-card select,
 .form-card textarea {
-  min-height: 2.8rem;
+  min-height: 3rem;
   border: 1px solid var(--fe-border);
   border-radius: var(--fe-radius-sm);
   padding: 0 0.8rem;
@@ -1083,9 +1116,10 @@
 .payment-list small,
 .wallet-card p {
   color: var(--fe-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 .payment-list button {
+  min-height: var(--fe-touch);
   border-radius: 0.7rem;
   background: var(--fe-green-soft);
   padding: 0.5rem 0.65rem;
@@ -1394,5 +1428,25 @@ html.compact-product-cards .product-card .stock {
 
   .hero-illustration:hover .hero-illustration__icon--location {
     translate: 2px 2px;
+  }
+}
+
+@media (hover: hover) {
+  .profile-link,
+  .order-card,
+  .choice,
+  .payment-list article {
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      background 0.18s ease;
+  }
+
+  .profile-link:hover,
+  .order-card:hover,
+  .choice:hover:not(:disabled),
+  .payment-list article:hover {
+    border-color: color-mix(in srgb, var(--fe-green) 24%, var(--fe-border));
+    box-shadow: var(--fe-shadow-card);
   }
 }
