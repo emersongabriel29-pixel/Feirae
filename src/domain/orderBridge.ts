@@ -10,7 +10,8 @@ export type UnifiedOrderStatus =
   | "delivered"
   | "cancelled";
 
-export type UnifiedPaymentStatus = "authorized" | "due_on_delivery" | "failed" | "refunded";
+export type UnifiedPaymentStatus =
+  "authorized" | "due_on_delivery" | "failed" | "refund_pending" | "partially_refunded" | "refunded";
 
 export type UnifiedVendorStatus =
   "pending" | "accepted" | "preparing" | "ready" | "collected" | "delivered" | "rejected";
@@ -29,6 +30,7 @@ export type UnifiedOrderItem = {
   actualWeightKg?: number;
   unavailable?: boolean;
   note?: string;
+  cancelled?: boolean;
 };
 
 export type UnifiedOrderVendor = {
@@ -37,6 +39,13 @@ export type UnifiedOrderVendor = {
   vendorName: string;
   status: UnifiedVendorStatus;
   productIds: number[];
+  cancelReason?: string;
+};
+
+export type UnifiedPickupStop = {
+  vendorId: string;
+  storeId: string;
+  vendorName: string;
 };
 
 export type UnifiedOrderEvent = {
@@ -56,6 +65,30 @@ export type UnifiedSupportTicket = {
   createdAt: string;
   priority: "normal" | "urgent";
   status: "open" | "resolved";
+};
+
+export type UnifiedOrderRefund = {
+  id: string;
+  vendorId?: string;
+  vendorName?: string;
+  reason: string;
+  merchandiseAmount: number;
+  deliveryAmount: number;
+  externalAmount: number;
+  walletRestoreAmount: number;
+  amount: number;
+  destination?: "original_payment" | "wallet";
+  status: "pending_choice" | "requested" | "credited";
+  createdAt: string;
+};
+
+export type UnifiedVendorFinancial = {
+  vendorId: string;
+  storeId: string;
+  vendorName: string;
+  merchandiseSubtotal: number;
+  promotionDiscount: number;
+  netMerchandise: number;
 };
 
 export type UnifiedReview = {
@@ -84,6 +117,7 @@ export type UnifiedOrderRecord = {
   paymentStatus?: UnifiedPaymentStatus;
   whatsappConsent?: boolean;
   refundAmount?: number;
+  refunds?: UnifiedOrderRefund[];
   changeFor?: number;
   subtotal: number;
   promotionDiscount?: number;
@@ -94,6 +128,13 @@ export type UnifiedOrderRecord = {
   total: number;
   items: UnifiedOrderItem[];
   vendors?: UnifiedOrderVendor[];
+  vendorFinancials?: UnifiedVendorFinancial[];
+  deliveryPricing?: {
+    baseFee: number;
+    extraStopFee: number;
+    originalVendorCount: number;
+    currentVendorCount: number;
+  };
   status: UnifiedOrderStatus;
   cancelReason?: string;
   cancelDetails?: string;
@@ -112,6 +153,7 @@ export type UnifiedOrderRecord = {
     totalKm: number;
     etaMinutes: number;
     source: "routing_provider" | "local_fixture" | "osrm";
+    pickupStops?: UnifiedPickupStop[];
   };
   events: UnifiedOrderEvent[];
   supportTickets?: UnifiedSupportTicket[];
@@ -152,8 +194,22 @@ function normalizeOrder(order: UnifiedOrderRecord): UnifiedOrderRecord {
           productIds: items.filter((item) => item.vendorId === vendorId).map((item) => item.productId),
         };
       });
+  const activeVendorIds = new Set(
+    vendors.filter((vendor) => vendor.status !== "rejected").map((vendor) => vendor.vendorId),
+  );
+  const route = order.route
+    ? {
+        ...order.route,
+        pickupStops: (order.route.pickupStops?.length
+          ? order.route.pickupStops
+          : vendors.map(({ vendorId, storeId, vendorName }) => ({ vendorId, storeId, vendorName }))
+        ).filter((stop) => activeVendorIds.has(stop.vendorId)),
+      }
+    : undefined;
+
   return {
     ...order,
+    route,
     paymentStatus:
       order.paymentStatus ??
       (order.paymentMethod?.toLocaleLowerCase("pt-BR").includes("entrega")
@@ -161,6 +217,7 @@ function normalizeOrder(order: UnifiedOrderRecord): UnifiedOrderRecord {
         : "authorized"),
     items,
     vendors,
+    refunds: order.refunds ?? [],
     supportTickets: order.supportTickets ?? [],
     reviews: order.reviews ?? [],
   };
@@ -230,26 +287,27 @@ export function patchUnifiedOrder(
 }
 
 function overallVendorStatus(order: UnifiedOrderRecord, vendors: UnifiedOrderVendor[]) {
-  if (vendors.some((vendor) => vendor.status === "rejected")) return "cancelled" as const;
   if (order.status === "delivered" || order.status === "cancelled") return order.status;
+  const activeVendors = vendors.filter((vendor) => vendor.status !== "rejected");
+  if (vendors.length && activeVendors.length === 0) return "cancelled" as const;
   if (["driver_assigned", "collected", "out_for_delivery"].includes(order.status)) return order.status;
   if (
     order.fulfillment === "pickup" &&
-    vendors.length &&
-    vendors.every((vendor) => vendor.status === "delivered")
+    activeVendors.length &&
+    activeVendors.every((vendor) => vendor.status === "delivered")
   ) {
     return "delivered" as const;
   }
   if (
     order.fulfillment === "pickup" &&
-    vendors.some((vendor) => vendor.status === "delivered") &&
-    vendors.every((vendor) => ["ready", "delivered"].includes(vendor.status))
+    activeVendors.some((vendor) => vendor.status === "delivered") &&
+    activeVendors.every((vendor) => ["ready", "delivered"].includes(vendor.status))
   ) {
     return "ready_for_pickup" as const;
   }
-  if (vendors.length && vendors.every((vendor) => vendor.status === "ready"))
+  if (activeVendors.length && activeVendors.every((vendor) => vendor.status === "ready"))
     return "ready_for_pickup" as const;
-  if (vendors.some((vendor) => ["accepted", "preparing", "ready"].includes(vendor.status))) {
+  if (activeVendors.some((vendor) => ["accepted", "preparing", "ready"].includes(vendor.status))) {
     return "preparing" as const;
   }
   return "received" as const;
@@ -275,6 +333,218 @@ export function patchVendorStatus(
         status: overallVendorStatus(normalized, vendors),
         updatedAt: new Date().toISOString(),
         events: event ? [...normalized.events, event] : normalized.events,
+      };
+    }),
+  );
+}
+
+export type VendorCancellationResult = {
+  productIds: number[];
+  refund: UnifiedOrderRefund | null;
+  remainingVendorCount: number;
+  orderCancelled: boolean;
+};
+
+export function cancelVendorParticipation(
+  orderId: string,
+  vendorId: string,
+  reason: string,
+): VendorCancellationResult | null {
+  const current = readRawOrders();
+  let result: VendorCancellationResult | null = null;
+
+  writeUnifiedOrders(
+    current.map((order) => {
+      if (order.id !== orderId) return order;
+      const normalized = normalizeOrder(order);
+      const vendor = normalized.vendors?.find((item) => item.vendorId === vendorId);
+      if (
+        !vendor ||
+        vendor.status === "rejected" ||
+        vendor.status === "collected" ||
+        vendor.status === "delivered"
+      ) {
+        return normalized;
+      }
+
+      const cancelledItems = normalized.items.filter((item) => item.vendorId === vendorId && !item.cancelled);
+      const merchandiseSubtotal =
+        normalized.vendorFinancials?.find((item) => item.vendorId === vendorId)?.merchandiseSubtotal ??
+        cancelledItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      const allocatedPromotionDiscount =
+        normalized.vendorFinancials?.find((item) => item.vendorId === vendorId)?.promotionDiscount ?? 0;
+      const netMerchandise = Math.max(0, merchandiseSubtotal - allocatedPromotionDiscount);
+
+      const vendors = normalized.vendors!.map((item) =>
+        item.vendorId === vendorId ? { ...item, status: "rejected" as const, cancelReason: reason } : item,
+      );
+      const remainingVendorCount = vendors.filter((item) => item.status !== "rejected").length;
+      const deliveryPricing = normalized.deliveryPricing;
+      const nextCalculatedDeliveryFee =
+        remainingVendorCount === 0
+          ? 0
+          : deliveryPricing
+            ? Math.round(
+                (deliveryPricing.baseFee +
+                  Math.max(0, remainingVendorCount - 1) * deliveryPricing.extraStopFee) *
+                  100,
+              ) / 100
+            : normalized.calculatedDeliveryFee;
+      const nextDeliverySubsidy = Math.min(normalized.deliverySubsidy, nextCalculatedDeliveryFee);
+      const nextCustomerDeliveryFee = Math.max(0, nextCalculatedDeliveryFee - nextDeliverySubsidy);
+      const deliveryAmount = Math.max(
+        0,
+        Math.round((normalized.customerDeliveryFee - nextCustomerDeliveryFee) * 100) / 100,
+      );
+
+      const nextSubtotal = Math.max(0, normalized.subtotal - merchandiseSubtotal);
+      const nextPromotionDiscount = Math.max(
+        0,
+        (normalized.promotionDiscount ?? 0) - allocatedPromotionDiscount,
+      );
+      const nextBeforeWallet = Math.max(0, nextSubtotal - nextPromotionDiscount + nextCustomerDeliveryFee);
+      const previousWalletUsed = normalized.walletUsed ?? 0;
+      const nextWalletUsed = Math.min(previousWalletUsed, nextBeforeWallet);
+      const walletRestoreAmount = Math.max(0, Math.round((previousWalletUsed - nextWalletUsed) * 100) / 100);
+      const nextTotal = Math.max(0, Math.round((nextBeforeWallet - nextWalletUsed) * 100) / 100);
+      const externalAmount =
+        normalized.paymentStatus === "due_on_delivery"
+          ? 0
+          : Math.max(0, Math.round((normalized.total - nextTotal) * 100) / 100);
+      const amount = Math.round((externalAmount + walletRestoreAmount) * 100) / 100;
+      const refund: UnifiedOrderRefund | null =
+        amount > 0
+          ? {
+              id: `refund-${orderId}-${vendorId}-${Date.now()}`,
+              vendorId,
+              vendorName: vendor.vendorName,
+              reason,
+              merchandiseAmount: Math.round(netMerchandise * 100) / 100,
+              deliveryAmount,
+              externalAmount,
+              walletRestoreAmount,
+              amount,
+              status: externalAmount > 0 ? "pending_choice" : "credited",
+              createdAt: new Date().toISOString(),
+            }
+          : null;
+
+      const derivedStatus = overallVendorStatus(normalized, vendors);
+      const remainingVendors = vendors.filter((item) => item.status !== "rejected");
+      const nextStatus =
+        normalized.fulfillment === "delivery" &&
+        normalized.status === "driver_assigned" &&
+        remainingVendors.length > 0 &&
+        remainingVendors.every((item) => item.status === "collected")
+          ? ("collected" as const)
+          : derivedStatus;
+      const orderCancelled = nextStatus === "cancelled";
+      result = {
+        productIds: vendor.productIds,
+        refund,
+        remainingVendorCount,
+        orderCancelled,
+      };
+
+      return normalizeOrder({
+        ...normalized,
+        vendors,
+        items: normalized.items.map((item) =>
+          item.vendorId === vendorId ? { ...item, cancelled: true } : item,
+        ),
+        subtotal: nextSubtotal,
+        promotionDiscount: nextPromotionDiscount,
+        walletUsed: nextWalletUsed,
+        calculatedDeliveryFee: nextCalculatedDeliveryFee,
+        deliverySubsidy: nextDeliverySubsidy,
+        customerDeliveryFee: nextCustomerDeliveryFee,
+        total: nextTotal,
+        paymentStatus:
+          normalized.paymentStatus === "due_on_delivery"
+            ? normalized.paymentStatus
+            : externalAmount > 0
+              ? "refund_pending"
+              : walletRestoreAmount > 0
+                ? orderCancelled
+                  ? "refunded"
+                  : "partially_refunded"
+                : normalized.paymentStatus,
+        refundAmount: Math.round(((normalized.refundAmount ?? 0) + amount) * 100) / 100,
+        refunds: refund ? [...(normalized.refunds ?? []), refund] : normalized.refunds,
+        deliveryPricing: deliveryPricing
+          ? { ...deliveryPricing, currentVendorCount: remainingVendorCount }
+          : normalized.deliveryPricing,
+        status: nextStatus,
+        updatedAt: new Date().toISOString(),
+        events: [
+          ...normalized.events,
+          eventNow(
+            orderCancelled ? "vendor-cancelled-order" : "vendor-cancelled-partial",
+            orderCancelled
+              ? `${vendor.vendorName} cancelou a última parte do pedido`
+              : `${vendor.vendorName} saiu do pedido`,
+            "vendor",
+            { reason },
+          ),
+        ],
+      });
+    }),
+  );
+
+  return result;
+}
+
+export function resolveRefundDestination(
+  orderId: string,
+  refundId: string,
+  destination: "original_payment" | "wallet",
+) {
+  const current = readRawOrders();
+  writeUnifiedOrders(
+    current.map((order) => {
+      if (order.id !== orderId) return order;
+      const normalized = normalizeOrder(order);
+      const target = (normalized.refunds ?? []).find((refund) => refund.id === refundId);
+      const nextRefunds = (normalized.refunds ?? []).map((refund) =>
+        refund.id === refundId && refund.status === "pending_choice"
+          ? {
+              ...refund,
+              destination,
+              status: destination === "wallet" ? ("credited" as const) : ("requested" as const),
+            }
+          : refund,
+      );
+      const hasPendingExternalRefund = nextRefunds.some(
+        (refund) =>
+          refund.externalAmount > 0 && (refund.status === "pending_choice" || refund.status === "requested"),
+      );
+      const hasResolvedRefund = nextRefunds.some(
+        (refund) => refund.status === "credited" || refund.destination === "original_payment",
+      );
+      return {
+        ...normalized,
+        updatedAt: new Date().toISOString(),
+        refunds: nextRefunds,
+        paymentStatus:
+          target?.status !== "pending_choice"
+            ? normalized.paymentStatus
+            : hasPendingExternalRefund
+              ? "refund_pending"
+              : normalized.status === "cancelled"
+                ? "refunded"
+                : hasResolvedRefund
+                  ? "partially_refunded"
+                  : normalized.paymentStatus,
+        events: [
+          ...normalized.events,
+          eventNow(
+            destination === "wallet" ? "refund-wallet" : "refund-original-payment",
+            destination === "wallet"
+              ? "Reembolso direcionado para a carteira Feiraê"
+              : "Estorno solicitado no meio de pagamento original",
+            "customer",
+          ),
+        ],
       };
     }),
   );

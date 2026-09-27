@@ -128,7 +128,7 @@ todas as bancas delivered
 → order delivered
 ```
 
-Uma banca não pode encerrar sozinha o pedido global de retirada quando existem outras bancas pendentes.
+Uma banca não pode encerrar sozinha o pedido global quando existem outras bancas ativas. Em cancelamento parcial, a banca vira `rejected`; itens dessa participação ficam marcados como cancelados e o estado global é derivado apenas das bancas restantes.
 
 ## 4. Pagamento
 
@@ -138,8 +138,12 @@ Frontend:
 authorized
 due_on_delivery
 failed
+refund_pending
+partially_refunded
 refunded
 ```
+
+O pedido também pode manter `refunds[]` por ajuste, com valor de mercadoria, ajuste de frete, restauração de carteira, valor externo, destino e status.
 
 SQL:
 

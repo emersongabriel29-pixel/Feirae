@@ -41,6 +41,7 @@ Um documento de requisito não é prova de implementação.
 
 - [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) — comportamento atual e limites.
 - [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido e entrega.
+- [MULTI_VENDOR_ORDERS.md](MULTI_VENDOR_ORDERS.md) — regra oficial de sacola por feira, mínimo por banca, frete e coleta multi-stop.
 - [NOTIFICATIONS.md](NOTIFICATIONS.md) — alertas operacionais, identidade Feiraê e limite do Web Push atual.
 - [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md) — termos de Feirante/Entregador, LGPD, assinatura e base legal.
 - [CUSTOMER_LEGAL_TERMS.md](CUSTOMER_LEGAL_TERMS.md) — Termos de Uso, Aviso de Privacidade e aceite no cadastro do Cliente.
@@ -64,6 +65,7 @@ Um documento de requisito não é prova de implementação.
 - [ADMIN_MANAGEMENT_SPEC.md](ADMIN_MANAGEMENT_SPEC.md)
 - [ONBOARDING_AND_APPROVAL.md](ONBOARDING_AND_APPROVAL.md)
 - [MONEY_FLOW.md](MONEY_FLOW.md)
+- [REFUND_CANCELLATION_POLICY.md](REFUND_CANCELLATION_POLICY.md) — cancelamento parcial, estorno, carteira e base legal.
 - [LGPD_AND_PRIVACY.md](LGPD_AND_PRIVACY.md)
 
 ## Planejamento

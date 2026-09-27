@@ -29,6 +29,7 @@ import { fairs } from "../data";
 import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
 import { cartWeight, productWeight } from "../domain/marketplace";
+import { MIN_VENDOR_ORDER_AMOUNT, vendorOrderSummaries } from "../domain/multiVendor";
 import type { LegalAcceptance, LegalTerm } from "../domain/legalTerms";
 import {
   customerPrivacyNotice,
@@ -1115,6 +1116,8 @@ export function CartDrawer({
   const totalWeight = cartWeight(items, cart);
   const fairName = items[0]?.fair ?? "";
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
+  const vendorSummaries = vendorOrderSummaries(items, cart);
+  const minimumMet = vendorSummaries.every((summary) => summary.meetsMinimum);
   return (
     <div
       className="drawer-backdrop"
@@ -1206,13 +1209,31 @@ export function CartDrawer({
                 valor estimado.
               </small>
             )}
+            <div className="surface-card">
+              <span className="eyebrow">Pedido mínimo por banca</span>
+              {vendorSummaries.map((summary) => (
+                <p key={summary.vendorName}>
+                  <span>{summary.vendorName}</span>
+                  <b>
+                    {money(summary.subtotal)} ·{" "}
+                    {summary.meetsMinimum ? "mínimo atingido" : `faltam ${money(summary.missingForMinimum)}`}
+                  </b>
+                </p>
+              ))}
+              <small>Mínimo de {money(MIN_VENDOR_ORDER_AMOUNT)} em produtos de cada banca.</small>
+            </div>
             <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>
             </p>
-            <button onClick={onCheckout} className="primary-action w-full">
+            <button onClick={onCheckout} disabled={!minimumMet} className="primary-action w-full">
               Continuar para checkout
             </button>
+            {!minimumMet && (
+              <small>
+                Complete o pedido mínimo de {money(MIN_VENDOR_ORDER_AMOUNT)} em cada banca para continuar.
+              </small>
+            )}
           </div>
         )}
       </aside>

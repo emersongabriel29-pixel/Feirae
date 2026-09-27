@@ -49,6 +49,11 @@ import {
 } from "./domain/marketplaceBridge";
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
+import {
+  MULTI_VENDOR_EXTRA_STOP_FEE,
+  allocatePromotionAcrossVendors,
+  multiVendorMinimumMet,
+} from "./domain/multiVendor";
 import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 import {
@@ -400,6 +405,10 @@ export default function App() {
       changeFor?: number;
     },
   ) {
+    if (!multiVendorMinimumMet(cartProducts, cart)) {
+      notify("Cada banca precisa atingir o pedido mínimo de R$ 30,00 antes de confirmar.");
+      return;
+    }
     const id = `FE-${String(Date.now()).slice(-8)}`;
     const reservation = reserveInventory(id, products, cart);
     if (!reservation.ok) {
@@ -454,6 +463,30 @@ export default function App() {
       deliverySubsidy: details.deliverySubsidy,
       customerDeliveryFee: details.customerDeliveryFee,
       total,
+      vendorFinancials: allocatePromotionAcrossVendors(cartProducts, cart, details.promotionDiscount).map(
+        (summary) => {
+          const product = cartProducts.find((item) => item.feirante === summary.vendorName)!;
+          return {
+            vendorId: product.vendorId ?? vendorIdFor(product.feirante),
+            storeId: product.storeId ?? storeIdFor(product.fair, product.feirante),
+            vendorName: summary.vendorName,
+            merchandiseSubtotal: summary.subtotal,
+            promotionDiscount: summary.promotionDiscount,
+            netMerchandise: summary.netMerchandise,
+          };
+        },
+      ),
+      deliveryPricing: {
+        baseFee: Math.max(
+          0,
+          details.calculatedDeliveryFee -
+            Math.max(0, new Set(cartProducts.map((product) => product.feirante)).size - 1) *
+              MULTI_VENDOR_EXTRA_STOP_FEE,
+        ),
+        extraStopFee: MULTI_VENDOR_EXTRA_STOP_FEE,
+        originalVendorCount: new Set(cartProducts.map((product) => product.feirante)).size,
+        currentVendorCount: new Set(cartProducts.map((product) => product.feirante)).size,
+      },
       items: cartProducts.map((product) => ({
         productId: product.id,
         name: product.name,
@@ -532,19 +565,51 @@ export default function App() {
     );
     const unifiedOrder = readUnifiedOrders(session?.email).find((order) => order.id === orderId);
     releaseInventory(orderId);
-    const shouldRefund = unifiedOrder?.paymentStatus === "authorized";
+    const externalRefund =
+      unifiedOrder?.paymentStatus === "authorized" ||
+      unifiedOrder?.paymentStatus === "partially_refunded" ||
+      unifiedOrder?.paymentStatus === "refund_pending"
+        ? (unifiedOrder.total ?? 0)
+        : 0;
+    const walletRestore = unifiedOrder?.walletUsed ?? 0;
+    const refundAmount = Math.round((externalRefund + walletRestore) * 100) / 100;
+    const refund =
+      unifiedOrder && refundAmount > 0
+        ? {
+            id: `refund-${orderId}-full-${Date.now()}`,
+            reason,
+            merchandiseAmount: Math.max(
+              0,
+              Math.round((unifiedOrder.subtotal - (unifiedOrder.promotionDiscount ?? 0)) * 100) / 100,
+            ),
+            deliveryAmount: unifiedOrder.customerDeliveryFee,
+            externalAmount: externalRefund,
+            walletRestoreAmount: walletRestore,
+            amount: refundAmount,
+            status: externalRefund > 0 ? ("pending_choice" as const) : ("credited" as const),
+            createdAt: new Date().toISOString(),
+          }
+        : null;
     patchUnifiedOrder(
       orderId,
       {
         status: "cancelled",
         cancelReason: reason,
         cancelDetails: details,
-        paymentStatus: shouldRefund ? "refunded" : unifiedOrder?.paymentStatus,
-        refundAmount: shouldRefund ? unifiedOrder?.total : unifiedOrder?.refundAmount,
+        total: 0,
+        walletUsed: 0,
+        paymentStatus:
+          externalRefund > 0
+            ? "refund_pending"
+            : walletRestore > 0
+              ? "refunded"
+              : unifiedOrder?.paymentStatus,
+        refundAmount: Math.round(((unifiedOrder?.refundAmount ?? 0) + refundAmount) * 100) / 100,
+        refunds: refund ? [...(unifiedOrder?.refunds ?? []), refund] : unifiedOrder?.refunds,
       },
       eventNow(
         "cancelled",
-        shouldRefund ? "Pedido cancelado · reembolso liberado" : "Pedido cancelado",
+        refund ? "Pedido cancelado · escolha o destino do reembolso" : "Pedido cancelado",
         "customer",
         { reason, details },
       ),

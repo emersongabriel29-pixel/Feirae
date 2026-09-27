@@ -2,9 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   appendReview,
   appendSupportTicket,
+  cancelVendorParticipation,
+  patchUnifiedOrder,
   patchUnifiedOrderItem,
   patchVendorStatus,
   readUnifiedOrders,
+  resolveRefundDestination,
   upsertUnifiedOrder,
 } from "./orderBridge";
 
@@ -30,6 +33,30 @@ describe("unified order bridge", () => {
       deliverySubsidy: 0,
       customerDeliveryFee: 10,
       total: 60,
+      vendorFinancials: [
+        {
+          vendorId: "vendor:a",
+          storeId: "store:a",
+          vendorName: "Banca A",
+          merchandiseSubtotal: 30,
+          promotionDiscount: 0,
+          netMerchandise: 30,
+        },
+        {
+          vendorId: "vendor:b",
+          storeId: "store:b",
+          vendorName: "Banca B",
+          merchandiseSubtotal: 20,
+          promotionDiscount: 0,
+          netMerchandise: 20,
+        },
+      ],
+      deliveryPricing: {
+        baseFee: 7.5,
+        extraStopFee: 2.5,
+        originalVendorCount: 2,
+        currentVendorCount: 2,
+      },
       items: [
         {
           productId: 1,
@@ -97,6 +124,179 @@ describe("unified order bridge", () => {
 
     patchVendorStatus("FE-MULTI", "vendor:b", "delivered");
     expect(readUnifiedOrders()[0].status).toBe("delivered");
+  });
+
+  it("keeps delivery in collection until every vendor stop is confirmed", () => {
+    seedOrder();
+    patchVendorStatus("FE-MULTI", "vendor:a", "ready");
+    patchVendorStatus("FE-MULTI", "vendor:b", "ready");
+    patchUnifiedOrder("FE-MULTI", { status: "driver_assigned" });
+
+    patchVendorStatus("FE-MULTI", "vendor:a", "collected");
+    let order = readUnifiedOrders()[0];
+    expect(order.status).toBe("driver_assigned");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:a")?.status).toBe("collected");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:b")?.status).toBe("ready");
+
+    patchVendorStatus("FE-MULTI", "vendor:b", "collected");
+    order = readUnifiedOrders()[0];
+    expect(order.status).toBe("driver_assigned");
+
+    patchUnifiedOrder("FE-MULTI", { status: "collected" });
+    expect(readUnifiedOrders()[0].status).toBe("collected");
+  });
+
+  it("derives ordered pickup stops for a multi-vendor route", () => {
+    seedOrder();
+    patchUnifiedOrder("FE-MULTI", {
+      route: {
+        toVendorKm: 2,
+        vendorToCustomerKm: 5,
+        totalKm: 7,
+        etaMinutes: 25,
+        source: "osrm",
+      },
+    });
+
+    expect(readUnifiedOrders()[0].route?.pickupStops).toEqual([
+      { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A" },
+      { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B" },
+    ]);
+  });
+
+  it("keeps the remaining bank active and recalculates refund and freight after one bank cancels", () => {
+    seedOrder();
+    patchUnifiedOrder("FE-MULTI", {
+      route: {
+        toVendorKm: 2,
+        vendorToCustomerKm: 5,
+        totalKm: 7,
+        etaMinutes: 25,
+        source: "osrm",
+        pickupStops: [
+          { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A" },
+          { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B" },
+        ],
+      },
+    });
+
+    const result = cancelVendorParticipation("FE-MULTI", "vendor:b", "Sem estoque");
+    const order = readUnifiedOrders()[0];
+
+    expect(result?.orderCancelled).toBe(false);
+    expect(order.status).toBe("received");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:b")?.status).toBe("rejected");
+    expect(order.items.find((item) => item.vendorId === "vendor:b")?.cancelled).toBe(true);
+    expect(order.calculatedDeliveryFee).toBe(7.5);
+    expect(order.customerDeliveryFee).toBe(7.5);
+    expect(order.subtotal).toBe(30);
+    expect(order.total).toBe(37.5);
+    expect(order.refunds?.[0].amount).toBe(22.5);
+    expect(order.refunds?.[0].status).toBe("pending_choice");
+    expect(order.route?.pickupStops?.map((stop) => stop.vendorName)).toEqual(["Banca A"]);
+
+    resolveRefundDestination("FE-MULTI", order.refunds![0].id, "wallet");
+    const resolved = readUnifiedOrders()[0];
+    expect(resolved.refunds?.[0].destination).toBe("wallet");
+    expect(resolved.refunds?.[0].status).toBe("credited");
+    expect(resolved.paymentStatus).toBe("partially_refunded");
+  });
+
+  it("moves to collected when the cancelled bank was the last uncollected stop", () => {
+    seedOrder();
+    patchVendorStatus("FE-MULTI", "vendor:a", "ready");
+    patchVendorStatus("FE-MULTI", "vendor:b", "ready");
+    patchUnifiedOrder("FE-MULTI", { status: "driver_assigned" });
+    patchVendorStatus("FE-MULTI", "vendor:a", "collected");
+
+    cancelVendorParticipation("FE-MULTI", "vendor:b", "Não consegue atender");
+
+    const order = readUnifiedOrders()[0];
+    expect(order.status).toBe("collected");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:a")?.status).toBe("collected");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:b")?.status).toBe("rejected");
+  });
+
+  it("keeps refund_pending while another vendor refund still awaits a destination", () => {
+    seedOrder();
+    const current = readUnifiedOrders()[0];
+    patchUnifiedOrder("FE-MULTI", {
+      subtotal: 80,
+      calculatedDeliveryFee: 12.5,
+      customerDeliveryFee: 12.5,
+      total: 92.5,
+      items: [
+        ...current.items,
+        {
+          productId: 3,
+          name: "Frutas",
+          vendor: "Banca C",
+          vendorId: "vendor:c",
+          storeId: "store:c",
+          quantity: 1,
+          unit: "cesta",
+          unitPrice: 30,
+          weightKg: 2,
+        },
+      ],
+      vendors: [
+        ...(current.vendors ?? []),
+        {
+          vendorId: "vendor:c",
+          storeId: "store:c",
+          vendorName: "Banca C",
+          status: "pending",
+          productIds: [3],
+        },
+      ],
+      vendorFinancials: [
+        ...(current.vendorFinancials ?? []),
+        {
+          vendorId: "vendor:c",
+          storeId: "store:c",
+          vendorName: "Banca C",
+          merchandiseSubtotal: 30,
+          promotionDiscount: 0,
+          netMerchandise: 30,
+        },
+      ],
+      deliveryPricing: {
+        baseFee: 7.5,
+        extraStopFee: 2.5,
+        originalVendorCount: 3,
+        currentVendorCount: 3,
+      },
+    });
+
+    cancelVendorParticipation("FE-MULTI", "vendor:b", "Sem estoque");
+    cancelVendorParticipation("FE-MULTI", "vendor:c", "Fechou mais cedo");
+
+    let order = readUnifiedOrders()[0];
+    expect(order.refunds).toHaveLength(2);
+    const [firstRefund, secondRefund] = order.refunds!;
+
+    resolveRefundDestination("FE-MULTI", firstRefund.id, "wallet");
+    order = readUnifiedOrders()[0];
+    expect(order.paymentStatus).toBe("refund_pending");
+
+    resolveRefundDestination("FE-MULTI", secondRefund.id, "wallet");
+    order = readUnifiedOrders()[0];
+    expect(order.paymentStatus).toBe("partially_refunded");
+  });
+
+  it("does not cancel a vendor participation after its handoff was collected", () => {
+    seedOrder();
+    patchVendorStatus("FE-MULTI", "vendor:a", "ready");
+    patchVendorStatus("FE-MULTI", "vendor:b", "ready");
+    patchUnifiedOrder("FE-MULTI", { status: "driver_assigned" });
+    patchVendorStatus("FE-MULTI", "vendor:a", "collected");
+
+    const result = cancelVendorParticipation("FE-MULTI", "vendor:a", "Tentativa tardia");
+    const order = readUnifiedOrders()[0];
+
+    expect(result).toBeNull();
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:a")?.status).toBe("collected");
+    expect(order.items.find((item) => item.vendorId === "vendor:a")?.cancelled).not.toBe(true);
   });
 
   it("propagates actual separated weight to logistics", () => {
