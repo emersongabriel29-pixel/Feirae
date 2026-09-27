@@ -113,22 +113,26 @@ Não há SDK de mapas instalado.
 
 ## Frete atual
 
-O checkout não usa a rota para formar o preço.
+O checkout não usa a geometria da rota para formar o preço.
 
-`CustomerScreens.tsx` calcula:
+`CustomerScreens.tsx` + `multiVendor.ts` calculam:
 
 1. pega as bancas do carrinho;
 2. lê `vendorMetrics.deliveryFee`;
-3. usa o maior valor como `fallbackDeliveryFee`;
-4. só transforma esse fallback em `calculatedDeliveryFee` quando existe endereço de entrega;
-5. sem endereço, o checkout mostra **A calcular** e não soma frete ao total;
-6. aplica subsídio/promoção somente sobre o frete já liberado.
+3. usa o maior valor como frete-base;
+4. soma R$ 2,50 por banca adicional;
+5. só libera esse valor quando existe endereço de entrega;
+6. sem endereço, mostra **A calcular**;
+7. aplica subsídio/promoção sobre o frete liberado.
+
+Em cancelamento parcial, `orderBridge.ts::cancelVendorParticipation()` reduz o adicional conforme o número restante de bancas.
 
 Portanto:
 
 - rota e ETA existem para logística;
-- preço de frete ainda é fixture/métrica local;
-- peso não altera o preço do frete atual;
+- preço-base ainda é fixture/métrica local;
+- adicional multi-banca é constante MVP e deve migrar para configuração administrativa;
+- peso define compatibilidade de veículo, mas ainda não altera o preço;
 - retirada usa frete zero.
 
 ## Capacidades de veículo atuais
@@ -210,18 +214,18 @@ Não faz:
 Contagem real:
 
 - `App.test.tsx`: 53;
-- `orderBridge.test.ts`: 7;
-- `multiVendor.test.ts`: 4;
+- `orderBridge.test.ts`: 8;
+- `multiVendor.test.ts`: 7;
 - `feiraeNotifications.test.ts`: 5;
 - `legalTerms.test.ts`: 8;
 - `marketplaceBridge.test.ts`: 4;
-- `inventoryBridge.test.ts`: 3;
+- `inventoryBridge.test.ts`: 4;
 - `localAuth.test.ts`: 4;
 - `marketplace.test.ts`: 4;
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **99**.
+Total: **104**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
@@ -302,3 +306,15 @@ Limite: o aceite persiste em `localStorage` no protótipo. Produção precisa de
 - `App.test.tsx`: valida a nova hierarquia, identidade, filtros e textos críticos.
 
 A mudança é visual/UX e preserva as regras jurídicas e de aprovação implementadas anteriormente.
+
+
+## Multi-banca, mínimo e reembolsos — 27/09/2026
+
+- `multiVendor.ts`: uma feira por sacola, até 4 bancas, mínimo de R$ 30,00 por banca e adicional de R$ 2,50 por coleta extra;
+- `CartDrawer`: mostra subtotal/mínimo de cada banca e bloqueia avanço se alguma estiver abaixo do mínimo;
+- `VendorStore`: informa o pedido mínimo ao abrir a banca;
+- `CustomerScreens.tsx::Checkout`: revalida mínimo e discrimina frete-base/coletas adicionais;
+- `orderBridge.ts`: `vendorFinancials`, `deliveryPricing`, `refunds`, cancelamento parcial e escolha do destino do reembolso;
+- `inventoryBridge.ts`: libera somente os itens da banca cancelada;
+- `DeliveryScreens.tsx`: remove banca cancelada de stops, itens e peso da corrida;
+- `REFUND_CANCELLATION_POLICY.md`: política funcional, jurídica e lacunas de PSP/ledger.
