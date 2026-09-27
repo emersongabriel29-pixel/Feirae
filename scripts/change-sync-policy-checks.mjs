@@ -13,18 +13,12 @@ test("requires a test when source behavior changes", () => {
 });
 
 test("requires TESTING_QA whenever tests change", () => {
-  const failures = evaluateChangedFiles([
-    "src/domain/operations.test.ts",
-    "docs/FUNCTIONAL_SPEC.md",
-  ]);
+  const failures = evaluateChangedFiles(["src/domain/operations.test.ts", "docs/FUNCTIONAL_SPEC.md"]);
   assert.ok(failures.some((failure) => failure.includes("docs/TESTING_QA.md")));
 });
 
 test("requires UI audit and design system for UI changes", () => {
-  const failures = evaluateChangedFiles([
-    "src/styles/customer.css",
-    "docs/UI_UX_PRO_MAX_GUARDRAILS.md",
-  ]);
+  const failures = evaluateChangedFiles(["src/styles/customer.css", "docs/UI_UX_PRO_MAX_GUARDRAILS.md"]);
   assert.ok(failures.some((failure) => failure.includes("docs/UI_INTERACTION_AUDIT.md")));
   assert.ok(failures.some((failure) => failure.includes("docs/DESIGN_SYSTEM.md")));
 });
