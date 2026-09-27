@@ -31,30 +31,31 @@ npm run build
 
 | Arquivo                                  |  Testes |
 | ---------------------------------------- | ------: |
-| `src/App.test.tsx`                       |      55 |
+| `src/App.test.tsx`                       |      56 |
 | `src/domain/orderBridge.test.ts`         |      11 |
 | `src/domain/feiraeNotifications.test.ts` |       6 |
 | `src/domain/legalTerms.test.ts`          |       8 |
 | `src/domain/customerLegal.test.ts`       |       4 |
 | `src/domain/marketplaceBridge.test.ts`   |       5 |
-| `src/domain/multiVendor.test.ts`         |       8 |
+| `src/domain/multiVendor.test.ts`         |      11 |
 | `src/domain/fairInternalRouting.test.ts` |       4 |
 | `src/domain/inventoryBridge.test.ts`     |       4 |
 | `src/domain/localAuth.test.ts`           |       4 |
 | `src/domain/marketplace.test.ts`         |       4 |
 | `src/domain/session.test.ts`             |       3 |
 | `src/utils.test.ts`                      |       4 |
-| **Total**                                | **123** |
+| **Total**                                | **127** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 55 testes cobrem explicitamente:
+Os 56 testes cobrem explicitamente:
 
 ### Cliente
 
 - abrir catálogo e acessar Início pela navegação principal;
-- bloquear checkout abaixo de R$ 30,00 por banca e liberar ao atingir o mínimo;
-- exibir o pedido mínimo ao abrir uma banca;
+- bloquear checkout quando uma banca não atinge o próprio mínimo e liberar ao atingir;
+- exibir o pedido mínimo configurado ao abrir uma banca;
+- permitir ao Feirante desativar o mínimo ou configurar outro valor;
 - concluir checkout demo;
 - não incluir frete no total antes de existir endereço de entrega;
 - ocultar ferramentas de busca/localização fora das telas de descoberta;
@@ -175,7 +176,20 @@ Os 55 testes cobrem explicitamente:
 - cupom válido e consumo;
 - Compre X Leve Y;
 - banca não aprovada fica oculta;
-- posição interna e código de coleta são sincronizados.
+- posição interna e código de coleta são sincronizados;
+- pedido mínimo configurado é publicado na banca;
+- desconto de promoção é separado por banca para a validação do mínimo.
+
+### multiVendor
+
+- fallback de R$ 30,00 para banca sem configuração explícita;
+- mínimo diferente por banca;
+- R$ 0,00 como ausência de mínimo;
+- desconto financiado pela banca reduz o valor elegível;
+- normalização e teto atual de R$ 100,00;
+- checkout libera somente quando todas as bancas atingem os próprios mínimos;
+- limite de quatro bancas e regra de uma feira por sacola;
+- cálculo do adicional de coleta e rateio promocional existente.
 
 ### inventoryBridge
 
@@ -191,7 +205,7 @@ Os 55 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 123 testes NÃO comprovam diretamente
+## 5. O que os 127 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
