@@ -110,10 +110,19 @@ export function HomePage({
           </div>
         </div>
         <div className="hero-illustration" aria-hidden="true">
-          <span>🥕</span>
-          <span>🥖</span>
-          <span>🧀</span>
-          <strong>🧺</strong>
+          <span className="hero-illustration__icon hero-illustration__icon--store">
+            <Store size={28} />
+          </span>
+          <span className="hero-illustration__icon hero-illustration__icon--bike">
+            <Bike size={28} />
+          </span>
+          <span className="hero-illustration__icon hero-illustration__icon--location">
+            <MapPin size={27} />
+          </span>
+          <strong className="hero-illustration__brand">
+            <img src="/feirae-mark.svg" alt="" />
+          </strong>
+          <i className="hero-illustration__route" />
         </div>
       </section>
       <section>
