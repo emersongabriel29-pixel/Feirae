@@ -17,9 +17,12 @@ import {
   XCircle,
 } from "lucide-react";
 import {
+  DocumentStatusTimeline,
+  DocumentsGuidanceCard,
   FeiraeNotificationCard,
   LegalTermSignatureCard,
   ModuleHeader,
+  PartnerDocumentsHero,
   OperationalOnboardingCard,
   OperationsMenu,
   Panel,
@@ -207,6 +210,7 @@ export function FeiranteOperations({
 }) {
   const unifiedOrderRevision = useUnifiedOrderRevision();
   const [active, setActive] = useState("Central");
+  const [documentFilter, setDocumentFilter] = useState("Todos");
   const [notificationPermission, setNotificationPermission] = useState(feiraeNotificationPermission());
   const seenVendorNotificationKeys = useRef<Set<string> | null>(null);
   const seedDemoData = session.email.endsWith("@feirae.test") && !session.isNewAccount;
@@ -527,6 +531,35 @@ export function FeiranteOperations({
         : documents.some((document) => document.status === "under_review")
           ? "Em análise"
           : "Documentação pendente";
+  const vendorRequiredDocuments = documents.filter((document) => document.required);
+  const vendorTermsSigned = vendorRequiredTerms.filter((term) =>
+    legalAcceptances.some(
+      (acceptance) =>
+        acceptance.termId === term.id &&
+        acceptance.role === "feirante" &&
+        acceptance.version === term.version,
+    ),
+  ).length;
+  const vendorDocumentsSent = vendorRequiredDocuments.filter((document) => Boolean(document.fileName)).length;
+  const vendorDocumentsApproved = vendorRequiredDocuments.filter(
+    (document) => document.status === "approved",
+  ).length;
+  const vendorPendingCount =
+    vendorRequiredTerms.length -
+    vendorTermsSigned +
+    vendorRequiredDocuments.filter((document) => document.status !== "approved").length;
+  const vendorDocumentProgress = Math.round(
+    ((vendorTermsSigned + vendorDocumentsApproved) /
+      Math.max(1, vendorRequiredTerms.length + vendorRequiredDocuments.length)) *
+      100,
+  );
+  const filteredVendorDocuments = documents.filter((document) => {
+    if (documentFilter === "Pendentes") return document.status === "pending";
+    if (documentFilter === "Em análise") return document.status === "under_review";
+    if (documentFilter === "Aprovados") return document.status === "approved";
+    if (documentFilter === "Correção necessária") return document.status === "correction_required";
+    return true;
+  });
   const vendorProfileReady = Boolean(
     bankProfile.name.trim() && bankProfile.fairName.trim() && bankProfile.box.trim(),
   );
@@ -2763,84 +2796,144 @@ export function FeiranteOperations({
               </>
             ) : active === "Documentos" ? (
               <>
-                <ModuleHeader
-                  badge={approvalStatus}
-                  title="Documentação e aprovação"
-                  description="Termos obrigatórios precisam ser assinados e documentos ficam em análise até a validação."
+                <PartnerDocumentsHero
+                  roleLabel="Feirante"
+                  status={approvalStatus}
+                  progress={vendorDocumentProgress}
+                  termsSigned={vendorTermsSigned}
+                  termsTotal={vendorRequiredTerms.length}
+                  documentsSent={vendorDocumentsSent}
+                  documentsApproved={vendorDocumentsApproved}
+                  documentsTotal={vendorRequiredDocuments.length}
+                  pendingCount={vendorPendingCount}
+                  onShowPending={() => setDocumentFilter("Pendentes")}
                 />
-                <div className="region-strip">
-                  <Check size={18} />
-                  <div>
-                    <b>Status do cadastro: {approvalStatus}</b>
-                    <p>
-                      Enquanto os termos vigentes não estiverem assinados e os documentos obrigatórios não
-                      estiverem aprovados, a banca não deve vender ou receber repasses no ambiente real.
-                    </p>
+
+                <section className="documents-section-block">
+                  <div className="documents-section-heading">
+                    <div>
+                      <span className="eyebrow">Termos jurídicos e privacidade</span>
+                      <h3>Termos obrigatórios</h3>
+                      <p>Leia cada versão com atenção. Mudanças materiais exigem uma nova assinatura.</p>
+                    </div>
+                    <span className="documents-counter">
+                      {vendorTermsSigned}/{vendorRequiredTerms.length} assinados
+                    </span>
                   </div>
-                </div>
-                <div className="legal-terms-stack">
-                  {vendorRequiredTerms.map((term) => (
-                    <LegalTermSignatureCard
-                      key={term.id}
-                      term={term}
-                      acceptance={legalAcceptances.find(
-                        (item) => item.termId === term.id && item.role === "feirante",
-                      )}
-                      signerName={vendorAccount.name || session.name}
-                      signerEmail={session.email}
-                      onSign={signVendorLegalTerm}
-                    />
-                  ))}
-                </div>
-                <div className="operation-list detailed">
-                  {documents.map((document) => (
-                    <article key={document.id}>
-                      <Upload />
-                      <div>
-                        <b>
-                          {document.name}
-                          {!document.required && " · quando aplicável"}
-                        </b>
-                        <small>{document.description}</small>
-                        {document.fileName && (
-                          <small>
-                            Arquivo: {document.file ? storedFileLabel(document.file) : document.fileName}
-                          </small>
+                  <div className="legal-terms-stack">
+                    {vendorRequiredTerms.map((term) => (
+                      <LegalTermSignatureCard
+                        key={term.id}
+                        term={term}
+                        acceptance={legalAcceptances.find(
+                          (item) => item.termId === term.id && item.role === "feirante",
                         )}
-                        {document.correctionReason && (
-                          <small>Correção solicitada: {document.correctionReason}</small>
-                        )}
-                      </div>
-                      <div className="item-actions">
-                        <span
-                          className={`document-status ${
-                            document.status === "approved"
-                              ? "status-approved"
-                              : document.status === "under_review"
-                                ? "status-review"
-                                : document.status === "correction_required"
-                                  ? "status-error"
-                                  : ""
-                          }`}
+                        signerName={vendorAccount.name || session.name}
+                        signerEmail={session.email}
+                        onSign={signVendorLegalTerm}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                <section className="documents-section-block" id="vendor-document-files">
+                  <div className="documents-section-heading">
+                    <div>
+                      <span className="eyebrow">Arquivos e validação</span>
+                      <h3>Seus documentos</h3>
+                      <p>Envie arquivos legíveis. Acompanhe a análise e corrija somente o que for solicitado.</p>
+                    </div>
+                    <span className="documents-counter">
+                      {vendorDocumentsApproved}/{vendorRequiredDocuments.length} aprovados
+                    </span>
+                  </div>
+
+                  <div className="document-filter-row" aria-label="Filtrar documentos">
+                    {["Todos", "Pendentes", "Em análise", "Aprovados", "Correção necessária"].map(
+                      (filter) => (
+                        <button
+                          type="button"
+                          key={filter}
+                          className={documentFilter === filter ? "active" : ""}
+                          onClick={() => setDocumentFilter(filter)}
                         >
-                          {vendorDocumentStatusLabel(document.status)}
-                        </span>
-                        <label className="mini-toggle">
-                          {document.fileName ? "Substituir" : "Enviar"}
-                          <input
-                            type="file"
-                            accept=".pdf,image/*"
-                            hidden
-                            onChange={(event) => {
-                              const file = event.target.files?.[0];
-                              if (file) uploadDocument(document, file);
-                            }}
+                          {filter}
+                        </button>
+                      ),
+                    )}
+                  </div>
+
+                  <div className="documents-card-list">
+                    {filteredVendorDocuments.map((document) => (
+                      <article className="document-file-card" key={document.id}>
+                        <div className="document-file-icon">
+                          <Upload />
+                        </div>
+                        <div className="document-file-content">
+                          <div className="document-file-heading">
+                            <div>
+                              <b>{document.name}</b>
+                              <small>{document.required ? "Obrigatório" : "Quando aplicável"}</small>
+                            </div>
+                            <span
+                              className={`document-status ${
+                                document.status === "approved"
+                                  ? "status-approved"
+                                  : document.status === "under_review"
+                                    ? "status-review"
+                                    : document.status === "correction_required"
+                                      ? "status-error"
+                                      : ""
+                              }`}
+                            >
+                              {vendorDocumentStatusLabel(document.status)}
+                            </span>
+                          </div>
+                          <p>{document.description}</p>
+                          <DocumentStatusTimeline
+                            status={document.status}
+                            fileName={document.file ? storedFileLabel(document.file) : document.fileName}
+                            correctionReason={document.correctionReason}
                           />
-                        </label>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                          <div className="document-file-actions">
+                            {document.file?.dataUrl && (
+                              <a
+                                className="secondary-action"
+                                href={document.file.dataUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Visualizar
+                              </a>
+                            )}
+                            <label className="primary-action document-upload-action">
+                              {document.fileName ? "Atualizar documento" : "Enviar documento"}
+                              <input
+                                type="file"
+                                accept=".pdf,image/*"
+                                hidden
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  if (file) uploadDocument(document, file);
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  {filteredVendorDocuments.length === 0 && (
+                    <div className="documents-filter-empty">
+                      <Check size={20} />
+                      <b>Nenhum documento neste filtro.</b>
+                      <span>Escolha outra situação para continuar acompanhando seu cadastro.</span>
+                    </div>
+                  )}
+                </section>
+
+                <DocumentsGuidanceCard roleLabel="Feirante" />
               </>
             ) : null}
           </div>
