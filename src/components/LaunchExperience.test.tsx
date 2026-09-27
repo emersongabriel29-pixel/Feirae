@@ -1,10 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  FEIRAE_SPLASH_LAST_FULL_DAY_KEY,
-  LaunchExperience,
-  getLaunchVariant,
-} from "./LaunchExperience";
+import { FEIRAE_SPLASH_LAST_FULL_DAY_KEY, LaunchExperience } from "./LaunchExperience";
 
 describe("LaunchExperience", () => {
   beforeEach(() => {
@@ -87,6 +83,15 @@ describe("LaunchExperience", () => {
       })),
     });
 
-    expect(getLaunchVariant()).toBe("reduced");
+    render(
+      <LaunchExperience>
+        <div>Aplicativo Feiraê</div>
+      </LaunchExperience>,
+    );
+
+    expect(screen.getByRole("status", { name: "Feiraê carregando" })).toHaveAttribute(
+      "data-variant",
+      "reduced",
+    );
   });
 });
