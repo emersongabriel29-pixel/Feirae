@@ -72,6 +72,7 @@ import {
   patchUnifiedOrder,
   patchVendorStatus,
   readUnifiedOrders,
+  type UnifiedPickupStop,
 } from "../../domain/orderBridge";
 
 export function DeliveryOperations({
@@ -374,8 +375,8 @@ export function DeliveryOperations({
               internalDistanceMeters: internalRoute.distanceMeters,
               internalEtaMinutes: internalRoute.etaMinutes,
               internalRouteStrategy: internalRoute.strategy,
-              driverOriginLat: baseLat,
-              driverOriginLng: baseLng,
+              driverOriginLat: baseLat!,
+              driverOriginLng: baseLng!,
             },
           },
           eventNow("route-updated", "Rota calculada com percurso interno da feira", "system"),
@@ -558,7 +559,7 @@ export function DeliveryOperations({
       const fair = fairs.find((item) => item.name === order.fairName);
       const activeItems = order.items.filter((item) => !item.cancelled);
       const vendorNames = Array.from(new Set(activeItems.map((item) => item.vendor)));
-      const pickupStops = (route.pickupStops ?? []).map((stop) => ({
+      const pickupStops: Array<UnifiedPickupStop & { collected: boolean }> = (route.pickupStops ?? []).map((stop) => ({
         ...stop,
         collected: order.vendors?.find((vendor) => vendor.vendorId === stop.vendorId)?.status === "collected",
       }));
@@ -606,7 +607,7 @@ export function DeliveryOperations({
               vendorName: delivery.bank,
               collected: false,
             },
-          ],
+          ] as Array<UnifiedPickupStop & { collected: boolean }>,
           fairAddress: delivery.fair,
           internalDistanceMeters: 0,
           internalEtaMinutes: 0,
