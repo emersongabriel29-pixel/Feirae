@@ -30,6 +30,7 @@ import {
   readStoreByIdentity,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
+import { MAX_VENDORS_PER_ORDER } from "../../domain/multiVendor";
 import { walletBalance, walletHistory } from "../../domain/walletBridge";
 import {
   appendReview,
@@ -788,6 +789,13 @@ export function DeliveryTracking({
   >(scopedStorageKey("feirae:customer-reviews"), []);
 
   const unifiedOrder = readUnifiedOrders().find((item) => item.id === order.id);
+  const vendorStates = unifiedOrder?.vendors ?? [];
+  const readyVendorCount = vendorStates.filter((vendor) =>
+    ["ready", "collected", "delivered"].includes(vendor.status),
+  ).length;
+  const collectedVendorCount = vendorStates.filter((vendor) =>
+    ["collected", "delivered"].includes(vendor.status),
+  ).length;
   const statusConfig: Record<
     DemoOrder["status"],
     { title: string; description: string; activeStep: number }
@@ -943,6 +951,40 @@ export function DeliveryTracking({
           </div>
           <h2>{config.title}</h2>
           <p>{config.description}</p>
+          {vendorStates.length > 1 && (
+            <div className="surface-card">
+              <span className="eyebrow">Pedido multi-banca</span>
+              <h3>{vendorStates.length} bancas na mesma feira</h3>
+              <p>
+                {order.fulfillment === "delivery" && unifiedOrder?.driver
+                  ? `${collectedVendorCount}/${vendorStates.length} coletas confirmadas pelo entregador.`
+                  : `${readyVendorCount}/${vendorStates.length} bancas prontas.`}
+              </p>
+              <div className="operation-list detailed">
+                {vendorStates.map((vendor, index) => (
+                  <article key={vendor.vendorId}>
+                    {["collected", "delivered"].includes(vendor.status) ? <Check size={17} /> : <Store size={17} />}
+                    <div>
+                      <b>{index + 1}. {vendor.vendorName}</b>
+                      <small>
+                        {vendor.status === "pending"
+                          ? "Aguardando confirmação"
+                          : vendor.status === "accepted" || vendor.status === "preparing"
+                            ? "Em preparação"
+                            : vendor.status === "ready"
+                              ? "Pronta para coleta"
+                              : vendor.status === "collected"
+                                ? "Coleta confirmada"
+                                : vendor.status === "delivered"
+                                  ? "Concluída"
+                                  : "Recusada"}
+                      </small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
           {order.fulfillment === "delivery" && ["Coleta", "Em rota", "Entregue"].includes(order.status) && (
             <div className="surface-card">
               <span className="eyebrow">Entrega</span>
@@ -1245,6 +1287,7 @@ export function Checkout({
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const fairName = items[0]?.fair ?? "Feiraê";
+  const vendorCount = new Set(items.map((product) => product.feirante)).size;
   const stores = Array.from(
     new Map(
       items.map((item) => {
@@ -1508,6 +1551,10 @@ export function Checkout({
             <p>
               <span>Feira</span>
               <b>{fairName}</b>
+            </p>
+            <p>
+              <span>Bancas</span>
+              <b>{vendorCount} de até {MAX_VENDORS_PER_ORDER}</b>
             </p>
             <p>
               <span>Subtotal</span>
