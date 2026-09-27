@@ -1,6 +1,6 @@
 # Deploy e ambientes — Feiraê
 
-Atualizado em 26/09/2026 com base no repositório atual.
+Atualizado em 27/09/2026 com base no repositório atual.
 
 ## 1. O que existe hoje
 
@@ -14,7 +14,8 @@ Ele valida:
 
 - dependências;
 - lint;
-- testes;
+- testes Vitest;
+- testes da política de sincronização;
 - TypeScript/build;
 - Prettier;
 - em pull requests, sincronização entre código/testes/documentação via `npm run check:sync`.
@@ -145,7 +146,8 @@ Somente após staging aprovado:
 ## 8. Migrations existentes
 
 - 0001 core;
-- 0002 operations.
+- 0002 operations;
+- 0003 vendor store minimum order.
 
 Não aplicar cegamente em produção porque há gaps conhecidos:
 
@@ -235,3 +237,17 @@ Só afirmar após verificar:
 - smoke.
 
 Merge sozinho não é evidência.
+
+
+## 14. Estado do quality gate em 27/09/2026
+
+A `main` possui workflow Quality com:
+
+- lint;
+- 129 testes Vitest;
+- 8 testes Node da política de sincronização;
+- build TypeScript/Vite;
+- Prettier;
+- `check:sync` em pull requests.
+
+O repositório continua **sem pipeline de deploy/hosting**. Quality verde prova integridade do código, não publicação em staging/produção.
