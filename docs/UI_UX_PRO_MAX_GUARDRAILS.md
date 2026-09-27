@@ -78,7 +78,6 @@ Também foi adotado `100dvh` em áreas de tela cheia para comportamento mais est
 - Tailwind/web: `.github/prompts/ui-ux-pro-max/data/stacks/html-tailwind.csv`
 - UX: `.github/prompts/ui-ux-pro-max/data/ux-guidelines.csv`
 
-
 ## Revisão tela por tela — segunda passada
 
 ### Cliente
