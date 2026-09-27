@@ -8,6 +8,7 @@ type Reservation = {
     productId: number;
     quantity: number;
     storeId?: string;
+    released?: boolean;
   }>;
 };
 
@@ -130,12 +131,33 @@ export function releaseInventory(orderId: string) {
   const reservation = current.find((item) => item.orderId === orderId);
   if (!reservation || reservation.status !== "reserved") return;
   for (const item of reservation.items) {
+    if (item.released) continue;
     const dynamic = adjustSharedMarketplaceStock(item.productId, item.storeId, item.quantity);
     if (!dynamic) adjustStaticStock(item.productId, item.quantity);
   }
   writeJson(
     RESERVATION_KEY,
     current.map((item) => (item.orderId === orderId ? { ...item, status: "released" as const } : item)),
+  );
+}
+
+export function releaseInventoryItems(orderId: string, productIds: number[]) {
+  const ids = new Set(productIds);
+  if (!ids.size) return;
+  const current = reservations();
+  const reservation = current.find((item) => item.orderId === orderId);
+  if (!reservation || reservation.status !== "reserved") return;
+
+  const nextItems = reservation.items.map((item) => {
+    if (!ids.has(item.productId) || item.released) return item;
+    const dynamic = adjustSharedMarketplaceStock(item.productId, item.storeId, item.quantity);
+    if (!dynamic) adjustStaticStock(item.productId, item.quantity);
+    return { ...item, released: true };
+  });
+
+  writeJson(
+    RESERVATION_KEY,
+    current.map((item) => (item.orderId === orderId ? { ...item, items: nextItems } : item)),
   );
 }
 
