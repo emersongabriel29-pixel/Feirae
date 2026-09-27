@@ -97,6 +97,12 @@ Não é banco multiusuário; sincroniza apenas o navegador atual.
 
 - OSRM público: `https://router.project-osrm.org/route/v1/driving/`.
 
+`orderBridge.ts` + `DeliveryScreens.tsx`:
+
+- `route.pickupStops` mantém a sequência operacional das bancas em pedidos multi-banca;
+- cada parada usa `vendorId`, `storeId` e `vendorName`;
+- sem coordenadas individuais de banca, a geometria continua agregada no ponto da feira.
+
 ### Abrir navegação
 
 `App.tsx`:
@@ -203,8 +209,9 @@ Não faz:
 
 Contagem real:
 
-- `App.test.tsx`: 52;
-- `orderBridge.test.ts`: 5;
+- `App.test.tsx`: 53;
+- `orderBridge.test.ts`: 7;
+- `multiVendor.test.ts`: 4;
 - `feiraeNotifications.test.ts`: 5;
 - `legalTerms.test.ts`: 8;
 - `marketplaceBridge.test.ts`: 4;
@@ -214,7 +221,7 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **92**.
+Total: **99**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
