@@ -31,20 +31,21 @@ npm run build
 
 | Arquivo                                  | Testes |
 | ---------------------------------------- | -----: |
-| `src/App.test.tsx`                       |     50 |
+| `src/App.test.tsx`                       |     52 |
 | `src/domain/orderBridge.test.ts`         |      5 |
 | `src/domain/feiraeNotifications.test.ts` |      5 |
+| `src/domain/legalTerms.test.ts`          |      8 |
 | `src/domain/marketplaceBridge.test.ts`   |      4 |
 | `src/domain/inventoryBridge.test.ts`     |      3 |
 | `src/domain/localAuth.test.ts`           |      4 |
 | `src/domain/marketplace.test.ts`         |      4 |
 | `src/domain/session.test.ts`             |      3 |
 | `src/utils.test.ts`                      |      4 |
-| **Total**                                | **82** |
+| **Total**                                | **92** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 50 testes cobrem explicitamente:
+Os 52 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -95,6 +96,7 @@ Os 50 testes cobrem explicitamente:
 - entrega/retirada/frete grátis;
 - recebimento/taxas não configuradas;
 - documento enviado entra em análise;
+- termos jurídicos e aviso LGPD aparecem dentro de Documentos;
 - conta real sem storage de documentos não recebe aprovação seed.
 
 ### Entregador
@@ -111,6 +113,7 @@ Os 50 testes cobrem explicitamente:
 - Pix/conta bancária;
 - estados de repasse;
 - aprovação documental;
+- conta nova fica com termos jurídicos pendentes até assinar as versões vigentes;
 - conta real recém-criada não recebe corridas fixture;
 - lock de corrida cancelada externamente é liberado;
 - trocar perfil somente após logout.
@@ -124,6 +127,17 @@ Os 50 testes cobrem explicitamente:
 - Feirante recebe linguagem de novo pedido, pagamento e coleta;
 - Entregador recebe linguagem de rota, coleta e conclusão;
 - evento irrelevante para um papel é ignorado.
+
+### legalTerms
+
+- termo do Feirante contém verdade, CDC, responsabilidade, ética e segurança sanitária;
+- termo do Entregador contém autonomia real, ausência de exclusividade e salvaguarda contra cláusula fictícia de não vínculo;
+- regras atuais de moto-frete e referência à Resolução Contran nº 1.020/2025;
+- aviso LGPD separa ciência, bases legais e consentimentos opcionais;
+- assinatura exige versão vigente;
+- aceites são isolados por papel;
+- fingerprint muda quando o termo muda;
+- Feirante e Entregador exigem termo próprio + aviso de privacidade.
 
 ### orderBridge
 
@@ -153,7 +167,7 @@ Os 50 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 82 testes NÃO comprovam diretamente
+## 5. O que os 92 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
