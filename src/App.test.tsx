@@ -228,6 +228,9 @@ describe("Feiraê customer flow", () => {
 
     fireEvent.click(screen.getByLabelText(/cards compactos/i));
     expect(document.documentElement).toHaveClass("compact-product-cards");
+    expect(screen.getByRole("heading", { name: /documentos da sua conta/i })).toBeInTheDocument();
+    expect(screen.getByText(/termos de uso do cliente feiraê/i)).toBeInTheDocument();
+    expect(screen.getByText(/aviso de privacidade do cliente feiraê/i)).toBeInTheDocument();
   });
 
   it("keeps featured fairs inside the fairs area", () => {
