@@ -3,6 +3,7 @@ import type { Product } from "../types";
 import {
   calculateCheckoutPromotions,
   marketplaceProducts,
+  readSharedStores,
   registerPromotionUsage,
   syncVendorMarketplace,
 } from "./marketplaceBridge";
@@ -61,6 +62,37 @@ describe("marketplace bridge", () => {
     expect(catalog[0].name).toBe("Cesta premium");
     expect(catalog[0].price).toBe(45);
     expect(catalog[0].stock).toBe(4);
+  });
+
+  it("persists internal stall position and pickup verification code", () => {
+    syncVendorMarketplace({
+      accountKey: "vendor@test",
+      name: "Banca A",
+      fairName: "Feira X",
+      isOpen: true,
+      approved: true,
+      deliveryEnabled: true,
+      pickupEnabled: true,
+      absorbDeliveryFee: false,
+      acceptCashOnDelivery: true,
+      acceptCardOnDelivery: true,
+      sector: "Hortifruti",
+      corridor: "A",
+      box: "12",
+      reference: "Entrada principal",
+      internalX: 18,
+      internalY: 7,
+      promotions: [],
+      products: [],
+    });
+
+    const store = readSharedStores()[0];
+    expect(store.sector).toBe("Hortifruti");
+    expect(store.corridor).toBe("A");
+    expect(store.box).toBe("12");
+    expect(store.internalX).toBe(18);
+    expect(store.internalY).toBe(7);
+    expect(store.pickupCode).toMatch(/^FEIRAE-/);
   });
 
   it("applies a valid coupon and consumes its usage count", () => {
