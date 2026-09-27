@@ -202,6 +202,21 @@ describe("unified order bridge", () => {
     expect(resolved.paymentStatus).toBe("partially_refunded");
   });
 
+  it("moves to collected when the cancelled bank was the last uncollected stop", () => {
+    seedOrder();
+    patchVendorStatus("FE-MULTI", "vendor:a", "ready");
+    patchVendorStatus("FE-MULTI", "vendor:b", "ready");
+    patchUnifiedOrder("FE-MULTI", { status: "driver_assigned" });
+    patchVendorStatus("FE-MULTI", "vendor:a", "collected");
+
+    cancelVendorParticipation("FE-MULTI", "vendor:b", "Não consegue atender");
+
+    const order = readUnifiedOrders()[0];
+    expect(order.status).toBe("collected");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:a")?.status).toBe("collected");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:b")?.status).toBe("rejected");
+  });
+
   it("propagates actual separated weight to logistics", () => {
     seedOrder();
 
