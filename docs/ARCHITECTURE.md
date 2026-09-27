@@ -323,6 +323,6 @@ A sincronização de mudanças possui duas camadas:
 1. contrato humano em `docs/CHANGE_GOVERNANCE.md`;
 2. política automatizada em `scripts/change-sync-policy.mjs`.
 
-`scripts/check-change-sync.mjs` coleta o diff do PR e delega a avaliação para a política. A própria política possui testes Node em `scripts/change-sync-policy.test.mjs`.
+`scripts/check-change-sync.mjs` coleta o diff do PR e delega a avaliação para a política. A própria política possui testes Node em `scripts/change-sync-policy-checks.mjs`.
 
 Isso reduz o risco de um PR atualizar “qualquer documento” em vez do documento correto para o domínio alterado.
