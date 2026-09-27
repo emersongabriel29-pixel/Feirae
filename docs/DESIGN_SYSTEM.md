@@ -427,7 +427,6 @@ Em **Criar conta → Cliente**, o formulário mostra um card compacto com a iden
 
 O bloco deve permanecer compacto no celular, com documentos roláveis internamente e sem caixas pré-marcadas.
 
-
 ## Pedido mínimo por banca
 
 Não exibir mensagem genérica como **“pedido mínimo do carrinho”**.
@@ -459,4 +458,3 @@ Em **Editar banca**:
 - campo monetário somente quando houver mínimo;
 - informar o teto vigente da plataforma;
 - prévia pública deve refletir a configuração salva.
-
