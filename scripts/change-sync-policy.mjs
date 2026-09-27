@@ -10,11 +10,16 @@ const isTest = (file) =>
   file.startsWith("e2e/") ||
   file === "scripts/change-sync-policy-checks.mjs";
 
-const hasAny = (files, predicates) =>
-  files.some((file) => predicates.some((predicate) => predicate(file)));
+const hasAny = (files, predicates) => files.some((file) => predicates.some((predicate) => predicate(file)));
 
-const startsWithAny = (...prefixes) => (file) => prefixes.some((prefix) => file.startsWith(prefix));
-const equalsAny = (...names) => (file) => names.includes(file);
+const startsWithAny =
+  (...prefixes) =>
+  (file) =>
+    prefixes.some((prefix) => file.startsWith(prefix));
+const equalsAny =
+  (...names) =>
+  (file) =>
+    names.includes(file);
 
 export function evaluateChangedFiles(files) {
   const changed = new Set(files);
@@ -31,7 +36,8 @@ export function evaluateChangedFiles(files) {
       /(?:vercel|netlify|firebase|docker|fly\.toml|supabase\/config\.toml)/i.test(file),
   );
   const nonDocProjectChanges = files.filter(
-    (file) => !isDoc(file) && !file.startsWith(".github/pull_request_template") && file !== "package-lock.json",
+    (file) =>
+      !isDoc(file) && !file.startsWith(".github/pull_request_template") && file !== "package-lock.json",
   );
 
   const failures = [];
@@ -80,11 +86,7 @@ export function evaluateChangedFiles(files) {
     (file) => /^src\/features\/(customer|vendor|delivery)\/.*Screens\.tsx$/.test(file),
     equalsAny("src/App.tsx"),
   ]);
-  requireDocs(
-    uiUxChanged,
-    ["docs/UI_INTERACTION_AUDIT.md", "docs/DESIGN_SYSTEM.md"],
-    "UI/UX foi alterada.",
-  );
+  requireDocs(uiUxChanged, ["docs/UI_INTERACTION_AUDIT.md", "docs/DESIGN_SYSTEM.md"], "UI/UX foi alterada.");
 
   const launchChanged = hasAny(files, [
     (file) => file.startsWith("src/components/LaunchExperience"),
@@ -110,7 +112,9 @@ export function evaluateChangedFiles(files) {
     "Regra crítica de pedido/estoque/carteira foi alterada.",
   );
 
-  const notificationChanged = hasAny(files, [equalsAny("src/domain/feiraeNotifications.ts", "public/feirae-sw.js")]);
+  const notificationChanged = hasAny(files, [
+    equalsAny("src/domain/feiraeNotifications.ts", "public/feirae-sw.js"),
+  ]);
   requireDocs(
     notificationChanged,
     ["docs/NOTIFICATIONS.md", "docs/IMPLEMENTATION_TRACEABILITY.md"],
