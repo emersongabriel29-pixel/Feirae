@@ -104,7 +104,12 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
           </g>
           <g className="feirae-launch__produce feirae-launch__produce--leaf">
             <path d="M55 174c20-16 39-14 56 6-22 10-41 8-56-6z" fill="#7fc96c" />
-            <path d="M61 173c16 2 29 5 40 10" stroke="#2e7f4b" strokeWidth="3" strokeLinecap="round" />
+            <path
+              d="M61 173c16 2 29 5 40 10"
+              stroke="#2e7f4b"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
           </g>
 
           <g className="feirae-launch__bike">
@@ -123,7 +128,12 @@ function SplashScreen({ variant }: { variant: SplashVariant }) {
             <path d="M104 168c5-14 28-16 33 2l-13 1z" fill="#1f8b52" />
             <path d="M116 185l-22 25" stroke="#1d5f3d" strokeWidth="10" strokeLinecap="round" />
             <rect x="134" y="176" width="31" height="29" rx="5" fill="#f3c84d" />
-            <path d="M144 185c5 0 9 3 11 8" stroke="#317c4b" strokeWidth="3" strokeLinecap="round" />
+            <path
+              d="M144 185c5 0 9 3 11 8"
+              stroke="#317c4b"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
           </g>
 
           <g className="feirae-launch__pin">
