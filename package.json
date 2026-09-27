@@ -11,7 +11,7 @@
     "test:watch": "vitest",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
-    "format:check": "prettier --write docs/ADMIN_MANAGEMENT_SPEC.md docs/DESIGN_SYSTEM.md docs/IMPLEMENTATION_TRACEABILITY.md docs/LGPD_AND_PRIVACY.md docs/SECURITY_AND_AUTH.md src/App.test.tsx src/components/AppComponents.tsx src/domain/legalTerms.ts src/features/delivery/DeliveryScreens.tsx src/features/vendor/VendorScreens.tsx src/styles/operations.css && git diff -- docs/ADMIN_MANAGEMENT_SPEC.md docs/DESIGN_SYSTEM.md docs/IMPLEMENTATION_TRACEABILITY.md docs/LGPD_AND_PRIVACY.md docs/SECURITY_AND_AUTH.md src/App.test.tsx src/components/AppComponents.tsx src/domain/legalTerms.ts src/features/delivery/DeliveryScreens.tsx src/features/vendor/VendorScreens.tsx src/styles/operations.css && exit 1",
+    "format:check": "prettier --check .",
     "check": "npm run lint && npm run test && npm run build",
     "check:sync": "node scripts/check-change-sync.mjs"
   },
