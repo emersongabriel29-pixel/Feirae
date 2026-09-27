@@ -334,3 +334,28 @@ Antes de documentos reais:
 A Resolução CD/ANPD nº 15/2024 deve orientar o processo de incidentes e a Resolução CD/ANPD nº 19/2024 deve ser considerada quando houver transferência internacional.
 
 Detalhamento: [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).
+
+
+## 19. Cliente — ciência do aviso no cadastro
+
+Ao criar uma conta de Cliente, o Feiraê apresenta dois documentos separados:
+
+- **Termos de Uso do Cliente Feiraê**;
+- **Aviso de Privacidade do Cliente Feiraê**.
+
+O Cliente precisa aceitar os Termos de Uso e confirmar que leu o Aviso de Privacidade.
+
+Essa ciência não é tratada como consentimento genérico para todos os dados.
+
+A preferência **Quero receber ofertas e novidades do Feiraê**:
+
+- é opcional;
+- inicia desmarcada;
+- é armazenada separadamente;
+- não bloqueia a criação da conta.
+
+A comunicação operacional necessária a conta, pedido, entrega, segurança ou suporte continua separada de marketing.
+
+O protótipo registra localmente termo, versão, nome, e-mail, data/hora, fingerprint e método de aceite. Produção deve substituir isso por registro server-side auditável.
+
+Detalhamento: [CUSTOMER_LEGAL_TERMS.md](CUSTOMER_LEGAL_TERMS.md).
