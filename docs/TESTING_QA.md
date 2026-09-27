@@ -29,28 +29,31 @@ npm run build
 
 ## 2. Contagem atual
 
-| Arquivo                                  | Testes |
-| ---------------------------------------- | -----: |
-| `src/App.test.tsx`                       |     53 |
-| `src/domain/orderBridge.test.ts`         |      5 |
-| `src/domain/feiraeNotifications.test.ts` |      5 |
-| `src/domain/legalTerms.test.ts`          |      8 |
-| `src/domain/customerLegal.test.ts`       |      4 |
-| `src/domain/marketplaceBridge.test.ts`   |      4 |
-| `src/domain/inventoryBridge.test.ts`     |      3 |
-| `src/domain/localAuth.test.ts`           |      4 |
-| `src/domain/marketplace.test.ts`         |      4 |
-| `src/domain/session.test.ts`             |      3 |
-| `src/utils.test.ts`                      |      4 |
-| **Total**                                | **97** |
+| Arquivo                                  |  Testes |
+| ---------------------------------------- | ------: |
+| `src/App.test.tsx`                       |      55 |
+| `src/domain/orderBridge.test.ts`         |       9 |
+| `src/domain/feiraeNotifications.test.ts` |       6 |
+| `src/domain/legalTerms.test.ts`          |       8 |
+| `src/domain/customerLegal.test.ts`       |       4 |
+| `src/domain/marketplaceBridge.test.ts`   |       4 |
+| `src/domain/multiVendor.test.ts`         |       8 |
+| `src/domain/inventoryBridge.test.ts`     |       4 |
+| `src/domain/localAuth.test.ts`           |       4 |
+| `src/domain/marketplace.test.ts`         |       4 |
+| `src/domain/session.test.ts`             |       3 |
+| `src/utils.test.ts`                      |       4 |
+| **Total**                                | **113** |
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 53 testes cobrem explicitamente:
+Os 55 testes cobrem explicitamente:
 
 ### Cliente
 
 - abrir catálogo e acessar Início pela navegação principal;
+- bloquear checkout abaixo de R$ 30,00 por banca e liberar ao atingir o mínimo;
+- exibir o pedido mínimo ao abrir uma banca;
 - concluir checkout demo;
 - não incluir frete no total antes de existir endereço de entrega;
 - ocultar ferramentas de busca/localização fora das telas de descoberta;
@@ -168,6 +171,7 @@ Os 53 testes cobrem explicitamente:
 ### inventoryBridge
 
 - reservar/liberar;
+- liberar apenas os itens de uma banca cancelada;
 - não liberar depois de consumir;
 - rejeitar excesso de estoque.
 
@@ -178,7 +182,7 @@ Os 53 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 97 testes NÃO comprovam diretamente
+## 5. O que os 113 testes NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
