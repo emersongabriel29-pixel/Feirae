@@ -51,7 +51,8 @@ import {
   requestFeiraeNotificationPermission,
   showFeiraeNotification,
 } from "../../domain/feiraeNotifications";
-import { readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
+import { readSharedStores, readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
+import { pickupVerificationPayload } from "../../domain/fairInternalRouting";
 import { vendorIdFor } from "../../domain/identity";
 import { consumeInventory, releaseInventoryItems } from "../../domain/inventoryBridge";
 import { readFileForLocalStorage, storedFileLabel } from "../../domain/storedFile";
@@ -584,12 +585,24 @@ export function FeiranteOperations({
       absorbDeliveryFee: deliverySettings.absorbDeliveryFee,
       acceptCashOnDelivery: deliverySettings.acceptCashOnDelivery,
       acceptCardOnDelivery: deliverySettings.acceptCardOnDelivery,
+      box: bankProfile.box,
+      corridor: bankProfile.corridor,
+      sector: bankProfile.sector,
+      reference: bankProfile.reference,
+      internalX: bankProfile.internalX,
+      internalY: bankProfile.internalY,
       promotions,
       products: vendorItems,
     });
   }, [
+    bankProfile.box,
+    bankProfile.corridor,
     bankProfile.fairName,
+    bankProfile.internalX,
+    bankProfile.internalY,
     bankProfile.name,
+    bankProfile.reference,
+    bankProfile.sector,
     deliverySettings.absorbDeliveryFee,
     deliverySettings.deliveryEnabled,
     deliverySettings.pickupEnabled,
@@ -601,6 +614,9 @@ export function FeiranteOperations({
     vendorItems,
     approvalStatus,
   ]);
+
+  const sharedBankStore = readSharedStores().find((store) => store.accountKey === session.email);
+  const pickupPayload = sharedBankStore?.storeId ? pickupVerificationPayload(sharedBankStore.storeId) : "";
 
   const activeFreeShipping = promotions.some(
     (promotion) => promotion.active && promotion.type === "freteGratis" && promotion.vendorPaysDelivery,
@@ -1509,6 +1525,28 @@ export function FeiranteOperations({
                       checked={productDraft.active}
                       onChange={(checked) => setProductDraft((current) => ({ ...current, active: checked }))}
                     />
+                    <div className="surface-card">
+                      <span className="eyebrow">Localização para coleta</span>
+                      <h3>
+                        {bankProfile.sector || "Setor não informado"} · corredor {bankProfile.corridor || "—"} · box{" "}
+                        {bankProfile.box || "—"}
+                      </h3>
+                      <p>
+                        {bankProfile.internalX !== null && bankProfile.internalY !== null
+                          ? `Mapeada a ${bankProfile.internalX} m × ${bankProfile.internalY} m da entrada de referência.`
+                          : "Ainda sem posição X/Y. A logística usa setor, corredor e box como fallback."}
+                      </p>
+                      {pickupPayload && (
+                        <>
+                          <b>Código/QR de coleta</b>
+                          <code>{pickupPayload}</code>
+                          <small>
+                            Este conteúdo identifica a banca na confirmação da coleta. O QR visual pode ser impresso
+                            a partir deste payload quando o gerador/scanner for conectado.
+                          </small>
+                        </>
+                      )}
+                    </div>
                     <div className="module-action-row">
                       <button type="submit" className="primary-action">
                         Salvar produto
@@ -1674,12 +1712,13 @@ export function FeiranteOperations({
                         </select>
                       </label>
                       <label>
-                        Box/banca
+                        Setor/pavilhão
                         <input
-                          value={bankDraft.box}
+                          value={bankDraft.sector}
                           onChange={(event) =>
-                            setBankDraft((current) => ({ ...current, box: event.target.value }))
+                            setBankDraft((current) => ({ ...current, sector: event.target.value }))
                           }
+                          placeholder="Ex.: Hortifruti"
                         />
                       </label>
                       <label>
@@ -1689,6 +1728,46 @@ export function FeiranteOperations({
                           onChange={(event) =>
                             setBankDraft((current) => ({ ...current, corridor: event.target.value }))
                           }
+                          placeholder="Ex.: A"
+                        />
+                      </label>
+                      <label>
+                        Box/banca
+                        <input
+                          value={bankDraft.box}
+                          onChange={(event) =>
+                            setBankDraft((current) => ({ ...current, box: event.target.value }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Posição interna X (metros)
+                        <input
+                          type="number"
+                          step="1"
+                          value={bankDraft.internalX ?? ""}
+                          onChange={(event) =>
+                            setBankDraft((current) => ({
+                              ...current,
+                              internalX: event.target.value === "" ? null : Number(event.target.value),
+                            }))
+                          }
+                          placeholder="Distância horizontal da entrada"
+                        />
+                      </label>
+                      <label>
+                        Posição interna Y (metros)
+                        <input
+                          type="number"
+                          step="1"
+                          value={bankDraft.internalY ?? ""}
+                          onChange={(event) =>
+                            setBankDraft((current) => ({
+                              ...current,
+                              internalY: event.target.value === "" ? null : Number(event.target.value),
+                            }))
+                          }
+                          placeholder="Distância vertical da entrada"
                         />
                       </label>
                     </div>
@@ -1836,6 +1915,16 @@ export function FeiranteOperations({
                           {bankProfile.reference || "sem referência"}
                         </p>
                         <p>{bankProfile.categories}</p>
+                        <p>
+                          Localização interna: {bankProfile.sector || "setor não informado"} · corredor{" "}
+                          {bankProfile.corridor || "—"} · box {bankProfile.box || "—"}
+                        </p>
+                        {bankProfile.internalX !== null && bankProfile.internalY !== null && (
+                          <small>
+                            Mapa interno: X {bankProfile.internalX} m · Y {bankProfile.internalY} m a partir da
+                            entrada principal.
+                          </small>
+                        )}
                       </div>
                     )}
                   </>
