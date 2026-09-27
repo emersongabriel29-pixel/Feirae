@@ -266,7 +266,6 @@ Checklist da tela:
 - [x] card final de segurança/LGPD;
 - [x] responsividade mobile.
 
-
 ## UI/UX Pro Max — revisão sincronizada em 27/09/2026
 
 A revisão visual mais recente foi comparada novamente contra os componentes reais.
