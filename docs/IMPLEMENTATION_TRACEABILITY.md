@@ -26,20 +26,20 @@ Este documento responde: “onde cada função realmente vive hoje?”.
 
 ## Feirante
 
-| Função             | Arquivo             | Chave local                                  | SQL                                  |
-| ------------------ | ------------------- | -------------------------------------------- | ------------------------------------ |
-| conta              | `VendorScreens.tsx` | `feirae:vendor-account:<email>`              | `vendor_profiles` incompleto         |
-| banca              | `VendorScreens.tsx` | `feirae:vendor-bank:<email>`                 | `vendor_stores`                      |
-| produtos           | `VendorScreens.tsx` | `feirae:vendor-products:<email>`             | `products`                           |
-| estoque/histórico  | `VendorScreens.tsx` | `feirae:vendor-stock-history:<email>`        | reserva/histórico ausentes           |
-| promoções          | `VendorScreens.tsx` | `feirae:vendor-promotions:<email>`           | `promotions` incompleto              |
-| horários           | `VendorScreens.tsx` | `feirae:vendor-schedule:<email>`             | `vendor_stores.custom_opening_hours` |
-| usar horário feira | `VendorScreens.tsx` | `feirae:vendor-use-fair-hours:<email>`       | decisão futura                       |
-| entrega/retirada   | `VendorScreens.tsx` | `feirae:vendor-delivery-settings:<email>`    | colunas em `vendor_stores`           |
-| documentos         | `VendorScreens.tsx` | `feirae:vendor-documents:<email>`            | `onboarding_documents`               |
-| pedidos            | `VendorScreens.tsx` | `feirae:vendor-orders:<email>` + orderBridge | `order_vendors`                      |
-| financeiro         | `VendorScreens.tsx` | `feirae:vendor-settlements:<email>`          | `payouts` + ledger faltante          |
-| avaliações         | `VendorScreens.tsx` | `feirae:vendor-reviews:<email>`              | `order_reviews`                      |
+| Função             | Arquivo             | Chave local                                  | SQL                                      |
+| ------------------ | ------------------- | -------------------------------------------- | ---------------------------------------- |
+| conta              | `VendorScreens.tsx` | `feirae:vendor-account:<email>`              | `vendor_profiles` incompleto             |
+| banca              | `VendorScreens.tsx` | `feirae:vendor-bank:<email>`                 | `vendor_stores` + `minimum_order_amount` |
+| produtos           | `VendorScreens.tsx` | `feirae:vendor-products:<email>`             | `products`                               |
+| estoque/histórico  | `VendorScreens.tsx` | `feirae:vendor-stock-history:<email>`        | reserva/histórico ausentes               |
+| promoções          | `VendorScreens.tsx` | `feirae:vendor-promotions:<email>`           | `promotions` incompleto                  |
+| horários           | `VendorScreens.tsx` | `feirae:vendor-schedule:<email>`             | `vendor_stores.custom_opening_hours`     |
+| usar horário feira | `VendorScreens.tsx` | `feirae:vendor-use-fair-hours:<email>`       | decisão futura                           |
+| entrega/retirada   | `VendorScreens.tsx` | `feirae:vendor-delivery-settings:<email>`    | colunas em `vendor_stores`               |
+| documentos         | `VendorScreens.tsx` | `feirae:vendor-documents:<email>`            | `onboarding_documents`                   |
+| pedidos            | `VendorScreens.tsx` | `feirae:vendor-orders:<email>` + orderBridge | `order_vendors`                          |
+| financeiro         | `VendorScreens.tsx` | `feirae:vendor-settlements:<email>`          | `payouts` + ledger faltante              |
+| avaliações         | `VendorScreens.tsx` | `feirae:vendor-reviews:<email>`              | `order_reviews`                          |
 
 ## Entregador
 
@@ -71,6 +71,7 @@ Ele publica para o cliente:
 - aberta/fechada;
 - entrega/retirada;
 - pagamento na entrega;
+- pedido mínimo da banca;
 - promoções;
 - produtos;
 - foto do produto quando `photoDataUrl` foi cadastrada.
@@ -207,14 +208,14 @@ Não faz:
 
 Contagem real:
 
-- `App.test.tsx`: 55;
+- `App.test.tsx`: 56;
 - `LaunchExperience.test.tsx`: 3;
 - `orderBridge.test.ts`: 11;
 - `feiraeNotifications.test.ts`: 6;
 - `legalTerms.test.ts`: 8;
 - `customerLegal.test.ts`: 4;
 - `marketplaceBridge.test.ts`: 5;
-- `multiVendor.test.ts`: 8;
+- `multiVendor.test.ts`: 11;
 - `fairInternalRouting.test.ts`: 4;
 - `inventoryBridge.test.ts`: 4;
 - `localAuth.test.ts`: 4;
@@ -222,7 +223,7 @@ Contagem real:
 - `session.test.ts`: 3;
 - `utils.test.ts`: 4.
 
-Total: **123**.
+Total: **127**.
 
 ## Navegação e UX do cliente — auditoria em vídeo de 26/09/2026
 
@@ -345,3 +346,19 @@ Limite: a evidência ainda é local. Produção exige persistência server-side 
 - documentação canônica: `INTERNAL_FAIR_ROUTING.md`.
 
 Limites ainda reais: mapa cartesiano sem grafo de obstáculos, entrada/saída distintas ainda não cadastradas e token QR de produção ainda precisa de backend antifraude.
+
+## Pedido mínimo configurável por banca — 27/09/2026
+
+- `multiVendor.ts`: substitui a regra única por mínimo individual, com R$ 0,00 = sem mínimo, fallback legado de R$ 30,00 e teto atual de R$ 100,00;
+- `marketplaceBridge.ts`: publica `minimumOrderAmount` e informa descontos promocionais por banca;
+- `vendorModel.ts` + `VendorScreens.tsx`: Feirante escolhe sem mínimo ou valor próprio e vê a configuração na prévia pública;
+- `AppComponents.tsx::CartDrawer`: pré-valida cada banca separadamente;
+- `CustomerScreens.tsx::VendorStore`: informa o mínimo antes da compra;
+- `CustomerScreens.tsx::Checkout`: revalida cada banca após promoções e explica quanto falta;
+- `App.tsx::confirmOrder`: revalida a regra antes de reservar estoque/criar pedido;
+- `0003_vendor_store_minimum_order.sql`: prepara `vendor_stores.minimum_order_amount` com constraint de R$ 0,00 a R$ 100,00;
+- `multiVendor.test.ts`: cobre fallback, valores diferentes, ausência de mínimo, desconto e teto;
+- `marketplaceBridge.test.ts`: cobre persistência do mínimo e desconto por banca;
+- `App.test.tsx`: cobre configuração do Feirante e fluxo do Cliente.
+
+O painel administrativo runtime continua ausente. O teto/fallback são políticas centrais do protótipo e devem migrar para configuração administrativa persistida antes da produção.

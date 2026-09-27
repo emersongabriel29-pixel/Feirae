@@ -292,6 +292,24 @@ Para uma banca/loja operar em uma feira específica, o backend precisa definir a
 - `vendor_stores`
 - catálogo publicado.
 
+## 12.1. Pedido mínimo da banca
+
+A migration `0003_vendor_store_minimum_order.sql` adiciona:
+
+- `vendor_stores.minimum_order_amount numeric(12,2)`;
+- `0` significa sem mínimo;
+- constraint atual entre R$ 0,00 e R$ 100,00.
+
+Isso prepara o dado por banca, mas **não conclui a regra server-side** porque o aplicativo ainda não consome Supabase.
+
+Antes da produção ainda faltam:
+
+- política administrativa persistida para teto/fallback, em vez de constante do frontend;
+- validação server-side no fechamento do pedido;
+- snapshot da regra/valor aplicado por banca no pedido;
+- RLS/policy de atualização para permitir que o Feirante altere somente sua própria banca;
+- trilha de auditoria para alteração administrativa do teto.
+
 ## 13. Produtos e imagens
 
 `products` possui somente dados textuais/numéricos.
@@ -376,4 +394,5 @@ A próxima migration não deve ser genérica. Ela precisa, no mínimo:
 8. modelar reserva de estoque;
 9. modelar catálogo de veículos/taxas/suspensões/admin audit;
 10. completar RLS/policies;
-11. testar tudo em banco descartável antes de staging.
+11. testar tudo em banco descartável antes de staging;
+12. validar server-side o pedido mínimo por banca e persistir snapshot da regra aplicada.

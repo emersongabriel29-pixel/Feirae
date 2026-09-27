@@ -34,6 +34,7 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou ba
 - catálogo;
 - favoritos;
 - carrinho;
+- pedido mínimo configurável por banca;
 - checkout;
 - pagamento local;
 - retirada;
@@ -47,6 +48,7 @@ Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou ba
 ### Feirante
 
 - conta e banca;
+- pedido mínimo próprio ou sem mínimo;
 - produto/estoque;
 - horários;
 - promoções;
@@ -122,7 +124,8 @@ Existem:
 
 - `.env.example`;
 - `supabase/migrations/0001_feirae_core.sql`;
-- `supabase/migrations/0002_feirae_operations.sql`.
+- `supabase/migrations/0002_feirae_operations.sql`;
+- `supabase/migrations/0003_vendor_store_minimum_order.sql`.
 
 Não existem ainda:
 
@@ -138,9 +141,10 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 
 Suite atual:
 
-- 53 testes em `App.test.tsx`;
-- 44 testes de domínio/utilidades;
-- **97 testes no total**.
+- 56 testes em `App.test.tsx`;
+- 3 testes do componente de abertura;
+- 68 testes de domínio/utilidades;
+- **127 testes no total**.
 
 CI:
 

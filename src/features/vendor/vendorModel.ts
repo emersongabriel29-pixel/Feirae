@@ -60,6 +60,7 @@ export type VendorBankProfile = {
   categories: string;
   phone: string;
   whatsapp: string;
+  minimumOrderAmount: number;
   logoDataUrl: string;
   coverDataUrl: string;
 };
@@ -367,6 +368,7 @@ export function newVendorBankProfile(name: string): VendorBankProfile {
     categories: "",
     phone: "",
     whatsapp: "",
+    minimumOrderAmount: 0,
     logoDataUrl: "",
     coverDataUrl: "",
   };
@@ -385,6 +387,7 @@ export const initialBankProfile: VendorBankProfile = {
   categories: "Hortifruti, orgânicos e cestas",
   phone: "",
   whatsapp: "",
+  minimumOrderAmount: 30,
   logoDataUrl: "",
   coverDataUrl: "",
 };

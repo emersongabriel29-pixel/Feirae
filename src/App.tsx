@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
-import { filterProducts, sortFairsByDistance } from "./utils";
+import { filterProducts, money, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
 import { CartDrawer, Header, LoginPage, MobileNavigation } from "./components/AppComponents";
 import {
@@ -50,9 +50,11 @@ import {
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import {
+  DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
   MULTI_VENDOR_EXTRA_STOP_FEE,
   allocatePromotionAcrossVendors,
-  multiVendorMinimumMet,
+  normalizeVendorMinimumOrder,
+  vendorOrderSummaries,
 } from "./domain/multiVendor";
 import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
@@ -399,14 +401,36 @@ export default function App() {
       deliverySubsidy: number;
       customerDeliveryFee: number;
       promotionDiscount: number;
+      vendorPromotionDiscounts: Record<string, number>;
       walletUsed: number;
       appliedPromotions: string[];
       whatsappConsent: boolean;
       changeFor?: number;
     },
   ) {
-    if (!multiVendorMinimumMet(cartProducts, cart)) {
-      notify("Cada banca precisa atingir o pedido mínimo de R$ 30,00 antes de confirmar.");
+    const minimumByVendor = Object.fromEntries(
+      Array.from(new Set(cartProducts.map((product) => product.feirante))).map((vendorName) => {
+        const product = cartProducts.find((item) => item.feirante === vendorName);
+        const store = product ? readStoreByIdentity(product.fair, vendorName) : undefined;
+        return [
+          vendorName,
+          normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT),
+        ];
+      }),
+    );
+    const minimumSummaries = vendorOrderSummaries(
+      cartProducts,
+      cart,
+      minimumByVendor,
+      details.vendorPromotionDiscounts,
+    );
+    const blockedMinimum = minimumSummaries.find((summary) => !summary.meetsMinimum);
+    if (blockedMinimum) {
+      notify(
+        `${blockedMinimum.vendorName}: faltam ${money(
+          blockedMinimum.missingForMinimum,
+        )} para o pedido mínimo de ${money(blockedMinimum.minimumOrderAmount)}.`,
+      );
       return;
     }
     const id = `FE-${String(Date.now()).slice(-8)}`;

@@ -120,8 +120,26 @@ Arquivos existentes:
 - peso;
 - modalidades permitidas;
 - promoções via `calculateCheckoutPromotions()`;
+- pedido mínimo individual por banca via `vendorOrderSummaries()`;
 - carteira;
 - frete fixture via `vendorMetrics.deliveryFee`.
+
+### 5.2.1 Validação do mínimo por banca
+
+A fonte local da regra é `SharedStore.minimumOrderAmount`.
+
+Fluxo:
+
+```
+banca → marketplaceBridge
+→ sacola (pré-validação)
+→ checkout (promoções + validação final)
+→ App.confirmOrder() (revalidação antes de reservar estoque)
+```
+
+O frontend atual usa R$ 30,00 somente como fallback para banca sem configuração legada/estática. Banca nova pode usar R$ 0,00.
+
+Produção precisa repetir essa validação no servidor; o valor enviado pelo navegador nunca deve ser aceito como fonte de verdade.
 
 ### 5.3 Confirmar pedido
 
@@ -208,7 +226,8 @@ Isso não é transação de banco.
 - promoções;
 - aprovação;
 - aberta/fechada;
-- modalidades de entrega/pagamento.
+- modalidades de entrega/pagamento;
+- pedido mínimo configurado por banca.
 
 Storage:
 

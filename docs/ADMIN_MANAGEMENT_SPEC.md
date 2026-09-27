@@ -173,6 +173,39 @@ Tipos mínimos:
 
 Alterar regra nunca reescreve pedidos antigos. Pedido guarda snapshot da regra aplicada.
 
+## Pedido mínimo por banca
+
+O modelo funcional é **mínimo por banca**, não mínimo global por carrinho.
+
+### Controle do Feirante
+
+O Feirante pode:
+
+- não exigir mínimo;
+- definir um valor mínimo para novos pedidos;
+- visualizar o valor publicado ao Cliente.
+
+### Governança da plataforma
+
+A Gestão precisa controlar a política global, sem editar manualmente cada pedido:
+
+- ativar/desativar a possibilidade de pedido mínimo;
+- definir o **teto permitido** para as bancas;
+- opcionalmente definir um valor de fallback para cadastros legados;
+- listar bancas com e sem mínimo;
+- identificar valores fora do padrão;
+- registrar quem alterou a política e quando;
+- versionar alterações para que pedidos antigos preservem a regra aplicada.
+
+No protótipo atual:
+
+- teto central = **R$ 100,00**;
+- fallback para banca estática/legada sem configuração = **R$ 30,00**;
+- banca nova criada pelo Feirante inicia **sem mínimo**;
+- esses parâmetros ainda estão no código, porque o painel administrativo runtime ainda não foi implementado.
+
+Antes de produção, o teto/fallback devem sair de constantes do frontend e passar para configuração administrativa persistida e validada no backend.
+
 ## 7. Feirantes
 
 Admin deve acessar:

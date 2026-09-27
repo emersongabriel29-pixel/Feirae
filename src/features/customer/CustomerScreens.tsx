@@ -31,11 +31,11 @@ import {
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
 import {
+  DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
   MAX_VENDORS_PER_ORDER,
-  MIN_VENDOR_ORDER_AMOUNT,
   MULTI_VENDOR_EXTRA_STOP_FEE,
   calculateMultiVendorDeliveryFee,
-  multiVendorMinimumMet,
+  normalizeVendorMinimumOrder,
   vendorOrderSummaries,
 } from "../../domain/multiVendor";
 import { customerPrivacyNotice, customerTermsOfUse } from "../../domain/customerLegal";
@@ -722,6 +722,9 @@ export function VendorStore({
     (product) => product.feirante === vendorName && product.fair === fairName,
   );
   const sharedStore = readStoreByIdentity(fairName, vendorName);
+  const minimumOrderAmount = normalizeVendorMinimumOrder(
+    sharedStore?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
+  );
   const metrics = metricForVendor(vendorName, vendorMetrics);
   return (
     <Panel
@@ -742,8 +745,14 @@ export function VendorStore({
             {minutesLabel(metrics.deliveryMinutes)} · entrega a partir de {money(metrics.deliveryFee)}
           </p>
           <p>
-            Pedido mínimo nesta banca: <strong>{money(MIN_VENDOR_ORDER_AMOUNT)}</strong>. Em pedidos
-            multi-banca, cada banca precisa atingir esse mínimo.
+            {minimumOrderAmount > 0 ? (
+              <>
+                Pedido mínimo nesta banca: <strong>{money(minimumOrderAmount)}</strong>. Em pedidos
+                multi-banca, esta banca precisa atingir o próprio mínimo.
+              </>
+            ) : (
+              <strong>Esta banca não exige pedido mínimo.</strong>
+            )}
           </p>
         </div>
         <button
@@ -1337,6 +1346,7 @@ export function Checkout({
       deliverySubsidy: number;
       customerDeliveryFee: number;
       promotionDiscount: number;
+      vendorPromotionDiscounts: Record<string, number>;
       walletUsed: number;
       appliedPromotions: string[];
       whatsappConsent: boolean;
@@ -1360,17 +1370,23 @@ export function Checkout({
   const totalWeight = cartWeight(items, cart);
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const fairName = items[0]?.fair ?? "Feiraê";
-  const vendorCount = new Set(items.map((product) => product.feirante)).size;
-  const vendorMinimums = vendorOrderSummaries(items, cart);
-  const vendorMinimumMet = multiVendorMinimumMet(items, cart);
-  const stores = Array.from(
-    new Map(
-      items.map((item) => {
-        const store = readStoreByIdentity(item.fair, item.feirante);
-        return [`${item.fair}::${item.feirante}`, store] as const;
-      }),
-    ).values(),
-  ).filter(Boolean);
+  const vendorNames = Array.from(new Set(items.map((product) => product.feirante)));
+  const vendorCount = vendorNames.length;
+  const storesByVendor = new Map(
+    vendorNames.map((vendorName) => {
+      const item = items.find((product) => product.feirante === vendorName);
+      return [vendorName, item ? readStoreByIdentity(item.fair, vendorName) : undefined] as const;
+    }),
+  );
+  const stores = Array.from(storesByVendor.values()).filter(Boolean);
+  const minimumByVendor = Object.fromEntries(
+    vendorNames.map((vendorName) => [
+      vendorName,
+      normalizeVendorMinimumOrder(
+        storesByVendor.get(vendorName)?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
+      ),
+    ]),
+  );
   const deliveryAllowed = stores.every((store) => store?.deliveryEnabled !== false);
   const pickupAllowed = stores.every((store) => store?.pickupEnabled !== false);
   const cashOnDeliveryAllowed = stores.every((store) => store?.acceptCashOnDelivery !== false);
@@ -1388,6 +1404,15 @@ export function Checkout({
     ? calculateMultiVendorDeliveryFee(fallbackDeliveryFee, vendorCount)
     : 0;
   const promotionResult = calculateCheckoutPromotions(items, cart, calculatedDeliveryFee, couponCode);
+  const vendorMinimums = vendorOrderSummaries(
+    items,
+    cart,
+    minimumByVendor,
+    promotionResult.vendorPromotionDiscounts,
+  );
+  const vendorMinimumMet =
+    vendorMinimums.length > 0 && vendorMinimums.every((summary) => summary.meetsMinimum);
+  const blockedMinimum = vendorMinimums.find((summary) => !summary.meetsMinimum);
   const promotionDiscount = promotionResult.promotionDiscount;
   const deliverySubsidy =
     fulfillment === "delivery"
@@ -1583,11 +1608,23 @@ export function Checkout({
             <span className="eyebrow">Pedido mínimo por banca</span>
             {vendorMinimums.map((summary) => (
               <p key={summary.vendorName}>
-                <strong>{summary.vendorName}</strong> · {money(summary.subtotal)}{" "}
-                {summary.meetsMinimum ? "✓ mínimo atingido" : `· faltam ${money(summary.missingForMinimum)}`}
+                <strong>{summary.vendorName}</strong> ·{" "}
+                {summary.minimumOrderAmount > 0 ? (
+                  <>
+                    mínimo {money(summary.minimumOrderAmount)} · considerado {money(summary.eligibleSubtotal)}{" "}
+                    {summary.meetsMinimum
+                      ? "✓ mínimo atingido"
+                      : `· faltam ${money(summary.missingForMinimum)}`}
+                  </>
+                ) : (
+                  <>sem pedido mínimo ✓</>
+                )}
               </p>
             ))}
-            <small>Cada banca precisa somar pelo menos {money(MIN_VENDOR_ORDER_AMOUNT)} em produtos.</small>
+            <small>
+              Cada banca define o próprio mínimo. Frete e taxas não contam; descontos financiados pela própria
+              banca reduzem o valor de produtos considerado.
+            </small>
           </div>
 
           {availableWallet > 0 && (
@@ -1737,6 +1774,7 @@ export function Checkout({
                 deliverySubsidy,
                 customerDeliveryFee,
                 promotionDiscount,
+                vendorPromotionDiscounts: promotionResult.vendorPromotionDiscounts,
                 walletUsed,
                 appliedPromotions: promotionResult.appliedPromotions,
                 whatsappConsent,
@@ -1754,8 +1792,10 @@ export function Checkout({
             <small>
               {!storesOpen
                 ? "Uma das bancas está fechada no momento."
-                : !vendorMinimumMet
-                  ? `Cada banca precisa atingir o pedido mínimo de ${money(MIN_VENDOR_ORDER_AMOUNT)}.`
+                : !vendorMinimumMet && blockedMinimum
+                  ? `${blockedMinimum.vendorName}: faltam ${money(
+                      blockedMinimum.missingForMinimum,
+                    )} para o pedido mínimo de ${money(blockedMinimum.minimumOrderAmount)}.`
                   : !deliveryAllowed && fulfillment === "delivery"
                     ? "Uma das bancas não aceita entrega."
                     : !pickupAllowed && fulfillment === "pickup"

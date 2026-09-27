@@ -34,7 +34,8 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
     const checkoutButton = screen.getByRole("button", { name: /continuar para checkout/i });
     expect(checkoutButton).toBeDisabled();
-    expect(screen.getByText(/mínimo de r\$ 30,00 em produtos de cada banca/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/verde cerrado/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/faltam r\$ 2,00/i).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /adicionar uma unidade de planta ornamental/i }));
     expect(checkoutButton).toBeEnabled();
     fireEvent.click(checkoutButton);
@@ -633,6 +634,29 @@ describe("Feiraê role access", () => {
     expect(screen.getByLabelText(/box\/banca/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/foto de capa/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^logo$/i)).toBeInTheDocument();
+  });
+
+  it("lets the feirante choose its own minimum order or disable the minimum", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getByRole("button", { name: /minha banca/i }));
+    fireEvent.click(screen.getByRole("button", { name: /editar banca/i }));
+
+    const minimumMode = screen.getByLabelText(/^pedido mínimo$/i);
+    expect(minimumMode).toHaveValue("custom");
+    expect(screen.getByLabelText(/valor mínimo por pedido/i)).toHaveValue(30);
+
+    fireEvent.change(minimumMode, { target: { value: "none" } });
+    expect(screen.queryByLabelText(/valor mínimo por pedido/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /salvar banca/i }));
+    fireEvent.click(screen.getByRole("button", { name: /visualizar como cliente/i }));
+    expect(screen.getByText(/sem valor mínimo/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /editar banca/i }));
+    fireEvent.change(screen.getByLabelText(/^pedido mínimo$/i), { target: { value: "custom" } });
+    fireEvent.change(screen.getByLabelText(/valor mínimo por pedido/i), { target: { value: "45" } });
+    fireEvent.click(screen.getByRole("button", { name: /salvar banca/i }));
+    expect(screen.getByText(/r\$ 45,00/i)).toBeInTheDocument();
   });
 
   it("uses the selected fair official schedule and allows custom day-by-day hours", () => {
