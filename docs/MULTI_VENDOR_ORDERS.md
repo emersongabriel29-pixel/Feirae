@@ -99,15 +99,27 @@ No acompanhamento, pedidos com mais de uma banca mostram:
 
 ## Geometria da rota
 
-A sequência de coleta por banca agora existe no pedido e na interface do entregador.
+A rota agora é híbrida:
 
-Porém o marketplace atual ainda não persiste coordenadas individuais de cada banca/box. Por isso:
+```
+localização atual do entregador
+→ entrada de referência da feira
+→ bancas/boxes em ordem interna otimizada
+→ saída da feira
+→ cliente
+```
 
-- OSRM calcula atualmente entregador → feira → cliente;
-- as paradas internas da feira são paradas operacionais ordenadas;
-- o sistema ainda não calcula distância real entre banca A → banca B → banca C.
+O GPS/OSRM é usado nos trechos externos. Dentro da feira, cada banca pode ter setor, corredor, box e posição cartesiana X/Y em metros a partir da entrada.
 
-Para otimização real de rota intra-feira, cada banca precisará ter coordenada/posição do box e o roteador deverá receber todos os waypoints.
+Quando existem posições X/Y, `fairInternalRouting.ts` escolhe a próxima banca mais próxima, calcula a distância interna e soma esse trecho ao ETA/distância da corrida.
+
+Quando uma banca ainda não tem X/Y, o fluxo não quebra: usa `setor → corredor → box` como fallback de orientação e ordenação.
+
+Cada `pickupStop` pode carregar posição, sequência, distância desde a parada anterior e código de confirmação.
+
+A coleta pode exigir o código/QR da banca antes de mudar a participação para `collected`.
+
+Detalhes: [INTERNAL_FAIR_ROUTING.md](INTERNAL_FAIR_ROUTING.md).
 
 ## Frete multi-banca
 
