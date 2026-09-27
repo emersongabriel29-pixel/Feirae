@@ -794,7 +794,6 @@ Para evitar conflito entre mensagens da marca:
 
 Essas três frases possuem funções diferentes e não devem ser trocadas automaticamente entre superfícies.
 
-
 ### Critério visual da abertura
 
 A versão completa deve mostrar, de forma perceptível e nessa ordem:
