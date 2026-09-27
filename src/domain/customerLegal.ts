@@ -5,7 +5,8 @@ export const customerTermsOfUse: LegalTerm = {
   version: "2026-09-27.1",
   role: "customer",
   title: "Termos de Uso do Cliente Feiraê",
-  summary: "Regras para conta, compras, ofertas, pagamentos, entregas, avaliações, segurança e uso responsável.",
+  summary:
+    "Regras para conta, compras, ofertas, pagamentos, entregas, avaliações, segurança e uso responsável.",
   sections: [
     {
       title: "1. Conta e veracidade",
@@ -99,7 +100,8 @@ export const customerPrivacyNotice: LegalTerm = {
   version: "2026-09-27.1",
   role: "customer",
   title: "Aviso de Privacidade do Cliente Feiraê",
-  summary: "Como dados da conta, endereços, localização, pedidos, pagamentos, suporte e preferências são tratados.",
+  summary:
+    "Como dados da conta, endereços, localização, pedidos, pagamentos, suporte e preferências são tratados.",
   sections: [
     {
       title: "1. Dados tratados",
