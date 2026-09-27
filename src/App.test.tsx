@@ -35,7 +35,7 @@ describe("Feiraê customer flow", () => {
     const checkoutButton = screen.getByRole("button", { name: /continuar para checkout/i });
     expect(checkoutButton).toBeDisabled();
     expect(screen.getAllByText(/verde cerrado/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/faltam r\$ 2,00/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/faltam r\$ 2,00/i).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /adicionar uma unidade de planta ornamental/i }));
     expect(checkoutButton).toBeEnabled();
     fireEvent.click(checkoutButton);
