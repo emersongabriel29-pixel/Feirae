@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   appendReview,
   appendSupportTicket,
+  patchUnifiedOrder,
   patchUnifiedOrderItem,
   patchVendorStatus,
   readUnifiedOrders,
@@ -97,6 +98,44 @@ describe("unified order bridge", () => {
 
     patchVendorStatus("FE-MULTI", "vendor:b", "delivered");
     expect(readUnifiedOrders()[0].status).toBe("delivered");
+  });
+
+  it("keeps delivery in collection until every vendor stop is confirmed", () => {
+    seedOrder();
+    patchVendorStatus("FE-MULTI", "vendor:a", "ready");
+    patchVendorStatus("FE-MULTI", "vendor:b", "ready");
+    patchUnifiedOrder("FE-MULTI", { status: "driver_assigned" });
+
+    patchVendorStatus("FE-MULTI", "vendor:a", "collected");
+    let order = readUnifiedOrders()[0];
+    expect(order.status).toBe("driver_assigned");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:a")?.status).toBe("collected");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:b")?.status).toBe("ready");
+
+    patchVendorStatus("FE-MULTI", "vendor:b", "collected");
+    order = readUnifiedOrders()[0];
+    expect(order.status).toBe("driver_assigned");
+
+    patchUnifiedOrder("FE-MULTI", { status: "collected" });
+    expect(readUnifiedOrders()[0].status).toBe("collected");
+  });
+
+  it("derives ordered pickup stops for a multi-vendor route", () => {
+    seedOrder();
+    patchUnifiedOrder("FE-MULTI", {
+      route: {
+        toVendorKm: 2,
+        vendorToCustomerKm: 5,
+        totalKm: 7,
+        etaMinutes: 25,
+        source: "osrm",
+      },
+    });
+
+    expect(readUnifiedOrders()[0].route?.pickupStops).toEqual([
+      { vendorId: "vendor:a", storeId: "store:a", vendorName: "Banca A" },
+      { vendorId: "vendor:b", storeId: "store:b", vendorName: "Banca B" },
+    ]);
   });
 
   it("propagates actual separated weight to logistics", () => {
