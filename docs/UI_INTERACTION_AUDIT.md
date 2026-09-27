@@ -305,3 +305,28 @@ A revisão visual mais recente foi comparada novamente contra os componentes rea
 ### Limite
 
 Essa revisão continua sem prova de layout em browser real. Browser E2E/regressão visual permanece pendente.
+
+## Correção da splash após vídeo — 27/09/2026
+
+A inspeção da gravação em aparelho real identificou divergência entre o conceito aprovado e a primeira versão implementada.
+
+Problemas observados:
+
+- ilustração pequena demais;
+- aparência de ícone/cartoon simples;
+- pouca profundidade;
+- movimento da entrega pouco destacado;
+- transição para a marca curta demais.
+
+Correção aplicada:
+
+- cena ampliada para ocupar melhor o viewport;
+- banca com mais detalhe e camadas;
+- frutas/verduras com stagger;
+- moto com entregador e rodas animadas;
+- rota com glow;
+- pin com bounce;
+- fundo com profundidade;
+- transição final mais próxima do conceito premium aprovado.
+
+Acessibilidade e reduced motion foram preservados.

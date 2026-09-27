@@ -6,8 +6,8 @@ A abertura apresenta a proposta do Feiraê em poucos segundos: a banca ganha vid
 
 ## Comportamento
 
-- Primeira abertura do dia: animação completa, com duração aproximada de 3,1 s.
-- Reaberturas no mesmo dia: versão rápida, com duração aproximada de 1,45 s.
+- Primeira abertura do dia: animação completa, com duração aproximada de 3,3 s.
+- Reaberturas no mesmo dia: versão rápida, com duração aproximada de 1,55 s.
 - Dispositivos com `prefers-reduced-motion: reduce`: versão estática de 650 ms.
 - O aplicativo é montado enquanto a splash está visível para evitar atraso adicional após a animação.
 
@@ -59,3 +59,23 @@ A chave `feirae:splash:last-full-day` registra a última data em que a animaçã
 - assinatura desta splash: **Da feira até você**.
 
 A splash não redefine o slogan institucional; usa uma assinatura específica para comunicar feira + entrega.
+
+## Revisão premium após validação em vídeo — 27/09/2026
+
+A gravação real em celular mostrou que a primeira implementação estava funcional, porém visualmente simplificada demais em relação ao conceito aprovado.
+
+A cena foi refeita para preservar a promessa visual original:
+
+- banca maior, com estrutura, toldo, madeira, caixas e profundidade;
+- contorno da banca continua sendo desenhado antes do preenchimento;
+- frutas, verduras e elementos orgânicos entram em camadas e tempos diferentes;
+- fundo recebeu auroras, textura sutil, folhas e halo central;
+- rota possui linha principal e brilho suave;
+- entrega usa moto/entregador com caixa traseira, rodas girando e linhas de movimento;
+- pin encerra a rota com bounce;
+- cena sai com blur/scale antes da marca;
+- marca entra em card luminoso com micro-bounce;
+- full: ~3,3 s;
+- quick: ~1,55 s.
+
+A implementação continua vetorial/CSS, sem vídeo pesado ou dependência remota.
