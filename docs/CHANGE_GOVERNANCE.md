@@ -1,6 +1,6 @@
 # Governança de mudanças — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 27/09/2026.
 
 Esta regra vale para qualquer alteração futura do projeto: **nenhuma parte do Feiraê evolui isoladamente**.
 
@@ -151,6 +151,7 @@ Obrigatório revisar:
 - `SCHEMA_GAP_MATRIX.md`;
 - `DATA_MODEL_AND_STATES.md`;
 - `IMPLEMENTATION_TRACEABILITY.md`;
+- `DEPLOYMENT_AND_ENVIRONMENTS.md`;
 - `SECURITY_AND_AUTH.md` se houver RLS/policy;
 - roadmap/checklist quando um gap for fechado.
 
@@ -176,6 +177,7 @@ Obrigatório revisar:
 - acessibilidade;
 - testes comportamentais;
 - `UI_INTERACTION_AUDIT.md`;
+- `DESIGN_SYSTEM.md`;
 - especificação funcional se mudar comportamento.
 
 ### Mudança no painel administrativo
@@ -246,11 +248,17 @@ Não fazer merge quando:
 
 O repositório possui `scripts/check-change-sync.mjs`.
 
-Em pull requests, o CI verifica automaticamente regras mínimas:
+Em pull requests, o CI verifica automaticamente regras mínimas e regras semânticas por domínio:
 
 - mudança em código/config/schema exige documentação no mesmo PR;
 - mudança de comportamento em `src/` exige teste no mesmo PR;
-- migration exige atualização de documentação de schema/estado;
-- workflow/config de deploy exige atualização de documentação de deploy.
+- alteração de teste exige atualização de `TESTING_QA.md`;
+- migration exige `SCHEMA_GAP_MATRIX.md`, `DATA_MODEL_AND_STATES.md`, `IMPLEMENTATION_TRACEABILITY.md` e `DEPLOYMENT_AND_ENVIRONMENTS.md`;
+- UI/UX exige `UI_INTERACTION_AUDIT.md` e `DESIGN_SYSTEM.md`;
+- splash/identidade sonora exige `LAUNCH_EXPERIENCE.md`, `ARCHITECTURE.md` e `FUNCTIONAL_SPEC.md`;
+- pedido/estoque/carteira exige `FUNCTIONAL_SPEC.md` e `IMPLEMENTATION_TRACEABILITY.md`;
+- notificações exigem `NOTIFICATIONS.md` e `IMPLEMENTATION_TRACEABILITY.md`;
+- Auth/termos/dados pessoais exigem `SECURITY_AND_AUTH.md` e `LGPD_AND_PRIVACY.md`;
+- workflow/config de deploy exige atualização de `DEPLOYMENT_AND_ENVIRONMENTS.md`.
 
-A automação é uma barreira mínima. A matriz de impacto deste documento continua sendo obrigatória mesmo quando o script não consegue inferir semanticamente todo o impacto.
+A política vive em `scripts/change-sync-policy.mjs` e possui testes em `scripts/change-sync-policy.test.mjs`. Ela continua sendo uma barreira automática, não substitui a revisão humana da matriz de impacto.
