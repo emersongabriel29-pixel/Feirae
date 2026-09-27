@@ -1,4 +1,4 @@
-export type LegalPartyRole = "feirante" | "delivery" | "all";
+export type LegalPartyRole = "customer" | "feirante" | "delivery" | "all";
 
 export type LegalReference = {
   label: string;
@@ -30,7 +30,7 @@ export type LegalAcceptance = {
   signerEmail: string;
   signedAt: string;
   fingerprint: string;
-  method: "typed-name" | "seed-demo";
+  method: "typed-name" | "checkbox" | "seed-demo";
 };
 
 const commonReferences: LegalReference[] = [
