@@ -122,6 +122,19 @@ A mensagem deve comunicar imediatamente Cliente, Feirante e Entregador sem compe
 - quando um e-mail já pertence a outro papel, a mensagem informa explicitamente o acesso correto;
 - no cadastro mobile, a apresentação promocional é compactada para priorizar os campos.
 
+### Cliente
+
+Ao criar uma nova conta, o Cliente precisa confirmar separadamente:
+
+- **Li e aceito os Termos de Uso do Cliente Feiraê**;
+- **Li o Aviso de Privacidade e estou ciente de como meus dados são tratados**.
+
+Sem as duas confirmações, a conta não é criada.
+
+**Ofertas e novidades** é uma preferência opcional, inicia desmarcada e não pode ser condição para criar a conta.
+
+Os textos completos ficam disponíveis antes do cadastro e também depois em **Perfil → Configurações → Termos e privacidade**.
+
 ### Feirante
 
 Se o cadastro não estiver aprovado, a Central mostra um bloco prioritário **Complete seu cadastro para vender** e leva primeiro à banca ou aos documentos conforme a pendência.
