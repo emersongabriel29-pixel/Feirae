@@ -77,3 +77,55 @@ Também foi adotado `100dvh` em áreas de tela cheia para comportamento mais est
 - React: `.github/prompts/ui-ux-pro-max/data/stacks/react.csv`
 - Tailwind/web: `.github/prompts/ui-ux-pro-max/data/stacks/html-tailwind.csv`
 - UX: `.github/prompts/ui-ux-pro-max/data/ux-guidelines.csv`
+
+
+## Revisão tela por tela — segunda passada
+
+### Cliente
+
+- Home: ilustração vetorial alinhada à marca, sem emoji estrutural.
+- Feiras: capa visual com ícone vetorial e marca Feiraê; horário mais legível.
+- Catálogo: categoria selecionada exposta com `aria-pressed`.
+- Favoritos: estado pressionado exposto aos leitores de tela.
+- Pedidos: estado vazio real quando não há pedidos.
+- Perfil e pagamentos: microtextos e ações com melhor legibilidade/tamanho de toque.
+- Navegação móvel: item atual exposto com `aria-current="page"` e destaque visual consistente.
+- Sacola: fechar, remover e alterar quantidade usam alvo de toque maior; rolagem fica contida no drawer.
+
+### Feirante
+
+- Central: hierarquia de resumo, métricas, pedidos ao vivo e módulos foi padronizada.
+- Minha banca: fallback visual usa ícone vetorial; estado aberto/fechado usa `aria-pressed`.
+- Produtos/estoque/pedidos: ações pequenas receberam alvo de toque consistente.
+- Financeiro, avaliações e documentos: microtextos operacionais ficaram mais legíveis sem alterar cálculos ou fluxos.
+- Feedbacks de sucesso relevantes usam região de status acessível.
+
+### Entregador
+
+- Corridas: cards ganharam hierarquia mais clara para rota, peso, veículo, ganho e ação.
+- Disponibilidade: ligar/desligar expõe estado com `aria-pressed`.
+- Veículos, financeiro e ajuda: textos, botões e ações seguem a mesma escala visual da operação do feirante.
+- Filtros de ajuda selecionados expõem estado pressionado.
+- Feedbacks de protocolo, conta e alertas usam status acessível.
+
+### Responsividade
+
+Em telas pequenas:
+
+- CTAs principais da Home ocupam a largura disponível quando necessário;
+- listas operacionais podem quebrar linha sem esmagar conteúdo;
+- ações de pedido/corrida passam a ter mais espaço;
+- formulários de pagamento reorganizam o botão em linha própria;
+- grupos de ações ficam empilhados quando a largura é insuficiente;
+- onboarding/documentos continuam usando os breakpoints já existentes.
+
+## Critério de aceitação desta revisão
+
+A revisão só pode ser considerada pronta quando:
+
+- lint passar;
+- testes automatizados passarem;
+- build de produção passar;
+- sincronização entre código, testes e documentação passar;
+- Prettier passar;
+- nenhuma mudança de regra de negócio for introduzida como efeito colateral de UI/UX.
