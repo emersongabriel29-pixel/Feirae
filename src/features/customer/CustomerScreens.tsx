@@ -779,7 +779,9 @@ export function FairDetail({
             <ProductCard
               key={product.id}
               product={product}
+              quantity={cart[product.id] ?? 0}
               onAdd={onAdd}
+              onRemove={onRemove}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
             />
