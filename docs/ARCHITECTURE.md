@@ -374,3 +374,23 @@ A cartografia do Cliente foi separada em domínio e UI:
 - `App.tsx` fornece as coordenadas obtidas pelo fluxo de GPS já existente.
 
 A projeção é deliberadamente independente de SDK externo. Coordenadas regionais são fallback de apresentação e não pertencem ao domínio de frete/roteamento. Quando o backend fornecer coordenadas verificadas, o mesmo componente passa a priorizá-las sem mudança de contrato visual.
+
+## Arquitetura do acompanhamento cartográfico — 28/09/2026
+
+`src/components/OrderRouteMap.tsx` é o componente compartilhado por Cliente, Feirante e Entregador.
+
+Fontes de estado:
+
+- `UnifiedOrderRecord.status`: posição operacional quando não existe GPS;
+- `UnifiedOrderRecord.route.pickupStops`: bancas e sequência de coleta;
+- `UnifiedOrderRecord.customerAddress/customerLat/customerLng`: destino;
+- `UnifiedOrderRecord.driver.location`: snapshot opcional de GPS do entregador;
+- `fairMapCoordinate()`: coordenada de feira, priorizando `lat/lng` verificados e usando fallback regional somente quando necessário.
+
+O Entregador usa `navigator.geolocation.watchPosition()` apenas durante corrida ativa e somente depois de existir localização-base configurada pelo próprio usuário. Escritas são limitadas a no máximo uma a cada 5 segundos.
+
+A posição visual da moto é:
+- por GPS quando há snapshot utilizável;
+- por etapa do pedido como fallback explícito.
+
+O protótipo persiste snapshots na bridge local. Produção deve substituir isso por backend autenticado/realtime sem alterar o contrato do componente.
