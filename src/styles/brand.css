@@ -1,0 +1,48 @@
+.feirae-brand-lockup {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  line-height: 0;
+}
+
+.feirae-brand-lockup__image {
+  display: block;
+  width: clamp(10.5rem, 22vw, 14.5rem);
+  height: auto;
+  max-width: 100%;
+}
+
+.feirae-brand-lockup.is-compact .feirae-brand-lockup__image {
+  width: 9.25rem;
+}
+
+.login-brand.feirae-brand-lockup {
+  position: relative;
+  z-index: 1;
+}
+
+.login-brand .feirae-brand-lockup__image {
+  width: clamp(12.5rem, 34vw, 17rem);
+  filter: drop-shadow(0 14px 24px rgba(0, 34, 17, 0.18));
+}
+
+.brand .feirae-brand-lockup {
+  flex: none;
+}
+
+.brand .feirae-brand-lockup__image {
+  width: 8.75rem;
+}
+
+.brand-surface {
+  border: 1px solid color-mix(in srgb, var(--fe-green) 14%, var(--fe-border));
+  background:
+    radial-gradient(circle at 90% 5%, rgba(255, 193, 7, 0.1), transparent 11rem),
+    linear-gradient(145deg, var(--fe-surface), var(--fe-cream));
+}
+
+@media (max-width: 420px) {
+  .brand .feirae-brand-lockup__image {
+    width: 7.5rem;
+  }
+}
