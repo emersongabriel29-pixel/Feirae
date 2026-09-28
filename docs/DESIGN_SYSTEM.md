@@ -551,3 +551,18 @@ Elementos visuais:
 - resumo inferior com origem, destino e estado do rastreamento.
 
 A casa deve ser reconhecível como destino sem expor texto sensível além do endereço já autorizado no contexto do pedido.
+
+## Card completo de produto
+
+O card de produto é um componente informativo de compra, não apenas uma miniatura.
+
+Hierarquia visual:
+1. imagem + categoria + status da banca;
+2. banca, nome, feira e descrição;
+3. promoções;
+4. avaliação, prazo e frete;
+5. grade com venda, peso, estoque e volume;
+6. chips de entrega, retirada e pedido mínimo;
+7. preço/unidade e CTA adicionar.
+
+A tela inicial reutiliza esse mesmo card para não criar uma versão visualmente mais pobre do catálogo.
