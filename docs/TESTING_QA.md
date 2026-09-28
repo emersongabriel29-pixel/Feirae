@@ -383,3 +383,23 @@ Limites de QA:
 - coordenadas regionais são aproximações temporárias;
 - validação visual deve conferir sobreposição de pins e legibilidade em 360, 390 e 412 px;
 - coordenadas exatas de produção devem receber casos de teste quando passarem a vir do backend.
+
+## QA do mapa de acompanhamento — 28/09/2026
+
+`src/components/OrderRouteMap.test.tsx` cobre:
+
+- presença do mapa compartilhado;
+- origem na feira;
+- ícone/label **Casa do cliente**;
+- marcador do Entregador com GPS;
+- texto de atualização do GPS;
+- fallback honesto por etapa quando não existe GPS;
+- substituição da casa por **Retirada na feira** em pedidos pickup.
+
+QA manual recomendado:
+
+- Cliente: abrir pedido em cada etapa e conferir moto/casa/timeline;
+- Feirante: abrir pedido e conferir destaque da própria banca;
+- Entregador: aceitar corrida com GPS configurado, conferir atualização e remoção ao finalizar/cancelar;
+- negar permissão do navegador e confirmar fallback sem quebra;
+- validar 360, 390 e 412 px sem sobreposição entre casa, moto e pins de banca.
