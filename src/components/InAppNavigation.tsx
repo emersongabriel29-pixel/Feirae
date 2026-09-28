@@ -38,6 +38,7 @@ export function InAppNavigation({
   const [locationMessage, setLocationMessage] = useState("");
   const targetCoords = useMemo(() => parseCoordinateTarget(destination), [destination]);
   const distance = origin && targetCoords ? distanceKm(origin, targetCoords) : null;
+
   function updateLocation() {
     if (!navigator.geolocation) {
       setLocationMessage("Localização do aparelho indisponível.");
@@ -84,12 +85,19 @@ export function InAppNavigation({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section className="in-app-route" role="dialog" aria-modal="true" aria-labelledby="in-app-route-title">
+      <section
+        className="in-app-route"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="in-app-route-title"
+      >
         <header className="in-app-route__header">
           <div>
             <span className="eyebrow">MAPA FEIRAÊ</span>
             <h2 id="in-app-route-title">Sua rota sem sair do app</h2>
-            <p>O Feiraê é o mapa principal. Google Maps e Waze ficam disponíveis como opções externas.</p>
+            <p>
+              O Feiraê é o mapa principal. Google Maps e Waze ficam disponíveis como opções externas.
+            </p>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Fechar mapa">
             <X size={20} />
@@ -110,24 +118,47 @@ export function InAppNavigation({
               </linearGradient>
             </defs>
             <rect width="1000" height="520" fill="url(#inAppRouteLand)" />
-            <path d="M50 110 C210 170 330 118 460 180 C590 242 725 186 950 250" className="in-app-route__street" />
-            <path d="M80 420 C230 330 350 380 505 292 C642 215 772 300 935 155" className="in-app-route__street" />
-            <path d="M210 40 C280 160 240 280 330 495" className="in-app-route__street" />
-            <path d="M105 405 C250 324 366 363 510 286 C665 204 770 284 892 170" className="in-app-route__path" stroke="url(#inAppRouteLine)" />
+            <path
+              d="M50 110 C210 170 330 118 460 180 C590 242 725 186 950 250"
+              className="in-app-route__street"
+            />
+            <path
+              d="M80 420 C230 330 350 380 505 292 C642 215 772 300 935 155"
+              className="in-app-route__street"
+            />
+            <path
+              d="M210 40 C280 160 240 280 330 495"
+              className="in-app-route__street"
+            />
+            <path
+              d="M105 405 C250 324 366 363 510 286 C665 204 770 284 892 170"
+              className="in-app-route__path"
+              stroke="url(#inAppRouteLine)"
+            />
           </svg>
 
           <div className="in-app-route__origin">
-            <span><Crosshair size={21} /></span>
+            <span>
+              <Crosshair size={21} />
+            </span>
             <b>{origin ? "Você" : "Sua localização"}</b>
           </div>
 
           <div className="in-app-route__destination">
-            <span>{destination.toLocaleLowerCase("pt-BR").includes("feira") ? <Store size={21} /> : <House size={21} />}</span>
+            <span>
+              {destination.toLocaleLowerCase("pt-BR").includes("feira") ? (
+                <Store size={21} />
+              ) : (
+                <House size={21} />
+              )}
+            </span>
             <b>Destino</b>
           </div>
 
           <div className="in-app-route__vehicle">
-            <span><Navigation size={19} /></span>
+            <span>
+              <Navigation size={19} />
+            </span>
           </div>
         </div>
 
@@ -143,13 +174,27 @@ export function InAppNavigation({
             <Route size={18} />
             <span>
               <small>Distância</small>
-              <b>{distance !== null ? `~${distance.toFixed(1)} km em linha reta` : "Calculada durante a navegação"}</b>
+              <b>
+                {distance !== null
+                  ? `~${distance.toFixed(1)} km em linha reta`
+                  : "Calculada durante a navegação"}
+              </b>
             </span>
           </div>
         </div>
 
-        <button type="button" className="primary-action w-full in-app-route__locate" onClick={updateLocation} disabled={locating}>
-          <Crosshair size={17} /> {locating ? "Atualizando localização..." : origin ? "Atualizar minha localização" : "Usar minha localização"}
+        <button
+          type="button"
+          className="primary-action w-full in-app-route__locate"
+          onClick={updateLocation}
+          disabled={locating}
+        >
+          <Crosshair size={17} />{" "}
+          {locating
+            ? "Atualizando localização..."
+            : origin
+              ? "Atualizar minha localização"
+              : "Usar minha localização"}
         </button>
         {locationMessage && <p className="in-app-route__message">{locationMessage}</p>}
 
