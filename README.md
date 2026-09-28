@@ -141,13 +141,13 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 
 Suite atual:
 
-- 58 testes em `App.test.tsx`;
-- 3 testes do componente de abertura;
-- 68 testes de domínio/utilidades;
-- **129 testes Vitest**;
+- 60 testes em `App.test.tsx`;
+- 4 testes do componente de abertura;
+- 81 testes de componentes, domínio e utilidades;
+- **145 testes Vitest**;
 - 8 testes da política de sincronização do repositório em `scripts/change-sync-policy-checks.mjs`.
 
-O `npm run check` executa lint, 129 testes Vitest, 8 testes de governança e build.
+O `npm run check` executa lint, 145 testes Vitest, 8 testes de governança e build.
 
 CI:
 
@@ -169,6 +169,7 @@ Cobertura exata e lacunas:
 Design e rastreabilidade:
 
 - [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
+- [BRAND_IDENTITY.md](docs/BRAND_IDENTITY.md)
 - [IMPLEMENTATION_TRACEABILITY.md](docs/IMPLEMENTATION_TRACEABILITY.md)
 - [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md)
 - [DATA_MODEL_AND_STATES.md](docs/DATA_MODEL_AND_STATES.md)
@@ -228,3 +229,7 @@ npm run format:check
 Para afirmar **o que existe hoje**, verificar código + testes + migrations.
 
 Os documentos definem contratos, decisões e lacunas, mas não podem transformar requisito futuro em funcionalidade existente.
+
+## Shell visual da gestão
+
+A rota estática `/gestao/` aplica a identidade oficial Feiraê ao futuro painel administrativo. Ela é referência visual e **não representa backend administrativo pronto**; permissões, auditoria, taxas e ações reais continuam descritas em `docs/ADMIN_MANAGEMENT_SPEC.md`.

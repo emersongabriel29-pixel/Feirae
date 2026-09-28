@@ -411,3 +411,15 @@ Os cards de produto recebem `cart` e as ações `addProductToCart` / `removeFrom
 `ProductCard` recebe apenas a quantidade derivada `cart[product.id] ?? 0`; não cria estado local de quantidade. Isso garante sincronização imediata entre todas as telas que exibem o mesmo produto e o `CartDrawer`.
 
 O limite superior continua sendo validado por `useDemoCart.addToCart()` contra `product.stock`. A interface também desabilita visualmente o incremento ao atingir o estoque, mas a regra de domínio permanece no hook.
+
+## Camada de identidade compartilhada — 28/09/2026
+
+A marca deixa de ser montada localmente em cada tela e passa a ter uma camada compartilhada:
+
+- assets em `public/brand/`;
+- alias legado `public/feirae-mark.svg`;
+- componente `src/components/FeiraeBrand.tsx`;
+- tokens em `src/styles/tokens.css`;
+- estilos institucionais em `src/styles/brand.css`.
+
+Login, header e fallback da splash consomem essa camada. A gestão estática em `public/gestao/` usa os mesmos assets, sem compartilhar lógica de negócio do app.

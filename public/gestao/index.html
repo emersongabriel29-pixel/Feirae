@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0B662F" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Feiraê — Gestão</title>
+    <link rel="icon" href="/brand/feirae-symbol.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/gestao/gestao.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <aside class="sidebar">
+        <a class="admin-brand" href="/" aria-label="Voltar ao Feiraê">
+          <img src="/brand/feirae-logo-horizontal.svg" alt="Feiraê — Da feira até você" />
+        </a>
+        <nav aria-label="Navegação da gestão">
+          <a class="active" href="#visao-geral">Visão geral</a>
+          <a href="#operacao">Operação</a>
+          <a href="#parceiros">Parceiros</a>
+          <a href="#documentos">Documentos</a>
+          <a href="#financeiro">Financeiro</a>
+          <a href="#configuracoes">Configurações</a>
+        </nav>
+        <div class="sidebar-note">
+          <strong>Identidade oficial</strong>
+          <span>Mesmo sistema visual do app Feiraê.</span>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">Painel administrativo</span>
+            <h1>Gestão Feiraê</h1>
+          </div>
+          <div class="clock" aria-live="polite">
+            <strong id="admin-date">--/--/----</strong>
+            <span id="admin-time">--:--</span>
+          </div>
+        </header>
+
+        <section class="implementation-note" role="note">
+          <strong>Shell visual conectado à identidade oficial.</strong>
+          <span
+            >RBAC, auditoria, taxas, sanções e persistência administrativa continuam como requisitos de
+            backend antes de produção.</span
+          >
+        </section>
+
+        <section id="visao-geral" class="hero">
+          <div>
+            <span class="eyebrow light">Da feira até você</span>
+            <h2>Operação clara, segura e próxima.</h2>
+            <p>
+              Uma visão consistente da plataforma, das feiras e dos parceiros, sem precisar alterar a
+              identidade a cada módulo.
+            </p>
+          </div>
+          <img src="/brand/feirae-symbol.svg" alt="" aria-hidden="true" />
+        </section>
+
+        <section class="metrics" aria-label="Resumo da operação">
+          <article><span>Feiras ativas</span><strong>—</strong><small>Dados reais pendentes</small></article>
+          <article><span>Pedidos hoje</span><strong>—</strong><small>Dados reais pendentes</small></article>
+          <article><span>Parceiros</span><strong>—</strong><small>Dados reais pendentes</small></article>
+          <article><span>Entregas</span><strong>—</strong><small>Dados reais pendentes</small></article>
+        </section>
+
+        <section id="operacao" class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Operação</span>
+              <h2>Controles principais</h2>
+            </div>
+            <span class="status-chip">UI pronta para integração</span>
+          </div>
+          <div class="module-grid">
+            <article>
+              <span class="module-icon">UF</span>
+              <h3>Estados e cidades</h3>
+              <p>Ativação regional, cobertura e disponibilidade.</p>
+              <button disabled>Gerenciar</button>
+            </article>
+            <article>
+              <span class="module-icon">FE</span>
+              <h3>Feiras</h3>
+              <p>Cadastro, horários, coordenadas e publicação.</p>
+              <button disabled>Gerenciar</button>
+            </article>
+            <article>
+              <span class="module-icon">RT</span>
+              <h3>Rotas e veículos</h3>
+              <p>Tipos globais, capacidade e regras operacionais.</p>
+              <button disabled>Gerenciar</button>
+            </article>
+          </div>
+        </section>
+
+        <section id="parceiros" class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Parceiros</span>
+              <h2>Feirantes e entregadores</h2>
+            </div>
+          </div>
+          <div class="list-row">
+            <span class="dot"></span>
+            <div><strong>Aprovações</strong><small>Fila de documentos, termos e correções.</small></div>
+            <span class="pill">Pendente de backend</span>
+          </div>
+          <div class="list-row">
+            <span class="dot"></span>
+            <div>
+              <strong>Suspensões e permissões</strong
+              ><small>Ações com motivo, prazo e trilha de auditoria.</small>
+            </div>
+            <span class="pill">Pendente de backend</span>
+          </div>
+        </section>
+
+        <section id="documentos" class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Documentos</span>
+              <h2>Regularização e transparência</h2>
+            </div>
+          </div>
+          <p class="panel-copy">
+            A experiência visual segue o mesmo padrão premium da Central de Documentos do app: marca canônica,
+            status claros, filtros, versão jurídica e evidência de aceite.
+          </p>
+        </section>
+
+        <section id="financeiro" class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Financeiro</span>
+              <h2>Taxas, repasses e ajustes</h2>
+            </div>
+          </div>
+          <p class="panel-copy">
+            A interface deve consumir regras versionadas. Nenhum valor financeiro deve ser alterado por edição
+            direta de saldo.
+          </p>
+        </section>
+
+        <section id="configuracoes" class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Configurações</span>
+              <h2>Identidade protegida</h2>
+            </div>
+          </div>
+          <div class="brand-swatches">
+            <span style="--swatch: #0b662f">Verde Feira</span>
+            <span style="--swatch: #2aa745">Verde Folha</span>
+            <span style="--swatch: #ffc107">Amarelo Feiraê</span>
+            <span style="--swatch: #fff8e7">Creme Natural</span>
+            <span style="--swatch: #8b5e34">Marrom Terra</span>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      const dateEl = document.getElementById("admin-date");
+      const timeEl = document.getElementById("admin-time");
+      function updateClock() {
+        const now = new Date();
+        dateEl.textContent = new Intl.DateTimeFormat("pt-BR").format(now);
+        timeEl.textContent = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(
+          now,
+        );
+      }
+      updateClock();
+      setInterval(updateClock, 30000);
+    </script>
+  </body>
+</html>

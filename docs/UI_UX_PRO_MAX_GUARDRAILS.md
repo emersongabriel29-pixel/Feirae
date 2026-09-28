@@ -128,3 +128,17 @@ A revisão só pode ser considerada pronta quando:
 - sincronização entre código, testes e documentação passar;
 - Prettier passar;
 - nenhuma mudança de regra de negócio for introduzida como efeito colateral de UI/UX.
+
+## Brand lock oficial — 28/09/2026
+
+A partir desta revisão, o UI/UX Pro Max opera sob a identidade definida em `BRAND_IDENTITY.md`.
+
+- não redesenhar o wordmark;
+- não alterar o ê;
+- não trocar toldo/folhas;
+- não criar paleta alternativa;
+- reutilizar `FeiraeBrand` no React;
+- usar `/brand/feirae-logo-horizontal.svg` na gestão e superfícies estáticas;
+- priorizar tokens do Feiraê antes de qualquer sugestão de tendência visual.
+
+A ordem de decisão é: **marca Feiraê → regras do produto → design system → UI/UX Pro Max**.

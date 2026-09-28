@@ -10,19 +10,22 @@
   color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --fe-green: #176b3a;
-  --fe-green-dark: #0b4224;
-  --fe-green-soft: #eaf5ed;
-  --fe-lime: #dff36b;
-  --fe-amber: #f8bf3c;
-  --fe-bg: #f6f7f2;
+  --fe-green: #0b662f;
+  --fe-green-dark: #064a24;
+  --fe-green-soft: #edf7ef;
+  --fe-green-leaf: #2aa745;
+  --fe-lime: #e6f1a6;
+  --fe-amber: #ffc107;
+  --fe-cream: #fff8e7;
+  --fe-earth: #8b5e34;
+  --fe-bg: #faf9f1;
   --fe-ink: #172019;
   --fe-muted: #617069;
-  --fe-border: #dfe5df;
+  --fe-border: #dce5d8;
   --fe-surface: #ffffff;
-  --fe-surface-soft: #f3f6f3;
+  --fe-surface-soft: #f7f6ee;
   --fe-text-soft: #53615a;
-  --fe-success: #176b3a;
+  --fe-success: #0b662f;
   --fe-success-soft: #eaf5ed;
   --fe-warning: #8a5a00;
   --fe-warning-soft: #fff4d6;
@@ -38,7 +41,7 @@
   --fe-shadow-card: 0 10px 24px rgba(30, 45, 34, 0.055);
   --fe-shadow-raised: 0 18px 36px rgba(30, 45, 34, 0.09);
   --fe-touch: 2.75rem;
-  --fe-focus: #2f7d4d;
+  --fe-focus: #2aa745;
 }
 
 * {
@@ -103,6 +106,6 @@ textarea:focus-visible {
 }
 
 ::selection {
-  background: rgba(223, 243, 107, 0.7);
+  background: rgba(255, 193, 7, 0.34);
   color: var(--fe-green-dark);
 }

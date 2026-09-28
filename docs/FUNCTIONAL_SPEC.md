@@ -906,3 +906,15 @@ Regras:
 - a quantidade é a mesma em Início, Catálogo, Feira, Banca e Favoritos porque todas as telas usam o estado real da sacola.
 
 O controle não mantém um contador local independente; ele reflete diretamente `cart[product.id]`.
+
+## Identidade visual compartilhada — 28/09/2026
+
+A padronização de marca é uma mudança visual, não uma nova regra de negócio.
+
+Comportamento:
+
+- login e cabeçalho exibem o mesmo lockup canônico;
+- o fallback da splash usa o mesmo lockup;
+- PWA/favicon usam o símbolo oficial;
+- a página `/gestao/` é um shell visual e não executa ações administrativas reais;
+- nenhum fluxo de Cliente, Feirante ou Entregador foi removido ou renomeado por esta revisão.

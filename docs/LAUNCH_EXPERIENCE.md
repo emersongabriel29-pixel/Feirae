@@ -116,3 +116,9 @@ Os SVGs estáticos de `public/launch/` foram removidos para evitar regressão fu
 Durante a integração do mapa das feiras, o Prettier também normalizou a formatação de
 `src/components/LaunchExperience.tsx`. Não houve mudança de comportamento, duração, assets,
 áudio, fallback ou fluxo da experiência de abertura.
+
+## Identidade canônica na abertura — 28/09/2026
+
+O vídeo principal continua preservado. A mudança desta revisão afeta o **fallback de movimento reduzido**: ele passa a reutilizar `FeiraeBrand` e o lockup `/brand/feirae-logo-horizontal.svg`.
+
+Isso garante que o ê, o toldo, as folhas e a assinatura visual não tenham uma versão paralela na abertura. A regra de frequência, duração e identidade sonora não foi alterada.

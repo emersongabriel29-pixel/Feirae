@@ -96,7 +96,7 @@
   box-shadow: 0 9px 20px rgba(13, 76, 36, 0.18);
 }
 .order-route-map__fair > span {
-  background: #176b3a;
+  background: #0b662f;
   color: white;
 }
 .order-route-map__home > span {
@@ -105,13 +105,13 @@
   color: #483200;
 }
 .order-route-map__pickup > span {
-  background: #176b3a;
+  background: #0b662f;
   color: white;
 }
 .order-route-map__driver > span {
   border-radius: 999px;
   background: #fff;
-  color: #176b3a;
+  color: #0b662f;
 }
 .order-route-map__driver.is-live > span {
   box-shadow:
@@ -174,7 +174,7 @@
 }
 .order-route-map__summary svg {
   margin-top: 0.12rem;
-  color: #176b3a;
+  color: #0b662f;
 }
 .order-route-map__summary span {
   min-width: 0;
