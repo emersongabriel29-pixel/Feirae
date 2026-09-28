@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { isFeiraeSoundEnabled, playFeiraeSoundMark } from "../domain/feiraeSound";
 import "./LaunchExperience.css";
+import { FeiraeBrand } from "./FeiraeBrand";
 
 export const FEIRAE_SPLASH_LAST_FULL_DAY_KEY = "feirae:splash:last-full-day";
 
@@ -51,9 +52,7 @@ function SplashScreen({ variant, onDone }: { variant: SplashVariant; onDone: () 
         aria-live="polite"
       >
         <div className="feirae-launch__reduced">
-          <img src="/feirae-mark.svg" alt="Feiraê" />
-          <strong>Feiraê</strong>
-          <span>Da feira até você</span>
+          <FeiraeBrand priority />
         </div>
       </section>
     );
