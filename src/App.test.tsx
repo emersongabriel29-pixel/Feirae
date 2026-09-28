@@ -480,9 +480,9 @@ describe("Feiraê customer flow", () => {
     }
 
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 7 unidades/i }));
-    expect(
-      screen.getByRole("button", { name: /limite de estoque atingido para bolsa artesanal/i }),
-    ).toBeDisabled();
+    screen
+      .getAllByRole("button", { name: /limite de estoque atingido para bolsa artesanal/i })
+      .forEach((button) => expect(button).toBeDisabled());
     expect(screen.getByText(/limite de estoque atingido/i)).toBeInTheDocument();
   });
 
