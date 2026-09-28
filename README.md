@@ -189,6 +189,12 @@ Produção:
 - [INTEGRATIONS.md](docs/INTEGRATIONS.md)
 - [DEPLOYMENT_AND_ENVIRONMENTS.md](docs/DEPLOYMENT_AND_ENVIRONMENTS.md)
 
+## Figma Design Studio
+
+Design editável oficial: [Feiraê — Design Studio](https://www.figma.com/design/PEwFNTJNDSveGcDwY2oaON).
+
+O GitHub `main` continua sendo a fonte de verdade do código. Fluxo de sincronização e regras de uso: [FIGMA_DESIGN_STUDIO.md](docs/FIGMA_DESIGN_STUDIO.md).
+
 ## Regra para qualquer atualização
 
 Toda mudança futura deve seguir [Governança de mudanças](docs/CHANGE_GOVERNANCE.md).

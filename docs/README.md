@@ -39,6 +39,7 @@ Um documento de requisito não é prova de implementação.
 
 ## Produto
 
+- [FIGMA_DESIGN_STUDIO.md](FIGMA_DESIGN_STUDIO.md) — ligação entre Figma e GitHub, fonte de verdade e fluxo de sincronização.
 - [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) — comportamento atual e limites.
 - [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido e entrega.
 - [MULTI_VENDOR_ORDERS.md](MULTI_VENDOR_ORDERS.md)
