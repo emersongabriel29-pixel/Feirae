@@ -1698,7 +1698,8 @@ html.compact-product-cards .product-card .stock {
   font-weight: 900;
   text-transform: uppercase;
 }
-.native-fair-map__selection-copy h3 {
+.native-fair-map__selection-copy strong {
+  display: block;
   margin-top: 0.15rem;
   font-size: 1rem;
   font-weight: 950;
