@@ -32,6 +32,6 @@ describe("FairMapPanel", () => {
     const link = screen.getByRole("link", { name: /abrir mapa completo/i });
     expect(link).toHaveAttribute("href", FEIRAE_DF_MAP_VIEW_URL);
     expect(link).toHaveAttribute("target", "_blank");
-    expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    expect(link.getAttribute("rel")).toContain("noopener");
   });
 });
