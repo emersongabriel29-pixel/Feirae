@@ -15,7 +15,7 @@ function loginAs(role: "cliente" | "feirante" | "entregador") {
 }
 
 describe("Feiraê customer flow", () => {
-  it("shows complete product information on the home highlights", () => {
+  it("shows compact product information on the home highlights", () => {
     render(<App />);
     loginAs("cliente");
 
@@ -24,14 +24,11 @@ describe("Feiraê customer flow", () => {
     expect(card).not.toBeNull();
 
     const productCard = within(card as HTMLElement);
-    expect(productCard.getByText("Feira do Produtor Rural")).toBeInTheDocument();
-    expect(productCard.getByText(/^Venda$/i)).toBeInTheDocument();
-    expect(productCard.getByText(/^Peso logístico$/i)).toBeInTheDocument();
-    expect(productCard.getByText(/^Estoque$/i)).toBeInTheDocument();
-    expect(productCard.getByText(/^Volume$/i)).toBeInTheDocument();
-    expect(productCard.getByText(/4 kg/i)).toBeInTheDocument();
-    expect(productCard.getByText(/30 cesta/i)).toBeInTheDocument();
+    expect(productCard.getByText("Sítio da Vó")).toBeInTheDocument();
     expect(productCard.getByText(/R\$ 24,90/i)).toBeInTheDocument();
+    expect(productCard.getByLabelText(/informações resumidas de cesta de frutas/i)).toBeInTheDocument();
+    expect(productCard.queryByText(/^Peso logístico$/i)).not.toBeInTheDocument();
+    expect(productCard.queryByText(/^Volume$/i)).not.toBeInTheDocument();
   });
 
   it("turns the product plus button into an in-card quantity control", () => {
@@ -134,7 +131,7 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
     fireEvent.click(screen.getByRole("button", { name: /adicionar planta ornamental/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
-    const checkoutButton = screen.getByRole("button", { name: /continuar para checkout/i });
+    const checkoutButton = screen.getByRole("button", { name: /finalizar pedido/i });
     expect(checkoutButton).toBeDisabled();
     expect(screen.getAllByText(/verde cerrado/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/faltam r\$ 2,00/i).length).toBeGreaterThan(0);
@@ -149,6 +146,21 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
     expect(screen.getByRole("heading", { name: /meus pedidos/i })).toBeInTheDocument();
     expect(screen.getByText(/recebido/i)).toBeInTheDocument();
+  });
+
+  it("opens Feiraê navigation before offering external map apps", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    fireEvent.click(screen.getAllByRole("button", { name: /^feiras$/i })[0]);
+    const routeButtons = screen.getAllByRole("button", { name: /abrir rota no feiraê para/i });
+    expect(routeButtons.length).toBeGreaterThan(0);
+    fireEvent.click(routeButtons[0]);
+
+    expect(screen.getByRole("dialog", { name: /sua rota sem sair do app/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/mapa de rota dentro do feiraê/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /google maps/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^waze/i })).toBeInTheDocument();
   });
 
   it("shows the R$30 minimum when opening a vendor", () => {
@@ -507,7 +519,7 @@ describe("Feiraê customer flow", () => {
       fireEvent.click(screen.getByRole("button", { name: /adicionar mais uma unidade de tomate orgânico/i }));
     }
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 4 unidades/i }));
-    fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
 
     expect(screen.getByRole("button", { name: /pix/i })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /cartão/i }).length).toBeGreaterThan(0);
@@ -588,7 +600,7 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
     fireEvent.click(screen.getByRole("button", { name: /adicionar mais uma unidade de cesta de frutas/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 2 unidades/i }));
-    fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
+    fireEvent.click(screen.getByRole("button", { name: /finalizar pedido/i }));
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
 
