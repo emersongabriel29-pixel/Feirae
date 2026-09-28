@@ -113,7 +113,7 @@ function emptyProduct(): VendorProduct {
   return {
     id: 0,
     name: "",
-    category: "Frutas",
+    category: "",
     description: "",
     stock: 0,
     minStock: 3,
@@ -804,6 +804,10 @@ export function FeiranteOperations({
       showNotice("Informe nome, preço e peso logístico válidos.");
       return;
     }
+    if (!productCategories.some((category) => category === productDraft.category)) {
+      showNotice("Selecione uma categoria para o produto.");
+      return;
+    }
     const nextProduct = {
       ...productDraft,
       id:
@@ -946,8 +950,8 @@ export function FeiranteOperations({
             <div>
               <b>{item.name}</b>
               <small>
-                {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} · peso logístico{" "}
-                {item.weightKg} kg · mínimo {item.minStock}
+                {item.category} · {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} ·
+                peso logístico {item.weightKg} kg · mínimo {item.minStock}
               </small>
               <small>Status: {status}</small>
             </div>
@@ -1450,17 +1454,26 @@ export function FeiranteOperations({
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label>
-                        Categoria
+                        Categoria do produto
                         <select
                           value={productDraft.category}
                           onChange={(event) =>
                             setProductDraft((current) => ({ ...current, category: event.target.value }))
                           }
+                          required
                         >
+                          <option value="" disabled>
+                            Selecione uma categoria
+                          </option>
                           {productCategories.map((category) => (
-                            <option key={category}>{category}</option>
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
                           ))}
                         </select>
+                        <small>
+                          A categoria organiza o produto na vitrine e nos filtros do Cliente.
+                        </small>
                       </label>
                       <label>
                         Unidade de venda
