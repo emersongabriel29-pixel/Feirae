@@ -1065,7 +1065,8 @@ export function DeliveryOperations({
           onClick={() => onMap(headingToPickup ? activeDelivery.fairAddress : activeDelivery.customerAddress)}
           className="secondary-action"
         >
-          <MapPin size={17} /> {headingToPickup ? "Rota no Feiraê até a feira" : "Rota no Feiraê até o cliente"}
+          <MapPin size={17} />{" "}
+          {headingToPickup ? "Rota no Feiraê até a feira" : "Rota no Feiraê até o cliente"}
         </button>
         <button
           className="primary-action"
