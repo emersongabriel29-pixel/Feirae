@@ -358,3 +358,14 @@ A comunicação operacional necessária a conta, pedido, entrega, segurança ou 
 O protótipo registra localmente termo, versão, nome, e-mail, data/hora, fingerprint e método de aceite. Produção deve substituir isso por registro server-side auditável.
 
 Detalhamento: [CUSTOMER_LEGAL_TERMS.md](CUSTOMER_LEGAL_TERMS.md).
+
+## Mapa externo de feiras
+
+O Google My Maps é tratado como conteúdo externo de terceiros.
+
+- O `iframe` não é carregado automaticamente; depende de ação explícita em **Abrir mapa interativo**.
+- O Feiraê não repassa ao mapa as coordenadas precisas obtidas pelo recurso interno de GPS.
+- Ao abrir o mapa, o navegador realiza uma requisição ao Google, sujeita às práticas e políticas do provedor externo.
+- O mapa incorporado não recebe nome, e-mail, telefone, endereço salvo, pedidos ou identificadores de conta por código do Feiraê.
+- Se no futuro houver envio de localização, endereço ou identificadores para um provedor cartográfico, a avaliação de base legal, transparência e minimização de dados deverá ser refeita antes da liberação.
+
