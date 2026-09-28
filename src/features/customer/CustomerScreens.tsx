@@ -77,6 +77,7 @@ import {
   Toggle,
 } from "../../components/AppComponents";
 import { FairMapPanel } from "./FairMapPanel";
+import { OrderRouteMap } from "../../components/OrderRouteMap";
 
 export function HomePage({
   onTab,
@@ -1003,7 +1004,9 @@ export function DeliveryTracking({
       subtitle={"Pedido " + order.id + " · " + (order.fairName ?? "Feiraê") + " · " + order.status}
       onBack={onBack}
     >
-      <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+      {unifiedOrder && <OrderRouteMap order={unifiedOrder} audience="customer" />}
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <div className="tracking-map">
           <span aria-hidden="true">
             {order.status === "Entregue"
