@@ -391,7 +391,7 @@ export function CatalogPage({
         ))}
       </div>
       {items.length ? (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((product) => (
             <ProductCard
               key={product.id}
@@ -718,7 +718,7 @@ export function FairDetail({
       </div>
       <SectionHeading eyebrow="Catálogo" title="Produtos desta feira" />
       {fairProducts.length ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {fairProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -875,7 +875,7 @@ export function VendorStore({
         </button>
       </div>
       {vendorProducts.length ? (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {vendorProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -1959,7 +1959,7 @@ export function FavoritesPage({
     <Panel title="Favoritos" subtitle="Produtos e bancas que você quer encontrar de novo." onBack={onBack}>
       <SectionHeading eyebrow="Produtos" title="Produtos favoritos" />
       {favoriteProducts.length ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {favoriteProducts.map((product) => (
             <ProductCard key={product.id} product={product} onAdd={onAdd} favorite onFavorite={onFavorite} />
           ))}
