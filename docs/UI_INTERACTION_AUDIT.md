@@ -416,3 +416,17 @@ A grade foi ajustada para evitar que informações desapareçam por falta de lar
 - telas largas: até 3 cards.
 
 O card prioriza leitura em blocos: identidade, promoção, serviço, dados do produto, disponibilidade e compra. A opção de cards compactos reduz espaçamento, mas não deve remover preço, estoque, peso, unidade, banca ou feira.
+
+## Padronização de marca — 28/09/2026
+
+Revisão aplicada às superfícies institucionais:
+
+- login deixa de montar um “ê” isolado + texto variável;
+- cabeçalho usa o mesmo lockup canônico;
+- fallback de splash usa o mesmo lockup;
+- ícone legado `feirae-mark.svg` foi substituído pelo símbolo oficial;
+- manifesto/favicon usam o símbolo oficial;
+- página `/gestao/` usa a mesma identidade do app;
+- tokens de cor foram sincronizados à paleta oficial.
+
+Critério de regressão: nenhuma nova tela deve reconstruir “Feiraê” com texto/CSS quando o asset canônico puder ser usado.
