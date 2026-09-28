@@ -191,10 +191,14 @@ export function HomePage({
 }
 export function FairsPage({
   fairItems,
+  userCoords,
+  onRequestLocation,
   onFair,
   onMap,
 }: {
   fairItems: ReturnType<typeof sortFairsByDistance>;
+  userCoords: { lat: number; lng: number } | null;
+  onRequestLocation: () => void;
   onFair: (name: string) => void;
   onMap: (destination: number | string, lng?: number) => void;
 }) {
@@ -239,7 +243,13 @@ export function FairsPage({
         </label>
       </div>
 
-      <FairMapPanel />
+      <FairMapPanel
+        fairItems={filteredItems}
+        userCoords={userCoords}
+        onRequestLocation={onRequestLocation}
+        onFair={onFair}
+        onRoute={onMap}
+      />
 
       <div className="mt-7">
         <SectionHeading
@@ -593,6 +603,7 @@ export function FairDetail({
   fairName,
   onBack,
   onMap,
+  onVendors,
   onAdd,
   favorites,
   onFavorite,
@@ -600,6 +611,7 @@ export function FairDetail({
   fairName: string;
   onBack: () => void;
   onMap: (destination: number | string, lng?: number) => void;
+  onVendors: () => void;
   onAdd: (id: number) => void;
   favorites: number[];
   onFavorite: (id: number) => void;
@@ -625,16 +637,22 @@ export function FairDetail({
           </p>
           {fair.address && <p>{fair.address}</p>}
         </div>
-        <button
-          onClick={() =>
-            typeof fair.lat === "number" && typeof fair.lng === "number"
-              ? onMap(fair.lat, fair.lng)
-              : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
-          }
-          className="secondary-action light"
-        >
-          <MapPin size={17} /> Abrir rota
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={onVendors} className="primary-action amber">
+            <Store size={17} /> Ver bancas
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              typeof fair.lat === "number" && typeof fair.lng === "number"
+                ? onMap(fair.lat, fair.lng)
+                : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
+            }
+            className="secondary-action light"
+          >
+            <MapPin size={17} /> Abrir rota
+          </button>
+        </div>
       </div>
       <SectionHeading eyebrow="Catálogo" title="Produtos desta feira" />
       {fairProducts.length ? (
