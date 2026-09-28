@@ -76,7 +76,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText("Sítio da Vó")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
-    expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
     expect(screen.getByText(/cesta de frutas/i)).toBeInTheDocument();
   });
 
