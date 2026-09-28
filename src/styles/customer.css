@@ -54,7 +54,7 @@
   padding: clamp(2rem, 6vw, 4.5rem);
   background:
     radial-gradient(circle at 80% 18%, rgba(223, 243, 107, 0.25), transparent 18rem),
-    linear-gradient(135deg, #083e22, #176b3a 58%, #25824c);
+    linear-gradient(135deg, #064a24, #0b662f 58%, #2aa745);
   color: white;
   box-shadow: 0 22px 55px rgba(13, 76, 42, 0.18);
 }
@@ -1823,7 +1823,7 @@ html.compact-product-cards .product-card .stock {
 }
 .product-store-status.is-open {
   background: #e8f7e9 !important;
-  color: #176b3a !important;
+  color: #0b662f !important;
 }
 .product-store-status.is-closed {
   background: #fff2e7 !important;
