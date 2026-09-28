@@ -363,3 +363,14 @@ A fonte canônica é a cena SVG inline de `LaunchExperience.tsx`, animada por gr
 Durante a integração do mapa das feiras, o Prettier também normalizou a formatação de
 `src/components/LaunchExperience.tsx`. Não houve mudança de comportamento, duração, assets,
 áudio, fallback ou fluxo da experiência de abertura.
+
+## Arquitetura do mapa nativo de feiras — 27/09/2026
+
+A cartografia do Cliente foi separada em domínio e UI:
+
+- `src/domain/fairMap.ts` mantém referências regionais temporárias, resolve prioridade de `fair.lat/lng`, projeta coordenadas no canvas do DF e calcula proximidade;
+- `src/features/customer/FairMapPanel.tsx` renderiza o mapa, pins, posição do Cliente, seleção e CTAs;
+- `CustomerScreens.tsx::FairsPage` aplica o filtro regional antes de enviar as feiras ao mapa;
+- `App.tsx` fornece as coordenadas obtidas pelo fluxo de GPS já existente.
+
+A projeção é deliberadamente independente de SDK externo. Coordenadas regionais são fallback de apresentação e não pertencem ao domínio de frete/roteamento. Quando o backend fornecer coordenadas verificadas, o mesmo componente passa a priorizá-las sem mudança de contrato visual.
