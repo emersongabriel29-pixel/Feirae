@@ -110,3 +110,9 @@ A abertura volta a ser uma única cena vetorial contínua, com elementos indepen
 - cena saindo antes da entrada da marca.
 
 Os SVGs estáticos de `public/launch/` foram removidos para evitar regressão futura.
+
+## Manutenção de formatação — 27/09/2026
+
+Durante a integração do mapa das feiras, o Prettier também normalizou a formatação de
+`src/components/LaunchExperience.tsx`. Não houve mudança de comportamento, duração, assets,
+áudio, fallback ou fluxo da experiência de abertura.
