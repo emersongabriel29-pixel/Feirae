@@ -439,3 +439,15 @@ QA manual:
 - a revisão visual não altera regras de negócio;
 - login, header, fallback da splash e gestão reutilizam a mesma fonte de marca;
 - a validação final continua exigindo lint, Vitest, política de sincronização, build e Prettier.
+
+## QA — cards compactos, mapa principal, endereço e carrinho — 28/09/2026
+
+Cobertura desta rodada:
+
+- `App.test.tsx` valida que cards de produto exibem o resumo essencial sem voltar ao bloco extenso de peso/volume;
+- `App.test.tsx` valida que a rota abre primeiro dentro do Feiraê e que Google Maps/Waze aparecem somente como alternativas;
+- a suíte valida o CTA da sacola como **Finalizar pedido**;
+- a lógica de pedido mínimo continua validada por banca, mantendo o valor configurado fixo e exibindo separadamente quanto falta;
+- lint, Vitest, política de sincronização e build devem permanecer verdes antes de merge.
+
+QA manual obrigatório em 360, 390 e 412 px: confirmar dois produtos lado a lado, stepper legível, endereço preenchido pelo GPS e abertura do painel de rota sem salto para aplicativo externo.
