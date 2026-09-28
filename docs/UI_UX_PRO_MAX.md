@@ -44,7 +44,8 @@ O Feiraê usa React + Vite + Tailwind. Para trabalho de interface:
 2. usar UI UX Pro Max como inteligência complementar;
 3. preservar a identidade verde/branco e a linguagem visual já aprovada;
 4. não substituir decisões de produto por sugestões genéricas da skill;
-5. validar acessibilidade, responsividade e testes antes de merge.
+5. validar acessibilidade, responsividade e testes antes de merge;
+6. obedecer a identidade canônica descrita em `docs/BRAND_IDENTITY.md`, sem criar logo, ê ou paleta alternativos.
 
 ## Arquivos vendorizados
 
