@@ -570,12 +570,7 @@ export function DeliveryOperations({
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [
-    deliveryPreferences.baseLat,
-    deliveryPreferences.baseLng,
-    effectiveAccepted,
-    session.email,
-  ]);
+  }, [deliveryPreferences.baseLat, deliveryPreferences.baseLng, effectiveAccepted, session.email]);
 
   const deliveredReviewOrders = sharedOrders.filter(
     (order) =>

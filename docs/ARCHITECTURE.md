@@ -390,6 +390,7 @@ Fontes de estado:
 O Entregador usa `navigator.geolocation.watchPosition()` apenas durante corrida ativa e somente depois de existir localização-base configurada pelo próprio usuário. Escritas são limitadas a no máximo uma a cada 5 segundos.
 
 A posição visual da moto é:
+
 - por GPS quando há snapshot utilizável;
 - por etapa do pedido como fallback explícito.
 

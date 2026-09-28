@@ -21,26 +21,12 @@ function projectedDriverPosition(order: UnifiedOrderRecord) {
 
   const fair = fairs.find((item) => item.name === order.fairName);
   const fairCoordinate = fair ? fairMapCoordinate(fair) : null;
-  if (
-    !fairCoordinate ||
-    typeof order.customerLat !== "number" ||
-    typeof order.customerLng !== "number"
-  ) {
+  if (!fairCoordinate || typeof order.customerLat !== "number" || typeof order.customerLng !== "number") {
     return statusPosition(order);
   }
 
-  const toDriver = distanceInKm(
-    fairCoordinate.lat,
-    fairCoordinate.lng,
-    live.lat,
-    live.lng,
-  );
-  const toCustomer = distanceInKm(
-    live.lat,
-    live.lng,
-    order.customerLat,
-    order.customerLng,
-  );
+  const toDriver = distanceInKm(fairCoordinate.lat, fairCoordinate.lng, live.lat, live.lng);
+  const toCustomer = distanceInKm(live.lat, live.lng, order.customerLat, order.customerLng);
   const total = toDriver + toCustomer;
   if (!Number.isFinite(total) || total <= 0) return statusPosition(order);
 
@@ -95,7 +81,9 @@ export function OrderRouteMap({
   const driverLeft = projectedDriverPosition(order);
   const liveLocation = order.driver?.location;
   const destinationLabel =
-    order.customerAddress ?? order.customerCity ?? (order.fulfillment === "pickup" ? order.fairName : "Cliente");
+    order.customerAddress ??
+    order.customerCity ??
+    (order.fulfillment === "pickup" ? order.fairName : "Cliente");
   const fairLabel = order.fairName;
 
   return (
@@ -107,7 +95,8 @@ export function OrderRouteMap({
         </div>
         {order.route && (
           <small>
-            <Clock size={14} /> {order.route.etaMinutes} min · {order.route.totalKm.toLocaleString("pt-BR")} km
+            <Clock size={14} /> {order.route.etaMinutes} min · {order.route.totalKm.toLocaleString("pt-BR")}{" "}
+            km
           </small>
         )}
       </div>
@@ -151,7 +140,7 @@ export function OrderRouteMap({
           const top = 66 - (index % 2) * 10;
           const highlighted = Boolean(
             highlightVendorName &&
-              stop.vendorName.toLocaleLowerCase("pt-BR") === highlightVendorName.toLocaleLowerCase("pt-BR"),
+            stop.vendorName.toLocaleLowerCase("pt-BR") === highlightVendorName.toLocaleLowerCase("pt-BR"),
           );
           return (
             <div
@@ -170,7 +159,9 @@ export function OrderRouteMap({
             className={liveLocation ? "order-route-map__driver is-live" : "order-route-map__driver"}
             style={{ left: `${driverLeft}%`, top: "43%" }}
             aria-label={
-              liveLocation ? "Posição do entregador por GPS" : "Posição estimada do entregador pela etapa do pedido"
+              liveLocation
+                ? "Posição do entregador por GPS"
+                : "Posição estimada do entregador pela etapa do pedido"
             }
           >
             <span>
