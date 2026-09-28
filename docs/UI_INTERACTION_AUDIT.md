@@ -422,8 +422,9 @@ O card prioriza leitura em blocos: identidade, promoção, serviço, dados do pr
 Foi adotado o padrão de comércio mobile em que o CTA inicial **+** se transforma em um stepper após a primeira adição.
 
 Estados:
+
 - **0 unidades:** botão verde **+**;
-- **1 ou mais:** controle **−  quantidade  +**;
+- **1 ou mais:** controle **− quantidade +**;
 - **estoque máximo:** botão **+** do stepper desabilitado;
 - **banca fechada:** incremento desabilitado, remoção preservada.
 

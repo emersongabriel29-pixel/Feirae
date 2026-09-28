@@ -47,27 +47,17 @@ describe("Feiraê customer flow", () => {
     const productCard = within(card as HTMLElement);
 
     fireEvent.click(productCard.getByRole("button", { name: /adicionar cesta de frutas à sacola/i }));
-    expect(
-      productCard.getByLabelText(/1 unidade de cesta de frutas na sacola/i),
-    ).toHaveTextContent("1");
+    expect(productCard.getByLabelText(/1 unidade de cesta de frutas na sacola/i)).toHaveTextContent("1");
 
     fireEvent.click(
       productCard.getByRole("button", { name: /adicionar mais uma unidade de cesta de frutas/i }),
     );
-    expect(
-      productCard.getByLabelText(/2 unidades de cesta de frutas na sacola/i),
-    ).toHaveTextContent("2");
+    expect(productCard.getByLabelText(/2 unidades de cesta de frutas na sacola/i)).toHaveTextContent("2");
 
-    fireEvent.click(
-      productCard.getByRole("button", { name: /remover uma unidade de cesta de frutas/i }),
-    );
-    expect(
-      productCard.getByLabelText(/1 unidade de cesta de frutas na sacola/i),
-    ).toHaveTextContent("1");
+    fireEvent.click(productCard.getByRole("button", { name: /remover uma unidade de cesta de frutas/i }));
+    expect(productCard.getByLabelText(/1 unidade de cesta de frutas na sacola/i)).toHaveTextContent("1");
 
-    fireEvent.click(
-      productCard.getByRole("button", { name: /remover uma unidade de cesta de frutas/i }),
-    );
+    fireEvent.click(productCard.getByRole("button", { name: /remover uma unidade de cesta de frutas/i }));
     expect(
       productCard.getByRole("button", { name: /adicionar cesta de frutas à sacola/i }),
     ).toBeInTheDocument();
@@ -474,9 +464,7 @@ describe("Feiraê customer flow", () => {
     fireEvent.change(search, { target: { value: "bolsa artesanal" } });
     fireEvent.click(screen.getByRole("button", { name: /adicionar bolsa artesanal/i }));
     for (let quantity = 1; quantity < 7; quantity += 1) {
-      fireEvent.click(
-        screen.getByRole("button", { name: /adicionar mais uma unidade de bolsa artesanal/i }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: /adicionar mais uma unidade de bolsa artesanal/i }));
     }
 
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 7 unidades/i }));
@@ -516,9 +504,7 @@ describe("Feiraê customer flow", () => {
     fireEvent.change(search, { target: { value: "tomate orgânico" } });
     fireEvent.click(screen.getByRole("button", { name: /adicionar tomate orgânico/i }));
     for (let quantity = 1; quantity < 4; quantity += 1) {
-      fireEvent.click(
-        screen.getByRole("button", { name: /adicionar mais uma unidade de tomate orgânico/i }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: /adicionar mais uma unidade de tomate orgânico/i }));
     }
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 4 unidades/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
@@ -600,9 +586,7 @@ describe("Feiraê customer flow", () => {
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "cesta de frutas" } });
     fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
-    fireEvent.click(
-      screen.getByRole("button", { name: /adicionar mais uma unidade de cesta de frutas/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /adicionar mais uma unidade de cesta de frutas/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 2 unidades/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));

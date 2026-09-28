@@ -573,6 +573,7 @@ A tela inicial reutiliza esse mesmo card para não criar uma versão visualmente
 O componente visual `.product-quantity-control` substitui o botão de adicionar quando a quantidade é maior que zero.
 
 Composição:
+
 - botão de diminuir à esquerda;
 - quantidade central com números tabulares;
 - botão de aumentar à direita;

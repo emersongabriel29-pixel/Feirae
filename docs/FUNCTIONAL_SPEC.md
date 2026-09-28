@@ -893,9 +893,10 @@ Campos de operação interna, como estoque mínimo de reposição, não são exp
 
 ## Quantidade do produto diretamente no card — 28/09/2026
 
-Ao adicionar um produto pela primeira vez, o botão **+** do card deve virar um controle de quantidade **−  n  +**.
+Ao adicionar um produto pela primeira vez, o botão **+** do card deve virar um controle de quantidade **− n +**.
 
 Regras:
+
 - o número central mostra quantas unidades daquele produto já estão na sacola;
 - **+** adiciona mais uma unidade;
 - **−** remove uma unidade;

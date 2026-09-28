@@ -416,12 +416,14 @@ Regressão a bloquear: qualquer tela do Cliente que mostre produto em formato de
 ## QA do stepper de produto — 28/09/2026
 
 Cobertura automatizada em `App.test.tsx`:
+
 - primeiro toque no **+** muda o card para quantidade 1;
 - novo **+** muda para 2;
 - **−** reduz para 1;
 - novo **−** remove a última unidade e restaura o botão **+**.
 
 QA manual:
+
 - confirmar sincronização do mesmo produto entre Início, Catálogo, Feira, Banca, Favoritos e Sacola;
 - confirmar bloqueio do **+** no limite de estoque;
 - confirmar que uma banca fechada ainda permite diminuir/remover item previamente adicionado;
