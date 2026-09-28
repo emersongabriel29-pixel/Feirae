@@ -6,7 +6,9 @@ Este documento corresponde ao painel separado solicitado para administrar o Feir
 
 ## 1. Situação atual
 
-O painel administrativo **não está implementado**.
+Existe um **shell visual de gestão** em `public/gestao/`, já alinhado à identidade oficial Feiraê e preparado para servir de referência de UI.
+
+O painel administrativo **operacional ainda não está implementado**.
 
 O SQL possui papéis `admin` e `fair_manager`, mas ainda não existem:
 
@@ -17,6 +19,16 @@ O SQL possui papéis `admin` e `fair_manager`, mas ainda não existem:
 - tabela de regras de taxas;
 - catálogo global de veículos;
 - tabela de estados/UF atendidos.
+
+### Identidade visual da gestão
+
+A gestão deve reutilizar os mesmos assets e tokens do app:
+
+- `/brand/feirae-logo-horizontal.svg`;
+- `/brand/feirae-symbol.svg`;
+- Verde Feira, Verde Folha, Amarelo Feiraê, Creme Natural e Marrom Terra.
+
+O shell atual mostra data/hora e a arquitetura visual dos módulos, mas mantém ações administrativas desabilitadas até existirem RBAC, auditoria, persistência e APIs reais.
 
 ## 2. Estados/UF atendidos
 
