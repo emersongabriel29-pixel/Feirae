@@ -865,3 +865,27 @@ Regras:
 10. pedidos de retirada não exibem a casa; exibem **Retirada na feira**.
 
 No protótipo atual, os snapshots são persistidos na camada local compartilhada do pedido. Produção exige canal backend em tempo real, autenticação e política de retenção.
+
+## Catálogo completo de produtos — 28/09/2026
+
+A exibição de produtos do Cliente deve preservar os dados cadastrados pelo Feirante e usar o mesmo card completo em Início, Catálogo, Feira e Banca.
+
+Informações mostradas quando disponíveis:
+- foto ou fallback visual;
+- categoria;
+- banca/feirante e feira;
+- nome e descrição;
+- avaliação e quantidade de avaliações;
+- previsão e valor de entrega;
+- apresentação/embalagem;
+- peso logístico;
+- estoque disponível;
+- classificação de volume;
+- preço e unidade de venda;
+- aviso para itens de peso variável;
+- status aberta/fechada da banca;
+- entrega e/ou retirada;
+- pedido mínimo da banca;
+- promoções ativas aplicáveis ao produto.
+
+Campos de operação interna, como estoque mínimo de reposição, não são expostos ao Cliente.
