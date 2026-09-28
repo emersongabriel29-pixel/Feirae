@@ -320,3 +320,25 @@ Controles atuais:
 - coordenadas regionais aproximadas são marcadas como aproximação e não podem alimentar decisões operacionais.
 
 Antes de conectar um SDK ou serviço de geocodificação real, criar adapter específico, definir credenciais publicáveis/secretas, revisar política de dados e documentar rate limit, fallback e observabilidade.
+
+## Segurança do rastreamento de entrega
+
+`driver.location` é dado de localização e deve ser tratado como informação de acesso restrito ao pedido.
+
+Regras do protótipo:
+
+- somente a sessão do Entregador atribuída ao pedido atualiza o snapshot;
+- o watcher só inicia em corrida ativa e depois de o Entregador ter configurado localização-base via GPS;
+- atualizações não geram eventos de timeline para evitar crescimento desnecessário do histórico;
+- o watcher é encerrado ao sair da corrida;
+- sem GPS disponível, nenhuma localização é inventada: a UI usa apenas a etapa operacional.
+
+Requisitos de produção:
+
+- autorização server-side por `orderId` + `driverId`;
+- canal realtime autenticado;
+- rejeitar escrita de localização por Cliente/Feirante;
+- TTL curto e política de retenção;
+- rate limit e validação de coordenadas;
+- trilha de auditoria para alteração de vínculo do entregador;
+- não expor localização histórica fora da janela operacional da entrega.
