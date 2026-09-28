@@ -306,16 +306,17 @@ O texto já aceito não deve ser sobrescrito silenciosamente. Uma nova versão c
 
 Ver [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).
 
-## Conteúdo cartográfico externo
+## Mapa nativo e localização
 
-O card **Mapa Feiraê** incorpora uma página pública do Google My Maps apenas após ação do usuário.
+O **Mapa Feiraê** não incorpora conteúdo cartográfico externo na visualização principal.
 
 Controles atuais:
 
-- não existe API key ou secret exposto para essa integração;
-- o `iframe` usa `referrerPolicy="strict-origin-when-cross-origin"`;
+- não existe API key, token ou secret para renderizar o mapa;
+- coordenadas de GPS permanecem no estado do frontend e são usadas somente para ordenação/proximidade;
+- o cálculo de distância acontece localmente no navegador;
+- o link opcional para o Google My Maps não recebe latitude, longitude, sessão ou identificadores do Cliente;
 - links externos usam `target="_blank"` com `rel="noopener noreferrer"`;
-- coordenadas internas obtidas por geolocalização não são interpoladas na URL do `iframe`;
-- autenticação, sessão e dados de conta do Feiraê não são enviados pelo código da integração ao My Maps.
+- coordenadas regionais aproximadas são marcadas como aproximação e não podem alimentar decisões operacionais.
 
-A integração deve permanecer somente leitura até existir adapter cartográfico próprio com política explícita de dados e credenciais.
+Antes de conectar um SDK ou serviço de geocodificação real, criar adapter específico, definir credenciais publicáveis/secretas, revisar política de dados e documentar rate limit, fallback e observabilidade.
