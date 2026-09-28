@@ -1,13 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
-  <title id="title">Feiraê</title>
-  <defs>
-    <linearGradient id="g" x1="18" y1="14" x2="110" y2="116" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#25824c"/>
-      <stop offset="1" stop-color="#0b4224"/>
-    </linearGradient>
-  </defs>
-  <rect width="128" height="128" rx="38" fill="url(#g)"/>
-  <path d="M33 67c0-25 14-40 35-40 18 0 30 11 30 27 0 18-15 28-40 28h-7c3 11 11 17 24 17 8 0 15-2 22-7v18c-7 5-16 7-27 7-24 0-37-17-37-50Zm18-1h6c15 0 23-4 23-12 0-6-4-10-12-10-10 0-16 8-17 22Z" fill="#fff"/>
-  <path d="m55 19 12-10 12 10" fill="none" stroke="#dff36b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <title id="title">Símbolo Feiraê</title>
+  <rect width="128" height="128" rx="34" fill="#0B662F"/>
+  <path d="M64 21C52 5 34 8 31 26c14 3 25 8 33 18Z" fill="#2AA745"/>
+  <path d="M64 21C76 5 94 8 97 26c-14 3-25 8-33 18Z" fill="#39B54A"/>
+  <path d="M30 49h68l8 12H22Z" fill="#FFF8E7"/>
+  <path d="M22 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#2AA745"/>
+  <path d="M36 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#FFF8E7"/>
+  <path d="M50 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#2AA745"/>
+  <path d="M64 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#FFF8E7"/>
+  <path d="M78 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#2AA745"/>
+  <path d="M92 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#FFF8E7"/>
+  <rect x="37" y="98" width="54" height="9" rx="4.5" fill="#FFC107"/>
 </svg>
-
