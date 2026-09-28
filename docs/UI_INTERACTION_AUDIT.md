@@ -521,3 +521,9 @@ Comportamento esperado:
 5. ao salvar, a categoria é persistida junto ao produto;
 6. a sincronização Feirante → Cliente mantém a categoria para filtros e catálogo;
 7. em edição, a categoria atual do produto vem pré-selecionada.
+
+## Correção visual da marca no cabeçalho — 28/09/2026
+
+Foi removido o wrapper visual que transformava a logomarca em um cartão creme no topo do aplicativo. O cabeçalho volta a apresentar a marca limpa, preservando o espaço original da navegação e evitando o quadrado vazio observado em ambientes que não carregam recursos externos dentro de SVG usado como imagem.
+
+Nenhum fluxo de Home, produtos, mapa, carrinho, pedidos, autenticação, Feirante ou Entregador foi alterado nesta correção.

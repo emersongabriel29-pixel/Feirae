@@ -655,3 +655,9 @@ Padrão visual e de interação:
 - a categoria escolhida permanece selecionada ao editar um produto existente;
 - texto de apoio explica que a categoria organiza vitrine e filtros do Cliente;
 - a categoria também aparece no resumo do produto dentro da gestão do Feirante.
+
+## Marca sem cartão artificial — 28/09/2026
+
+No cabeçalho e nas superfícies padrão, `FeiraeBrand` deve exibir somente a arte da marca, sem criar automaticamente fundo creme, borda, padding ou sombra ao redor. Superfícies especiais podem fornecer seu próprio fundo quando necessário, mas o componente de marca não deve parecer um botão ou bloco vazio.
+
+A arte aprovada é carregada diretamente pelo componente. Fallbacks SVG continuam reservados para ícones e compatibilidade.

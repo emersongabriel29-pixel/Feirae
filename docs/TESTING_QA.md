@@ -504,3 +504,14 @@ QA manual:
 - testar edição de produto existente mantendo a categoria atual;
 - criar produtos em categorias diferentes e conferir filtros no Cliente;
 - garantir que nenhum novo produto receba **Frutas** por padrão sem escolha do Feirante.
+
+## QA — renderização da marca aprovada — 28/09/2026
+
+Cobertura automatizada em `FeiraeBrand.test.tsx` confirma que o componente usa diretamente `/brand/feirae-logo-approved.webp` nas variantes normal e compacta.
+
+QA visual recomendado:
+
+- conferir cabeçalho em 360, 390, 412 e 768 px;
+- confirmar que não aparece cartão/quadrado creme vazio;
+- confirmar que a logo aprovada é visível no login e cabeçalho;
+- confirmar que favicon, marca de apoio e ilustrações que usam os SVGs autocontidos continuam renderizando sem depender do WebP externo dentro do SVG.

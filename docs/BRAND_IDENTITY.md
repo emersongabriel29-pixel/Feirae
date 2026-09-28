@@ -121,3 +121,9 @@ A identidade foi travada na arte aprovada enviada ao projeto: **folhas verdes + 
 A aplicação no app foi ajustada para respeitar a proporção mais vertical dessa marca, sem esticar o arquivo para simular uma logo horizontal. Cabeçalhos, login e gestão usam fundo creme e dimensões próprias para manter legibilidade.
 
 As notificações, favicon e referências legadas continuam apontando para os aliases canônicos, que agora reutilizam a mesma arte aprovada. Nenhuma superfície deve manter a versão simplificada anterior.
+
+## 12. Correção de renderização no preview — 28/09/2026
+
+O componente React `FeiraeBrand` passa a carregar a arte aprovada diretamente de `/brand/feirae-logo-approved.webp`. A tentativa anterior de colocar o WebP dentro de um SVG por meio de `<image href=...>` foi removida da aplicação principal porque alguns ambientes de preview tratam SVG carregado por `<img>` como recurso isolado e não carregam a imagem externa, deixando apenas um bloco vazio.
+
+A apresentação visual também volta a ser limpa: a marca não recebe cartão creme, borda ou sombra por padrão no cabeçalho. Os SVGs de símbolo/alias permanecem autocontidos como fallback vetorial para favicon, ilustrações e superfícies que não devem depender de imagem externa.
