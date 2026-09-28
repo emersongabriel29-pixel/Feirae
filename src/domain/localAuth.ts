@@ -118,6 +118,7 @@ export function authenticateLocalAccount(input: {
   return { ok: false as const, message: "Conta não encontrada. Use Criar conta primeiro." };
 }
 
+// Recuperação local exclusiva do protótipo; produção exige verificação do canal.
 export function resetLocalAccountPassword(input: { role: Role; email: string; newPassword: string }) {
   const email = normalizeEmail(input.email);
   if (!email || !email.includes("@")) {
