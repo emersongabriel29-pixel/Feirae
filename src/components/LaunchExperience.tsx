@@ -40,13 +40,7 @@ function getLaunchVariant(date = new Date()): SplashVariant {
   }
 }
 
-function SplashScreen({
-  variant,
-  onDone,
-}: {
-  variant: SplashVariant;
-  onDone: () => void;
-}) {
+function SplashScreen({ variant, onDone }: { variant: SplashVariant; onDone: () => void }) {
   if (variant === "reduced") {
     return (
       <section

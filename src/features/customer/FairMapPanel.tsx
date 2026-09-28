@@ -22,8 +22,8 @@ export function FairMapPanel() {
           </span>
           <h2 id="fair-map-title">Veja as feiras do DF no mapa</h2>
           <p>
-            Explore a localização das feiras e depois abra cada feira para ver bancas, produtos e
-            opções de entrega.
+            Explore a localização das feiras e depois abra cada feira para ver bancas, produtos e opções de
+            entrega.
           </p>
         </div>
       </div>
@@ -61,8 +61,7 @@ export function FairMapPanel() {
             allowFullScreen
           />
           <p>
-            Conteúdo externo do Google My Maps. O Feiraê não repassa as coordenadas do seu GPS para
-            este mapa.
+            Conteúdo externo do Google My Maps. O Feiraê não repassa as coordenadas do seu GPS para este mapa.
           </p>
         </div>
       )}

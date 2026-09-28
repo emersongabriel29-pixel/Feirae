@@ -374,4 +374,3 @@ O teste de `LaunchExperience` valida a presença estrutural da banca, moto e pin
 - `src/features/customer/FairMapPanel.test.tsx` cobre o carregamento sob demanda do Google My Maps.
 - O teste confirma que o `iframe` não é criado antes da ação do usuário, reduzindo carregamento externo desnecessário.
 - Também valida URL do mapa incorporado, `loading="lazy"`, estado acessível `aria-expanded` e acesso ao mapa completo em nova aba.
-

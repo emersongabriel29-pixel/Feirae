@@ -354,6 +354,7 @@ A correção restaura a cena vetorial contínua e elimina os assets estáticos p
 A tela **Feiras** passa a exibir, logo após os seletores de estado e cidade/região, um card visual **Mapa Feiraê**.
 
 Comportamento:
+
 - o mapa não carrega automaticamente;
 - **Abrir mapa interativo** expande o Google My Maps compartilhado com as feiras do DF;
 - **Ocultar mapa** recolhe o conteúdo sem alterar o filtro/lista de feiras;
@@ -361,9 +362,9 @@ Comportamento:
 - o mapa geral é complementar à lista filtrável do Feiraê e não substitui os dados, disponibilidade, bancas ou rotas mantidos pelo aplicativo.
 
 Acessibilidade e mobile:
+
 - botão possui `aria-expanded` e `aria-controls`;
 - `iframe` possui título descritivo;
 - ações preservam área mínima de toque;
 - altura do mapa é responsiva por `clamp()`;
 - o bloco usa quebra de linha nas ações para telas estreitas.
-

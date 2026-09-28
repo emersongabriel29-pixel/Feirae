@@ -311,6 +311,7 @@ Ver [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).
 O card **Mapa Feiraê** incorpora uma página pública do Google My Maps apenas após ação do usuário.
 
 Controles atuais:
+
 - não existe API key ou secret exposto para essa integração;
 - o `iframe` usa `referrerPolicy="strict-origin-when-cross-origin"`;
 - links externos usam `target="_blank"` com `rel="noopener noreferrer"`;
@@ -318,4 +319,3 @@ Controles atuais:
 - autenticação, sessão e dados de conta do Feiraê não são enviados pelo código da integração ao My Maps.
 
 A integração deve permanecer somente leitura até existir adapter cartográfico próprio com política explícita de dados e credenciais.
-

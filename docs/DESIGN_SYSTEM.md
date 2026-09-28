@@ -520,6 +520,7 @@ A splash do Feiraê não pode ser reduzida a frames estáticos com transição. 
 O mapa de feiras usa um contêiner de marca próprio, sem tentar reestilizar o conteúdo interno do Google My Maps.
 
 Diretrizes:
+
 - fundo em gradiente verde Feiraê com brilho amarelo suave;
 - marca `/feirae-mark.svg` em superfície branca;
 - CTA principal branco e CTA secundário translúcido;
@@ -528,4 +529,3 @@ Diretrizes:
 - nenhum pin ou cor interna do Google é apresentado como parte do design system do Feiraê.
 
 Esse padrão pode ser reutilizado em futuras integrações cartográficas externas, mantendo o chrome do aplicativo consistente.
-

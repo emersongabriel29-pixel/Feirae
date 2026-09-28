@@ -368,4 +368,3 @@ O Google My Maps é tratado como conteúdo externo de terceiros.
 - Ao abrir o mapa, o navegador realiza uma requisição ao Google, sujeita às práticas e políticas do provedor externo.
 - O mapa incorporado não recebe nome, e-mail, telefone, endereço salvo, pedidos ou identificadores de conta por código do Feiraê.
 - Se no futuro houver envio de localização, endereço ou identificadores para um provedor cartográfico, a avaliação de base legal, transparência e minimização de dados deverá ser refeita antes da liberação.
-

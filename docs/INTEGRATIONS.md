@@ -266,4 +266,3 @@ A UI não deve interpretar “falha de rede” como “pagamento aprovado” ou 
 - As coordenadas de GPS coletadas pelo Feiraê para proximidade não são passadas ao `iframe`.
 
 Evolução futura: quando o backend de feiras estiver consolidado, os pontos poderão migrar para uma camada cartográfica nativa alimentada pela base do Feiraê, preservando o mapa público como referência/importação e não como dependência de negócio.
-
