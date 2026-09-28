@@ -871,9 +871,7 @@ export default function App() {
         {screen === "chat" && (
           <ChatPage
             orderId={selectedOrderId ?? undefined}
-            onBack={() =>
-              selectedOrderId ? openCustomerTab("orders") : openCustomerTab("profile")
-            }
+            onBack={() => (selectedOrderId ? openCustomerTab("orders") : openCustomerTab("profile"))}
           />
         )}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
