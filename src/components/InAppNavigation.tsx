@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Crosshair, ExternalLink, House, MapPin, Navigation, Route, Store, X } from "lucide-react";
 
 type Coords = { lat: number; lng: number };
@@ -38,11 +38,6 @@ export function InAppNavigation({
   const [locationMessage, setLocationMessage] = useState("");
   const targetCoords = useMemo(() => parseCoordinateTarget(destination), [destination]);
   const distance = origin && targetCoords ? distanceKm(origin, targetCoords) : null;
-
-  useEffect(() => {
-    if (initialCoords) setOrigin(initialCoords);
-  }, [initialCoords]);
-
   function updateLocation() {
     if (!navigator.geolocation) {
       setLocationMessage("Localização do aparelho indisponível.");
