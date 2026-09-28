@@ -248,7 +248,6 @@
   }
 }
 
-
 .in-app-route-backdrop {
   position: fixed;
   inset: 0;
@@ -346,29 +345,29 @@
   box-shadow: 0 8px 20px rgba(11, 94, 58, 0.18);
 }
 .in-app-route__origin > span {
-  background: #0B5E3A;
+  background: #0b5e3a;
   color: white;
 }
 .in-app-route__destination > span {
   border-radius: 999px 999px 999px 0.8rem;
-  background: #FF8A00;
+  background: #ff8a00;
   color: white;
 }
 .in-app-route__vehicle > span {
   width: 2.4rem;
   height: 2.4rem;
   background: white;
-  color: #0B5E3A;
+  color: #0b5e3a;
 }
 .in-app-route__origin b,
 .in-app-route__destination b {
   border-radius: 999px;
-  background: rgba(255,255,255,0.94);
+  background: rgba(255, 255, 255, 0.94);
   padding: 0.22rem 0.5rem;
   color: var(--fe-ink);
   font-size: 0.65rem;
   font-weight: 900;
-  box-shadow: 0 3px 10px rgba(20,60,35,0.08);
+  box-shadow: 0 3px 10px rgba(20, 60, 35, 0.08);
 }
 .in-app-route__details {
   display: grid;
@@ -378,7 +377,7 @@
 .in-app-route__details > div {
   display: grid;
   min-width: 0;
-  grid-template-columns: auto minmax(0,1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.55rem;
   padding: 0.9rem 1rem;
 }
@@ -387,7 +386,7 @@
 }
 .in-app-route__details svg {
   margin-top: 0.1rem;
-  color: #0B5E3A;
+  color: #0b5e3a;
 }
 .in-app-route__details small,
 .in-app-route__details b {
