@@ -373,3 +373,34 @@ Acessibilidade e mobile:
 - mapa, legenda e card de seleção são responsivos;
 - em telas estreitas, os CTAs principais ocupam a largura disponível;
 - a camada visual não depende de gesto de arrastar ou zoom para acessar uma feira.
+
+## Mapa Feiraê no acompanhamento — 28/09/2026
+
+A mesma linguagem visual do mapa de Feiras foi aplicada ao acompanhamento do pedido.
+
+### Cliente
+
+- mapa aparece antes da timeline;
+- origem identificada como feira;
+- bancas aparecem como paradas numeradas;
+- destino de entrega usa ícone **Casa do cliente**;
+- moto aparece apenas após atribuição do entregador;
+- GPS real recebe halo e texto de atualização;
+- sem GPS, a interface informa que a posição é estimada pela etapa.
+
+### Feirante
+
+- mapa aparece no detalhe do pedido;
+- a própria banca recebe destaque amarelo;
+- o Feirante acompanha entregador indo à feira, coleta, saída e deslocamento ao cliente;
+- a casa do cliente é mostrada como destino logístico, usando somente o endereço já pertencente ao pedido.
+
+### Entregador
+
+- mapa aparece na entrega em andamento;
+- preserva o percurso interno Entrada → Bancas → Saída;
+- mostra o destino **Casa do cliente**;
+- oferece CTA para abrir o GPS externo até o endereço do cliente;
+- localização contínua só é compartilhada durante corrida ativa e após o Entregador já ter habilitado GPS na configuração.
+
+O componente compartilhado evita três experiências visuais diferentes para a mesma rota.
