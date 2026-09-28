@@ -516,7 +516,6 @@ QA visual recomendado:
 - confirmar que a logo aprovada é visível no login e cabeçalho;
 - confirmar que favicon, marca de apoio e ilustrações que usam os SVGs autocontidos continuam renderizando sem depender do WebP externo dentro do SVG.
 
-
 ## QA — referência de marketplace e suporte contextual — 28/09/2026
 
 A rodada baseada nos três vídeos de referência preserva a identidade Feiraê e altera comportamento apenas onde havia ganho claro de usabilidade.
