@@ -13,7 +13,7 @@ export function FeiraeBrand({ compact = false, className = "", priority = false 
       <img
         className="feirae-brand-lockup__image"
         src="/brand/feirae-logo-horizontal.svg"
-        alt="Feiraê — Da feira até você"
+        alt="Feiraê"
         decoding="async"
         loading={priority ? "eager" : "lazy"}
       />
