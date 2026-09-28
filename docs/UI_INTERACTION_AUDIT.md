@@ -349,22 +349,27 @@ Foi identificada e removida uma regressão em que a abertura premium havia sido 
 
 A correção restaura a cena vetorial contínua e elimina os assets estáticos para reduzir o risco de repetição desse desvio.
 
-## Mapa Feiraê na tela de Feiras — 27/09/2026
+## Mapa nativo Feiraê na tela de Feiras — 27/09/2026
 
-A tela **Feiras** passa a exibir, logo após os seletores de estado e cidade/região, um card visual **Mapa Feiraê**.
+A tela **Feiras** exibe, logo após os seletores de estado e cidade/região, um mapa construído dentro do próprio frontend do Feiraê.
 
 Comportamento:
 
-- o mapa não carrega automaticamente;
-- **Abrir mapa interativo** expande o Google My Maps compartilhado com as feiras do DF;
-- **Ocultar mapa** recolhe o conteúdo sem alterar o filtro/lista de feiras;
-- **Abrir mapa completo** abre a visualização pública em nova aba;
-- o mapa geral é complementar à lista filtrável do Feiraê e não substitui os dados, disponibilidade, bancas ou rotas mantidos pelo aplicativo.
+- os pontos respeitam o filtro de cidade/região;
+- tocar em um pin abre diretamente a feira correspondente;
+- o card inferior permite abrir a feira ou traçar rota;
+- **Usar minha localização** reaproveita a permissão de GPS já existente no app;
+- com GPS disponível, o mapa destaca o Cliente e mostra a feira mais próxima;
+- a distância recebe `~` quando deriva do centro aproximado da Região Administrativa;
+- o Google My Maps deixou de ser incorporado e permanece somente como referência externa opcional;
+- Feira → **Ver bancas** → Banca → Produtos forma uma navegação explícita e contínua.
 
 Acessibilidade e mobile:
 
-- botão possui `aria-expanded` e `aria-controls`;
-- `iframe` possui título descritivo;
-- ações preservam área mínima de toque;
-- altura do mapa é responsiva por `clamp()`;
-- o bloco usa quebra de linha nas ações para telas estreitas.
+- cada pin é um `button` com nome acessível e `aria-pressed`;
+- o mapa possui rótulo próprio;
+- o marcador de localização possui descrição acessível;
+- CTAs mantêm área mínima de toque;
+- mapa, legenda e card de seleção são responsivos;
+- em telas estreitas, os CTAs principais ocupam a largura disponível;
+- a camada visual não depende de gesto de arrastar ou zoom para acessar uma feira.
