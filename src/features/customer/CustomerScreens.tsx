@@ -2223,42 +2223,130 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       setLocationMessage("Seu navegador não oferece localização por GPS.");
       return;
     }
+
+    const brazilStateCodes: Record<string, string> = {
+      acre: "AC",
+      alagoas: "AL",
+      amapá: "AP",
+      amazonas: "AM",
+      bahia: "BA",
+      ceará: "CE",
+      "distrito federal": "DF",
+      "espírito santo": "ES",
+      goiás: "GO",
+      maranhão: "MA",
+      "mato grosso": "MT",
+      "mato grosso do sul": "MS",
+      "minas gerais": "MG",
+      pará: "PA",
+      paraíba: "PB",
+      paraná: "PR",
+      pernambuco: "PE",
+      piauí: "PI",
+      "rio de janeiro": "RJ",
+      "rio grande do norte": "RN",
+      "rio grande do sul": "RS",
+      rondônia: "RO",
+      roraima: "RR",
+      "santa catarina": "SC",
+      "são paulo": "SP",
+      sergipe: "SE",
+      tocantins: "TO",
+    };
+
     setLocationLoading(true);
-    setLocationMessage("Buscando sua localização...");
+    setLocationMessage("Buscando sua localização e preenchendo o endereço...");
+
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         const nextCoords = { lat: coords.latitude, lng: coords.longitude };
         setGpsCoords(nextCoords);
         if (!label.trim()) setLabel("Localização atual");
+
         try {
           const response = await fetch(
-            "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=" +
+            "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&lat=" +
               encodeURIComponent(String(coords.latitude)) +
               "&lon=" +
               encodeURIComponent(String(coords.longitude)),
             { headers: { "Accept-Language": "pt-BR,pt" } },
           );
           if (!response.ok) throw new Error("reverse-geocode");
+
           const data = (await response.json()) as {
             address?: Record<string, string>;
             display_name?: string;
           };
           const address = data.address ?? {};
-          setCep(address.postcode ?? "");
-          setState(
-            (address.state_code ?? address.state ?? "DF").replace("BR-", "").slice(0, 2).toUpperCase(),
-          );
-          setCity(
-            address.city ?? address.town ?? address.municipality ?? address.village ?? address.county ?? "",
-          );
-          setNeighborhood(address.suburb ?? address.neighbourhood ?? address.city_district ?? "");
-          setStreet(address.road ?? address.pedestrian ?? address.residential ?? "");
+          const postcode = address.postcode ?? "";
+          const rawStateCode = (address.state_code ?? "").replace(/^BR-/i, "").toUpperCase();
+          const normalizedState =
+            rawStateCode.length === 2
+              ? rawStateCode
+              : brazilStateCodes[(address.state ?? "").toLocaleLowerCase("pt-BR")] ?? state ?? "DF";
+          const detectedCity =
+            address.city ??
+            address.town ??
+            address.municipality ??
+            address.village ??
+            address.city_district ??
+            address.county ??
+            "";
+          const detectedNeighborhood =
+            address.suburb ??
+            address.neighbourhood ??
+            address.quarter ??
+            address.city_district ??
+            "";
+          const detectedStreet =
+            address.road ??
+            address.pedestrian ??
+            address.residential ??
+            address.path ??
+            address.quarter ??
+            "";
+
+          setCep(postcode);
+          setState(normalizedState);
+          setCity(detectedCity);
+          setNeighborhood(detectedNeighborhood);
+          setStreet(detectedStreet);
+          if (address.house_number) setNumber(address.house_number);
+
+          if (postcode) {
+            try {
+              const cepDigits = postcode.replace(/\D/g, "");
+              const cepResponse = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+              if (cepResponse.ok) {
+                const viaCep = (await cepResponse.json()) as {
+                  erro?: boolean;
+                  cep?: string;
+                  logradouro?: string;
+                  bairro?: string;
+                  localidade?: string;
+                  uf?: string;
+                };
+                if (!viaCep.erro) {
+                  if (viaCep.cep) setCep(viaCep.cep);
+                  if (viaCep.uf) setState(viaCep.uf);
+                  if (viaCep.localidade) setCity(viaCep.localidade);
+                  if (viaCep.bairro) setNeighborhood(viaCep.bairro);
+                  if (viaCep.logradouro) setStreet(viaCep.logradouro);
+                }
+              }
+            } catch {
+              // O endereço do GPS continua válido mesmo quando o complemento por CEP não responde.
+            }
+          }
+
           setLocationMessage(
-            "GPS localizado. Confira os campos e complete número, complemento e referência.",
+            address.house_number
+              ? "Endereço atualizado automaticamente pelo GPS. Confira os dados antes de salvar."
+              : "Endereço atualizado pelo GPS. Confira e complete o número/lote antes de salvar.",
           );
         } catch {
           setLocationMessage(
-            "GPS localizado, mas o endereço automático não respondeu. Complete os campos restantes.",
+            "Sua posição foi encontrada, mas não foi possível converter o GPS em endereço agora. Os campos podem ser preenchidos manualmente.",
           );
         } finally {
           setLocationLoading(false);
@@ -2268,7 +2356,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
         setLocationLoading(false);
         setLocationMessage("Não foi possível acessar o GPS. Você pode preencher o endereço manualmente.");
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
     );
   }
 
