@@ -118,6 +118,76 @@ export function authenticateLocalAccount(input: {
   return { ok: false as const, message: "Conta não encontrada. Use Criar conta primeiro." };
 }
 
+export function resetLocalAccountPassword(input: {
+  role: Role;
+  email: string;
+  newPassword: string;
+}) {
+  const email = normalizeEmail(input.email);
+  if (!email || !email.includes("@")) {
+    return { ok: false as const, message: "Informe um e-mail válido." };
+  }
+  if (input.newPassword.length < 6) {
+    return { ok: false as const, message: "A nova senha precisa ter pelo menos 6 caracteres." };
+  }
+
+  const accounts = readAccounts();
+  const existing = accounts.find((account) => normalizeEmail(account.email) === email);
+  if (existing) {
+    if (existing.role !== input.role) {
+      const access = roleAccessLabel[existing.role];
+      return {
+        ok: false as const,
+        message: `Este e-mail está vinculado ao acesso ${access}. Selecione ${access} para redefinir a senha.`,
+      };
+    }
+
+    const updated: LocalAccount = {
+      ...existing,
+      passwordDigest: digestPassword(input.newPassword),
+      updatedAt: new Date().toISOString(),
+    };
+    writeAccounts([
+      updated,
+      ...accounts.filter((account) => normalizeEmail(account.email) !== email),
+    ]);
+    return { ok: true as const, account: updated };
+  }
+
+  const demoRoleByEmail: Partial<Record<string, Role>> = {
+    "cliente@feirae.test": "customer",
+    "feirante@feirae.test": "feirante",
+    "entregador@feirae.test": "delivery",
+  };
+  const demoRole = demoRoleByEmail[email];
+  if (demoRole) {
+    if (demoRole !== input.role) {
+      const access = roleAccessLabel[demoRole];
+      return {
+        ok: false as const,
+        message: `Esta conta de demonstração usa o acesso ${access}. Selecione ${access} para redefinir a senha.`,
+      };
+    }
+
+    const now = new Date().toISOString();
+    const account: LocalAccount = {
+      email,
+      role: input.role,
+      name: nameFromEmail(email),
+      passwordDigest: digestPassword(input.newPassword),
+      createdAt: now,
+      updatedAt: now,
+    };
+    writeAccounts([account, ...accounts]);
+    return { ok: true as const, account };
+  }
+
+  return {
+    ok: false as const,
+    message: "Conta não encontrada neste dispositivo. Confira o e-mail ou crie uma conta.",
+  };
+}
+
 function migrateScopedStorage(oldEmail: string, newEmail: string) {
   if (typeof window === "undefined" || oldEmail === newEmail) return;
   const suffix = ":" + oldEmail;
