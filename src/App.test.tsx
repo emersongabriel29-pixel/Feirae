@@ -174,7 +174,7 @@ describe("Feiraê customer flow", () => {
 
     const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
     expect(minimumState).not.toBeNull();
-    expect(within(minimumState as HTMLElement).getByText(/R\$ 30,00/i)).toBeInTheDocument();
+    expect(within(minimumState as HTMLElement).getByText(/^R\$ 30,00$/i)).toBeInTheDocument();
   });
 
   it("shows the demonstration account identity instead of visitor", () => {
