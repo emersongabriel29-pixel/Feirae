@@ -29,13 +29,14 @@ Essas frases têm papéis diferentes e não devem ser misturadas.
 
 ## 3. Paleta oficial
 
-| Token          | Cor       | Uso                                         |
-| -------------- | --------- | ------------------------------------------- |
-| Verde Principal | `#0B5E3A` | marca, CTAs, confiança                      |
+| Token            | Cor       | Uso                                         |
+| ---------------- | --------- | ------------------------------------------- |
+| Verde Principal  | `#0B5E3A` | marca, CTAs, confiança                      |
 | Verde Secundário | `#22C55E` | frescor, estados positivos, destaques       |
-| Laranja Destaque | `#FF8A00` | ê, energia e destaque da marca              |\n| Amarelo Apoio | `#FFC107` | rota e microdestaques                       |
-| Fundo Creme     | `#FFF8EB` | fundos institucionais e superfícies quentes |
-| Marrom Terra   | `#8B5E34` | madeira, tradição, apoio visual             |
+| Laranja Destaque | `#FF8A00` | ê, energia e destaque da marca              |
+| Amarelo Apoio    | `#FFC107` | rota e microdestaques                       |
+| Fundo Creme      | `#FFF8EB` | fundos institucionais e superfícies quentes |
+| Marrom Terra     | `#8B5E34` | madeira, tradição, apoio visual             |
 
 Cores semânticas de erro/informação podem existir, mas não substituem a paleta de marca em superfícies institucionais.
 
