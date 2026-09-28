@@ -1471,9 +1471,7 @@ export function FeiranteOperations({
                             </option>
                           ))}
                         </select>
-                        <small>
-                          A categoria organiza o produto na vitrine e nos filtros do Cliente.
-                        </small>
+                        <small>A categoria organiza o produto na vitrine e nos filtros do Cliente.</small>
                       </label>
                       <label>
                         Unidade de venda

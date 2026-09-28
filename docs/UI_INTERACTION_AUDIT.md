@@ -508,7 +508,6 @@ Estados cobertos:
 
 O aviso do protótipo deixa explícito que produção deverá confirmar identidade por código ou link enviado ao e-mail.
 
-
 ## Categoria obrigatória ao criar produto — 28/09/2026
 
 O fluxo **Feirante → Produtos → Adicionar produto** não deve mais iniciar silenciosamente em **Frutas**.

@@ -919,7 +919,6 @@ Comportamento:
 - a página `/gestao/` é um shell visual e não executa ações administrativas reais;
 - nenhum fluxo de Cliente, Feirante ou Entregador foi removido ou renomeado por esta revisão.
 
-
 ## Categoria obrigatória de produto — 28/09/2026
 
 Todo novo produto cadastrado pelo Feirante deve possuir uma categoria válida da lista `productCategories`.

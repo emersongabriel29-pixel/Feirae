@@ -643,7 +643,6 @@ No estado de recuperação:
 - erro usa o padrão `inline-error` e sucesso usa `inline-success`;
 - o CTA principal passa a ser **Redefinir senha como Cliente/Feirante/Entregador**.
 
-
 ## Categoria no cadastro de produto — 28/09/2026
 
 No módulo **Feirante → Produtos**, a categoria é uma escolha explícita e obrigatória.

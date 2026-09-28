@@ -487,7 +487,6 @@ QA manual recomendado:
 - 360, 390 e 412 px com teclado virtual aberto;
 - conferir que nenhuma senha aparece em localStorage em texto aberto.
 
-
 ## QA — categoria no cadastro de produto — 28/09/2026
 
 Cobertura adicionada em `App.test.tsx`:
