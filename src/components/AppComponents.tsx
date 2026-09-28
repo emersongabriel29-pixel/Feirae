@@ -1216,27 +1216,32 @@ export function CartDrawer({
             <div className="surface-card">
               <span className="eyebrow">Pedido mínimo por banca</span>
               {vendorSummaries.map((summary) => (
-                <p key={summary.vendorName}>
-                  <span>{summary.vendorName}</span>
-                  <b>
-                    {summary.minimumOrderAmount > 0
-                      ? `${money(summary.subtotal)} · ${
-                          summary.meetsMinimum
-                            ? "mínimo atingido"
-                            : `faltam ${money(summary.missingForMinimum)}`
-                        }`
-                      : "sem pedido mínimo"}
-                  </b>
-                </p>
+                <div className="cart-minimum-row" key={summary.vendorName}>
+                  <p>
+                    <span>{summary.vendorName}</span>
+                    <b>
+                      {summary.minimumOrderAmount > 0
+                        ? `Pedido mínimo ${money(summary.minimumOrderAmount)}`
+                        : "Sem pedido mínimo"}
+                    </b>
+                  </p>
+                  {summary.minimumOrderAmount > 0 && (
+                    <small>
+                      {summary.meetsMinimum
+                        ? "Mínimo atingido."
+                        : `Faltam ${money(summary.missingForMinimum)} para liberar o pedido.`}
+                    </small>
+                  )}
+                </div>
               ))}
-              <small>Cada banca define o próprio valor mínimo. Frete e taxas não entram nessa conta.</small>
+              <small>O valor mínimo da banca é fixo. Frete e taxas não entram nessa conta.</small>
             </div>
             <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>
             </p>
             <button onClick={onCheckout} disabled={!minimumMet} className="primary-action w-full">
-              Continuar para checkout
+              Finalizar pedido
             </button>
             {!minimumMet && firstBlockedMinimum && (
               <small>
