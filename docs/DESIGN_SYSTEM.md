@@ -629,3 +629,17 @@ Regras:
 - chevron verde próprio, sem depender da seta visual nativa;
 - estados `hover`, `focus-visible` e `disabled` preservam contraste e acessibilidade;
 - em navegadores que substituem totalmente o popup nativo, o campo fechado continua coerente com a identidade Feiraê.
+
+
+## Recuperação de senha na entrada — 28/09/2026
+
+O login mantém **Esqueci minha senha** como ação secundária, visualmente subordinada ao CTA Entrar.
+
+No estado de recuperação:
+
+- a identidade e os cartões de papel permanecem visíveis para evitar ambiguidade de conta;
+- existe ação **Voltar para entrar**;
+- nova senha e confirmação reutilizam o componente de senha com olho mostrar/ocultar;
+- um aviso verde de segurança explica que a redefinição atual é local ao protótipo;
+- erro usa o padrão `inline-error` e sucesso usa `inline-success`;
+- o CTA principal passa a ser **Redefinir senha como Cliente/Feirante/Entregador**.
