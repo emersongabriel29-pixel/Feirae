@@ -950,8 +950,8 @@ export function FeiranteOperations({
             <div>
               <b>{item.name}</b>
               <small>
-                {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} · peso logístico{" "}
-                {item.weightKg} kg · mínimo {item.minStock}
+                {item.category} · {item.stock} {item.saleUnit}(s) · {money(item.price)} / {item.saleUnit} ·
+                peso logístico {item.weightKg} kg · mínimo {item.minStock}
               </small>
               <small>Status: {status}</small>
             </div>
@@ -1471,7 +1471,7 @@ export function FeiranteOperations({
                             </option>
                           ))}
                         </select>
-                        <small className="field-help">
+                        <small>
                           A categoria organiza o produto na vitrine e nos filtros do Cliente.
                         </small>
                       </label>
