@@ -505,7 +505,6 @@ QA manual:
 - criar produtos em categorias diferentes e conferir filtros no Cliente;
 - garantir que nenhum novo produto receba **Frutas** por padrão sem escolha do Feirante.
 
-
 ## QA — renderização da marca aprovada — 28/09/2026
 
 Cobertura automatizada em `FeiraeBrand.test.tsx` confirma que o componente usa diretamente `/brand/feirae-logo-approved.webp` nas variantes normal e compacta.

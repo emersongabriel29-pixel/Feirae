@@ -122,7 +122,6 @@ A aplicação no app foi ajustada para respeitar a proporção mais vertical des
 
 As notificações, favicon e referências legadas continuam apontando para os aliases canônicos, que agora reutilizam a mesma arte aprovada. Nenhuma superfície deve manter a versão simplificada anterior.
 
-
 ## 12. Correção de renderização no preview — 28/09/2026
 
 O componente React `FeiraeBrand` passa a carregar a arte aprovada diretamente de `/brand/feirae-logo-approved.webp`. A tentativa anterior de colocar o WebP dentro de um SVG por meio de `<image href=...>` foi removida da aplicação principal porque alguns ambientes de preview tratam SVG carregado por `<img>` como recurso isolado e não carregam a imagem externa, deixando apenas um bloco vazio.
