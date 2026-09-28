@@ -251,14 +251,15 @@ A `main` possui workflow Quality com:
 
 O repositório continua **sem pipeline de deploy/hosting**. Quality verde prova integridade do código, não publicação em staging/produção.
 
-## Google My Maps
+## Mapa nativo de feiras
 
-A incorporação do mapa público das feiras do DF não adiciona variável de ambiente, secret, pacote ou etapa de deploy.
+O mapa principal do Feiraê não adiciona variável de ambiente, secret, pacote, CDN ou etapa de deploy.
 
-Requisitos de ambiente:
+Requisitos atuais:
 
-- acesso HTTPS de saída do navegador para `google.com/maps`;
-- política de conteúdo/hosting não pode bloquear o `iframe` do Google My Maps;
-- não há configuração server-side específica para a versão atual.
+- JavaScript/React padrão do bundle existente;
+- permissão de geolocalização do navegador somente quando solicitada pelo Cliente;
+- nenhuma chamada externa é necessária para desenhar pins, mapa ou calcular proximidade;
+- o link opcional para o Google My Maps é apenas navegação externa.
 
-Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox ou outro SDK com credenciais, a configuração deverá ser documentada aqui antes do deploy.
+Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HERE ou outro SDK com credenciais, a configuração, limites, política de chaves, CSP e fallback deverão ser documentados aqui antes do deploy.
