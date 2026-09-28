@@ -407,6 +407,7 @@ QA manual recomendado:
 ## QA do catálogo completo — 28/09/2026
 
 Cobertura adicionada:
+
 - `marketplaceBridge.test.ts` garante que descrição e apresentação/embalagem sobrevivem à sincronização Feirante → Cliente;
 - `App.test.tsx` garante que os destaques da tela inicial exibem informações essenciais como feira, venda, peso, estoque, volume e preço.
 

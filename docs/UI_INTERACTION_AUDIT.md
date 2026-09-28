@@ -410,6 +410,7 @@ O componente compartilhado evita três experiências visuais diferentes para a m
 Foi eliminado o padrão reduzido de produto nos destaques da tela inicial. Produtos destacados agora usam o mesmo card informativo do catálogo.
 
 A grade foi ajustada para evitar que informações desapareçam por falta de largura:
+
 - celular: 1 card por linha;
 - telas médias: 2 cards;
 - telas largas: até 3 cards.

@@ -441,7 +441,8 @@ export function ProductCard({
       )
       .slice(0, 2) ?? [];
   const freeShipping =
-    Boolean(store?.absorbDeliveryFee) || activePromotions.some((promotion) => promotion.type === "freteGratis");
+    Boolean(store?.absorbDeliveryFee) ||
+    activePromotions.some((promotion) => promotion.type === "freteGratis");
 
   return (
     <article className="product-card product-card--complete">

@@ -871,6 +871,7 @@ No protótipo atual, os snapshots são persistidos na camada local compartilhada
 A exibição de produtos do Cliente deve preservar os dados cadastrados pelo Feirante e usar o mesmo card completo em Início, Catálogo, Feira e Banca.
 
 Informações mostradas quando disponíveis:
+
 - foto ou fallback visual;
 - categoria;
 - banca/feirante e feira;

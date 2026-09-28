@@ -557,6 +557,7 @@ A casa deve ser reconhecível como destino sem expor texto sensível além do en
 O card de produto é um componente informativo de compra, não apenas uma miniatura.
 
 Hierarquia visual:
+
 1. imagem + categoria + status da banca;
 2. banca, nome, feira e descrição;
 3. promoções;
