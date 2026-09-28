@@ -34,6 +34,45 @@ describe("Feiraê customer flow", () => {
     expect(productCard.getByText(/R\$ 24,90/i)).toBeInTheDocument();
   });
 
+  it("turns the product plus button into an in-card quantity control", () => {
+    window.localStorage.removeItem("feirae:cart:cliente@feirae.test");
+    window.localStorage.removeItem("feirae:cart:guest");
+
+    render(<App />);
+    loginAs("cliente");
+
+    const productHeading = screen.getByRole("heading", { name: /cesta de frutas/i });
+    const card = productHeading.closest("article");
+    expect(card).not.toBeNull();
+    const productCard = within(card as HTMLElement);
+
+    fireEvent.click(productCard.getByRole("button", { name: /adicionar cesta de frutas à sacola/i }));
+    expect(
+      productCard.getByLabelText(/1 unidade de cesta de frutas na sacola/i),
+    ).toHaveTextContent("1");
+
+    fireEvent.click(
+      productCard.getByRole("button", { name: /adicionar mais uma unidade de cesta de frutas/i }),
+    );
+    expect(
+      productCard.getByLabelText(/2 unidades de cesta de frutas na sacola/i),
+    ).toHaveTextContent("2");
+
+    fireEvent.click(
+      productCard.getByRole("button", { name: /remover uma unidade de cesta de frutas/i }),
+    );
+    expect(
+      productCard.getByLabelText(/1 unidade de cesta de frutas na sacola/i),
+    ).toHaveTextContent("1");
+
+    fireEvent.click(
+      productCard.getByRole("button", { name: /remover uma unidade de cesta de frutas/i }),
+    );
+    expect(
+      productCard.getByRole("button", { name: /adicionar cesta de frutas à sacola/i }),
+    ).toBeInTheDocument();
+  });
+
   it("opens the catalog from the home page", () => {
     render(<App />);
     loginAs("cliente");
