@@ -5,7 +5,7 @@ import { FeiraeBrand } from "./FeiraeBrand";
 describe("FeiraeBrand", () => {
   it("renders the canonical Feiraê lockup asset", () => {
     render(<FeiraeBrand priority />);
-    expect(screen.getByRole("img", { name: /feiraê — da feira até você/i })).toHaveAttribute(
+    expect(screen.getByRole("img", { name: /^feiraê$/i })).toHaveAttribute(
       "src",
       "/brand/feirae-logo-horizontal.svg",
     );
