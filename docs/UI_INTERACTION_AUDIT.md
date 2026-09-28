@@ -528,7 +528,6 @@ Foi removido o wrapper visual que transformava a logomarca em um cartão creme n
 
 Nenhum fluxo de Home, produtos, mapa, carrinho, pedidos, autenticação, Feirante ou Entregador foi alterado nesta correção.
 
-
 ## Rodada de referência de marketplace — 28/09/2026
 
 Os vídeos externos desta rodada são referência de comportamento, não de identidade visual. O Feiraê mantém marca, cores, tipografia, mapas e linguagem próprios.
