@@ -472,8 +472,12 @@ describe("Feiraê customer flow", () => {
 
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "bolsa artesanal" } });
-    const addButton = screen.getByRole("button", { name: /adicionar bolsa artesanal/i });
-    for (let quantity = 0; quantity < 7; quantity += 1) fireEvent.click(addButton);
+    fireEvent.click(screen.getByRole("button", { name: /adicionar bolsa artesanal/i }));
+    for (let quantity = 1; quantity < 7; quantity += 1) {
+      fireEvent.click(
+        screen.getByRole("button", { name: /adicionar mais uma unidade de bolsa artesanal/i }),
+      );
+    }
 
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 7 unidades/i }));
     expect(
@@ -510,11 +514,12 @@ describe("Feiraê customer flow", () => {
     loginAs("cliente");
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "tomate orgânico" } });
-    const addTomato = screen.getByRole("button", { name: /adicionar tomate orgânico/i });
-    fireEvent.click(addTomato);
-    fireEvent.click(addTomato);
-    fireEvent.click(addTomato);
-    fireEvent.click(addTomato);
+    fireEvent.click(screen.getByRole("button", { name: /adicionar tomate orgânico/i }));
+    for (let quantity = 1; quantity < 4; quantity += 1) {
+      fireEvent.click(
+        screen.getByRole("button", { name: /adicionar mais uma unidade de tomate orgânico/i }),
+      );
+    }
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 4 unidades/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
 
@@ -594,9 +599,10 @@ describe("Feiraê customer flow", () => {
 
     const search = screen.getByPlaceholderText(/busque produtos/i);
     fireEvent.change(search, { target: { value: "cesta de frutas" } });
-    const addBasket = screen.getByRole("button", { name: /adicionar cesta de frutas/i });
-    fireEvent.click(addBasket);
-    fireEvent.click(addBasket);
+    fireEvent.click(screen.getByRole("button", { name: /adicionar cesta de frutas/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /adicionar mais uma unidade de cesta de frutas/i }),
+    );
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 2 unidades/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar para checkout/i }));
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
