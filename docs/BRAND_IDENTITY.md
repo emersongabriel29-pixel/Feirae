@@ -16,7 +16,7 @@ Arquivos canônicos:
 
 Não reconstruir “Feiraê” com texto solto, emoji, um “ê” isolado, outro toldo ou outra combinação de folhas.
 
-O **ê é sempre amarelo Feiraê** e faz parte do lockup oficial. O restante do nome usa Verde Feira.
+O **ê é sempre Laranja Destaque** e faz parte do lockup oficial. O restante do nome usa Verde Principal.
 
 ## 2. Assinatura verbal
 
@@ -31,10 +31,10 @@ Essas frases têm papéis diferentes e não devem ser misturadas.
 
 | Token          | Cor       | Uso                                         |
 | -------------- | --------- | ------------------------------------------- |
-| Verde Feira    | `#0B662F` | marca, CTAs, confiança                      |
-| Verde Folha    | `#2AA745` | frescor, estados positivos, destaques       |
-| Amarelo Feiraê | `#FFC107` | ê, rota, energia, microdestaques            |
-| Creme Natural  | `#FFF8E7` | fundos institucionais e superfícies quentes |
+| Verde Principal | `#0B5E3A` | marca, CTAs, confiança                      |
+| Verde Secundário | `#22C55E` | frescor, estados positivos, destaques       |
+| Laranja Destaque | `#FF8A00` | ê, energia e destaque da marca              |\n| Amarelo Apoio | `#FFC107` | rota e microdestaques                       |
+| Fundo Creme     | `#FFF8EB` | fundos institucionais e superfícies quentes |
 | Marrom Terra   | `#8B5E34` | madeira, tradição, apoio visual             |
 
 Cores semânticas de erro/informação podem existir, mas não substituem a paleta de marca em superfícies institucionais.
@@ -109,3 +109,9 @@ Antes de aprovar uma tela:
 ## 10. Status de adoção
 
 Esta identidade é a referência obrigatória para app, splash, gestão e novas peças digitais.
+
+## 11. Sincronização com o styleboard aprovado — 28/09/2026
+
+A aplicação foi realinhada ao styleboard aprovado: palavra **Feira** em verde principal, **ê** em laranja destaque, folhas verdes e assinatura **Da feira até você**. O símbolo reduzido usa o **ê laranja + folhas**, sem o antigo quadrado/toldo como marca principal.
+
+As notificações devem usar o mesmo símbolo canônico do app. Nenhuma superfície deve manter uma versão paralela da marca.
