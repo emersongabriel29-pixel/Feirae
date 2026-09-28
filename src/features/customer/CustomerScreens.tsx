@@ -2216,7 +2216,9 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
 
   function useCurrentLocation() {
     if (!navigator.geolocation) {
-      setLocationMessage(\n        "Não foi possível acessar sua localização neste ambiente. Você pode informar seu CEP ou preencher o endereço manualmente.",\n      );
+      setLocationMessage(
+        "Não foi possível acessar sua localização neste ambiente. Você pode informar seu CEP ou preencher o endereço manualmente.",
+      );
       return;
     }
 
@@ -2346,7 +2348,9 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       },
       () => {
         setLocationLoading(false);
-        setLocationMessage(\n          "Não foi possível acessar sua localização neste ambiente. Você pode informar seu CEP ou preencher o endereço manualmente.",\n        );
+        setLocationMessage(
+          "Não foi possível acessar sua localização neste ambiente. Você pode informar seu CEP ou preencher o endereço manualmente.",
+        );
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
     );
