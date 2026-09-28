@@ -1,4 +1,7 @@
 export const FEIRAE_SOUND_ENABLED_KEY = "feirae:sound-enabled";
+export const FEIRAE_SONIC_LOGO_SRC = "/feirae-sonic-logo.mp3";
+
+let activeSonicLogo: HTMLAudioElement | null = null;
 
 export function isFeiraeSoundEnabled() {
   if (typeof window === "undefined") return false;
@@ -11,8 +14,43 @@ export function isFeiraeSoundEnabled() {
   }
 }
 
+async function playFeiraeSonicLogoAsset() {
+  if (typeof window === "undefined" || typeof Audio === "undefined") return false;
+
+  try {
+    activeSonicLogo?.pause();
+
+    const audio = new Audio(FEIRAE_SONIC_LOGO_SRC);
+    audio.preload = "auto";
+    audio.volume = 0.82;
+    activeSonicLogo = audio;
+
+    audio.addEventListener(
+      "ended",
+      () => {
+        if (activeSonicLogo === audio) activeSonicLogo = null;
+      },
+      { once: true },
+    );
+
+    await audio.play();
+    return true;
+  } catch {
+    activeSonicLogo = null;
+    return false;
+  }
+}
+
 export async function playFeiraeSoundMark() {
-  if (!isFeiraeSoundEnabled() || typeof window === "undefined" || !window.AudioContext) {
+  if (!isFeiraeSoundEnabled() || typeof window === "undefined") {
+    return false;
+  }
+
+  if (await playFeiraeSonicLogoAsset()) {
+    return true;
+  }
+
+  if (!window.AudioContext) {
     return false;
   }
 
