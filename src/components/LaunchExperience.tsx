@@ -7,14 +7,14 @@ export const FEIRAE_SPLASH_LAST_FULL_DAY_KEY = "feirae:splash:last-full-day";
 type SplashVariant = "full" | "quick" | "reduced";
 
 const fallbackDurations: Record<SplashVariant, number> = {
-  full: 2600,
-  quick: 2600,
+  full: 7000,
+  quick: 7000,
   reduced: 650,
 };
 
 const soundDelays: Partial<Record<SplashVariant, number>> = {
-  full: 900,
-  quick: 900,
+  full: 80,
+  quick: 80,
 };
 
 function localDayKey(date = new Date()) {
