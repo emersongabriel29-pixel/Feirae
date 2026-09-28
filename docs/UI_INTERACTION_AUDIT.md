@@ -527,3 +527,45 @@ Comportamento esperado:
 Foi removido o wrapper visual que transformava a logomarca em um cartão creme no topo do aplicativo. O cabeçalho volta a apresentar a marca limpa, preservando o espaço original da navegação e evitando o quadrado vazio observado em ambientes que não carregam recursos externos dentro de SVG usado como imagem.
 
 Nenhum fluxo de Home, produtos, mapa, carrinho, pedidos, autenticação, Feirante ou Entregador foi alterado nesta correção.
+
+
+## Rodada de referência de marketplace — 28/09/2026
+
+Os vídeos externos desta rodada são referência de comportamento, não de identidade visual. O Feiraê mantém marca, cores, tipografia, mapas e linguagem próprios.
+
+### Página da banca
+
+O resumo da banca deve apresentar o pedido mínimo como estado transacional:
+
+- valor mínimo permanece fixo;
+- subtotal atual da banca é mostrado separadamente;
+- enquanto não atingir, informar **quanto falta**;
+- ao atingir, trocar a mensagem por **✓ Atingido** sem transformar o mínimo em um valor progressivo;
+- em compra multi-banca, cada banca conserva sua própria validação.
+
+### Checkout multi-banca
+
+Itens deixam de ser uma lista única quando há mais de uma banca. O padrão é:
+
+1. cabeçalho da banca;
+2. subtotal daquela banca;
+3. estado do pedido mínimo;
+4. itens daquela banca;
+5. resumo geral do pedido permanece separado.
+
+Essa hierarquia deve permitir que o Cliente entenda imediatamente qual banca está bloqueando a finalização.
+
+### Pedidos e ajuda
+
+Cards de pedido usam ação contextual:
+
+- pedido ativo: **Acompanhar pedido**;
+- pedido concluído/cancelado: **Ver detalhes**;
+- **Preciso de ajuda** abre suporte já vinculado ao pedido;
+- **Comprar novamente** permanece disponível quando aplicável.
+
+O suporte vinculado mostra o identificador do pedido antes do chat e o protocolo criado conserva esse contexto.
+
+### Responsividade
+
+Em largura móvel, card de pedido e ações podem empilhar. Os grupos de banca do checkout preservam hierarquia e não devem gerar rolagem horizontal.
