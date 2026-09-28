@@ -662,7 +662,6 @@ No cabeçalho e nas superfícies padrão, `FeiraeBrand` deve exibir somente a ar
 
 A arte aprovada é carregada diretamente pelo componente. Fallbacks SVG continuam reservados para ícones e compatibilidade.
 
-
 ## Padrões transacionais de marketplace — 28/09/2026
 
 ### Estado de pedido mínimo
