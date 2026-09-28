@@ -328,6 +328,9 @@ describe("Feiraê customer flow", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /^entrar$/i }));
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "123456" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
     expect(screen.getByRole("alert")).toBeInTheDocument();
 
