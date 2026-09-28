@@ -59,6 +59,27 @@ describe("Feiraê customer flow", () => {
     expect(allCategory).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("navigates from a native map pin to the fair, vendors and products", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+
+    expect(screen.getByLabelText(/mapa nativo das feiras/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+
+    expect(screen.getByRole("heading", { name: "Feira do Produtor Rural" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
+
+    expect(screen.getByRole("heading", { name: /bancas e feirantes/i })).toBeInTheDocument();
+    expect(screen.getByText("Sítio da Vó")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
+    expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
+    expect(screen.getByText(/cesta de frutas/i)).toBeInTheDocument();
+  });
+
   it("completes the local demo checkout without leaving a blank screen", () => {
     render(<App />);
     loginAs("cliente");

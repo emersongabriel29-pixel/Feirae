@@ -254,15 +254,26 @@ Para cada integração real definir:
 
 A UI não deve interpretar “falha de rede” como “pagamento aprovado” ou “entrega concluída”.
 
-## Google My Maps — mapa público de feiras do DF
+## Cartografia de feiras do DF
 
-**Status:** integração visual ativa no frontend do cliente.
+**Status:** mapa nativo ativo no frontend do Cliente.
 
-- Embed: `https://www.google.com/maps/d/embed?mid=1DIWDxyR1EKjC-0VEI2PSj-AjSqP9GElB&ehbc=2E312F`
-- Visualização completa: `https://www.google.com/maps/d/viewer?mid=1DIWDxyR1EKjC-0VEI2PSj-AjSqP9GElB`
-- Não exige chave de API, secret ou variável de ambiente.
-- O conteúdo externo só é criado depois que o usuário escolhe **Abrir mapa interativo**.
-- A integração é apenas de visualização: o Feiraê não escreve no My Maps e não usa o mapa incorporado como banco de dados.
-- As coordenadas de GPS coletadas pelo Feiraê para proximidade não são passadas ao `iframe`.
+A visualização principal não depende de SDK, API key, tiles ou `iframe`. A projeção e a seleção de pins são implementadas localmente por:
 
-Evolução futura: quando o backend de feiras estiver consolidado, os pontos poderão migrar para uma camada cartográfica nativa alimentada pela base do Feiraê, preservando o mapa público como referência/importação e não como dependência de negócio.
+- `src/domain/fairMap.ts`: resolução de coordenada, fallback regional, projeção e cálculo da feira mais próxima;
+- `src/features/customer/FairMapPanel.tsx`: interação visual e navegação.
+
+O Google My Maps permanece apenas como referência externa opcional:
+
+- Visualização pública: `https://www.google.com/maps/d/viewer?mid=1DIWDxyR1EKjC-0VEI2PSj-AjSqP9GElB`;
+- o link só abre quando o usuário escolhe acessá-lo;
+- nenhuma coordenada de GPS do Cliente é adicionada ao link.
+
+### Fonte de coordenadas
+
+- `fair.lat/lng` possui prioridade quando disponível;
+- sem coordenada própria, o frontend usa temporariamente o centro aproximado da Região Administrativa;
+- esse fallback serve somente para descoberta visual e estimativa de proximidade;
+- frete, rota operacional e logística não podem consumir a coordenada aproximada.
+
+Evolução de produção: persistir coordenadas verificadas de feira no backend e expô-las pelo repositório de domínio, removendo progressivamente os fallbacks regionais.

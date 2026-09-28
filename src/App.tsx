@@ -720,7 +720,15 @@ export default function App() {
                 onAdd={addProductToCart}
               />
             )}
-            {tab === "fairs" && <FairsPage fairItems={fairsWithDistance} onFair={openFair} onMap={openMap} />}
+            {tab === "fairs" && (
+              <FairsPage
+                fairItems={fairsWithDistance}
+                userCoords={coords}
+                onRequestLocation={requestLocation}
+                onFair={openFair}
+                onMap={openMap}
+              />
+            )}
             {tab === "products" && (
               <CatalogPage
                 items={visibleProducts}
@@ -756,6 +764,7 @@ export default function App() {
             fairName={selectedFair}
             onBack={() => openCustomerTab("fairs")}
             onMap={openMap}
+            onVendors={() => openScreen("vendors")}
             onAdd={addProductToCart}
             favorites={favorites}
             onFavorite={toggleFavorite}

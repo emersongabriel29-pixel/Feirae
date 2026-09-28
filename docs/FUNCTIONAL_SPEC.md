@@ -829,15 +829,20 @@ Não atende ao requisito aprovado:
 
 A abertura completa deve ser contínua e mostrar movimento real dos elementos descritos no critério visual.
 
-## Mapa das feiras do Distrito Federal
+## Mapa nativo das feiras do Distrito Federal
 
-Na jornada do cliente, a aba **Feiras** oferece uma visão cartográfica complementar da rede de feiras do DF.
+Na jornada do Cliente, a aba **Feiras** possui uma camada cartográfica própria do Feiraê, sem `iframe` ou SDK de mapas.
 
 Regras funcionais:
 
-1. o mapa é carregado somente após ação explícita do usuário;
-2. a fonte atual é o Google My Maps público compartilhado do projeto;
-3. o mapa serve para descoberta espacial e não é a fonte de verdade de catálogo, status, horário, bancas, frete ou disponibilidade;
-4. o filtro por cidade/região continua atuando na lista de feiras do Feiraê;
-5. o botão de rota de cada feira continua usando o fluxo próprio de abertura de destino;
-6. a integração atual não recebe nem transmite ao `iframe` as coordenadas obtidas pelo GPS do Feiraê.
+1. as feiras filtradas por cidade/região aparecem como pontos interativos no mapa;
+2. tocar em um ponto abre diretamente a tela da feira correspondente;
+3. na tela da feira, **Ver bancas** continua a jornada Feira → Bancas → Produtos;
+4. quando o Cliente autoriza GPS, o mapa destaca sua posição e calcula a feira mais próxima;
+5. quando a feira possui `lat/lng` próprios, a distância usa essas coordenadas;
+6. enquanto uma feira ainda não possui coordenada própria, o mapa usa uma referência da Região Administrativa e apresenta a distância com `~` para indicar aproximação;
+7. coordenadas aproximadas nunca devem ser usadas para preço de frete, roteamento operacional ou prova de entrega;
+8. **Rota** continua usando o endereço cadastrado da feira no provedor externo;
+9. o Google My Maps permanece somente como link público de referência, sem conteúdo incorporado no app.
+
+A camada atual é uma visualização geográfica leve e progressiva: à medida que coordenadas oficiais forem persistidas no backend, elas substituem automaticamente o fallback regional.
