@@ -485,7 +485,6 @@ Os selects do Feiraê usam superfície clara, chevron verde, foco visível e est
 
 Limite conhecido: alguns sistemas operacionais renderizam a lista aberta do `<select>` fora do controle CSS da aplicação. Nesses casos, a superfície fechada e os estados de interação continuam padronizados.
 
-
 ## Esqueci minha senha — 28/09/2026
 
 Fluxo implementado na tela de entrada:

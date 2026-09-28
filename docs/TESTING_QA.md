@@ -467,7 +467,6 @@ QA manual:
 - conferir fundo claro, chevron verde, foco, hover e estado desabilitado;
 - testar pelo menos Chrome Android e um navegador desktop, reconhecendo que o popup nativo aberto pode ser controlado pelo sistema operacional.
 
-
 ## QA — recuperação de senha — 28/09/2026
 
 Cobertura automatizada:

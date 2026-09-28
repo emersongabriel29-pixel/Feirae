@@ -118,11 +118,7 @@ export function authenticateLocalAccount(input: {
   return { ok: false as const, message: "Conta não encontrada. Use Criar conta primeiro." };
 }
 
-export function resetLocalAccountPassword(input: {
-  role: Role;
-  email: string;
-  newPassword: string;
-}) {
+export function resetLocalAccountPassword(input: { role: Role; email: string; newPassword: string }) {
   const email = normalizeEmail(input.email);
   if (!email || !email.includes("@")) {
     return { ok: false as const, message: "Informe um e-mail válido." };
@@ -147,10 +143,7 @@ export function resetLocalAccountPassword(input: {
       passwordDigest: digestPassword(input.newPassword),
       updatedAt: new Date().toISOString(),
     };
-    writeAccounts([
-      updated,
-      ...accounts.filter((account) => normalizeEmail(account.email) !== email),
-    ]);
+    writeAccounts([updated, ...accounts.filter((account) => normalizeEmail(account.email) !== email)]);
     return { ok: true as const, account: updated };
   }
 

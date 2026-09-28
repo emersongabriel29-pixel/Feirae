@@ -321,7 +321,9 @@ export function LoginPage({
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword((value) => !value)}
-                      aria-label={showConfirmPassword ? "Ocultar confirmação da senha" : "Mostrar confirmação da senha"}
+                      aria-label={
+                        showConfirmPassword ? "Ocultar confirmação da senha" : "Mostrar confirmação da senha"
+                      }
                     >
                       {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -330,8 +332,8 @@ export function LoginPage({
                 <div className="password-recovery-notice">
                   <ShieldCheck size={18} />
                   <p>
-                    Nesta versão de demonstração, a redefinição fica salva somente neste dispositivo.
-                    Em produção, a identidade será confirmada por código ou link enviado ao e-mail.
+                    Nesta versão de demonstração, a redefinição fica salva somente neste dispositivo. Em
+                    produção, a identidade será confirmada por código ou link enviado ao e-mail.
                   </p>
                 </div>
               </>

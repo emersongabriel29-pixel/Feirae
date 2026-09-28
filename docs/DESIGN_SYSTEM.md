@@ -630,7 +630,6 @@ Regras:
 - estados `hover`, `focus-visible` e `disabled` preservam contraste e acessibilidade;
 - em navegadores que substituem totalmente o popup nativo, o campo fechado continua coerente com a identidade Feiraê.
 
-
 ## Recuperação de senha na entrada — 28/09/2026
 
 O login mantém **Esqueci minha senha** como ação secundária, visualmente subordinada ao CTA Entrar.

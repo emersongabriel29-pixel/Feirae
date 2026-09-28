@@ -388,7 +388,6 @@ Princípios aplicados no protótipo:
 
 Produção deve definir retenção curta para localização de Entregador, acesso por papel/pedido, registro da transparência apresentada, descarte ou anonimização após a finalidade e avaliação específica de segurança do canal realtime.
 
-
 ## Recuperação de senha — impacto de privacidade — 28/09/2026
 
 A recuperação adicionada ao protótipo não envia e-mail nem compartilha dados com terceiros. E-mail, papel da conta e digest da nova senha permanecem no armazenamento local já usado pela autenticação demonstrativa.

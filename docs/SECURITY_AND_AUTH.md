@@ -343,7 +343,6 @@ Requisitos de produção:
 - trilha de auditoria para alteração de vínculo do entregador;
 - não expor localização histórica fora da janela operacional da entrega.
 
-
 ## Recuperação de senha no protótipo — 28/09/2026
 
 A tela de entrada passa a oferecer **Esqueci minha senha** para Cliente, Feirante e Entregador.
