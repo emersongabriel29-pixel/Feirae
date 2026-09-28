@@ -41,6 +41,7 @@ import {
   customerTermsOfUse,
   saveCustomerLegalAcceptances,
 } from "../domain/customerLegal";
+import { FeiraeBrand } from "./FeiraeBrand";
 
 const roleLabels: Record<Role, string> = {
   customer: "Cliente",
@@ -142,12 +143,7 @@ export function LoginPage({
   return (
     <main className={`login-page auth-mode-${mode}`}>
       <section className="login-showcase">
-        <div className="login-brand">
-          <span className="brand-mark">ê</span>
-          <b>
-            Feiraê<span>.</span>
-          </b>
-        </div>
+        <FeiraeBrand className="login-brand" priority />
         <div>
           <span className="eyebrow light">A feira do seu jeito</span>
           <h1>Da banca até você.</h1>
@@ -399,15 +395,7 @@ export function Header(props: HeaderProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex min-h-16 items-center gap-3 py-2">
           <button onClick={props.onHome} className="brand" aria-label="Ir para o início do Feiraê">
-            <span className="brand-mark" aria-hidden="true">
-              ê
-            </span>
-            <span>
-              <b>
-                Feiraê<i>.</i>
-              </b>
-              <small>A feira do seu jeito</small>
-            </span>
+            <FeiraeBrand compact />
           </button>
           {props.role === "customer" && (
             <nav className="ml-3 hidden items-center gap-1 lg:flex" aria-label="Navegação principal">
