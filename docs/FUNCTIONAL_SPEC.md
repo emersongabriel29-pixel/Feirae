@@ -890,3 +890,16 @@ Informações mostradas quando disponíveis:
 - promoções ativas aplicáveis ao produto.
 
 Campos de operação interna, como estoque mínimo de reposição, não são expostos ao Cliente.
+
+## Identidade visual compartilhada — 28/09/2026
+
+A padronização de marca é uma mudança visual, não uma nova regra de negócio.
+
+Comportamento:
+
+- login e cabeçalho exibem o mesmo lockup canônico;
+- o fallback da splash usa o mesmo lockup;
+- PWA/favicon usam o símbolo oficial;
+- a página `/gestao/` é um shell visual e não executa ações administrativas reais;
+- nenhum fluxo de Cliente, Feirante ou Entregador foi removido ou renomeado por esta revisão.
+
