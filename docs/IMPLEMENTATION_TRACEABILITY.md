@@ -416,3 +416,16 @@ Limite mantido: no protótipo a localização compartilhada usa storage/eventos 
 - `data.ts`: fixtures recebem descrição e apresentação;
 - `customer.css`: layout completo e responsivo;
 - testes de bridge e interface protegem a regressão.
+
+## Identidade visual canônica — 28/09/2026
+
+| Função | Implementação | Fonte de verdade |
+| --- | --- | --- |
+| lockup Feiraê | `public/brand/feirae-logo-horizontal.svg` | `docs/BRAND_IDENTITY.md` |
+| símbolo/app icon | `public/brand/feirae-symbol.svg` + `public/feirae-mark.svg` | `docs/BRAND_IDENTITY.md` |
+| componente React | `src/components/FeiraeBrand.tsx` | `docs/DESIGN_SYSTEM.md` |
+| paleta | `src/styles/tokens.css` | `docs/BRAND_IDENTITY.md` |
+| estilos de marca | `src/styles/brand.css` | `docs/DESIGN_SYSTEM.md` |
+| gestão visual | `public/gestao/index.html` + `gestao.css` | `docs/ADMIN_MANAGEMENT_SPEC.md` |
+
+A página de gestão é, nesta etapa, um **shell visual**. Ela não altera o status das integrações administrativas de backend.
