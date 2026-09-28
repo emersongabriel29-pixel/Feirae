@@ -616,3 +616,17 @@ Paleta oficial sincronizada com o styleboard aprovado:
 - Laranja Destaque: `#FF8A00`;
 - Amarelo Apoio: `#FFC107`;
 - Fundo Creme: `#FFF8EB`.
+
+
+## Seletores claros e consistentes — 28/09/2026
+
+Os seletores de estado, cidade/região e cancelamento seguem a linguagem visual do Feiraê em vez do dropdown escuro padrão do navegador quando o ambiente permite estilização.
+
+Regras:
+
+- `appearance: none` nas superfícies controladas pelo Feiraê;
+- `color-scheme: light` para reduzir variações escuras do agente do usuário;
+- fundo branco/creme, borda suave e raio compatível com os tokens;
+- chevron verde próprio, sem depender da seta visual nativa;
+- estados `hover`, `focus-visible` e `disabled` preservam contraste e acessibilidade;
+- em navegadores que substituem totalmente o popup nativo, o campo fechado continua coerente com a identidade Feiraê.
