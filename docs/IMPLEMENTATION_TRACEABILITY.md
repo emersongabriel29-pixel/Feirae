@@ -383,3 +383,14 @@ Limites ainda reais: mapa cartesiano sem grafo de obstáculos, entrada/saída di
 - `App.test.tsx`: cobre configuração do Feirante e fluxo do Cliente.
 
 O painel administrativo runtime continua ausente. O teto/fallback são políticas centrais do protótipo e devem migrar para configuração administrativa persistida antes da produção.
+
+## Mapa nativo de feiras — 27/09/2026
+
+- `fairMap.ts`: coordenadas verificadas quando existentes, fallback por Região Administrativa, projeção e proximidade;
+- `FairMapPanel.tsx`: pins nativos, posição do Cliente, feira mais próxima e navegação direta pelo pin;
+- `FairsPage`: aplica cidade/região também ao mapa;
+- `FairDetail`: adiciona CTA **Ver bancas** para explicitar Feira → Bancas → Produtos;
+- `App.tsx`: conecta GPS e navegação ao mapa;
+- `fairMap.test.ts` + `FairMapPanel.test.tsx`: cobertura de domínio e interação.
+
+Gap ainda aberto: substituir progressivamente as referências regionais por `lat/lng` verificados e persistidos no backend para todas as feiras oficiais. Até lá, distância aproximada não participa de frete, SLA ou roteamento operacional.
