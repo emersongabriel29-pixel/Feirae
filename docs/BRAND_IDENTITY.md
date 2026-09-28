@@ -105,3 +105,7 @@ Antes de aprovar uma tela:
 - foco/contraste/alvos de toque estão adequados?
 - loading/erro/sucesso/disabled foram considerados?
 - a hierarquia parece produto Feiraê, e não template genérico?
+
+## 10. Status de adoção
+
+Esta identidade é a referência obrigatória para app, splash, gestão e novas peças digitais.
