@@ -416,3 +416,15 @@ A grade foi ajustada para evitar que informações desapareçam por falta de lar
 - telas largas: até 3 cards.
 
 O card prioriza leitura em blocos: identidade, promoção, serviço, dados do produto, disponibilidade e compra. A opção de cards compactos reduz espaçamento, mas não deve remover preço, estoque, peso, unidade, banca ou feira.
+
+## Controle − quantidade + nos produtos — 28/09/2026
+
+Foi adotado o padrão de comércio mobile em que o CTA inicial **+** se transforma em um stepper após a primeira adição.
+
+Estados:
+- **0 unidades:** botão verde **+**;
+- **1 ou mais:** controle **−  quantidade  +**;
+- **estoque máximo:** botão **+** do stepper desabilitado;
+- **banca fechada:** incremento desabilitado, remoção preservada.
+
+O contador fica no próprio card, ao lado do preço, evitando que o Cliente precise abrir a sacola para confirmar quantas unidades já adicionou.
