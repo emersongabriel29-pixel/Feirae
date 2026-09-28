@@ -345,7 +345,7 @@ export function FairCard({
                 : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
             }
             className="icon-button large"
-            aria-label={`Abrir rota para ${fair.name}`}
+            aria-label={`Abrir rota no Feiraê para ${fair.name}`}
           >
             <MapPin size={18} />
           </button>
@@ -728,7 +728,7 @@ export function FairDetail({
             }
             className="secondary-action light"
           >
-            <MapPin size={17} /> Abrir rota
+            <MapPin size={17} /> Rota no Feiraê
           </button>
         </div>
       </div>
