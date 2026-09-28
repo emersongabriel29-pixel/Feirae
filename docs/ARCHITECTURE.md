@@ -357,3 +357,9 @@ Não há dependência de CDN, imagem remota ou vídeo. O shell do app continua p
 A splash premium não deve ser implementada como slideshow de imagens prontas.
 
 A fonte canônica é a cena SVG inline de `LaunchExperience.tsx`, animada por grupos via `LaunchExperience.css`. Isso permite movimento contínuo e independente de banca, produtos, rota, moto, rodas, pin e marca.
+
+## Manutenção de formatação — 27/09/2026
+
+Durante a integração do mapa das feiras, o Prettier também normalizou a formatação de
+`src/components/LaunchExperience.tsx`. Não houve mudança de comportamento, duração, assets,
+áudio, fallback ou fluxo da experiência de abertura.
