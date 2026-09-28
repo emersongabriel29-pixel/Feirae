@@ -10,6 +10,7 @@ import {
   LogOut,
   MapPin,
   MessageCircle,
+  Minus,
   Package,
   Plus,
   Settings,
@@ -86,6 +87,8 @@ export function HomePage({
   onVendors,
   onTracking,
   onAdd,
+  onRemove,
+  cart,
   favorites,
   onFavorite,
 }: {
@@ -94,6 +97,8 @@ export function HomePage({
   onVendors: () => void;
   onTracking: () => void;
   onAdd: (id: number) => void;
+  onRemove: (id: number) => void;
+  cart: Record<number, number>;
   favorites: number[];
   onFavorite: (id: number) => void;
 }) {
@@ -175,7 +180,9 @@ export function HomePage({
               <ProductCard
                 key={product.id}
                 product={product}
+                quantity={cart[product.id] ?? 0}
                 onAdd={onAdd}
+                onRemove={onRemove}
                 favorite={favorites.includes(product.id)}
                 onFavorite={onFavorite}
               />
@@ -355,6 +362,8 @@ export function CatalogPage({
   category,
   onCategory,
   onAdd,
+  onRemove,
+  cart,
   favorites,
   onFavorite,
 }: {
@@ -364,6 +373,8 @@ export function CatalogPage({
   category: string;
   onCategory: (category: string) => void;
   onAdd: (id: number) => void;
+  onRemove: (id: number) => void;
+  cart: Record<number, number>;
   favorites: number[];
   onFavorite: (id: number) => void;
 }) {
@@ -396,7 +407,9 @@ export function CatalogPage({
             <ProductCard
               key={product.id}
               product={product}
+              quantity={cart[product.id] ?? 0}
               onAdd={onAdd}
+              onRemove={onRemove}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
             />
@@ -410,13 +423,17 @@ export function CatalogPage({
 }
 export function ProductCard({
   product,
+  quantity,
   onAdd,
+  onRemove,
   favorite,
   onFavorite,
   addDisabled = false,
 }: {
   product: Product;
+  quantity: number;
   onAdd: (id: number) => void;
+  onRemove: (id: number) => void;
   favorite: boolean;
   onFavorite: (id: number) => void;
   addDisabled?: boolean;
@@ -534,18 +551,52 @@ export function ProductCard({
             <strong>{money(product.price)}</strong>
             <span>/{product.unit}</span>
           </div>
-          <button
-            onClick={() => onAdd(product.id)}
-            disabled={addDisabled}
-            className="add-button"
-            aria-label={
-              addDisabled
-                ? `${product.name} indisponível porque a banca está fechada`
-                : `Adicionar ${product.name} à sacola`
-            }
-          >
-            <Plus size={19} />
-          </button>
+          {quantity > 0 ? (
+            <div className="product-quantity-control" aria-label={`Quantidade de ${product.name} na sacola`}>
+              <button
+                type="button"
+                onClick={() => onRemove(product.id)}
+                aria-label={`Remover uma unidade de ${product.name}`}
+              >
+                <Minus size={18} />
+              </button>
+              <span
+                className="product-quantity-control__value"
+                aria-live="polite"
+                aria-label={`${quantity} ${quantity === 1 ? "unidade" : "unidades"} de ${product.name} na sacola`}
+              >
+                {quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => onAdd(product.id)}
+                disabled={addDisabled || quantity >= product.stock}
+                aria-label={
+                  quantity >= product.stock
+                    ? `Limite de estoque atingido para ${product.name}`
+                    : addDisabled
+                      ? `${product.name} indisponível porque a banca está fechada`
+                      : `Adicionar mais uma unidade de ${product.name}`
+                }
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onAdd(product.id)}
+              disabled={addDisabled}
+              className="add-button"
+              aria-label={
+                addDisabled
+                  ? `${product.name} indisponível porque a banca está fechada`
+                  : `Adicionar ${product.name} à sacola`
+              }
+            >
+              <Plus size={19} />
+            </button>
+          )}
         </div>
       </div>
     </article>
@@ -668,6 +719,8 @@ export function FairDetail({
   onMap,
   onVendors,
   onAdd,
+  onRemove,
+  cart,
   favorites,
   onFavorite,
 }: {
@@ -676,6 +729,8 @@ export function FairDetail({
   onMap: (destination: number | string, lng?: number) => void;
   onVendors: () => void;
   onAdd: (id: number) => void;
+  onRemove: (id: number) => void;
+  cart: Record<number, number>;
   favorites: number[];
   onFavorite: (id: number) => void;
 }) {
@@ -724,7 +779,9 @@ export function FairDetail({
             <ProductCard
               key={product.id}
               product={product}
+              quantity={cart[product.id] ?? 0}
               onAdd={onAdd}
+              onRemove={onRemove}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
             />
@@ -815,6 +872,8 @@ export function VendorStore({
   fairName,
   onBack,
   onAdd,
+  onRemove,
+  cart,
   favorites,
   onFavorite,
   storeFavorite,
@@ -824,6 +883,8 @@ export function VendorStore({
   fairName: string;
   onBack: () => void;
   onAdd: (id: number) => void;
+  onRemove: (id: number) => void;
+  cart: Record<number, number>;
   favorites: number[];
   onFavorite: (id: number) => void;
   storeFavorite: boolean;
@@ -881,7 +942,9 @@ export function VendorStore({
             <ProductCard
               key={product.id}
               product={product}
+              quantity={cart[product.id] ?? 0}
               onAdd={onAdd}
+              onRemove={onRemove}
               addDisabled={sharedStore?.isOpen === false}
               favorite={favorites.includes(product.id)}
               onFavorite={onFavorite}
@@ -1930,6 +1993,8 @@ export function FavoritesPage({
   ids,
   vendorFavorites,
   onAdd,
+  onRemove,
+  cart,
   onFavorite,
   onVendorFavorite,
   onVendor,
@@ -1939,6 +2004,8 @@ export function FavoritesPage({
   ids: number[];
   vendorFavorites: string[];
   onAdd: (id: number) => void;
+  onRemove: (id: number) => void;
+  cart: Record<number, number>;
   onFavorite: (id: number) => void;
   onVendorFavorite: (name: string) => void;
   onVendor: (name: string) => void;
@@ -1962,7 +2029,15 @@ export function FavoritesPage({
       {favoriteProducts.length ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {favoriteProducts.map((product) => (
-            <ProductCard key={product.id} product={product} onAdd={onAdd} favorite onFavorite={onFavorite} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              quantity={cart[product.id] ?? 0}
+              onAdd={onAdd}
+              onRemove={onRemove}
+              favorite
+              onFavorite={onFavorite}
+            />
           ))}
         </div>
       ) : (

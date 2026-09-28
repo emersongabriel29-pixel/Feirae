@@ -1,23 +1,5 @@
 # Design system e layout — Feiraê
 
-## Identidade canônica Feiraê — 28/09/2026
-
-A identidade visual passou a ter uma fonte de verdade própria em [BRAND_IDENTITY.md](BRAND_IDENTITY.md).
-
-Regras obrigatórias:
-
-- lockup oficial: `/brand/feirae-logo-horizontal.svg`;
-- símbolo oficial: `/brand/feirae-symbol.svg`;
-- compatibilidade legada: `/feirae-mark.svg` usa o mesmo símbolo;
-- componente React: `FeiraeBrand`;
-- Verde Feira `#0B662F`;
-- Verde Folha `#2AA745`;
-- Amarelo Feiraê `#FFC107`;
-- Creme Natural `#FFF8E7`;
-- Marrom Terra `#8B5E34`.
-
-É proibido recriar a marca com `ê` isolado, “Feiraê.” montado em CSS, novo toldo, outra cor para o ê ou wordmark alternativo. O UI/UX Pro Max melhora hierarquia, responsividade e acessibilidade, mas não pode gerar uma identidade concorrente.
-
 Atualizado em 27/09/2026 após auditoria visual, UI/UX Pro Max e Sincronização Mestre.
 
 ## Objetivo
@@ -585,3 +567,38 @@ Hierarquia visual:
 7. preço/unidade e CTA adicionar.
 
 A tela inicial reutiliza esse mesmo card para não criar uma versão visualmente mais pobre do catálogo.
+
+## Stepper de quantidade no card de produto
+
+O componente visual `.product-quantity-control` substitui o botão de adicionar quando a quantidade é maior que zero.
+
+Composição:
+
+- botão de diminuir à esquerda;
+- quantidade central com números tabulares;
+- botão de aumentar à direita;
+- borda e estados usando os tokens verdes do Feiraê;
+- área mínima de toque compatível com `--fe-touch`;
+- `aria-live` no valor para anunciar mudanças de quantidade.
+
+A redução para zero deve restaurar o CTA **+** original, mantendo consistência visual com produtos ainda não adicionados.
+
+## Identidade canônica Feiraê — 28/09/2026
+
+A identidade visual passou a ter uma fonte de verdade própria em [BRAND_IDENTITY.md](BRAND_IDENTITY.md).
+
+Regras obrigatórias:
+
+- lockup oficial: `/brand/feirae-logo-horizontal.svg`;
+- símbolo oficial: `/brand/feirae-symbol.svg`;
+- compatibilidade legada: `/feirae-mark.svg` usa o mesmo símbolo;
+- componente React: `FeiraeBrand`;
+- Verde Feira `#0B662F`;
+- Verde Folha `#2AA745`;
+- Amarelo Feiraê `#FFC107`;
+- Creme Natural `#FFF8E7`;
+- Marrom Terra `#8B5E34`.
+
+É proibido recriar a marca com `ê` isolado, “Feiraê.” montado em CSS, novo toldo, outra cor para o ê ou wordmark alternativo. O UI/UX Pro Max melhora hierarquia, responsividade e acessibilidade, mas não pode gerar uma identidade concorrente.
+
+Atualizado em 27/09/2026 após auditoria visual, UI/UX Pro Max e Sincronização Mestre.

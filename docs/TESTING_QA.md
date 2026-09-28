@@ -1,6 +1,6 @@
 # Testes e QA — Feiraê
 
-Atualizado em 28/09/2026 com contagem conferida no CI do PR de identidade.
+Atualizado em 28/09/2026 com contagem conferida no CI da identidade oficial.
 
 ## 1. Pipeline atual
 
@@ -416,6 +416,22 @@ Cobertura adicionada:
 - `App.test.tsx` garante que os destaques da tela inicial exibem informações essenciais como feira, venda, peso, estoque, volume e preço.
 
 Regressão a bloquear: qualquer tela do Cliente que mostre produto em formato de compra não deve voltar a exibir apenas imagem, nome e preço.
+
+## QA do stepper de produto — 28/09/2026
+
+Cobertura automatizada em `App.test.tsx`:
+
+- primeiro toque no **+** muda o card para quantidade 1;
+- novo **+** muda para 2;
+- **−** reduz para 1;
+- novo **−** remove a última unidade e restaura o botão **+**.
+
+QA manual:
+
+- confirmar sincronização do mesmo produto entre Início, Catálogo, Feira, Banca, Favoritos e Sacola;
+- confirmar bloqueio do **+** no limite de estoque;
+- confirmar que uma banca fechada ainda permite diminuir/remover item previamente adicionado;
+- validar toque confortável e leitura do contador em celulares estreitos.
 
 ### Identidade visual canônica — 28/09/2026
 

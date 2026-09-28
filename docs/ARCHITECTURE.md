@@ -404,6 +404,14 @@ O protótipo persiste snapshots na bridge local. Produção deve substituir isso
 
 Dados internos de operação permanecem fora do contrato público do produto.
 
+## Estado da quantidade nos cards — 28/09/2026
+
+Os cards de produto recebem `cart` e as ações `addProductToCart` / `removeFromCart` a partir de `App.tsx`.
+
+`ProductCard` recebe apenas a quantidade derivada `cart[product.id] ?? 0`; não cria estado local de quantidade. Isso garante sincronização imediata entre todas as telas que exibem o mesmo produto e o `CartDrawer`.
+
+O limite superior continua sendo validado por `useDemoCart.addToCart()` contra `product.stock`. A interface também desabilita visualmente o incremento ao atingir o estoque, mas a regra de domínio permanece no hook.
+
 ## Camada de identidade compartilhada — 28/09/2026
 
 A marca deixa de ser montada localmente em cada tela e passa a ter uma camada compartilhada:
