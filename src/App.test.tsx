@@ -15,6 +15,25 @@ function loginAs(role: "cliente" | "feirante" | "entregador") {
 }
 
 describe("Feiraê customer flow", () => {
+  it("shows complete product information on the home highlights", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const productHeading = screen.getByRole("heading", { name: /cesta de frutas/i });
+    const card = productHeading.closest("article");
+    expect(card).not.toBeNull();
+
+    const productCard = within(card as HTMLElement);
+    expect(productCard.getByText("Feira do Produtor Rural")).toBeInTheDocument();
+    expect(productCard.getByText(/^Venda$/i)).toBeInTheDocument();
+    expect(productCard.getByText(/^Peso logístico$/i)).toBeInTheDocument();
+    expect(productCard.getByText(/^Estoque$/i)).toBeInTheDocument();
+    expect(productCard.getByText(/^Volume$/i)).toBeInTheDocument();
+    expect(productCard.getByText(/4 kg/i)).toBeInTheDocument();
+    expect(productCard.getByText(/30 cesta/i)).toBeInTheDocument();
+    expect(productCard.getByText(/R\$ 24,90/i)).toBeInTheDocument();
+  });
+
   it("opens the catalog from the home page", () => {
     render(<App />);
     loginAs("cliente");
