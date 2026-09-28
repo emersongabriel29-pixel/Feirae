@@ -394,3 +394,15 @@ O painel administrativo runtime continua ausente. O teto/fallback são política
 - `fairMap.test.ts` + `FairMapPanel.test.tsx`: cobertura de domínio e interação.
 
 Gap ainda aberto: substituir progressivamente as referências regionais por `lat/lng` verificados e persistidos no backend para todas as feiras oficiais. Até lá, distância aproximada não participa de frete, SLA ou roteamento operacional.
+
+## Acompanhamento no Mapa Feiraê — 28/09/2026
+
+- `UnifiedOrderRecord.driver.location`: snapshot de localização do Entregador;
+- `OrderRouteMap.tsx`: mapa compartilhado com Feira, bancas, moto e **Casa do cliente**;
+- `CustomerScreens.tsx::DeliveryTracking`: mapa no acompanhamento do Cliente;
+- `VendorScreens.tsx::Pedidos`: mapa no detalhe do pedido do Feirante, destacando sua banca;
+- `DeliveryScreens.tsx`: mapa na corrida ativa + publicação de GPS durante a corrida;
+- `map.css`: identidade visual única para os três papéis;
+- `OrderRouteMap.test.tsx`: cobertura do destino residencial, GPS e fallback por etapa.
+
+Limite mantido: no protótipo a localização compartilhada usa storage/eventos locais. Produção ainda precisa de backend realtime autenticado e política de retenção.
