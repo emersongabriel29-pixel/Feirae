@@ -416,3 +416,11 @@ Limite mantido: no protótipo a localização compartilhada usa storage/eventos 
 - `data.ts`: fixtures recebem descrição e apresentação;
 - `customer.css`: layout completo e responsivo;
 - testes de bridge e interface protegem a regressão.
+
+## Quantidade no card do produto — 28/09/2026
+
+- `App.tsx`: distribui `cart` e `removeFromCart` às telas de produto;
+- `CustomerScreens.tsx::ProductCard`: transforma **+** em **− quantidade +** quando `quantity > 0`;
+- `customer.css`: estilos e estados do stepper;
+- `App.test.tsx`: protege adição, incremento, decremento e retorno a zero;
+- documentação funcional, visual e arquitetural atualizada.
