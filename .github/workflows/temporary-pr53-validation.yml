@@ -1,0 +1,30 @@
+name: Temporary PR53 Validation
+
+on:
+  push:
+    branches:
+      - fix/brand-mobile-cards-native-map-cart
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Verify project synchronization
+        env:
+          BASE_SHA: 05011cf38a66594ee9834ba6629405ef77a2bfcd
+          HEAD_SHA: ${{ github.sha }}
+        run: npm run check:sync
+      - run: npm run format:check
