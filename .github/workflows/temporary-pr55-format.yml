@@ -1,0 +1,45 @@
+name: Temporary PR55 Formatter
+
+on:
+  push:
+    branches:
+      - feat/password-recovery-20260928
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Format PR 55 files
+        run: >-
+          npx prettier --write
+          docs/DESIGN_SYSTEM.md
+          docs/LGPD_AND_PRIVACY.md
+          docs/SECURITY_AND_AUTH.md
+          docs/TESTING_QA.md
+          docs/UI_INTERACTION_AUDIT.md
+          src/components/AppComponents.tsx
+          src/domain/localAuth.test.ts
+          src/domain/localAuth.ts
+      - name: Remove temporary workflow and commit formatting
+        run: |
+          rm .github/workflows/temporary-pr55-format.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/DESIGN_SYSTEM.md docs/LGPD_AND_PRIVACY.md docs/SECURITY_AND_AUTH.md docs/TESTING_QA.md docs/UI_INTERACTION_AUDIT.md src/components/AppComponents.tsx src/domain/localAuth.test.ts src/domain/localAuth.ts .github/workflows/temporary-pr55-format.yml
+          if git diff --cached --quiet; then
+            echo "No formatting changes were needed."
+            exit 0
+          fi
+          git commit -m "chore: format password recovery changes"
+          git push origin HEAD:feat/password-recovery-20260928
