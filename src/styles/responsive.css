@@ -1,8 +1,4 @@
-@media (min-width: 640px) {
-  .brand small {
-    display: block;
-  }
-  .metrics {
+@media (min-width: 640px) {.metrics {
     grid-template-columns: repeat(4, 1fr);
   }
   .login-form {
@@ -123,15 +119,7 @@
     min-height: 100dvh;
   }
 }
-@media (max-width: 420px) {
-  .brand-mark {
-    width: 2.1rem;
-    height: 2.1rem;
-  }
-  .brand b {
-    font-size: 1.2rem;
-  }
-  .hero {
+@media (max-width: 420px) {.hero {
     border-radius: 1.5rem;
     padding: 1.5rem;
   }
