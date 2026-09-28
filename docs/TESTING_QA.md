@@ -34,6 +34,7 @@ npm run build
 | ------------------------------------------ | ------: |
 | `src/App.test.tsx`                         |      58 |
 | `src/components/LaunchExperience.test.tsx` |       3 |
+| `src/components/FeiraeBrand.test.tsx`        |       2 |
 | `src/domain/orderBridge.test.ts`           |      11 |
 | `src/domain/feiraeNotifications.test.ts`   |       6 |
 | `src/domain/legalTerms.test.ts`            |       8 |
@@ -46,7 +47,7 @@ npm run build
 | `src/domain/marketplace.test.ts`           |       4 |
 | `src/domain/session.test.ts`               |       3 |
 | `src/utils.test.ts`                        |       4 |
-| **Total Vitest**                           | **129** |
+| **Total Vitest**                           | **131** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
@@ -412,3 +413,10 @@ Cobertura adicionada:
 - `App.test.tsx` garante que os destaques da tela inicial exibem informações essenciais como feira, venda, peso, estoque, volume e preço.
 
 Regressão a bloquear: qualquer tela do Cliente que mostre produto em formato de compra não deve voltar a exibir apenas imagem, nome e preço.
+
+### Identidade visual canônica — 28/09/2026
+
+- `FeiraeBrand.test.tsx` protege o asset canônico e a variante compacta;
+- a revisão visual não altera regras de negócio;
+- login, header, fallback da splash e gestão reutilizam a mesma fonte de marca;
+- a validação final continua exigindo lint, Vitest, política de sincronização, build e Prettier.
