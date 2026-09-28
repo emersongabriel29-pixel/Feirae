@@ -403,3 +403,16 @@ O protótipo persiste snapshots na bridge local. Produção deve substituir isso
 `syncVendorMarketplace()` não deve reduzir o produto a nome/preço/estoque. Novos campos públicos do cadastro do Feirante devem ser avaliados para propagação à camada de Cliente quando tiverem finalidade de compra.
 
 Dados internos de operação permanecem fora do contrato público do produto.
+
+## Camada de identidade compartilhada — 28/09/2026
+
+A marca deixa de ser montada localmente em cada tela e passa a ter uma camada compartilhada:
+
+- assets em `public/brand/`;
+- alias legado `public/feirae-mark.svg`;
+- componente `src/components/FeiraeBrand.tsx`;
+- tokens em `src/styles/tokens.css`;
+- estilos institucionais em `src/styles/brand.css`.
+
+Login, header e fallback da splash consomem essa camada. A gestão estática em `public/gestao/` usa os mesmos assets, sem compartilhar lógica de negócio do app.
+
