@@ -468,3 +468,19 @@ Critério de regressão: nenhuma nova tela deve reconstruir “Feiraê” com te
 - CTA principal: **Finalizar pedido**;
 - pedido mínimo mostra sempre o valor configurado da banca;
 - subtotal do carrinho não substitui o texto do mínimo; o estado de cumprimento aparece separadamente.
+
+## GPS e seletores — 28/09/2026
+
+### Endereço
+
+Quando o ambiente não oferece geolocalização ou a permissão falha, o fluxo não termina em erro genérico. A interface orienta explicitamente:
+
+> Não foi possível acessar sua localização neste ambiente. Você pode informar seu CEP ou preencher o endereço manualmente.
+
+O formulário permanece disponível e nenhum campo manual é bloqueado.
+
+### Estado / cidade / região
+
+Os selects do Feiraê usam superfície clara, chevron verde, foco visível e estado desabilitado legível. O objetivo é evitar que o preview ou o navegador apresente um campo fechado visualmente incompatível com o restante do aplicativo.
+
+Limite conhecido: alguns sistemas operacionais renderizam a lista aberta do `<select>` fora do controle CSS da aplicação. Nesses casos, a superfície fechada e os estados de interação continuam padronizados.

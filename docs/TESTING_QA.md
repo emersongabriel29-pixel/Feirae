@@ -451,3 +451,18 @@ Cobertura desta rodada:
 - lint, Vitest, política de sincronização e build devem permanecer verdes antes de merge.
 
 QA manual obrigatório em 360, 390 e 412 px: confirmar dois produtos lado a lado, stepper legível, endereço preenchido pelo GPS e abertura do painel de rota sem salto para aplicativo externo.
+
+## QA — fallback de GPS e selects — 28/09/2026
+
+Cobertura adicionada em `App.test.tsx`:
+
+- abrir Perfil → Meus endereços → Adicionar endereço;
+- tentar **Usar minha localização atual** em ambiente sem geolocalização;
+- confirmar que a interface oferece CEP e preenchimento manual em vez de deixar o usuário preso.
+
+QA manual:
+
+- negar permissão de localização no navegador e conferir a mesma orientação;
+- validar selects em 360, 390, 412 e 768 px;
+- conferir fundo claro, chevron verde, foco, hover e estado desabilitado;
+- testar pelo menos Chrome Android e um navegador desktop, reconhecendo que o popup nativo aberto pode ser controlado pelo sistema operacional.

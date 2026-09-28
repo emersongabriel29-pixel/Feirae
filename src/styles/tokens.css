@@ -66,6 +66,13 @@ select,
 textarea {
   font: inherit;
 }
+select {
+  color-scheme: light;
+}
+select option {
+  background: var(--fe-surface);
+  color: var(--fe-ink);
+}
 button {
   cursor: pointer;
 }
