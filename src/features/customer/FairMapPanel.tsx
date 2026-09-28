@@ -165,7 +165,7 @@ export function FairMapPanel({
                   ? "Localização cadastrada"
                   : "Posição aproximada pela região"}
               </small>
-              <h3>{selectedPoint.fair.name}</h3>
+              <strong>{selectedPoint.fair.name}</strong>
               <p>
                 <MapPin size={14} /> {selectedPoint.fair.place}
                 {nearest?.fair.name === selectedPoint.fair.name
