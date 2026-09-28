@@ -141,6 +141,8 @@ export function syncVendorMarketplace(input: {
     id: number;
     name: string;
     category: string;
+    description?: string;
+    packageSize?: string;
     stock: number;
     active: boolean;
     price: number;
@@ -189,6 +191,8 @@ export function syncVendorMarketplace(input: {
     fair: input.fairName,
     price: product.price,
     category: product.category,
+    description: product.description,
+    packageSize: product.packageSize,
     emoji: "🧺",
     imageDataUrl: product.photoDataUrl || undefined,
     stock: product.stock,
@@ -258,7 +262,7 @@ export function marketplaceProducts(baseProducts: Product[]): Product[] {
   );
 }
 
-function promotionIsActive(promotion: SharedPromotion) {
+export function promotionIsActive(promotion: SharedPromotion) {
   if (!promotion.active) return false;
   const now = Date.now();
   if (promotion.startsAt && Date.parse(promotion.startsAt) > now) return false;

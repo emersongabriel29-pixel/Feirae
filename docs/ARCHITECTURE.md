@@ -395,3 +395,11 @@ A posição visual da moto é:
 - por etapa do pedido como fallback explícito.
 
 O protótipo persiste snapshots na bridge local. Produção deve substituir isso por backend autenticado/realtime sem alterar o contrato do componente.
+
+## Integridade de dados Feirante → Catálogo — 28/09/2026
+
+`VendorProduct` possui dados de apresentação que precisam atravessar a bridge do marketplace. `Product` e `SharedCatalogProduct` passam a preservar `description` e `packageSize`.
+
+`syncVendorMarketplace()` não deve reduzir o produto a nome/preço/estoque. Novos campos públicos do cadastro do Feirante devem ser avaliados para propagação à camada de Cliente quando tiverem finalidade de compra.
+
+Dados internos de operação permanecem fora do contrato público do produto.
