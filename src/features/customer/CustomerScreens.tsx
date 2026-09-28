@@ -1804,9 +1804,7 @@ export function Checkout({
           <Step title="Itens do pedido">
             <div className="checkout-vendor-list">
               {vendorMinimums.map((vendorSummary) => {
-                const vendorItems = items.filter(
-                  (product) => product.feirante === vendorSummary.vendorName,
-                );
+                const vendorItems = items.filter((product) => product.feirante === vendorSummary.vendorName);
                 const vendorSubtotal = vendorItems.reduce(
                   (sum, product) => sum + product.price * (cart[product.id] ?? 0),
                   0,
@@ -3216,13 +3214,7 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
     </Panel>
   );
 }
-export function ChatPage({
-  onBack,
-  orderId,
-}: {
-  onBack: () => void;
-  orderId?: string;
-}) {
+export function ChatPage({ onBack, orderId }: { onBack: () => void; orderId?: string }) {
   const [topic, setTopic] = useState("Pedido em andamento");
   const [messages, setMessages] = usePersistentState<string[]>(scopedStorageKey("feirae:support-messages"), [
     "Olá! Escolha o assunto e descreva o problema.",
