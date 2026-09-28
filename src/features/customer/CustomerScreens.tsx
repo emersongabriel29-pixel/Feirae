@@ -450,7 +450,9 @@ export function ProductCard({
       (promotion) =>
         promotionIsActive(promotion) &&
         (!promotion.target ||
-          product.name.toLocaleLowerCase("pt-BR").includes(promotion.target.toLocaleLowerCase("pt-BR")) ||
+          product.name
+            .toLocaleLowerCase("pt-BR")
+            .includes(promotion.target.toLocaleLowerCase("pt-BR")) ||
           product.category
             .toLocaleLowerCase("pt-BR")
             .includes(promotion.target.toLocaleLowerCase("pt-BR"))),
@@ -479,7 +481,9 @@ export function ProductCard({
         )}
         <small>{product.category}</small>
         {store && (
-          <span className={store.isOpen ? "product-store-status is-open" : "product-store-status is-closed"}>
+          <span
+            className={store.isOpen ? "product-store-status is-open" : "product-store-status is-closed"}
+          >
             {store.isOpen ? "Aberta" : "Fechada"}
           </span>
         )}
@@ -491,7 +495,10 @@ export function ProductCard({
           <h3>{product.name}</h3>
         </div>
 
-        <div className="product-card__summary" aria-label={`Informações resumidas de ${product.name}`}>
+        <div
+          className="product-card__summary"
+          aria-label={`Informações resumidas de ${product.name}`}
+        >
           <span title="Avaliação da banca">
             <Star size={11} /> {ratingLabel(metrics.rating)}
           </span>
@@ -512,7 +519,10 @@ export function ProductCard({
           </div>
 
           {quantity > 0 ? (
-            <div className="product-quantity-control" aria-label={`Quantidade de ${product.name} na sacola`}>
+            <div
+              className="product-quantity-control"
+              aria-label={`Quantidade de ${product.name} na sacola`}
+            >
               <button
                 type="button"
                 onClick={() => onRemove(product.id)}
@@ -2283,7 +2293,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
           const normalizedState =
             rawStateCode.length === 2
               ? rawStateCode
-              : brazilStateCodes[(address.state ?? "").toLocaleLowerCase("pt-BR")] ?? state ?? "DF";
+              : (brazilStateCodes[(address.state ?? "").toLocaleLowerCase("pt-BR")] ?? state ?? "DF");
           const detectedCity =
             address.city ??
             address.town ??
@@ -2354,7 +2364,9 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       },
       () => {
         setLocationLoading(false);
-        setLocationMessage("Não foi possível acessar o GPS. Você pode preencher o endereço manualmente.");
+        setLocationMessage(
+          "Não foi possível acessar o GPS. Você pode preencher o endereço manualmente.",
+        );
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
     );
