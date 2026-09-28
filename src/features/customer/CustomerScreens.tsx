@@ -76,6 +76,7 @@ import {
   Step,
   Toggle,
 } from "../../components/AppComponents";
+import { FairMapPanel } from "./FairMapPanel";
 
 export function HomePage({
   onTab,
@@ -237,6 +238,8 @@ export function FairsPage({
           </select>
         </label>
       </div>
+
+      <FairMapPanel />
 
       <div className="mt-7">
         <SectionHeading
