@@ -828,3 +828,16 @@ Não atende ao requisito aprovado:
 - simular movimento sem animar os elementos da cena.
 
 A abertura completa deve ser contínua e mostrar movimento real dos elementos descritos no critério visual.
+
+## Mapa das feiras do Distrito Federal
+
+Na jornada do cliente, a aba **Feiras** oferece uma visão cartográfica complementar da rede de feiras do DF.
+
+Regras funcionais:
+1. o mapa é carregado somente após ação explícita do usuário;
+2. a fonte atual é o Google My Maps público compartilhado do projeto;
+3. o mapa serve para descoberta espacial e não é a fonte de verdade de catálogo, status, horário, bancas, frete ou disponibilidade;
+4. o filtro por cidade/região continua atuando na lista de feiras do Feiraê;
+5. o botão de rota de cada feira continua usando o fluxo próprio de abertura de destino;
+6. a integração atual não recebe nem transmite ao `iframe` as coordenadas obtidas pelo GPS do Feiraê.
+
