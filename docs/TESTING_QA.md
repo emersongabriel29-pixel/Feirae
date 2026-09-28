@@ -32,7 +32,7 @@ npm run build
 
 | Arquivo                                       |  Testes |
 | --------------------------------------------- | ------: |
-| `src/App.test.tsx`                            |      60 |
+| `src/App.test.tsx`                            |      66 |
 | `src/components/LaunchExperience.test.tsx`    |       4 |
 | `src/components/FeiraeBrand.test.tsx`         |       2 |
 | `src/components/OrderRouteMap.test.tsx`       |       3 |
@@ -50,13 +50,13 @@ npm run build
 | `src/domain/marketplace.test.ts`              |       4 |
 | `src/domain/session.test.ts`                  |       3 |
 | `src/utils.test.ts`                           |       4 |
-| **Total Vitest**                              | **145** |
+| **Total Vitest**                              | **153** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 60 testes cobrem explicitamente:
+Os 66 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -213,7 +213,7 @@ Os 60 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 129 testes Vitest NÃO comprovam diretamente
+## 5. O que os 153 testes Vitest NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -515,3 +515,23 @@ QA visual recomendado:
 - confirmar que não aparece cartão/quadrado creme vazio;
 - confirmar que a logo aprovada é visível no login e cabeçalho;
 - confirmar que favicon, marca de apoio e ilustrações que usam os SVGs autocontidos continuam renderizando sem depender do WebP externo dentro do SVG.
+
+
+## QA — referência de marketplace e suporte contextual — 28/09/2026
+
+A rodada baseada nos três vídeos de referência preserva a identidade Feiraê e altera comportamento apenas onde havia ganho claro de usabilidade.
+
+Cobertura automatizada em `App.test.tsx`:
+
+- a página da banca continua expondo o pedido mínimo configurado;
+- pedidos ativos usam a ação **Acompanhar pedido**, enquanto pedidos concluídos preservam **Ver detalhes**;
+- os fluxos de detalhe e cancelamento continuam acessíveis após a mudança de rótulo;
+- a suíte completa registra **153/153 testes Vitest** aprovados antes da verificação documental.
+
+QA funcional/manual desta rodada:
+
+- validar o resumo do pedido mínimo da banca em estado **não atingido** e **atingido**;
+- validar checkout multi-banca agrupado por banca, com subtotal, mínimo e itens de cada vendedor;
+- validar **Preciso de ajuda** a partir do card do pedido e conferir o vínculo do protocolo ao pedido correto;
+- validar responsividade dos novos agrupamentos em 360, 390 e 412 px;
+- confirmar que busca, stepper de quantidade, GPS, mapa interno e regras já existentes não sofreram regressão.
