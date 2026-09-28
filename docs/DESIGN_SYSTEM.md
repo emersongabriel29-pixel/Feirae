@@ -593,12 +593,26 @@ Regras obrigatórias:
 - símbolo oficial: `/brand/feirae-symbol.svg`;
 - compatibilidade legada: `/feirae-mark.svg` usa o mesmo símbolo;
 - componente React: `FeiraeBrand`;
-- Verde Feira `#0B662F`;
-- Verde Folha `#2AA745`;
-- Amarelo Feiraê `#FFC107`;
-- Creme Natural `#FFF8E7`;
+- Verde Principal `#0B5E3A`;
+- Verde Secundário `#22C55E`;
+- Laranja Destaque `#FF8A00`;
+- Fundo Creme `#FFF8EB`;
 - Marrom Terra `#8B5E34`.
 
 É proibido recriar a marca com `ê` isolado, “Feiraê.” montado em CSS, novo toldo, outra cor para o ê ou wordmark alternativo. O UI/UX Pro Max melhora hierarquia, responsividade e acessibilidade, mas não pode gerar uma identidade concorrente.
 
 Atualizado em 27/09/2026 após auditoria visual, UI/UX Pro Max e Sincronização Mestre.
+
+## Cards compactos e navegação Feiraê-first — 28/09/2026
+
+O padrão de produto para mobile usa duas colunas a partir de 320 px. O card deve preservar hierarquia rápida de compra: imagem quadrada, banca, nome, sinais de serviço, preço, mínimo e controle de quantidade. Informações operacionais extensas pertencem à tela de detalhe/gestão, não ao card de descoberta.
+
+A navegação externa deixa de ser CTA primário. O componente `InAppNavigation` apresenta primeiro o mapa com linguagem visual Feiraê; **Google Maps** e **Waze** são alternativas secundárias claramente rotuladas.
+
+Paleta oficial sincronizada com o styleboard aprovado:
+
+- Verde Principal: `#0B5E3A`;
+- Verde Secundário: `#22C55E`;
+- Laranja Destaque: `#FF8A00`;
+- Amarelo Apoio: `#FFC107`;
+- Fundo Creme: `#FFF8EB`.
