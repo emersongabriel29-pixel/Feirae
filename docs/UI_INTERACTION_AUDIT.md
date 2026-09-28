@@ -404,3 +404,14 @@ A mesma linguagem visual do mapa de Feiras foi aplicada ao acompanhamento do ped
 - localização contínua só é compartilhada durante corrida ativa e após o Entregador já ter habilitado GPS na configuração.
 
 O componente compartilhado evita três experiências visuais diferentes para a mesma rota.
+
+## Recuperação da informação dos produtos — 28/09/2026
+
+Foi eliminado o padrão reduzido de produto nos destaques da tela inicial. Produtos destacados agora usam o mesmo card informativo do catálogo.
+
+A grade foi ajustada para evitar que informações desapareçam por falta de largura:
+- celular: 1 card por linha;
+- telas médias: 2 cards;
+- telas largas: até 3 cards.
+
+O card prioriza leitura em blocos: identidade, promoção, serviço, dados do produto, disponibilidade e compra. A opção de cards compactos reduz espaçamento, mas não deve remover preço, estoque, peso, unidade, banca ou feira.
