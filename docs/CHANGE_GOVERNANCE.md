@@ -168,6 +168,20 @@ Obrigatório revisar:
 - `DEPLOYMENT_AND_ENVIRONMENTS.md`;
 - LGPD se dados forem enviados a terceiro.
 
+### Mudança em identidade/branding
+
+Obrigatório revisar:
+
+- `BRAND_IDENTITY.md`;
+- assets em `public/brand/`;
+- `DESIGN_SYSTEM.md`;
+- `UI_UX_PRO_MAX_GUARDRAILS.md`;
+- componentes compartilhados de marca;
+- testes de identidade;
+- gestão e splash quando exibirem a marca.
+
+Não aceitar novo wordmark ou “ê” reconstruído localmente.
+
 ### Mudança em UI/UX
 
 Obrigatório revisar:
