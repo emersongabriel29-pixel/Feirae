@@ -173,7 +173,7 @@ export function HomePage({
           action="Ver catálogo"
           onAction={() => onTab("products")}
         />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {liveProducts
             .filter((product) => product.featured)
             .map((product) => (
@@ -402,7 +402,7 @@ export function CatalogPage({
         ))}
       </div>
       {items.length ? (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((product) => (
             <ProductCard
               key={product.id}
@@ -445,31 +445,30 @@ export function ProductCard({
     store && typeof store.minimumOrderAmount === "number"
       ? normalizeVendorMinimumOrder(store.minimumOrderAmount)
       : null;
-  const activePromotions =
-    store?.promotions
-      .filter(
-        (promotion) =>
-          promotionIsActive(promotion) &&
-          (!promotion.target ||
-            product.name.toLocaleLowerCase("pt-BR").includes(promotion.target.toLocaleLowerCase("pt-BR")) ||
-            product.category
-              .toLocaleLowerCase("pt-BR")
-              .includes(promotion.target.toLocaleLowerCase("pt-BR"))),
-      )
-      .slice(0, 2) ?? [];
-  const freeShipping =
-    Boolean(store?.absorbDeliveryFee) ||
-    activePromotions.some((promotion) => promotion.type === "freteGratis");
+  const activePromotion =
+    store?.promotions.find(
+      (promotion) =>
+        promotionIsActive(promotion) &&
+        (!promotion.target ||
+          product.name.toLocaleLowerCase("pt-BR").includes(promotion.target.toLocaleLowerCase("pt-BR")) ||
+          product.category
+            .toLocaleLowerCase("pt-BR")
+            .includes(promotion.target.toLocaleLowerCase("pt-BR"))),
+    ) ?? null;
+  const freeShipping = Boolean(store?.absorbDeliveryFee) || activePromotion?.type === "freteGratis";
 
   return (
-    <article className="product-card product-card--complete">
+    <article
+      className="product-card product-card--compact"
+      title={product.description ? `${product.name} · ${product.description}` : product.name}
+    >
       <button
         className="favorite-button"
         onClick={() => onFavorite(product.id)}
         aria-label={favorite ? `Remover ${product.name} dos favoritos` : `Favoritar ${product.name}`}
         aria-pressed={favorite}
       >
-        <Heart size={17} className={favorite ? "fill-red-500 text-red-500" : ""} />
+        <Heart size={16} className={favorite ? "fill-red-500 text-red-500" : ""} />
       </button>
 
       <div className="product-art" data-category={product.category}>
@@ -481,7 +480,7 @@ export function ProductCard({
         <small>{product.category}</small>
         {store && (
           <span className={store.isOpen ? "product-store-status is-open" : "product-store-status is-closed"}>
-            {store.isOpen ? "Banca aberta" : "Banca fechada"}
+            {store.isOpen ? "Aberta" : "Fechada"}
           </span>
         )}
       </div>
@@ -490,67 +489,28 @@ export function ProductCard({
         <div className="product-card__identity">
           <small className="vendor-name">{product.feirante}</small>
           <h3>{product.name}</h3>
-          <p className="product-card__fair">
-            <Store size={13} /> {product.fair}
-          </p>
-          {product.description && <p className="product-card__description">{product.description}</p>}
         </div>
 
-        {activePromotions.length > 0 && (
-          <div className="product-card__promotions" aria-label="Promoções ativas">
-            {activePromotions.map((promotion) => (
-              <span key={promotion.id}>{promotion.name}</span>
-            ))}
-          </div>
-        )}
-
-        <div className="market-meta product-card__service">
+        <div className="product-card__summary" aria-label={`Informações resumidas de ${product.name}`}>
           <span title="Avaliação da banca">
-            <Star size={12} /> {ratingLabel(metrics.rating)} ({metrics.reviewCount})
+            <Star size={11} /> {ratingLabel(metrics.rating)}
           </span>
           <span title="Previsão de entrega">{minutesLabel(metrics.deliveryMinutes)}</span>
           <span title="Frete">{freeShipping ? "Frete grátis" : money(metrics.deliveryFee)}</span>
         </div>
 
-        <div className="product-card__facts">
-          <span>
-            <small>Venda</small>
-            <b>{product.packageSize || `1 ${product.unit}`}</b>
-          </span>
-          <span>
-            <small>Peso logístico</small>
-            <b>{product.weightKg.toLocaleString("pt-BR")} kg</b>
-          </span>
-          <span>
-            <small>Estoque</small>
-            <b>
-              {product.stock} {product.unit}
-            </b>
-          </span>
-          <span>
-            <small>Volume</small>
-            <b>{product.volume}</b>
-          </span>
-        </div>
-
-        <div className="product-card__availability">
-          {store?.deliveryEnabled && <span>Entrega</span>}
-          {store?.pickupEnabled && <span>Retirada</span>}
-          {minimumOrder !== null && (
-            <span>{minimumOrder > 0 ? `Pedido mínimo ${money(minimumOrder)}` : "Sem pedido mínimo"}</span>
-          )}
-        </div>
-
-        {variableWeight && (
-          <p className="product-card__weight-note">Peso e valor finais podem variar na separação.</p>
-        )}
+        {activePromotion && <span className="product-card__promotion">{activePromotion.name}</span>}
 
         <div className="product-card__purchase">
-          <div>
-            <small>Preço</small>
+          <div className="product-card__price">
             <strong>{money(product.price)}</strong>
             <span>/{product.unit}</span>
+            {minimumOrder !== null && minimumOrder > 0 && (
+              <small>Pedido mín. {money(minimumOrder)}</small>
+            )}
+            {variableWeight && <small>Peso/valor podem variar</small>}
           </div>
+
           {quantity > 0 ? (
             <div className="product-quantity-control" aria-label={`Quantidade de ${product.name} na sacola`}>
               <button
@@ -558,7 +518,7 @@ export function ProductCard({
                 onClick={() => onRemove(product.id)}
                 aria-label={`Remover uma unidade de ${product.name}`}
               >
-                <Minus size={18} />
+                <Minus size={16} />
               </button>
               <span
                 className="product-quantity-control__value"
@@ -579,7 +539,7 @@ export function ProductCard({
                       : `Adicionar mais uma unidade de ${product.name}`
                 }
               >
-                <Plus size={18} />
+                <Plus size={16} />
               </button>
             </div>
           ) : (
@@ -594,7 +554,7 @@ export function ProductCard({
                   : `Adicionar ${product.name} à sacola`
               }
             >
-              <Plus size={19} />
+              <Plus size={18} />
             </button>
           )}
         </div>
@@ -774,7 +734,7 @@ export function FairDetail({
       </div>
       <SectionHeading eyebrow="Catálogo" title="Produtos desta feira" />
       {fairProducts.length ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {fairProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -937,7 +897,7 @@ export function VendorStore({
         </button>
       </div>
       {vendorProducts.length ? (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {vendorProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -2027,7 +1987,7 @@ export function FavoritesPage({
     <Panel title="Favoritos" subtitle="Produtos e bancas que você quer encontrar de novo." onBack={onBack}>
       <SectionHeading eyebrow="Produtos" title="Produtos favoritos" />
       {favoriteProducts.length ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {favoriteProducts.map((product) => (
             <ProductCard
               key={product.id}
