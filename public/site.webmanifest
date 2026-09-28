@@ -8,9 +8,9 @@
   "theme_color": "#0B5E3A",
   "icons": [
     {
-      "src": "/brand/feirae-symbol.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/brand/09_versao_selo.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
     }
   ]
 }

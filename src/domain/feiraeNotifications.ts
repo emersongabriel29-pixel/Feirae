@@ -339,8 +339,8 @@ export async function showFeiraeNotification({ title, body, tag, url = "/" }: Fe
   const notificationTitle = `Feiraê • ${title}`;
   const options: NotificationOptions = {
     body,
-    icon: "/brand/feirae-symbol.svg",
-    badge: "/brand/feirae-symbol.svg",
+    icon: "/brand/09_versao_selo.webp",
+    badge: "/brand/09_versao_selo.webp",
     tag,
     data: { url },
   };

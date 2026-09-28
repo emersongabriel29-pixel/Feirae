@@ -8,12 +8,18 @@ Este documento é a **fonte de verdade visual da marca Feiraê** no produto. UI/
 
 A arte aprovada pelo projeto é a **única fonte de verdade da logomarca**: duas folhas verdes no topo, toldo verde + creme, palavra **Feira** em verde, **ê** em laranja e traço verde inferior.
 
-Arquivos canônicos:
+Arquivos canônicos — pacote oficial aprovado em 28/09/2026:
 
-- `public/brand/feirae-logo-approved.webp` — arte mestre aprovada, preservando visualmente o arquivo fornecido;
-- `public/brand/feirae-logo-horizontal.svg` — wrapper compatível para componentes existentes, apontando para a arte mestre;
-- `public/brand/feirae-symbol.svg` — ícone quadrado que reutiliza a mesma arte mestre, sem redesenhar a marca;
-- `public/feirae-mark.svg` — alias compatível para referências antigas, também reutilizando a mesma arte.
+- `public/brand/02_logo_alta_definicao_fundo_claro.webp` — versão de alta definição sobre fundo claro;
+- `public/brand/03_logo_fundo_transparente.webp` — versão com fundo transparente;
+- `public/brand/04_versao_principal.webp` — versão principal;
+- `public/brand/05_versao_horizontal.webp` — versão horizontal;
+- `public/brand/06_icone_mais_nome.webp` — ícone + nome;
+- `public/brand/07_versao_monocromatica_verde.webp` — versão monocromática verde;
+- `public/brand/08_versao_fundo_escuro.webp` — versão para fundo escuro;
+- `public/brand/09_versao_selo.webp` — versão selo/ícone.
+
+Esses oito arquivos foram derivados diretamente das oito artes aprovadas fornecidas no pacote `Feirae_Logos_Todas_Versoes`, sem redesenhar a marca. Não manter logos antigas, aliases gráficos ou wordmarks concorrentes no repositório.
 
 ### Regra obrigatória
 
@@ -120,10 +126,8 @@ A identidade foi travada na arte aprovada enviada ao projeto: **folhas verdes + 
 
 A aplicação no app foi ajustada para respeitar a proporção mais vertical dessa marca, sem esticar o arquivo para simular uma logo horizontal. Cabeçalhos, login e gestão usam fundo creme e dimensões próprias para manter legibilidade.
 
-As notificações, favicon e referências legadas continuam apontando para os aliases canônicos, que agora reutilizam a mesma arte aprovada. Nenhuma superfície deve manter a versão simplificada anterior.
+Notificações, favicon, PWA e superfícies que precisam de um ícone usam a versão selo aprovada. Cabeçalhos compactos usam a versão horizontal e superfícies amplas usam a versão transparente/principal. Nenhuma superfície deve manter a versão simplificada anterior.
 
 ## 12. Correção de renderização no preview — 28/09/2026
 
-O componente React `FeiraeBrand` passa a carregar a arte aprovada diretamente de `/brand/feirae-logo-approved.webp`. A tentativa anterior de colocar o WebP dentro de um SVG por meio de `<image href=...>` foi removida da aplicação principal porque alguns ambientes de preview tratam SVG carregado por `<img>` como recurso isolado e não carregam a imagem externa, deixando apenas um bloco vazio.
-
-A apresentação visual também volta a ser limpa: a marca não recebe cartão creme, borda ou sombra por padrão no cabeçalho. Os SVGs de símbolo/alias permanecem autocontidos como fallback vetorial para favicon, ilustrações e superfícies que não devem depender de imagem externa.
+O componente React `FeiraeBrand` usa somente assets do pacote oficial: versão transparente em superfícies amplas e versão horizontal no modo compacto. Favicon, notificações e PWA usam a versão selo aprovada. Os antigos SVGs/aliases foram removidos para impedir regressões visuais.

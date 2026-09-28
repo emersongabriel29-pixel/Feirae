@@ -341,7 +341,7 @@ export function LoginPage({
             {mode === "signup" && selectedRole === "customer" && (
               <section className="customer-signup-legal" aria-label="Termos para criar conta de Cliente">
                 <div className="customer-signup-legal-heading">
-                  <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+                  <img src="/brand/09_versao_selo.webp" alt="" aria-hidden="true" />
                   <div>
                     <b>Antes de criar sua conta</b>
                     <span>Leia os documentos e confirme somente o que você concorda.</span>
@@ -717,7 +717,7 @@ export function FeiraeNotificationCard({
 
   return (
     <section className="feirae-notification-card" aria-label="Notificações do Feiraê">
-      <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+      <img src="/brand/09_versao_selo.webp" alt="" aria-hidden="true" />
       <div>
         <span>Feiraê</span>
         <b>{message}</b>
@@ -807,10 +807,10 @@ export function PartnerDocumentsHero({
 
   return (
     <section className="documents-brand-hero" aria-label="Documentos e Regularização">
-      <img className="documents-brand-watermark" src="/feirae-mark.svg" alt="" aria-hidden="true" />
+      <img className="documents-brand-watermark" src="/brand/09_versao_selo.webp" alt="" aria-hidden="true" />
       <div className="documents-brand-copy">
         <div className="documents-brand-mark">
-          <img src="/feirae-mark.svg" alt="Feiraê" />
+          <img src="/brand/09_versao_selo.webp" alt="Feiraê" />
           <div>
             <span>Feiraê · {roleLabel}</span>
             <h2>Documentos e Regularização</h2>
@@ -983,7 +983,7 @@ export function LegalTermSignatureCard({
     <section className="legal-term-card" aria-label={term.title}>
       <div className="legal-term-heading">
         <span className="legal-term-icon" aria-hidden="true">
-          <img src="/feirae-mark.svg" alt="" />
+          <img src="/brand/09_versao_selo.webp" alt="" />
         </span>
         <div>
           <span className="eyebrow">Termo obrigatório · versão {term.version}</span>
@@ -1001,7 +1001,7 @@ export function LegalTermSignatureCard({
         <summary>Ler termo completo</summary>
         <div className="legal-term-scroll">
           <header className="legal-document-sheet-header">
-            <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+            <img src="/brand/09_versao_selo.webp" alt="" aria-hidden="true" />
             <div>
               <span>Feiraê · Documento jurídico</span>
               <h4>{term.title}</h4>
@@ -1039,7 +1039,7 @@ export function LegalTermSignatureCard({
           </section>
 
           <footer className="legal-document-sheet-footer">
-            <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+            <img src="/brand/09_versao_selo.webp" alt="" aria-hidden="true" />
             <span>
               Feiraê · {term.title} · versão {term.version}
             </span>
@@ -1049,7 +1049,7 @@ export function LegalTermSignatureCard({
 
       {currentAcceptance ? (
         <div className="legal-signature-proof">
-          <img src="/feirae-mark.svg" alt="" aria-hidden="true" />
+          <img src="/brand/09_versao_selo.webp" alt="" aria-hidden="true" />
           <div>
             <b>Assinado eletronicamente por {currentAcceptance.signerName}</b>
             <small>

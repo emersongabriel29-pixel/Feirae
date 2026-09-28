@@ -7,7 +7,7 @@ describe("FeiraeBrand", () => {
     render(<FeiraeBrand priority />);
     expect(screen.getByRole("img", { name: /^feiraê$/i })).toHaveAttribute(
       "src",
-      "/brand/feirae-logo-approved.webp",
+      "/brand/03_logo_fundo_transparente.webp",
     );
   });
 
@@ -17,7 +17,7 @@ describe("FeiraeBrand", () => {
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(document.querySelector(".feirae-brand-lockup__image")).toHaveAttribute(
       "src",
-      "/brand/feirae-logo-approved.webp",
+      "/brand/05_versao_horizontal.webp",
     );
   });
 });

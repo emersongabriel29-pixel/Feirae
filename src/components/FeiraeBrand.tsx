@@ -18,7 +18,7 @@ export function FeiraeBrand({
     >
       <img
         className="feirae-brand-lockup__image"
-        src="/brand/feirae-logo-approved.webp"
+        src={compact ? "/brand/05_versao_horizontal.webp" : "/brand/03_logo_fundo_transparente.webp"}
         alt={decorative ? "" : "Feiraê"}
         aria-hidden={decorative || undefined}
         decoding="async"
