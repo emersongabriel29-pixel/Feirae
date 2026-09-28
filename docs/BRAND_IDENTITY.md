@@ -6,17 +6,20 @@ Este documento é a **fonte de verdade visual da marca Feiraê** no produto. UI/
 
 ## 1. Marca mestre
 
+A arte aprovada pelo projeto é a **única fonte de verdade da logomarca**: duas folhas verdes no topo, toldo verde + creme, palavra **Feira** em verde, **ê** em laranja e traço verde inferior.
+
 Arquivos canônicos:
 
-- `public/brand/feirae-logo-horizontal.svg` — lockup oficial para app, gestão e comunicação;
-- `public/brand/feirae-symbol.svg` — símbolo reduzido;
-- `public/feirae-mark.svg` — alias compatível do símbolo oficial para referências antigas.
+- `public/brand/feirae-logo-approved.webp` — arte mestre aprovada, preservando visualmente o arquivo fornecido;
+- `public/brand/feirae-logo-horizontal.svg` — wrapper compatível para componentes existentes, apontando para a arte mestre;
+- `public/brand/feirae-symbol.svg` — ícone quadrado que reutiliza a mesma arte mestre, sem redesenhar a marca;
+- `public/feirae-mark.svg` — alias compatível para referências antigas, também reutilizando a mesma arte.
 
 ### Regra obrigatória
 
-Não reconstruir “Feiraê” com texto solto, emoji, um “ê” isolado, outro toldo ou outra combinação de folhas.
+Não reconstruir “Feiraê” com texto solto, emoji, um “ê” isolado, outro toldo, outras folhas ou outra tipografia. Não substituir a arte mestre por uma versão simplificada.
 
-O **ê é sempre Laranja Destaque** e faz parte do lockup oficial. O restante do nome usa Verde Principal.
+O fundo institucional recomendado para a marca é creme claro próximo de `#FBF8EF`. Em superfícies verdes ou escuras, a marca deve aparecer sobre cartão/superfície creme para preservar contraste e fidelidade.
 
 ## 2. Assinatura verbal
 
@@ -111,8 +114,10 @@ Antes de aprovar uma tela:
 
 Esta identidade é a referência obrigatória para app, splash, gestão e novas peças digitais.
 
-## 11. Sincronização com o styleboard aprovado — 28/09/2026
+## 11. Sincronização com a arte aprovada — 28/09/2026
 
-A aplicação foi realinhada ao styleboard aprovado: palavra **Feira** em verde principal, **ê** em laranja destaque, folhas verdes e assinatura **Da feira até você**. O símbolo reduzido usa o **ê laranja + folhas**, sem o antigo quadrado/toldo como marca principal.
+A identidade foi travada na arte aprovada enviada ao projeto: **folhas verdes + toldo verde/creme + Feira verde + ê laranja + traço verde inferior**.
 
-As notificações devem usar o mesmo símbolo canônico do app. Nenhuma superfície deve manter uma versão paralela da marca.
+A aplicação no app foi ajustada para respeitar a proporção mais vertical dessa marca, sem esticar o arquivo para simular uma logo horizontal. Cabeçalhos, login e gestão usam fundo creme e dimensões próprias para manter legibilidade.
+
+As notificações, favicon e referências legadas continuam apontando para os aliases canônicos, que agora reutilizam a mesma arte aprovada. Nenhuma superfície deve manter a versão simplificada anterior.
