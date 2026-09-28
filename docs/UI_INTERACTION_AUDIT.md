@@ -507,3 +507,18 @@ Estados cobertos:
 - sucesso: não ocorre login automático.
 
 O aviso do protótipo deixa explícito que produção deverá confirmar identidade por código ou link enviado ao e-mail.
+
+
+## Categoria obrigatória ao criar produto — 28/09/2026
+
+O fluxo **Feirante → Produtos → Adicionar produto** não deve mais iniciar silenciosamente em **Frutas**.
+
+Comportamento esperado:
+
+1. abrir **Adicionar produto**;
+2. o campo **Categoria do produto** inicia em **Selecione uma categoria**;
+3. o Feirante escolhe uma das categorias oficiais;
+4. o formulário impede salvar sem categoria válida;
+5. ao salvar, a categoria é persistida junto ao produto;
+6. a sincronização Feirante → Cliente mantém a categoria para filtros e catálogo;
+7. em edição, a categoria atual do produto vem pré-selecionada.
