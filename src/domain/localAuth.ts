@@ -119,6 +119,7 @@ export function authenticateLocalAccount(input: {
 }
 
 // Recuperação local exclusiva do protótipo; produção exige verificação do canal.
+// Fluxo de demonstração local; produção deve confirmar a identidade no provedor de autenticação.
 export function resetLocalAccountPassword(input: { role: Role; email: string; newPassword: string }) {
   const email = normalizeEmail(input.email);
   if (!email || !email.includes("@")) {
