@@ -253,3 +253,16 @@ Para cada integração real definir:
 - fallback seguro.
 
 A UI não deve interpretar “falha de rede” como “pagamento aprovado” ou “entrega concluída”.
+
+## Google My Maps — mapa público de feiras do DF
+
+**Status:** integração visual ativa no frontend do cliente.
+
+- Embed: `https://www.google.com/maps/d/embed?mid=1DIWDxyR1EKjC-0VEI2PSj-AjSqP9GElB&ehbc=2E312F`
+- Visualização completa: `https://www.google.com/maps/d/viewer?mid=1DIWDxyR1EKjC-0VEI2PSj-AjSqP9GElB`
+- Não exige chave de API, secret ou variável de ambiente.
+- O conteúdo externo só é criado depois que o usuário escolhe **Abrir mapa interativo**.
+- A integração é apenas de visualização: o Feiraê não escreve no My Maps e não usa o mapa incorporado como banco de dados.
+- As coordenadas de GPS coletadas pelo Feiraê para proximidade não são passadas ao `iframe`.
+
+Evolução futura: quando o backend de feiras estiver consolidado, os pontos poderão migrar para uma camada cartográfica nativa alimentada pela base do Feiraê, preservando o mapa público como referência/importação e não como dependência de negócio.

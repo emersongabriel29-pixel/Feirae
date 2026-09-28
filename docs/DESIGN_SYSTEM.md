@@ -514,3 +514,18 @@ A marca final usa fundo claro, toldo/folhas, nome Feiraê em verde com o **ê** 
 ### Regra adicional da abertura
 
 A splash do Feiraê não pode ser reduzida a frames estáticos com transição. O movimento deve acontecer dentro da própria cena, mantendo a sensação de construção da feira e deslocamento da entrega.
+
+## Padrão visual — card de mapa Feiraê
+
+O mapa de feiras usa um contêiner de marca próprio, sem tentar reestilizar o conteúdo interno do Google My Maps.
+
+Diretrizes:
+
+- fundo em gradiente verde Feiraê com brilho amarelo suave;
+- marca `/feirae-mark.svg` em superfície branca;
+- CTA principal branco e CTA secundário translúcido;
+- mapa externo dentro de moldura branca arredondada;
+- bordas, raios, áreas de toque e tipografia seguem os tokens existentes;
+- nenhum pin ou cor interna do Google é apresentado como parte do design system do Feiraê.
+
+Esse padrão pode ser reutilizado em futuras integrações cartográficas externas, mantendo o chrome do aplicativo consistente.

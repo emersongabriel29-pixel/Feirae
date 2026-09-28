@@ -1450,3 +1450,125 @@ html.compact-product-cards .product-card .stock {
     box-shadow: var(--fe-shadow-card);
   }
 }
+
+/* Feiraê DF map */
+.fair-map-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--fe-radius-lg);
+  background:
+    radial-gradient(circle at 86% 14%, rgba(214, 245, 95, 0.3), transparent 24%),
+    linear-gradient(135deg, var(--fe-green-dark), var(--fe-green) 58%, #6e9f35);
+  padding: clamp(1rem, 3vw, 1.5rem);
+  color: white;
+  box-shadow: 0 20px 44px rgba(18, 74, 39, 0.18);
+}
+.fair-map-panel__glow {
+  position: absolute;
+  z-index: -1;
+  right: -4rem;
+  bottom: -5rem;
+  width: 14rem;
+  height: 14rem;
+  border: 2.2rem solid rgba(255, 221, 90, 0.12);
+  border-radius: 999px;
+  filter: blur(1px);
+}
+.fair-map-panel__intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.85rem;
+}
+.fair-map-panel__mark {
+  display: grid;
+  width: 3.4rem;
+  height: 3.4rem;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(5, 36, 17, 0.18);
+}
+.fair-map-panel__mark img {
+  width: 2.4rem;
+  height: 2.4rem;
+}
+.fair-map-panel__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #f7df70;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.fair-map-panel h2 {
+  margin-top: 0.3rem;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 950;
+  letter-spacing: -0.025em;
+}
+.fair-map-panel__intro p {
+  max-width: 50rem;
+  margin-top: 0.4rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.fair-map-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+.fair-map-panel__primary,
+.fair-map-panel__secondary {
+  display: inline-flex;
+  min-height: var(--fe-touch);
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+.fair-map-panel__primary {
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  background: white;
+  color: var(--fe-green-dark);
+  box-shadow: 0 9px 20px rgba(8, 48, 23, 0.16);
+}
+.fair-map-panel__secondary {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.09);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+.fair-map-panel__map {
+  margin-top: 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.45rem;
+  box-shadow: 0 14px 34px rgba(5, 35, 16, 0.2);
+}
+.fair-map-panel__map iframe {
+  display: block;
+  width: 100%;
+  height: clamp(20rem, 54vw, 31rem);
+  border: 0;
+  border-radius: 0.75rem;
+  background: #eef4ec;
+}
+.fair-map-panel__map p {
+  padding: 0.55rem 0.4rem 0.15rem;
+  color: #5f6e64;
+  font-size: 0.68rem;
+  line-height: 1.45;
+}

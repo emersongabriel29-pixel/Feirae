@@ -250,3 +250,15 @@ A `main` possui workflow Quality com:
 - `check:sync` em pull requests.
 
 O repositório continua **sem pipeline de deploy/hosting**. Quality verde prova integridade do código, não publicação em staging/produção.
+
+## Google My Maps
+
+A incorporação do mapa público das feiras do DF não adiciona variável de ambiente, secret, pacote ou etapa de deploy.
+
+Requisitos de ambiente:
+
+- acesso HTTPS de saída do navegador para `google.com/maps`;
+- política de conteúdo/hosting não pode bloquear o `iframe` do Google My Maps;
+- não há configuração server-side específica para a versão atual.
+
+Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox ou outro SDK com credenciais, a configuração deverá ser documentada aqui antes do deploy.

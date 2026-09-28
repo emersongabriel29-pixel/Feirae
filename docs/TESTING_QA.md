@@ -368,3 +368,9 @@ O teste estrutural evita que a splash volte silenciosamente para a composição 
 ## Proteção contra regressão da splash estática
 
 O teste de `LaunchExperience` valida a presença estrutural da banca, moto e pin na cena contínua. Os antigos SVGs estáticos de `public/launch/` foram removidos e não fazem mais parte da implementação.
+
+## Mapa interativo das feiras do DF — 27/09/2026
+
+- `src/features/customer/FairMapPanel.test.tsx` cobre o carregamento sob demanda do Google My Maps.
+- O teste confirma que o `iframe` não é criado antes da ação do usuário, reduzindo carregamento externo desnecessário.
+- Também valida URL do mapa incorporado, `loading="lazy"`, estado acessível `aria-expanded` e acesso ao mapa completo em nova aba.

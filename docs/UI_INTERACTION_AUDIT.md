@@ -348,3 +348,23 @@ Critérios de revisão visual em aparelho real:
 Foi identificada e removida uma regressão em que a abertura premium havia sido substituída por três SVGs estáticos em sequência.
 
 A correção restaura a cena vetorial contínua e elimina os assets estáticos para reduzir o risco de repetição desse desvio.
+
+## Mapa Feiraê na tela de Feiras — 27/09/2026
+
+A tela **Feiras** passa a exibir, logo após os seletores de estado e cidade/região, um card visual **Mapa Feiraê**.
+
+Comportamento:
+
+- o mapa não carrega automaticamente;
+- **Abrir mapa interativo** expande o Google My Maps compartilhado com as feiras do DF;
+- **Ocultar mapa** recolhe o conteúdo sem alterar o filtro/lista de feiras;
+- **Abrir mapa completo** abre a visualização pública em nova aba;
+- o mapa geral é complementar à lista filtrável do Feiraê e não substitui os dados, disponibilidade, bancas ou rotas mantidos pelo aplicativo.
+
+Acessibilidade e mobile:
+
+- botão possui `aria-expanded` e `aria-controls`;
+- `iframe` possui título descritivo;
+- ações preservam área mínima de toque;
+- altura do mapa é responsiva por `clamp()`;
+- o bloco usa quebra de linha nas ações para telas estreitas.

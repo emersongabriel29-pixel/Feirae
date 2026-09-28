@@ -305,3 +305,17 @@ Produção deve registrar o aceite em backend auditável com:
 O texto já aceito não deve ser sobrescrito silenciosamente. Uma nova versão cria um novo registro.
 
 Ver [PARTNER_LEGAL_TERMS.md](PARTNER_LEGAL_TERMS.md).
+
+## Conteúdo cartográfico externo
+
+O card **Mapa Feiraê** incorpora uma página pública do Google My Maps apenas após ação do usuário.
+
+Controles atuais:
+
+- não existe API key ou secret exposto para essa integração;
+- o `iframe` usa `referrerPolicy="strict-origin-when-cross-origin"`;
+- links externos usam `target="_blank"` com `rel="noopener noreferrer"`;
+- coordenadas internas obtidas por geolocalização não são interpoladas na URL do `iframe`;
+- autenticação, sessão e dados de conta do Feiraê não são enviados pelo código da integração ao My Maps.
+
+A integração deve permanecer somente leitura até existir adapter cartográfico próprio com política explícita de dados e credenciais.
