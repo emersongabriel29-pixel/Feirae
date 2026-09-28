@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Fair } from "../types";
-import {
-  fairMapCoordinate,
-  fairMapPoints,
-  nearestFairPoint,
-  projectDfCoordinate,
-} from "./fairMap";
+import { fairMapCoordinate, fairMapPoints, nearestFairPoint, projectDfCoordinate } from "./fairMap";
 
 const planaltinaFair: Fair = {
   name: "Feira do Produtor Rural",

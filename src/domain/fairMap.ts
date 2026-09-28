@@ -101,15 +101,12 @@ export function nearestFairPoint(
 ): (FairMapPoint & { distanceKm: number }) | null {
   if (!userCoords) return null;
 
-  return fairMapPoints(items)
-    .map((point) => ({
-      ...point,
-      distanceKm: distanceInKm(
-        userCoords.lat,
-        userCoords.lng,
-        point.coordinate.lat,
-        point.coordinate.lng,
-      ),
-    }))
-    .sort((a, b) => a.distanceKm - b.distanceKm)[0] ?? null;
+  return (
+    fairMapPoints(items)
+      .map((point) => ({
+        ...point,
+        distanceKm: distanceInKm(userCoords.lat, userCoords.lng, point.coordinate.lat, point.coordinate.lng),
+      }))
+      .sort((a, b) => a.distanceKm - b.distanceKm)[0] ?? null
+  );
 }

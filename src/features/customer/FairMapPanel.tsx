@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Crosshair,
-  ExternalLink,
-  LocateFixed,
-  MapPin,
-  Navigation,
-  Sparkles,
-  Store,
-} from "lucide-react";
+import { Crosshair, ExternalLink, LocateFixed, MapPin, Navigation, Sparkles, Store } from "lucide-react";
 import { fairMapPoints, nearestFairPoint, projectDfCoordinate } from "../../domain/fairMap";
 import type { Fair } from "../../types";
 
@@ -47,8 +39,8 @@ export function FairMapPanel({
           </span>
           <h2 id="fair-map-title">Feiras do DF dentro do próprio app</h2>
           <p>
-            Toque em um ponto para escolher a feira. Depois abra a feira, veja as bancas e chegue aos
-            produtos sem sair do Feiraê.
+            Toque em um ponto para escolher a feira. Depois abra a feira, veja as bancas e chegue aos produtos
+            sem sair do Feiraê.
           </p>
         </div>
       </div>
@@ -199,8 +191,8 @@ export function FairMapPanel({
       </div>
 
       <p className="fair-map-panel__notice">
-        Os pontos sem coordenada própria usam a região como referência visual e de distância aproximada.
-        Rotas continuam usando o endereço cadastrado da feira.
+        Os pontos sem coordenada própria usam a região como referência visual e de distância aproximada. Rotas
+        continuam usando o endereço cadastrado da feira.
       </p>
     </section>
   );
