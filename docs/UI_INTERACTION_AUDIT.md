@@ -443,3 +443,28 @@ Revisão aplicada às superfícies institucionais:
 - tokens de cor foram sincronizados à paleta oficial.
 
 Critério de regressão: nenhuma nova tela deve reconstruir “Feiraê” com texto/CSS quando o asset canônico puder ser usado.
+
+## Ajustes de interação — 28/09/2026
+
+### Produtos
+
+- a grade mobile passa a usar **2 cards por linha**;
+- o card vira um quadrado compacto com banca, nome, avaliação, prazo, frete, preço, pedido mínimo e stepper;
+- peso logístico, volume, estoque detalhado e descrição deixam de competir com a decisão rápida de compra no card.
+
+### Rotas
+
+- **Mapa Feiraê** é a ação primária;
+- Google Maps e Waze aparecem dentro do painel de rota como ações secundárias;
+- Cliente, Feirante e Entregador usam a mesma hierarquia de navegação.
+
+### Endereços
+
+- **Usar minha localização atual** atualiza CEP, UF, cidade/região, bairro/setor, rua/quadra e, quando disponível, número;
+- o usuário continua podendo revisar e completar dados que o GPS não consegue inferir com segurança.
+
+### Sacola
+
+- CTA principal: **Finalizar pedido**;
+- pedido mínimo mostra sempre o valor configurado da banca;
+- subtotal do carrinho não substitui o texto do mínimo; o estado de cumprimento aparece separadamente.
