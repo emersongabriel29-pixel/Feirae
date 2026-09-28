@@ -122,4 +122,3 @@ Durante a integração do mapa das feiras, o Prettier também normalizou a forma
 O vídeo principal continua preservado. A mudança desta revisão afeta o **fallback de movimento reduzido**: ele passa a reutilizar `FeiraeBrand` e o lockup `/brand/feirae-logo-horizontal.svg`.
 
 Isso garante que o ê, o toldo, as folhas e a assinatura visual não tenham uma versão paralela na abertura. A regra de frequência, duração e identidade sonora não foi alterada.
-

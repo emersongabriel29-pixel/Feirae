@@ -18,7 +18,6 @@ Regras obrigatórias:
 
 É proibido recriar a marca com `ê` isolado, “Feiraê.” montado em CSS, novo toldo, outra cor para o ê ou wordmark alternativo. O UI/UX Pro Max melhora hierarquia, responsividade e acessibilidade, mas não pode gerar uma identidade concorrente.
 
-
 Atualizado em 27/09/2026 após auditoria visual, UI/UX Pro Max e Sincronização Mestre.
 
 ## Objetivo

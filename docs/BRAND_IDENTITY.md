@@ -29,13 +29,13 @@ Essas frases têm papéis diferentes e não devem ser misturadas.
 
 ## 3. Paleta oficial
 
-| Token | Cor | Uso |
-| --- | --- | --- |
-| Verde Feira | `#0B662F` | marca, CTAs, confiança |
-| Verde Folha | `#2AA745` | frescor, estados positivos, destaques |
-| Amarelo Feiraê | `#FFC107` | ê, rota, energia, microdestaques |
-| Creme Natural | `#FFF8E7` | fundos institucionais e superfícies quentes |
-| Marrom Terra | `#8B5E34` | madeira, tradição, apoio visual |
+| Token          | Cor       | Uso                                         |
+| -------------- | --------- | ------------------------------------------- |
+| Verde Feira    | `#0B662F` | marca, CTAs, confiança                      |
+| Verde Folha    | `#2AA745` | frescor, estados positivos, destaques       |
+| Amarelo Feiraê | `#FFC107` | ê, rota, energia, microdestaques            |
+| Creme Natural  | `#FFF8E7` | fundos institucionais e superfícies quentes |
+| Marrom Terra   | `#8B5E34` | madeira, tradição, apoio visual             |
 
 Cores semânticas de erro/informação podem existir, mas não substituem a paleta de marca em superfícies institucionais.
 

@@ -415,4 +415,3 @@ A marca deixa de ser montada localmente em cada tela e passa a ter uma camada co
 - estilos institucionais em `src/styles/brand.css`.
 
 Login, header e fallback da splash consomem essa camada. A gestão estática em `public/gestao/` usa os mesmos assets, sem compartilhar lógica de negócio do app.
-

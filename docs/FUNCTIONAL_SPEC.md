@@ -902,4 +902,3 @@ Comportamento:
 - PWA/favicon usam o símbolo oficial;
 - a página `/gestao/` é um shell visual e não executa ações administrativas reais;
 - nenhum fluxo de Cliente, Feirante ou Entregador foi removido ou renomeado por esta revisão.
-

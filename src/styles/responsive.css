@@ -1,4 +1,5 @@
-@media (min-width: 640px) {.metrics {
+@media (min-width: 640px) {
+  .metrics {
     grid-template-columns: repeat(4, 1fr);
   }
   .login-form {
@@ -119,7 +120,8 @@
     min-height: 100dvh;
   }
 }
-@media (max-width: 420px) {.hero {
+@media (max-width: 420px) {
+  .hero {
     border-radius: 1.5rem;
     padding: 1.5rem;
   }

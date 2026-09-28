@@ -30,26 +30,26 @@ npm run build
 
 ## 2. Contagem atual
 
-| Arquivo                                      | Testes |
-| -------------------------------------------- | -----: |
-| `src/App.test.tsx`                           |     60 |
-| `src/components/LaunchExperience.test.tsx`   |      4 |
-| `src/components/FeiraeBrand.test.tsx`        |      2 |
-| `src/components/OrderRouteMap.test.tsx`      |      3 |
-| `src/features/customer/FairMapPanel.test.tsx`|      4 |
-| `src/domain/orderBridge.test.ts`             |     11 |
-| `src/domain/feiraeNotifications.test.ts`     |      6 |
-| `src/domain/legalTerms.test.ts`              |      8 |
-| `src/domain/customerLegal.test.ts`           |      4 |
-| `src/domain/marketplaceBridge.test.ts`       |      5 |
-| `src/domain/multiVendor.test.ts`             |     11 |
-| `src/domain/fairInternalRouting.test.ts`     |      4 |
-| `src/domain/fairMap.test.ts`                 |      4 |
-| `src/domain/inventoryBridge.test.ts`         |      4 |
-| `src/domain/localAuth.test.ts`               |      4 |
-| `src/domain/marketplace.test.ts`             |      4 |
-| `src/domain/session.test.ts`                 |      3 |
-| `src/utils.test.ts`                          |      4 |
+| Arquivo                                       |  Testes |
+| --------------------------------------------- | ------: |
+| `src/App.test.tsx`                            |      60 |
+| `src/components/LaunchExperience.test.tsx`    |       4 |
+| `src/components/FeiraeBrand.test.tsx`         |       2 |
+| `src/components/OrderRouteMap.test.tsx`       |       3 |
+| `src/features/customer/FairMapPanel.test.tsx` |       4 |
+| `src/domain/orderBridge.test.ts`              |      11 |
+| `src/domain/feiraeNotifications.test.ts`      |       6 |
+| `src/domain/legalTerms.test.ts`               |       8 |
+| `src/domain/customerLegal.test.ts`            |       4 |
+| `src/domain/marketplaceBridge.test.ts`        |       5 |
+| `src/domain/multiVendor.test.ts`              |      11 |
+| `src/domain/fairInternalRouting.test.ts`      |       4 |
+| `src/domain/fairMap.test.ts`                  |       4 |
+| `src/domain/inventoryBridge.test.ts`          |       4 |
+| `src/domain/localAuth.test.ts`                |       4 |
+| `src/domain/marketplace.test.ts`              |       4 |
+| `src/domain/session.test.ts`                  |       3 |
+| `src/utils.test.ts`                           |       4 |
 | **Total Vitest**                              | **145** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
