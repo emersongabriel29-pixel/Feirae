@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Símbolo Feiraê</title>
+  <rect width="128" height="128" rx="34" fill="#0B662F"/>
+  <path d="M64 21C52 5 34 8 31 26c14 3 25 8 33 18Z" fill="#2AA745"/>
+  <path d="M64 21C76 5 94 8 97 26c-14 3-25 8-33 18Z" fill="#39B54A"/>
+  <path d="M30 49h68l8 12H22Z" fill="#FFF8E7"/>
+  <path d="M22 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#2AA745"/>
+  <path d="M36 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#FFF8E7"/>
+  <path d="M50 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#2AA745"/>
+  <path d="M64 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#FFF8E7"/>
+  <path d="M78 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#2AA745"/>
+  <path d="M92 61h14v18c0 7-3 11-7 11s-7-4-7-11Z" fill="#FFF8E7"/>
+  <rect x="37" y="98" width="54" height="9" rx="4.5" fill="#FFC107"/>
+</svg>
