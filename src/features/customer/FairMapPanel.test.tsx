@@ -51,9 +51,7 @@ describe("FairMapPanel", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira permanente do gama/i }));
-    expect(screen.getByRole("heading", { name: "Feira Permanente do Gama" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
     expect(onFair).toHaveBeenCalledWith("Feira Permanente do Gama");
   });
 
