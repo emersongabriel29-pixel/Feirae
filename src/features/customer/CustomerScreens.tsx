@@ -173,7 +173,7 @@ export function HomePage({
           action="Ver catálogo"
           onAction={() => onTab("products")}
         />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {liveProducts
             .filter((product) => product.featured)
             .map((product) => (
@@ -345,7 +345,7 @@ export function FairCard({
                 : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
             }
             className="icon-button large"
-            aria-label={`Abrir rota para ${fair.name}`}
+            aria-label={`Abrir rota no Feiraê para ${fair.name}`}
           >
             <MapPin size={18} />
           </button>
@@ -402,7 +402,7 @@ export function CatalogPage({
         ))}
       </div>
       {items.length ? (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((product) => (
             <ProductCard
               key={product.id}
@@ -445,31 +445,28 @@ export function ProductCard({
     store && typeof store.minimumOrderAmount === "number"
       ? normalizeVendorMinimumOrder(store.minimumOrderAmount)
       : null;
-  const activePromotions =
-    store?.promotions
-      .filter(
-        (promotion) =>
-          promotionIsActive(promotion) &&
-          (!promotion.target ||
-            product.name.toLocaleLowerCase("pt-BR").includes(promotion.target.toLocaleLowerCase("pt-BR")) ||
-            product.category
-              .toLocaleLowerCase("pt-BR")
-              .includes(promotion.target.toLocaleLowerCase("pt-BR"))),
-      )
-      .slice(0, 2) ?? [];
-  const freeShipping =
-    Boolean(store?.absorbDeliveryFee) ||
-    activePromotions.some((promotion) => promotion.type === "freteGratis");
+  const activePromotion =
+    store?.promotions.find(
+      (promotion) =>
+        promotionIsActive(promotion) &&
+        (!promotion.target ||
+          product.name.toLocaleLowerCase("pt-BR").includes(promotion.target.toLocaleLowerCase("pt-BR")) ||
+          product.category.toLocaleLowerCase("pt-BR").includes(promotion.target.toLocaleLowerCase("pt-BR"))),
+    ) ?? null;
+  const freeShipping = Boolean(store?.absorbDeliveryFee) || activePromotion?.type === "freteGratis";
 
   return (
-    <article className="product-card product-card--complete">
+    <article
+      className="product-card product-card--compact"
+      title={product.description ? `${product.name} · ${product.description}` : product.name}
+    >
       <button
         className="favorite-button"
         onClick={() => onFavorite(product.id)}
         aria-label={favorite ? `Remover ${product.name} dos favoritos` : `Favoritar ${product.name}`}
         aria-pressed={favorite}
       >
-        <Heart size={17} className={favorite ? "fill-red-500 text-red-500" : ""} />
+        <Heart size={16} className={favorite ? "fill-red-500 text-red-500" : ""} />
       </button>
 
       <div className="product-art" data-category={product.category}>
@@ -481,7 +478,7 @@ export function ProductCard({
         <small>{product.category}</small>
         {store && (
           <span className={store.isOpen ? "product-store-status is-open" : "product-store-status is-closed"}>
-            {store.isOpen ? "Banca aberta" : "Banca fechada"}
+            {store.isOpen ? "Aberta" : "Fechada"}
           </span>
         )}
       </div>
@@ -490,67 +487,26 @@ export function ProductCard({
         <div className="product-card__identity">
           <small className="vendor-name">{product.feirante}</small>
           <h3>{product.name}</h3>
-          <p className="product-card__fair">
-            <Store size={13} /> {product.fair}
-          </p>
-          {product.description && <p className="product-card__description">{product.description}</p>}
         </div>
 
-        {activePromotions.length > 0 && (
-          <div className="product-card__promotions" aria-label="Promoções ativas">
-            {activePromotions.map((promotion) => (
-              <span key={promotion.id}>{promotion.name}</span>
-            ))}
-          </div>
-        )}
-
-        <div className="market-meta product-card__service">
+        <div className="product-card__summary" aria-label={`Informações resumidas de ${product.name}`}>
           <span title="Avaliação da banca">
-            <Star size={12} /> {ratingLabel(metrics.rating)} ({metrics.reviewCount})
+            <Star size={11} /> {ratingLabel(metrics.rating)}
           </span>
           <span title="Previsão de entrega">{minutesLabel(metrics.deliveryMinutes)}</span>
           <span title="Frete">{freeShipping ? "Frete grátis" : money(metrics.deliveryFee)}</span>
         </div>
 
-        <div className="product-card__facts">
-          <span>
-            <small>Venda</small>
-            <b>{product.packageSize || `1 ${product.unit}`}</b>
-          </span>
-          <span>
-            <small>Peso logístico</small>
-            <b>{product.weightKg.toLocaleString("pt-BR")} kg</b>
-          </span>
-          <span>
-            <small>Estoque</small>
-            <b>
-              {product.stock} {product.unit}
-            </b>
-          </span>
-          <span>
-            <small>Volume</small>
-            <b>{product.volume}</b>
-          </span>
-        </div>
-
-        <div className="product-card__availability">
-          {store?.deliveryEnabled && <span>Entrega</span>}
-          {store?.pickupEnabled && <span>Retirada</span>}
-          {minimumOrder !== null && (
-            <span>{minimumOrder > 0 ? `Pedido mínimo ${money(minimumOrder)}` : "Sem pedido mínimo"}</span>
-          )}
-        </div>
-
-        {variableWeight && (
-          <p className="product-card__weight-note">Peso e valor finais podem variar na separação.</p>
-        )}
+        {activePromotion && <span className="product-card__promotion">{activePromotion.name}</span>}
 
         <div className="product-card__purchase">
-          <div>
-            <small>Preço</small>
+          <div className="product-card__price">
             <strong>{money(product.price)}</strong>
             <span>/{product.unit}</span>
+            {minimumOrder !== null && minimumOrder > 0 && <small>Pedido mín. {money(minimumOrder)}</small>}
+            {variableWeight && <small>Peso/valor podem variar</small>}
           </div>
+
           {quantity > 0 ? (
             <div className="product-quantity-control" aria-label={`Quantidade de ${product.name} na sacola`}>
               <button
@@ -558,7 +514,7 @@ export function ProductCard({
                 onClick={() => onRemove(product.id)}
                 aria-label={`Remover uma unidade de ${product.name}`}
               >
-                <Minus size={18} />
+                <Minus size={16} />
               </button>
               <span
                 className="product-quantity-control__value"
@@ -579,7 +535,7 @@ export function ProductCard({
                       : `Adicionar mais uma unidade de ${product.name}`
                 }
               >
-                <Plus size={18} />
+                <Plus size={16} />
               </button>
             </div>
           ) : (
@@ -594,7 +550,7 @@ export function ProductCard({
                   : `Adicionar ${product.name} à sacola`
               }
             >
-              <Plus size={19} />
+              <Plus size={18} />
             </button>
           )}
         </div>
@@ -768,13 +724,13 @@ export function FairDetail({
             }
             className="secondary-action light"
           >
-            <MapPin size={17} /> Abrir rota
+            <MapPin size={17} /> Rota no Feiraê
           </button>
         </div>
       </div>
       <SectionHeading eyebrow="Catálogo" title="Produtos desta feira" />
       {fairProducts.length ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {fairProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -937,7 +893,7 @@ export function VendorStore({
         </button>
       </div>
       {vendorProducts.length ? (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {vendorProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -2027,7 +1983,7 @@ export function FavoritesPage({
     <Panel title="Favoritos" subtitle="Produtos e bancas que você quer encontrar de novo." onBack={onBack}>
       <SectionHeading eyebrow="Produtos" title="Produtos favoritos" />
       {favoriteProducts.length ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {favoriteProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -2263,42 +2219,126 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       setLocationMessage("Seu navegador não oferece localização por GPS.");
       return;
     }
+
+    const brazilStateCodes: Record<string, string> = {
+      acre: "AC",
+      alagoas: "AL",
+      amapá: "AP",
+      amazonas: "AM",
+      bahia: "BA",
+      ceará: "CE",
+      "distrito federal": "DF",
+      "espírito santo": "ES",
+      goiás: "GO",
+      maranhão: "MA",
+      "mato grosso": "MT",
+      "mato grosso do sul": "MS",
+      "minas gerais": "MG",
+      pará: "PA",
+      paraíba: "PB",
+      paraná: "PR",
+      pernambuco: "PE",
+      piauí: "PI",
+      "rio de janeiro": "RJ",
+      "rio grande do norte": "RN",
+      "rio grande do sul": "RS",
+      rondônia: "RO",
+      roraima: "RR",
+      "santa catarina": "SC",
+      "são paulo": "SP",
+      sergipe: "SE",
+      tocantins: "TO",
+    };
+
     setLocationLoading(true);
-    setLocationMessage("Buscando sua localização...");
+    setLocationMessage("Buscando sua localização e preenchendo o endereço...");
+
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         const nextCoords = { lat: coords.latitude, lng: coords.longitude };
         setGpsCoords(nextCoords);
         if (!label.trim()) setLabel("Localização atual");
+
         try {
           const response = await fetch(
-            "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=" +
+            "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&lat=" +
               encodeURIComponent(String(coords.latitude)) +
               "&lon=" +
               encodeURIComponent(String(coords.longitude)),
             { headers: { "Accept-Language": "pt-BR,pt" } },
           );
           if (!response.ok) throw new Error("reverse-geocode");
+
           const data = (await response.json()) as {
             address?: Record<string, string>;
             display_name?: string;
           };
           const address = data.address ?? {};
-          setCep(address.postcode ?? "");
-          setState(
-            (address.state_code ?? address.state ?? "DF").replace("BR-", "").slice(0, 2).toUpperCase(),
-          );
-          setCity(
-            address.city ?? address.town ?? address.municipality ?? address.village ?? address.county ?? "",
-          );
-          setNeighborhood(address.suburb ?? address.neighbourhood ?? address.city_district ?? "");
-          setStreet(address.road ?? address.pedestrian ?? address.residential ?? "");
+          const postcode = address.postcode ?? "";
+          const rawStateCode = (address.state_code ?? "").replace(/^BR-/i, "").toUpperCase();
+          const normalizedState =
+            rawStateCode.length === 2
+              ? rawStateCode
+              : (brazilStateCodes[(address.state ?? "").toLocaleLowerCase("pt-BR")] ?? state ?? "DF");
+          const detectedCity =
+            address.city ??
+            address.town ??
+            address.municipality ??
+            address.village ??
+            address.city_district ??
+            address.county ??
+            "";
+          const detectedNeighborhood =
+            address.suburb ?? address.neighbourhood ?? address.quarter ?? address.city_district ?? "";
+          const detectedStreet =
+            address.road ??
+            address.pedestrian ??
+            address.residential ??
+            address.path ??
+            address.quarter ??
+            "";
+
+          setCep(postcode);
+          setState(normalizedState);
+          setCity(detectedCity);
+          setNeighborhood(detectedNeighborhood);
+          setStreet(detectedStreet);
+          if (address.house_number) setNumber(address.house_number);
+
+          if (postcode) {
+            try {
+              const cepDigits = postcode.replace(/\D/g, "");
+              const cepResponse = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+              if (cepResponse.ok) {
+                const viaCep = (await cepResponse.json()) as {
+                  erro?: boolean;
+                  cep?: string;
+                  logradouro?: string;
+                  bairro?: string;
+                  localidade?: string;
+                  uf?: string;
+                };
+                if (!viaCep.erro) {
+                  if (viaCep.cep) setCep(viaCep.cep);
+                  if (viaCep.uf) setState(viaCep.uf);
+                  if (viaCep.localidade) setCity(viaCep.localidade);
+                  if (viaCep.bairro) setNeighborhood(viaCep.bairro);
+                  if (viaCep.logradouro) setStreet(viaCep.logradouro);
+                }
+              }
+            } catch {
+              // O endereço do GPS continua válido mesmo quando o complemento por CEP não responde.
+            }
+          }
+
           setLocationMessage(
-            "GPS localizado. Confira os campos e complete número, complemento e referência.",
+            address.house_number
+              ? "Endereço atualizado automaticamente pelo GPS. Confira os dados antes de salvar."
+              : "Endereço atualizado pelo GPS. Confira e complete o número/lote antes de salvar.",
           );
         } catch {
           setLocationMessage(
-            "GPS localizado, mas o endereço automático não respondeu. Complete os campos restantes.",
+            "Sua posição foi encontrada, mas não foi possível converter o GPS em endereço agora. Os campos podem ser preenchidos manualmente.",
           );
         } finally {
           setLocationLoading(false);
@@ -2308,7 +2348,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
         setLocationLoading(false);
         setLocationMessage("Não foi possível acessar o GPS. Você pode preencher o endereço manualmente.");
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
     );
   }
 

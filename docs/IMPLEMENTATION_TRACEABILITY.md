@@ -437,3 +437,17 @@ Limite mantido: no protótipo a localização compartilhada usa storage/eventos 
 | gestão visual    | `public/gestao/index.html` + `gestao.css`                   | `docs/ADMIN_MANAGEMENT_SPEC.md` |
 
 A página de gestão é, nesta etapa, um **shell visual**. Ela não altera o status das integrações administrativas de backend.
+
+## Correções de consistência mobile e navegação — 28/09/2026
+
+- **Logo oficial no app:** `public/brand/feirae-logo-horizontal.svg` + `FeiraeBrand`.
+- **Ícone oficial no app/notificação:** `public/brand/feirae-symbol.svg`, `feiraeNotifications.ts` e `feirae-sw.js`.
+- **Paleta do styleboard:** `src/styles/tokens.css`, manifesto e `theme-color`.
+- **2 produtos por linha no mobile:** `CustomerScreens.tsx` + `customer.css`.
+- **Informações resumidas no card:** `ProductCard` compacto.
+- **Mapa do app como primário:** `InAppNavigation.tsx` + `App.tsx::openMap`.
+- **Google Maps/Waze secundários:** ações externas dentro de `InAppNavigation`.
+- **GPS preenchendo endereço:** `AddressesPage::useCurrentLocation` + Nominatim/ViaCEP.
+- **CTA Finalizar pedido:** `AppComponents.tsx::CartDrawer`.
+- **Mínimo fixo por banca:** `CartDrawer` mostra `minimumOrderAmount` e progresso separadamente.
+- **Proteção de regressão:** `App.test.tsx`.

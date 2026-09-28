@@ -13,8 +13,8 @@ self.addEventListener("push", (event) => {
   const title = payload.title ? `Feiraê • ${payload.title}` : "Feiraê";
   const options = {
     body: payload.body || "Você tem uma nova atualização no Feiraê.",
-    icon: "/feirae-mark.svg",
-    badge: "/feirae-mark.svg",
+    icon: "/brand/feirae-symbol.svg",
+    badge: "/brand/feirae-symbol.svg",
     tag: payload.tag || "feirae-update",
     data: {
       url: payload.url || "/",

@@ -4,8 +4,8 @@
   "description": "Produtos frescos, feirantes locais e entrega. Da feira até você.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFF8E7",
-  "theme_color": "#0B662F",
+  "background_color": "#FFF8EB",
+  "theme_color": "#0B5E3A",
   "icons": [
     {
       "src": "/brand/feirae-symbol.svg",

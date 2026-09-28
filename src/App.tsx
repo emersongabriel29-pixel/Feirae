@@ -5,6 +5,7 @@ import type { DemoOrder, Role } from "./types";
 import { filterProducts, money, sortFairsByDistance } from "./utils";
 import { usePersistentState } from "./usePersistentState";
 import { CartDrawer, Header, LoginPage, MobileNavigation } from "./components/AppComponents";
+import { InAppNavigation } from "./components/InAppNavigation";
 import {
   AccountPage,
   AddressesPage,
@@ -103,6 +104,7 @@ export default function App() {
   );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [routeTarget, setRouteTarget] = useState<string | null>(null);
   const [readNotificationKeys, setReadNotificationKeys] = usePersistentState<string[]>(
     scopedStorageKey("feirae:notification-read", accountKey),
     [],
@@ -381,11 +383,7 @@ export default function App() {
       typeof destination === "number" && typeof lng === "number"
         ? `${destination},${lng}`
         : String(destination);
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    setRouteTarget(target);
   }
   function confirmOrder(
     total: number,
@@ -877,6 +875,13 @@ export default function App() {
           onClose={() => setCartOpen(false)}
           onBuyAgain={() => buyAgain()}
           onCheckout={() => openScreen("checkout")}
+        />
+      )}
+      {routeTarget && (
+        <InAppNavigation
+          destination={routeTarget}
+          initialCoords={coords}
+          onClose={() => setRouteTarget(null)}
         />
       )}
       {toast && (

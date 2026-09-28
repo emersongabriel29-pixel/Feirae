@@ -237,7 +237,7 @@ export function OrderRouteMap({
       {audience === "delivery" && onRoute && order.fulfillment === "delivery" && (
         <div className="order-route-map__actions">
           <button type="button" onClick={() => onRoute(order.customerAddress ?? destinationLabel)}>
-            <Navigation size={16} /> Abrir GPS até a casa do cliente
+            <Navigation size={16} /> Abrir rota no Feiraê
           </button>
         </div>
       )}

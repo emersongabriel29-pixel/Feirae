@@ -157,3 +157,9 @@ Para produção, o backend precisa:
 7. respeitar preferências, disponibilidade, suspensão e consentimento.
 
 O servidor deve ser a fonte de verdade para decidir quem recebe cada alerta.
+
+## Identidade visual das notificações — 28/09/2026
+
+Notificações locais e Web Push passam a reutilizar `/brand/feirae-symbol.svg`, o mesmo símbolo canônico usado pelo aplicativo/PWA. O service worker e `showFeiraeNotification` não mantêm mais um ícone visual divergente.
+
+Observação de plataforma: alguns sistemas operacionais monocromatizam ou mascaram o badge da notificação; o asset de origem continua sendo o símbolo oficial.
