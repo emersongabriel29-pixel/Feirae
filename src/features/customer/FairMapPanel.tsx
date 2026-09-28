@@ -129,7 +129,10 @@ export function FairMapPanel({
                   .filter(Boolean)
                   .join(" ")}
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                onClick={() => setSelectedFairName(point.fair.name)}
+                onClick={() => {
+                  setSelectedFairName(point.fair.name);
+                  onFair(point.fair.name);
+                }}
                 aria-label={`Selecionar ${point.fair.name}`}
                 aria-pressed={selected}
                 title={point.fair.name}
