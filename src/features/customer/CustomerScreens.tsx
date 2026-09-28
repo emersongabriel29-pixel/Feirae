@@ -563,10 +563,12 @@ export function OrdersPage({
   orders,
   onTracking,
   onBuyAgain,
+  onSupport,
 }: {
   orders: DemoOrder[];
   onTracking: (orderId: string) => void;
   onBuyAgain: (orderId: string) => void;
+  onSupport: (orderId: string) => void;
 }) {
   const ordered = [...orders].sort((a, b) => {
     const aTime = a.createdAt ? Date.parse(a.createdAt) : 0;
@@ -608,7 +610,14 @@ export function OrdersPage({
                 </span>
                 <strong>{money(order.value)}</strong>
                 <div className="order-actions">
-                  <button onClick={() => onTracking(order.id)}>Ver detalhes</button>
+                  <button onClick={() => onTracking(order.id)}>
+                    {["Recebido", "Preparando", "Coleta", "Em rota"].includes(order.status)
+                      ? "Acompanhar pedido"
+                      : "Ver detalhes"}
+                  </button>
+                  <button onClick={() => onSupport(order.id)}>
+                    <MessageCircle size={14} /> Preciso de ajuda
+                  </button>
                   <button onClick={() => onBuyAgain(order.id)}>Comprar novamente</button>
                 </div>
               </div>
@@ -855,6 +864,12 @@ export function VendorStore({
     sharedStore?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
   );
   const metrics = metricForVendor(vendorName, vendorMetrics);
+  const vendorCartSubtotal = vendorProducts.reduce(
+    (sum, product) => sum + product.price * (cart[product.id] ?? 0),
+    0,
+  );
+  const minimumReached = minimumOrderAmount <= 0 || vendorCartSubtotal >= minimumOrderAmount;
+  const missingForMinimum = Math.max(0, minimumOrderAmount - vendorCartSubtotal);
   return (
     <Panel
       title={vendorName}
@@ -873,16 +888,21 @@ export function VendorStore({
             Produtos selecionados direto da feira · {ratingLabel(metrics.rating)} ★ ({metrics.reviewCount}) ·{" "}
             {minutesLabel(metrics.deliveryMinutes)} · entrega a partir de {money(metrics.deliveryFee)}
           </p>
-          <p>
+          <div className={minimumReached ? "vendor-minimum-state is-met" : "vendor-minimum-state"}>
+            <span>Pedido mínimo</span>
             {minimumOrderAmount > 0 ? (
               <>
-                Pedido mínimo nesta banca: <strong>{money(minimumOrderAmount)}</strong>. Em pedidos
-                multi-banca, esta banca precisa atingir o próprio mínimo.
+                <strong>{money(minimumOrderAmount)}</strong>
+                <small>
+                  {minimumReached
+                    ? `✓ Atingido · ${money(vendorCartSubtotal)} em produtos`
+                    : `Faltam ${money(missingForMinimum)} · ${money(vendorCartSubtotal)} no carrinho`}
+                </small>
               </>
             ) : (
-              <strong>Esta banca não exige pedido mínimo.</strong>
+              <small>✓ Esta banca não exige pedido mínimo.</small>
             )}
-          </p>
+          </div>
         </div>
         <button
           className={storeFavorite ? "secondary-action light active" : "secondary-action light"}
@@ -1782,24 +1802,57 @@ export function Checkout({
           )}
 
           <Step title="Itens do pedido">
-            {items.map((product) => (
-              <div className="checkout-item" key={product.id}>
-                <span>{product.emoji}</span>
-                <div>
-                  <b>
-                    {cart[product.id]}× {product.name}
-                  </b>
-                  <small>{product.feirante}</small>
-                  <small>
-                    {productWeight(product, cart[product.id]).toLocaleString("pt-BR", {
-                      maximumFractionDigits: 1,
-                    })}{" "}
-                    kg estimados
-                  </small>
-                </div>
-                <strong>{money(product.price * cart[product.id])}</strong>
-              </div>
-            ))}
+            <div className="checkout-vendor-list">
+              {vendorMinimums.map((vendorSummary) => {
+                const vendorItems = items.filter(
+                  (product) => product.feirante === vendorSummary.vendorName,
+                );
+                const vendorSubtotal = vendorItems.reduce(
+                  (sum, product) => sum + product.price * (cart[product.id] ?? 0),
+                  0,
+                );
+                return (
+                  <section className="checkout-vendor-group" key={vendorSummary.vendorName}>
+                    <header>
+                      <div>
+                        <Store size={17} />
+                        <span>
+                          <b>{vendorSummary.vendorName}</b>
+                          <small>
+                            {vendorSummary.minimumOrderAmount > 0
+                              ? vendorSummary.meetsMinimum
+                                ? `Pedido mínimo ${money(vendorSummary.minimumOrderAmount)} · ✓ atingido`
+                                : `Pedido mínimo ${money(vendorSummary.minimumOrderAmount)} · faltam ${money(
+                                    vendorSummary.missingForMinimum,
+                                  )}`
+                              : "Sem pedido mínimo"}
+                          </small>
+                        </span>
+                      </div>
+                      <strong>{money(vendorSubtotal)}</strong>
+                    </header>
+                    {vendorItems.map((product) => (
+                      <div className="checkout-item" key={product.id}>
+                        <span>{product.emoji}</span>
+                        <div>
+                          <b>
+                            {cart[product.id]}× {product.name}
+                          </b>
+                          <small>{product.unit}</small>
+                          <small>
+                            {productWeight(product, cart[product.id]).toLocaleString("pt-BR", {
+                              maximumFractionDigits: 1,
+                            })}{" "}
+                            kg estimados
+                          </small>
+                        </div>
+                        <strong>{money(product.price * cart[product.id])}</strong>
+                      </div>
+                    ))}
+                  </section>
+                );
+              })}
+            </div>
           </Step>
         </div>
 
@@ -3163,7 +3216,13 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
     </Panel>
   );
 }
-export function ChatPage({ onBack }: { onBack: () => void }) {
+export function ChatPage({
+  onBack,
+  orderId,
+}: {
+  onBack: () => void;
+  orderId?: string;
+}) {
   const [topic, setTopic] = useState("Pedido em andamento");
   const [messages, setMessages] = usePersistentState<string[]>(scopedStorageKey("feirae:support-messages"), [
     "Olá! Escolha o assunto e descreva o problema.",
@@ -3185,7 +3244,7 @@ export function ChatPage({ onBack }: { onBack: () => void }) {
     setTickets((current) => [
       {
         id: protocol,
-        topic,
+        topic: orderId ? `${topic} · ${orderId}` : topic,
         message: userMessage,
         createdAt,
         status: "Aberto",
@@ -3203,9 +3262,22 @@ export function ChatPage({ onBack }: { onBack: () => void }) {
   return (
     <Panel
       title="Suporte Feiraê"
-      subtitle="Atendimento para pedido, pagamento, entrega e conta."
+      subtitle={
+        orderId
+          ? `Ajuda vinculada ao pedido ${orderId}. Atendimento para pedido, pagamento e entrega.`
+          : "Atendimento para pedido, pagamento, entrega e conta."
+      }
       onBack={onBack}
     >
+      {orderId && (
+        <div className="support-order-context">
+          <MessageCircle size={18} />
+          <div>
+            <b>Atendimento do pedido {orderId}</b>
+            <p>Seu protocolo ficará ligado a este pedido para facilitar a análise do suporte.</p>
+          </div>
+        </div>
+      )}
       <div className="chat-card">
         <div className="support-topics">
           {["Pedido em andamento", "Pagamento", "Entrega", "Conta"].map((item) => (
