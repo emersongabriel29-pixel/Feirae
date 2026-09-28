@@ -406,3 +406,13 @@ Gap ainda aberto: substituir progressivamente as referências regionais por `lat
 - `OrderRouteMap.test.tsx`: cobertura do destino residencial, GPS e fallback por etapa.
 
 Limite mantido: no protótipo a localização compartilhada usa storage/eventos locais. Produção ainda precisa de backend realtime autenticado e política de retenção.
+
+## Correção do catálogo de produtos — 28/09/2026
+
+- `types.ts::Product`: adiciona descrição e apresentação;
+- `marketplaceBridge.ts::syncVendorMarketplace`: preserva os campos cadastrados pelo Feirante;
+- `CustomerScreens.tsx::ProductCard`: restaura informação completa;
+- `CustomerScreens.tsx::HomePage`: substitui mini-card incompleto pelo card completo;
+- `data.ts`: fixtures recebem descrição e apresentação;
+- `customer.css`: layout completo e responsivo;
+- testes de bridge e interface protegem a regressão.
