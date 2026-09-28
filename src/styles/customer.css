@@ -1833,7 +1833,7 @@ html.compact-product-cards .product-card .stock {
 }
 .product-store-status.is-open {
   background: #e8f7e9 !important;
-  color: #0B5E3A !important;
+  color: #0b5e3a !important;
 }
 .product-store-status.is-closed {
   background: #fff2e7 !important;
@@ -1859,8 +1859,8 @@ html.compact-product-cards .product-card .stock {
   line-height: 1;
 }
 .product-card__summary svg {
-  fill: #F5B92F;
-  color: #F5B92F;
+  fill: #f5b92f;
+  color: #f5b92f;
 }
 .product-card__promotion {
   width: fit-content;
