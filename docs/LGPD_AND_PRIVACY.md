@@ -371,3 +371,19 @@ O mapa principal de feiras é renderizado localmente pelo Feiraê e não carrega
 - Se no futuro houver geocodificação, tiles personalizados, telemetria cartográfica ou envio de localização a terceiro, a avaliação de transparência, minimização, retenção, transferência e base legal deverá ser refeita antes da liberação.
 
 Coordenadas de localização continuam sendo dado pessoal quando associadas ou associáveis a uma pessoa e devem permanecer limitadas à finalidade informada.
+
+## Localização do entregador durante a corrida
+
+O mapa de acompanhamento pode exibir a posição do Entregador enquanto há uma corrida ativa.
+
+Princípios aplicados no protótipo:
+
+- o recurso depende de localização previamente ativada pelo Entregador na configuração de entrega;
+- a finalidade é operacional: chegada à feira, coleta e entrega ao Cliente;
+- Cliente e Feirante veem apenas o estado necessário ao pedido em andamento;
+- o mapa informa quando a moto é apenas uma estimativa por etapa e quando existe GPS compartilhado;
+- o snapshot contém coordenadas, precisão e horário de atualização;
+- o Google My Maps não recebe esses dados;
+- o ícone **Casa do cliente** representa o endereço de entrega já informado no pedido e não cria nova coleta de dado.
+
+Produção deve definir retenção curta para localização de Entregador, acesso por papel/pedido, registro da transparência apresentada, descarte ou anonimização após a finalidade e avaliação específica de segurança do canal realtime.

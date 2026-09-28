@@ -155,6 +155,12 @@ export type UnifiedOrderRecord = {
     plateMasked?: string;
     etaMinutes?: number;
     distanceKm?: number;
+    location?: {
+      lat: number;
+      lng: number;
+      accuracyMeters?: number;
+      updatedAt: string;
+    };
   };
   route?: {
     toVendorKm: number;

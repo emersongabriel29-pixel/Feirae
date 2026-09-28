@@ -277,3 +277,19 @@ O Google My Maps permanece apenas como referência externa opcional:
 - frete, rota operacional e logística não podem consumir a coordenada aproximada.
 
 Evolução de produção: persistir coordenadas verificadas de feira no backend e expô-las pelo repositório de domínio, removendo progressivamente os fallbacks regionais.
+
+## Rastreamento do entregador no Mapa Feiraê
+
+O acompanhamento de pedido não adiciona SDK externo de mapas.
+
+Durante corrida ativa, quando o Entregador já configurou GPS, o frontend usa a API nativa de geolocalização do navegador:
+
+- `navigator.geolocation.watchPosition()`;
+- precisão alta solicitada;
+- `maximumAge` de 5 segundos;
+- gravação limitada no app a no máximo uma atualização a cada 5 segundos;
+- `clearWatch()` executado ao encerrar/trocar a corrida ou desmontar o fluxo.
+
+O snapshot é salvo em `UnifiedOrderRecord.driver.location` com latitude, longitude, precisão e timestamp.
+
+Limite atual: a sincronização é local ao protótipo. Não existe WebSocket, Supabase Realtime ou serviço dedicado de telemetria. Para produção, criar um `DriverLocationRepository` autenticado com TTL, autorização por pedido e descarte após a finalidade.

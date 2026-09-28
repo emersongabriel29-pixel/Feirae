@@ -532,3 +532,22 @@ Diretrizes:
 - a posição aproximada deve ser explicitamente rotulada, nunca apresentada como coordenada exata.
 
 O mapa deve continuar funcional sem tiles, SDK, API key ou conexão com um provedor cartográfico externo.
+
+## Mapa de acompanhamento do pedido
+
+O componente compartilhado `OrderRouteMap` segue a identidade do Feiraê.
+
+Elementos visuais:
+
+- cabeçalho em gradiente verde;
+- rota tracejada verde → amarelo;
+- **Feira** em marcador verde;
+- bancas numeradas em verde;
+- banca do Feirante atual em amarelo;
+- **Casa do cliente** em marcador amarelo com ícone de residência;
+- moto em marcador branco/verde;
+- halo na moto quando existe snapshot real de GPS;
+- ruas secundárias em baixo contraste;
+- resumo inferior com origem, destino e estado do rastreamento.
+
+A casa deve ser reconhecível como destino sem expor texto sensível além do endereço já autorizado no contexto do pedido.

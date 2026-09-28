@@ -2,6 +2,7 @@
 @import "./styles/tokens.css";
 @import "./styles/auth.css";
 @import "./styles/customer.css";
+@import "./styles/map.css";
 @import "./styles/operations.css";
 @import "./styles/overlays.css";
 @import "./styles/responsive.css";

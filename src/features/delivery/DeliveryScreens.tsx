@@ -29,6 +29,7 @@ import {
   Panel,
 } from "../../components/AppComponents";
 import { deliveryModuleDetails } from "../../domain/operations";
+import { OrderRouteMap } from "../../components/OrderRouteMap";
 import { fairs } from "../../data";
 import { drivingRoute, geocodeAddress } from "../../domain/routing";
 import { readSharedStores } from "../../domain/marketplaceBridge";
@@ -530,6 +531,47 @@ export function DeliveryOperations({
     acceptedSharedOrder.driver?.driverKey === session.email;
   const effectiveAccepted = acceptedSharedOrder && !acceptedSharedOrderIsActive ? null : accepted;
 
+  useEffect(() => {
+    if (
+      !effectiveAccepted ||
+      deliveryPreferences.baseLat === null ||
+      deliveryPreferences.baseLng === null ||
+      !navigator.geolocation
+    ) {
+      return;
+    }
+
+    let lastWrite = 0;
+    const watchId = navigator.geolocation.watchPosition(
+      ({ coords }) => {
+        const now = Date.now();
+        if (now - lastWrite < 5000) return;
+        const order = readUnifiedOrders().find((item) => item.id === effectiveAccepted);
+        if (!order?.driver || order.driver.driverKey !== session.email) return;
+        lastWrite = now;
+        patchUnifiedOrder(effectiveAccepted, {
+          driver: {
+            ...order.driver,
+            location: {
+              lat: coords.latitude,
+              lng: coords.longitude,
+              accuracyMeters: coords.accuracy,
+              updatedAt: new Date(now).toISOString(),
+            },
+          },
+        });
+      },
+      () => undefined,
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 5000,
+      },
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [deliveryPreferences.baseLat, deliveryPreferences.baseLng, effectiveAccepted, session.email]);
+
   const deliveredReviewOrders = sharedOrders.filter(
     (order) =>
       order.status === "delivered" &&
@@ -844,6 +886,9 @@ export function DeliveryOperations({
       delivery.id === effectiveAccepted ||
       (delivery.assignedDriverKey === session.email && delivery.available === false),
   );
+  const activeUnifiedOrder = activeDelivery
+    ? readUnifiedOrders().find((order) => order.id === activeDelivery.id)
+    : undefined;
   const activePickupStops = activeDelivery?.pickupStops ?? [];
   const deliveryStages =
     activeDelivery && activePickupStops.length > 1
@@ -868,6 +913,15 @@ export function DeliveryOperations({
       <span className="eyebrow">Entrega em andamento</span>
       <h3>{activeDelivery.id}</h3>
       <p>{activeDelivery.route}</p>
+      {activeUnifiedOrder && (
+        <div className="mt-4">
+          <OrderRouteMap
+            order={activeUnifiedOrder}
+            audience="delivery"
+            onRoute={(destination) => onMap(destination)}
+          />
+        </div>
+      )}
       <div className="finance-breakdown">
         <p>
           <span>Feira</span>
@@ -1257,6 +1311,14 @@ export function DeliveryOperations({
                             : undefined,
                           etaMinutes: delivery.etaMinutes,
                           distanceKm: delivery.totalDistanceKm,
+                          location:
+                            deliveryPreferences.baseLat !== null && deliveryPreferences.baseLng !== null
+                              ? {
+                                  lat: deliveryPreferences.baseLat,
+                                  lng: deliveryPreferences.baseLng,
+                                  updatedAt: new Date().toISOString(),
+                                }
+                              : undefined,
                         },
                       },
                       eventNow("driver-assigned", "Entregador a caminho da banca", "delivery"),
