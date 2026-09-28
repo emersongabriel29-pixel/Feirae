@@ -661,3 +661,49 @@ Padrão visual e de interação:
 No cabeçalho e nas superfícies padrão, `FeiraeBrand` deve exibir somente a arte da marca, sem criar automaticamente fundo creme, borda, padding ou sombra ao redor. Superfícies especiais podem fornecer seu próprio fundo quando necessário, mas o componente de marca não deve parecer um botão ou bloco vazio.
 
 A arte aprovada é carregada diretamente pelo componente. Fallbacks SVG continuam reservados para ícones e compatibilidade.
+
+## Padrões transacionais de marketplace — 28/09/2026
+
+### Estado de pedido mínimo
+
+`.vendor-minimum-state` é a superfície canônica para comunicar mínimo da banca no contexto de compra.
+
+Hierarquia:
+
+- rótulo **Pedido mínimo**;
+- valor fixo em destaque;
+- linha de estado com subtotal/progresso;
+- estado atingido usa confirmação positiva;
+- estado pendente informa quanto falta sem alterar o valor mínimo.
+
+O componente não deve simular barra de progresso financeira nem confundir mínimo com total do carrinho.
+
+### Grupo de banca no checkout
+
+`.checkout-vendor-group` organiza pedidos multi-banca.
+
+Estrutura visual:
+
+- cabeçalho em superfície verde suave;
+- ícone de banca;
+- nome da banca;
+- texto curto do mínimo;
+- subtotal da banca alinhado como valor de apoio;
+- itens abaixo em superfície neutra.
+
+O resumo financeiro geral continua fora dos grupos para evitar dupla leitura de total.
+
+### Ações contextuais de pedido
+
+A hierarquia de ações é semântica:
+
+- **Acompanhar pedido** para estado em andamento;
+- **Ver detalhes** para histórico;
+- **Preciso de ajuda** como ação secundária de suporte;
+- **Comprar novamente** como ação de recorrência.
+
+A ação de suporte pode usar superfície amarela/creme de apoio, sem competir com o verde primário de acompanhamento.
+
+### Contexto de suporte
+
+`.support-order-context` usa borda e fundo verde suave, ícone de conversa e texto curto. Ele informa qual pedido está ligado ao atendimento sem transformar o suporte em uma segunda tela de detalhe do pedido.

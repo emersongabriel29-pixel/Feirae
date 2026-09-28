@@ -172,8 +172,9 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(banksAction as HTMLElement);
     fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
 
-    expect(screen.getByText(/pedido mínimo nesta banca:/i)).toBeInTheDocument();
-    expect(screen.getByText(/R\$ 30,00/i)).toBeInTheDocument();
+    const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
+    expect(minimumState).not.toBeNull();
+    expect(within(minimumState as HTMLElement).getByText(/^R\$ 30,00$/i)).toBeInTheDocument();
   });
 
   it("shows the demonstration account identity instead of visitor", () => {
@@ -486,7 +487,7 @@ describe("Feiraê customer flow", () => {
 
     const orderCard = screen.getByText("FE-1029").closest("article");
     expect(orderCard).not.toBeNull();
-    fireEvent.click(within(orderCard as HTMLElement).getByRole("button", { name: /ver detalhes/i }));
+    fireEvent.click(within(orderCard as HTMLElement).getByRole("button", { name: /acompanhar pedido/i }));
 
     expect(screen.getByText(/pedido fe-1029.*recebido/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^pedido recebido$/i })).toBeInTheDocument();
@@ -617,7 +618,7 @@ describe("Feiraê customer flow", () => {
     render(<App />);
     loginAs("cliente");
     fireEvent.click(screen.getAllByRole("button", { name: /^pedidos$/i })[0]);
-    fireEvent.click(screen.getByRole("button", { name: /ver detalhes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /acompanhar pedido/i }));
 
     expect(screen.getByRole("option", { name: /não preciso mais/i })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /^outro$/i })).toBeInTheDocument();
