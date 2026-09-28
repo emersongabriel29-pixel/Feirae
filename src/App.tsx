@@ -61,6 +61,7 @@ import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 import {
   authenticateLocalAccount,
+  resetLocalAccountPassword,
   scrubLegacyPlaintextPasswords,
   updateLocalAccount,
 } from "./domain/localAuth";
@@ -297,6 +298,15 @@ export default function App() {
     startSession(nextRole, result.account.email, result.account.name, result.isNewAccount);
     resetForRole(nextRole);
     return null;
+  }
+
+  function recoverPassword(nextRole: Role, email: string, newPassword: string) {
+    const result = resetLocalAccountPassword({
+      role: nextRole,
+      email,
+      newPassword,
+    });
+    return result.ok ? null : result.message;
   }
 
   function updateAccountIdentity(name: string, email: string, newPassword?: string) {
@@ -667,7 +677,7 @@ export default function App() {
     notify(`Itens disponíveis do pedido ${source.id} voltaram para a sacola.`);
   }
 
-  if (!role) return <LoginPage onLogin={login} />;
+  if (!role) return <LoginPage onLogin={login} onResetPassword={recoverPassword} />;
 
   return (
     <div className="min-h-screen bg-[var(--fe-bg)] pb-24 text-slate-900 md:pb-8">
