@@ -387,3 +387,17 @@ Princípios aplicados no protótipo:
 - o ícone **Casa do cliente** representa o endereço de entrega já informado no pedido e não cria nova coleta de dado.
 
 Produção deve definir retenção curta para localização de Entregador, acesso por papel/pedido, registro da transparência apresentada, descarte ou anonimização após a finalidade e avaliação específica de segurança do canal realtime.
+
+## Recuperação de senha — impacto de privacidade — 28/09/2026
+
+A recuperação adicionada ao protótipo não envia e-mail nem compartilha dados com terceiros. E-mail, papel da conta e digest da nova senha permanecem no armazenamento local já usado pela autenticação demonstrativa.
+
+Para produção, o envio de link/código de recuperação passa a envolver o e-mail cadastrado como dado pessoal necessário à segurança e execução da conta. O desenho de produção deve documentar:
+
+- finalidade específica de recuperação e segurança da conta;
+- provedor responsável pelo envio;
+- retenção de eventos de recuperação e tentativas;
+- proteção contra enumeração de usuários;
+- canal para contestação de redefinição não reconhecida;
+- descarte de tokens/OTPs após uso ou expiração;
+- ausência de senha, token ou OTP em analytics, logs de aplicação e ferramentas de suporte.

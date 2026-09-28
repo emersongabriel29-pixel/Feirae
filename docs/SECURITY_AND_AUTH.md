@@ -342,3 +342,30 @@ Requisitos de produção:
 - rate limit e validação de coordenadas;
 - trilha de auditoria para alteração de vínculo do entregador;
 - não expor localização histórica fora da janela operacional da entrega.
+
+## Recuperação de senha no protótipo — 28/09/2026
+
+A tela de entrada passa a oferecer **Esqueci minha senha** para Cliente, Feirante e Entregador.
+
+No protótipo local:
+
+- o usuário seleciona o papel da conta;
+- informa o e-mail;
+- define e confirma uma nova senha com mínimo de 6 caracteres;
+- a senha continua persistida somente como `passwordDigest` em `feirae:local-auth:v1`;
+- contas demo oficiais `cliente@feirae.test`, `feirante@feirae.test` e `entregador@feirae.test` podem ser redefinidas no dispositivo;
+- a redefinição não inicia sessão automaticamente.
+
+### Limite de segurança obrigatório
+
+Esse mecanismo serve **somente para demonstração local**. Como ainda não existe provedor de autenticação conectado, não há prova de posse do e-mail. Portanto, ele não pode ser levado para produção como está.
+
+Produção deve substituir `resetLocalAccountPassword` por fluxo do provedor de autenticação com, no mínimo:
+
+- link de uso único ou OTP enviado ao canal verificado;
+- token com expiração curta e uso único;
+- resposta neutra para evitar enumeração de contas;
+- rate limit por conta, IP/dispositivo e janela de tempo;
+- revogação/rotação de sessões após redefinição quando aplicável;
+- trilha de auditoria server-side sem registrar senha, OTP ou token em texto aberto;
+- proteção contra reutilização de token e ataques automatizados.

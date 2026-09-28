@@ -197,6 +197,56 @@
 .login-form .primary-action {
   margin-top: 0.3rem;
 }
+.forgot-password {
+  justify-self: end;
+  margin-top: -0.25rem;
+  color: var(--fe-green);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.forgot-password:hover {
+  color: var(--fe-green-dark);
+}
+.recovery-back {
+  display: inline-flex;
+  min-height: var(--fe-touch);
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.2rem 0 0.35rem;
+  color: var(--fe-green);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+.password-recovery-notice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--fe-green) 22%, var(--fe-border));
+  border-radius: 0.9rem;
+  background: var(--fe-green-soft);
+  padding: 0.8rem;
+  color: var(--fe-green-dark);
+}
+.password-recovery-notice svg {
+  margin-top: 0.05rem;
+}
+.password-recovery-notice p {
+  color: var(--fe-muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+.inline-success {
+  border: 1px solid color-mix(in srgb, var(--fe-success) 30%, var(--fe-border));
+  border-radius: 0.8rem;
+  background: var(--fe-success-soft);
+  padding: 0.7rem 0.8rem;
+  color: var(--fe-success);
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
 .demo-notice {
   margin-top: 0.8rem;
   color: var(--fe-muted);

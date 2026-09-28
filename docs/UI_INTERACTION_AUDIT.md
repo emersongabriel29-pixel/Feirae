@@ -484,3 +484,26 @@ O formulário permanece disponível e nenhum campo manual é bloqueado.
 Os selects do Feiraê usam superfície clara, chevron verde, foco visível e estado desabilitado legível. O objetivo é evitar que o preview ou o navegador apresente um campo fechado visualmente incompatível com o restante do aplicativo.
 
 Limite conhecido: alguns sistemas operacionais renderizam a lista aberta do `<select>` fora do controle CSS da aplicação. Nesses casos, a superfície fechada e os estados de interação continuam padronizados.
+
+## Esqueci minha senha — 28/09/2026
+
+Fluxo implementado na tela de entrada:
+
+1. usuário toca **Esqueci minha senha**;
+2. escolhe/confirma o tipo de acesso;
+3. informa o e-mail;
+4. cria a nova senha;
+5. confirma a nova senha;
+6. o protótipo valida conta/papel e atualiza o digest local;
+7. a interface volta ao login com confirmação de sucesso;
+8. o usuário entra manualmente com a nova senha.
+
+Estados cobertos:
+
+- senhas diferentes: bloqueio com mensagem clara;
+- senha menor que 6 caracteres: rejeição pela validação da autenticação/HTML;
+- e-mail inexistente: nenhuma conta local é criada silenciosamente;
+- papel incorreto: recuperação é recusada;
+- sucesso: não ocorre login automático.
+
+O aviso do protótipo deixa explícito que produção deverá confirmar identidade por código ou link enviado ao e-mail.

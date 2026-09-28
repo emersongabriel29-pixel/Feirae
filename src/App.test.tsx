@@ -253,6 +253,52 @@ describe("Feiraê customer flow", () => {
     expect(password).toHaveAttribute("type", "text");
   });
 
+  it("recovers a demo password from the login screen", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /esqueci minha senha/i }));
+    expect(screen.getByRole("heading", { name: /redefina sua senha/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "cliente@feirae.test" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/crie uma nova senha/i), {
+      target: { value: "nova456" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/digite a nova senha novamente/i), {
+      target: { value: "nova456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /redefinir senha como cliente/i }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(/senha redefinida/i);
+    expect(screen.getByRole("heading", { name: /como você vai usar o aplicativo/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "nova456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
+
+    expect(screen.getByRole("navigation", { name: /navegação móvel/i })).toBeInTheDocument();
+  });
+
+  it("blocks password recovery when confirmation does not match", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /esqueci minha senha/i }));
+    fireEvent.change(screen.getByLabelText(/e-mail/i), {
+      target: { value: "cliente@feirae.test" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/crie uma nova senha/i), {
+      target: { value: "nova456" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/digite a nova senha novamente/i), {
+      target: { value: "outra789" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /redefinir senha como cliente/i }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/senhas não coincidem/i);
+  });
+
   it("rejects an incorrect password instead of ignoring it", () => {
     render(<App />);
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
@@ -282,6 +328,9 @@ describe("Feiraê customer flow", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /^entrar$/i }));
+    fireEvent.change(screen.getByPlaceholderText(/digite sua senha/i), {
+      target: { value: "123456" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /entrar como cliente/i }));
     expect(screen.getByRole("alert")).toBeInTheDocument();
 

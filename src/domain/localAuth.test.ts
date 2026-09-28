@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { authenticateLocalAccount, scrubLegacyPlaintextPasswords, updateLocalAccount } from "./localAuth";
+import {
+  authenticateLocalAccount,
+  resetLocalAccountPassword,
+  scrubLegacyPlaintextPasswords,
+  updateLocalAccount,
+} from "./localAuth";
 
 describe("local auth", () => {
   beforeEach(() => {
@@ -109,6 +114,69 @@ describe("local auth", () => {
     });
     expect(login.ok).toBe(true);
     if (login.ok) expect(login.account.name).toBe("Entregador Atualizado");
+  });
+
+  it("resets the password for a local account and requires the new credential", () => {
+    authenticateLocalAccount({
+      role: "customer",
+      email: "recuperar@feirae.app",
+      name: "Cliente Recuperação",
+      password: "senha123",
+      signup: true,
+    });
+
+    const reset = resetLocalAccountPassword({
+      role: "customer",
+      email: "recuperar@feirae.app",
+      newPassword: "nova456",
+    });
+    expect(reset.ok).toBe(true);
+
+    expect(
+      authenticateLocalAccount({
+        role: "customer",
+        email: "recuperar@feirae.app",
+        name: "",
+        password: "senha123",
+        signup: false,
+      }).ok,
+    ).toBe(false);
+
+    expect(
+      authenticateLocalAccount({
+        role: "customer",
+        email: "recuperar@feirae.app",
+        name: "",
+        password: "nova456",
+        signup: false,
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("allows resetting a demo account on the selected correct role", () => {
+    const wrongRole = resetLocalAccountPassword({
+      role: "feirante",
+      email: "cliente@feirae.test",
+      newPassword: "nova456",
+    });
+    expect(wrongRole.ok).toBe(false);
+
+    const reset = resetLocalAccountPassword({
+      role: "customer",
+      email: "cliente@feirae.test",
+      newPassword: "nova456",
+    });
+    expect(reset.ok).toBe(true);
+
+    expect(
+      authenticateLocalAccount({
+        role: "customer",
+        email: "cliente@feirae.test",
+        name: "",
+        password: "nova456",
+        signup: false,
+      }).ok,
+    ).toBe(true);
   });
 
   it("removes plaintext passwords left by the old profile implementation", () => {

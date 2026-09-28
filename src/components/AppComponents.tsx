@@ -51,6 +51,7 @@ const roleLabels: Record<Role, string> = {
 
 export function LoginPage({
   onLogin,
+  onResetPassword,
 }: {
   onLogin: (
     role: Role,
@@ -59,17 +60,21 @@ export function LoginPage({
     password: string,
     isNewAccount: boolean,
   ) => string | null;
+  onResetPassword: (role: Role, email: string, newPassword: string) => string | null;
 }) {
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedCustomerTerms, setAcceptedCustomerTerms] = useState(false);
   const [acknowledgedCustomerPrivacy, setAcknowledgedCustomerPrivacy] = useState(false);
   const [customerOffersOptIn, setCustomerOffersOptIn] = useState(false);
   const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
   const options: Array<{ role: Role; title: string; text: string; icon: ReactNode }> = [
     {
       role: "customer",
@@ -93,6 +98,7 @@ export function LoginPage({
 
   function clearFormError() {
     if (formError) setFormError("");
+    if (formSuccess) setFormSuccess("");
   }
 
   function resetCustomerLegalChoice() {
@@ -101,20 +107,44 @@ export function LoginPage({
     setCustomerOffersOptIn(false);
   }
 
-  function changeMode(nextMode: "login" | "signup") {
+  function changeMode(nextMode: "login" | "signup" | "recovery") {
     setMode(nextMode);
     setFormError("");
-    if (nextMode === "login") resetCustomerLegalChoice();
+    setFormSuccess("");
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    if (nextMode !== "signup") resetCustomerLegalChoice();
   }
 
   function changeRole(nextRole: Role) {
     setSelectedRole(nextRole);
     setFormError("");
+    setFormSuccess("");
     resetCustomerLegalChoice();
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
+
+    if (mode === "recovery") {
+      if (password !== confirmPassword) {
+        setFormError("As senhas não coincidem.");
+        return;
+      }
+      const error = onResetPassword(selectedRole, email.trim(), password);
+      if (error) {
+        setFormError(error);
+        return;
+      }
+      setMode("login");
+      setPassword("");
+      setConfirmPassword("");
+      setFormError("");
+      setFormSuccess("Senha redefinida. Entre com sua nova senha.");
+      return;
+    }
 
     if (
       mode === "signup" &&
@@ -174,11 +204,24 @@ export function LoginPage({
               Criar conta
             </button>
           </div>
-          <h2>{mode === "login" ? "Como você vai usar o aplicativo?" : "Crie sua conta no Feiraê"}</h2>
+          {mode === "recovery" && (
+            <button type="button" className="recovery-back" onClick={() => changeMode("login")}>
+              <ArrowLeft size={16} /> Voltar para entrar
+            </button>
+          )}
+          <h2>
+            {mode === "login"
+              ? "Como você vai usar o aplicativo?"
+              : mode === "signup"
+                ? "Crie sua conta no Feiraê"
+                : "Redefina sua senha"}
+          </h2>
           <p className="login-intro">
             {mode === "login"
               ? "Escolha seu tipo de acesso. As telas serão preparadas para essa função."
-              : "Cliente entra rápido. Feirante e entregador passam por cadastro, documentos e validação."}
+              : mode === "signup"
+                ? "Cliente entra rápido. Feirante e entregador passam por cadastro, documentos e validação."
+                : "Escolha o tipo de conta, informe o e-mail e crie uma nova senha para este dispositivo."}
           </p>
           <div className="role-options" role="radiogroup" aria-label="Tipo de acesso">
             {options.map((option) => (
@@ -230,7 +273,7 @@ export function LoginPage({
               />
             </label>
             <label className="password-field">
-              Senha
+              {mode === "recovery" ? "Nova senha" : "Senha"}
               <span>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -239,8 +282,8 @@ export function LoginPage({
                     setPassword(event.target.value);
                     clearFormError();
                   }}
-                  placeholder="Digite sua senha"
-                  autoComplete="current-password"
+                  placeholder={mode === "recovery" ? "Crie uma nova senha" : "Digite sua senha"}
+                  autoComplete={mode === "recovery" ? "new-password" : "current-password"}
                   minLength={6}
                   required
                 />
@@ -253,6 +296,48 @@ export function LoginPage({
                 </button>
               </span>
             </label>
+            {mode === "login" && (
+              <button type="button" className="forgot-password" onClick={() => changeMode("recovery")}>
+                Esqueci minha senha
+              </button>
+            )}
+            {mode === "recovery" && (
+              <>
+                <label className="password-field">
+                  Confirmar nova senha
+                  <span>
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(event) => {
+                        setConfirmPassword(event.target.value);
+                        clearFormError();
+                      }}
+                      placeholder="Digite a nova senha novamente"
+                      autoComplete="new-password"
+                      minLength={6}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((value) => !value)}
+                      aria-label={
+                        showConfirmPassword ? "Ocultar confirmação da senha" : "Mostrar confirmação da senha"
+                      }
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </span>
+                </label>
+                <div className="password-recovery-notice">
+                  <ShieldCheck size={18} />
+                  <p>
+                    Nesta versão de demonstração, a redefinição fica salva somente neste dispositivo. Em
+                    produção, a identidade será confirmada por código ou link enviado ao e-mail.
+                  </p>
+                </div>
+              </>
+            )}
             {mode === "signup" && selectedRole === "customer" && (
               <section className="customer-signup-legal" aria-label="Termos para criar conta de Cliente">
                 <div className="customer-signup-legal-heading">
@@ -357,9 +442,14 @@ export function LoginPage({
                 {formError}
               </p>
             )}
+            {formSuccess && (
+              <p className="inline-success" role="status">
+                {formSuccess}
+              </p>
+            )}
             <button type="submit" className="primary-action w-full">
-              {mode === "login" ? "Entrar" : "Criar conta"} como {roleLabels[selectedRole]}{" "}
-              <ChevronRight size={18} />
+              {mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Redefinir senha"} como{" "}
+              {roleLabels[selectedRole]} <ChevronRight size={18} />
             </button>
           </form>
         </div>
