@@ -141,13 +141,13 @@ As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md]
 
 Suite atual:
 
-- 58 testes em `App.test.tsx`;
-- 3 testes do componente de abertura;
-- 68 testes de domínio/utilidades;
-- **129 testes Vitest**;
+- 60 testes em `App.test.tsx`;
+- 4 testes do componente de abertura;
+- 81 testes de componentes, domínio e utilidades;
+- **145 testes Vitest**;
 - 8 testes da política de sincronização do repositório em `scripts/change-sync-policy-checks.mjs`.
 
-O `npm run check` executa lint, 129 testes Vitest, 8 testes de governança e build.
+O `npm run check` executa lint, 145 testes Vitest, 8 testes de governança e build.
 
 CI:
 
