@@ -1,6 +1,6 @@
 # LGPD e privacidade — Feiraê
 
-Atualizado em 26/09/2026 com inventário baseado nas chaves e campos atuais do protótipo.
+Atualizado em 28/09/2026 com inventário baseado nas chaves e campos atuais do protótipo.
 
 Este documento descreve os dados realmente mantidos pelo app atual. A política pública final exige revisão jurídica antes de produção.
 
@@ -387,3 +387,10 @@ Princípios aplicados no protótipo:
 - o ícone **Casa do cliente** representa o endereço de entrega já informado no pedido e não cria nova coleta de dado.
 
 Produção deve definir retenção curta para localização de Entregador, acesso por papel/pedido, registro da transparência apresentada, descarte ou anonimização após a finalidade e avaliação específica de segurança do canal realtime.
+
+
+## Revisão de identidade — 28/09/2026
+
+A padronização visual do Feiraê foi revisada contra este inventário de privacidade. Ela não introduz nova categoria de dado pessoal, nova finalidade de tratamento, novo compartilhamento nem nova base legal.
+
+Os componentes jurídicos e documentais passaram a reutilizar a identidade oficial da marca, mas o conteúdo e o comportamento de tratamento de dados permanecem inalterados nesta mudança.
