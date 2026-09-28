@@ -66,6 +66,9 @@ select,
 textarea {
   font: inherit;
 }
+select {
+  color-scheme: light;
+}
 button {
   cursor: pointer;
 }
