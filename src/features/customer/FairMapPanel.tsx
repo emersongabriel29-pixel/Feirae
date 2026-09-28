@@ -181,7 +181,7 @@ export function FairMapPanel({
                   )
                 }
               >
-                <Navigation size={16} /> Rota
+                <Navigation size={16} /> Rota no Feiraê
               </button>
             </div>
           </article>
