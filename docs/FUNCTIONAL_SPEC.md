@@ -846,3 +846,22 @@ Regras funcionais:
 9. o Google My Maps permanece somente como link público de referência, sem conteúdo incorporado no app.
 
 A camada atual é uma visualização geográfica leve e progressiva: à medida que coordenadas oficiais forem persistidas no backend, elas substituem automaticamente o fallback regional.
+
+## Mapa de acompanhamento de pedidos — 28/09/2026
+
+O **Mapa Feiraê** passa a acompanhar também o fluxo do pedido para Cliente, Feirante e Entregador.
+
+Regras:
+
+1. pedidos com entrega exibem **Feira → bancas → casa do cliente**;
+2. a casa do cliente é um destino visual próprio, com ícone de residência;
+3. o Cliente vê o deslocamento dentro da tela **Acompanhar pedido**;
+4. o Feirante vê o mesmo mapa dentro do pedido selecionado, com sua banca destacada;
+5. o Entregador vê o mapa na corrida ativa, junto da rota operacional e do percurso interno da feira;
+6. quando o Entregador já autorizou GPS na configuração de entrega, uma corrida ativa pode publicar snapshots de localização no registro compartilhado do pedido;
+7. Cliente e Feirante exibem o último snapshot disponível do Entregador;
+8. sem snapshot de GPS, a moto é posicionada apenas pela etapa operacional e a interface deve dizer explicitamente que não é localização em tempo real;
+9. o mapa não substitui o provedor externo de navegação curva-a-curva; o CTA do Entregador continua abrindo GPS para o endereço do cliente;
+10. pedidos de retirada não exibem a casa; exibem **Retirada na feira**.
+
+No protótipo atual, os snapshots são persistidos na camada local compartilhada do pedido. Produção exige canal backend em tempo real, autenticação e política de retenção.
