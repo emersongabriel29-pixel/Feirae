@@ -59,6 +59,7 @@ import {
 } from "../../domain/feiraeNotifications";
 import { readSharedStores, readStoreByIdentity, syncVendorMarketplace } from "../../domain/marketplaceBridge";
 import { pickupVerificationPayload } from "../../domain/fairInternalRouting";
+import { OrderRouteMap } from "../../components/OrderRouteMap";
 import { storeIdFor, vendorIdFor } from "../../domain/identity";
 import { consumeInventory, releaseInventoryItems } from "../../domain/inventoryBridge";
 import { readFileForLocalStorage, storedFileLabel } from "../../domain/storedFile";
@@ -452,6 +453,9 @@ export function FeiranteOperations({
   }, [bankProfile.fairName, bankProfile.name, session.email, setOrders, unifiedOrderRevision]);
 
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
+  const selectedUnifiedOrder = selectedOrder
+    ? readUnifiedOrders().find((order) => order.id === selectedOrder.id)
+    : undefined;
   const accountVendorId = vendorIdFor(session.email);
   const vendorUnifiedOrders = readUnifiedOrders().filter((order) =>
     order.vendors?.some(
@@ -1141,6 +1145,15 @@ export function FeiranteOperations({
                     title={`${selectedOrder.id} · ${selectedOrder.customer}`}
                     description={`${selectedOrder.items.length} itens · ${money(selectedOrder.value)} · ${selectedOrder.city}`}
                   />
+                  {selectedUnifiedOrder && (
+                    <div className="mt-4">
+                      <OrderRouteMap
+                        order={selectedUnifiedOrder}
+                        audience="vendor"
+                        highlightVendorName={bankProfile.name}
+                      />
+                    </div>
+                  )}
                   <div className="module-kpi-strip">
                     <article>
                       <strong>{orderWeight(selectedOrder).toFixed(1)} kg</strong>
