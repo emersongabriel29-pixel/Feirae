@@ -113,6 +113,7 @@ function emptyProduct(): VendorProduct {
   return {
     id: 0,
     name: "",
+    // Produto novo exige escolha explícita para não classificar como Frutas por padrão.
     category: "",
     description: "",
     stock: 0,
