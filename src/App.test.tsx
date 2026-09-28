@@ -725,6 +725,32 @@ describe("Feiraê role access", () => {
     expect(screen.queryByText(/minha feira/i)).not.toBeInTheDocument();
   });
 
+  it("requires the vendor to choose a product category when creating a product", () => {
+    render(<App />);
+    loginAs("feirante");
+    fireEvent.click(screen.getAllByRole("button", { name: /^produtos$/i })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /adicionar produto/i }));
+
+    const category = screen.getByLabelText(/categoria do produto/i);
+    expect(category).toBeRequired();
+    expect(category).toHaveValue("");
+    expect(screen.getByRole("option", { name: /selecione uma categoria/i })).toBeDisabled();
+    expect(screen.getByRole("option", { name: /pescados e frutos do mar/i })).toBeInTheDocument();
+
+    fireEvent.change(category, { target: { value: "Pescados e frutos do mar" } });
+    fireEvent.change(screen.getByLabelText(/nome do produto/i), {
+      target: { value: "Tilápia fresca" },
+    });
+    fireEvent.change(screen.getByLabelText(/preço por un/i), {
+      target: { value: "29.90" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /salvar produto/i }));
+
+    const createdProduct = screen.getByText("Tilápia fresca").closest("article");
+    expect(createdProduct).not.toBeNull();
+    expect(within(createdProduct as HTMLElement).getByText(/pescados e frutos do mar/i)).toBeInTheDocument();
+  });
+
   it("lets the vendor manage products and inventory in the demo", () => {
     render(<App />);
     loginAs("feirante");

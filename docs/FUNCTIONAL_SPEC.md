@@ -918,3 +918,15 @@ Comportamento:
 - PWA/favicon usam o símbolo oficial;
 - a página `/gestao/` é um shell visual e não executa ações administrativas reais;
 - nenhum fluxo de Cliente, Feirante ou Entregador foi removido ou renomeado por esta revisão.
+
+## Categoria obrigatória de produto — 28/09/2026
+
+Todo novo produto cadastrado pelo Feirante deve possuir uma categoria válida da lista `productCategories`.
+
+Regras:
+
+- não existe categoria padrão automática para produto novo;
+- categoria é obrigatória antes de salvar;
+- edição preserva a categoria existente;
+- a categoria é sincronizada para o catálogo compartilhado e usada pelos filtros do Cliente;
+- categorias não cadastradas na lista oficial não devem ser persistidas pelo formulário.

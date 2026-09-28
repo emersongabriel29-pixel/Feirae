@@ -486,3 +486,21 @@ QA manual recomendado:
 - senha com menos de 6 caracteres;
 - 360, 390 e 412 px com teclado virtual aberto;
 - conferir que nenhuma senha aparece em localStorage em texto aberto.
+
+## QA — categoria no cadastro de produto — 28/09/2026
+
+Cobertura adicionada em `App.test.tsx`:
+
+- abre **Feirante → Produtos → Adicionar produto**;
+- confirma que o select de categoria é obrigatório;
+- confirma placeholder **Selecione uma categoria**;
+- confirma presença de categoria oficial, incluindo **Pescados e frutos do mar**;
+- seleciona categoria, preenche o produto e salva;
+- confirma que a categoria escolhida aparece no produto salvo.
+
+QA manual:
+
+- testar criação em mobile 360/390/412 px;
+- testar edição de produto existente mantendo a categoria atual;
+- criar produtos em categorias diferentes e conferir filtros no Cliente;
+- garantir que nenhum novo produto receba **Frutas** por padrão sem escolha do Feirante.

@@ -642,3 +642,16 @@ No estado de recuperação:
 - um aviso verde de segurança explica que a redefinição atual é local ao protótipo;
 - erro usa o padrão `inline-error` e sucesso usa `inline-success`;
 - o CTA principal passa a ser **Redefinir senha como Cliente/Feirante/Entregador**.
+
+## Categoria no cadastro de produto — 28/09/2026
+
+No módulo **Feirante → Produtos**, a categoria é uma escolha explícita e obrigatória.
+
+Padrão visual e de interação:
+
+- novo produto inicia com o placeholder **Selecione uma categoria**;
+- nenhuma categoria é presumida automaticamente;
+- o seletor usa a lista oficial de categorias do Feiraê;
+- a categoria escolhida permanece selecionada ao editar um produto existente;
+- texto de apoio explica que a categoria organiza vitrine e filtros do Cliente;
+- a categoria também aparece no resumo do produto dentro da gestão do Feirante.
