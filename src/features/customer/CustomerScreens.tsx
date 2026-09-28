@@ -2216,7 +2216,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
 
   function useCurrentLocation() {
     if (!navigator.geolocation) {
-      setLocationMessage("Seu navegador não oferece localização por GPS.");
+      setLocationMessage(\n        "Não foi possível acessar sua localização neste ambiente. Você pode informar seu CEP ou preencher o endereço manualmente.",\n      );
       return;
     }
 
@@ -2346,7 +2346,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       },
       () => {
         setLocationLoading(false);
-        setLocationMessage("Não foi possível acessar o GPS. Você pode preencher o endereço manualmente.");
+        setLocationMessage(\n          "Não foi possível acessar sua localização neste ambiente. Você pode informar seu CEP ou preencher o endereço manualmente.",\n        );
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
     );
