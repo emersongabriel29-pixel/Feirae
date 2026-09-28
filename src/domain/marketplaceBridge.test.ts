@@ -49,6 +49,8 @@ describe("marketplace bridge", () => {
           id: 1,
           name: "Cesta premium",
           category: "Frutas",
+          description: "Frutas selecionadas pela banca.",
+          packageSize: "1 cesta de 2,5 kg",
           stock: 4,
           active: true,
           price: 45,
@@ -63,6 +65,8 @@ describe("marketplace bridge", () => {
     expect(catalog[0].name).toBe("Cesta premium");
     expect(catalog[0].price).toBe(45);
     expect(catalog[0].stock).toBe(4);
+    expect(catalog[0].description).toBe("Frutas selecionadas pela banca.");
+    expect(catalog[0].packageSize).toBe("1 cesta de 2,5 kg");
     expect(readSharedStores()[0].minimumOrderAmount).toBe(25);
   });
 
