@@ -469,7 +469,6 @@ Critério de regressão: nenhuma nova tela deve reconstruir “Feiraê” com te
 - pedido mínimo mostra sempre o valor configurado da banca;
 - subtotal do carrinho não substitui o texto do mínimo; o estado de cumprimento aparece separadamente.
 
-
 ## GPS e seletores — 28/09/2026
 
 ### Endereço

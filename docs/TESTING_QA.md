@@ -452,7 +452,6 @@ Cobertura desta rodada:
 
 QA manual obrigatório em 360, 390 e 412 px: confirmar dois produtos lado a lado, stepper legível, endereço preenchido pelo GPS e abertura do painel de rota sem salto para aplicativo externo.
 
-
 ## QA — fallback de GPS e selects — 28/09/2026
 
 Cobertura adicionada em `App.test.tsx`:

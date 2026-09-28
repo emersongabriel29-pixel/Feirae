@@ -617,7 +617,6 @@ Paleta oficial sincronizada com o styleboard aprovado:
 - Amarelo Apoio: `#FFC107`;
 - Fundo Creme: `#FFF8EB`.
 
-
 ## Seletores claros e consistentes — 28/09/2026
 
 Os seletores de estado, cidade/região e cancelamento seguem a linguagem visual do Feiraê em vez do dropdown escuro padrão do navegador quando o ambiente permite estilização.
