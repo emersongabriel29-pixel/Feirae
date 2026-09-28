@@ -890,3 +890,19 @@ Informações mostradas quando disponíveis:
 - promoções ativas aplicáveis ao produto.
 
 Campos de operação interna, como estoque mínimo de reposição, não são expostos ao Cliente.
+
+## Quantidade do produto diretamente no card — 28/09/2026
+
+Ao adicionar um produto pela primeira vez, o botão **+** do card deve virar um controle de quantidade **− n +**.
+
+Regras:
+
+- o número central mostra quantas unidades daquele produto já estão na sacola;
+- **+** adiciona mais uma unidade;
+- **−** remove uma unidade;
+- ao chegar a zero, o controle volta a ser apenas o botão **+**;
+- o **+** fica desabilitado quando a quantidade atinge o estoque disponível;
+- se a banca estiver fechada, novas adições permanecem bloqueadas, mas o Cliente ainda pode reduzir/remover a quantidade já existente;
+- a quantidade é a mesma em Início, Catálogo, Feira, Banca e Favoritos porque todas as telas usam o estado real da sacola.
+
+O controle não mantém um contador local independente; ele reflete diretamente `cart[product.id]`.

@@ -567,3 +567,18 @@ Hierarquia visual:
 7. preço/unidade e CTA adicionar.
 
 A tela inicial reutiliza esse mesmo card para não criar uma versão visualmente mais pobre do catálogo.
+
+## Stepper de quantidade no card de produto
+
+O componente visual `.product-quantity-control` substitui o botão de adicionar quando a quantidade é maior que zero.
+
+Composição:
+
+- botão de diminuir à esquerda;
+- quantidade central com números tabulares;
+- botão de aumentar à direita;
+- borda e estados usando os tokens verdes do Feiraê;
+- área mínima de toque compatível com `--fe-touch`;
+- `aria-live` no valor para anunciar mudanças de quantidade.
+
+A redução para zero deve restaurar o CTA **+** original, mantendo consistência visual com produtos ainda não adicionados.

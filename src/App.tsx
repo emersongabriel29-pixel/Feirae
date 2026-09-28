@@ -718,6 +718,8 @@ export default function App() {
                 onVendors={() => openScreen("vendors")}
                 onTracking={() => openOrderTracking()}
                 onAdd={addProductToCart}
+                onRemove={removeFromCart}
+                cart={cart}
                 favorites={favorites}
                 onFavorite={toggleFavorite}
               />
@@ -739,6 +741,8 @@ export default function App() {
                 category={category}
                 onCategory={setCategory}
                 onAdd={addProductToCart}
+                onRemove={removeFromCart}
+                cart={cart}
                 favorites={favorites}
                 onFavorite={toggleFavorite}
               />
@@ -768,6 +772,8 @@ export default function App() {
             onMap={openMap}
             onVendors={() => openScreen("vendors")}
             onAdd={addProductToCart}
+            onRemove={removeFromCart}
+            cart={cart}
             favorites={favorites}
             onFavorite={toggleFavorite}
           />
@@ -778,6 +784,8 @@ export default function App() {
             fairName={selectedFair}
             onBack={() => openScreen("vendors")}
             onAdd={addProductToCart}
+            onRemove={removeFromCart}
+            cart={cart}
             favorites={favorites}
             onFavorite={toggleFavorite}
             storeFavorite={vendorFavorites.includes(selectedVendor)}
@@ -814,6 +822,8 @@ export default function App() {
             ids={favorites}
             vendorFavorites={vendorFavorites}
             onAdd={addProductToCart}
+            onRemove={removeFromCart}
+            cart={cart}
             onFavorite={toggleFavorite}
             onVendorFavorite={toggleVendorFavorite}
             onVendor={openFavoriteVendor}
