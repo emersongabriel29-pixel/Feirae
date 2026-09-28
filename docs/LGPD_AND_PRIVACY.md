@@ -359,12 +359,15 @@ O protótipo registra localmente termo, versão, nome, e-mail, data/hora, finger
 
 Detalhamento: [CUSTOMER_LEGAL_TERMS.md](CUSTOMER_LEGAL_TERMS.md).
 
-## Mapa externo de feiras
+## Localização no mapa de feiras
 
-O Google My Maps é tratado como conteúdo externo de terceiros.
+O mapa principal de feiras é renderizado localmente pelo Feiraê e não carrega um `iframe` de terceiros.
 
-- O `iframe` não é carregado automaticamente; depende de ação explícita em **Abrir mapa interativo**.
-- O Feiraê não repassa ao mapa as coordenadas precisas obtidas pelo recurso interno de GPS.
-- Ao abrir o mapa, o navegador realiza uma requisição ao Google, sujeita às práticas e políticas do provedor externo.
-- O mapa incorporado não recebe nome, e-mail, telefone, endereço salvo, pedidos ou identificadores de conta por código do Feiraê.
-- Se no futuro houver envio de localização, endereço ou identificadores para um provedor cartográfico, a avaliação de base legal, transparência e minimização de dados deverá ser refeita antes da liberação.
+- O GPS só é solicitado quando o Cliente aciona o recurso de localização já existente.
+- A latitude/longitude obtida é usada localmente para mostrar a posição do Cliente e estimar a feira mais próxima.
+- O código do mapa nativo não envia essas coordenadas ao Google My Maps.
+- O link opcional **Mapa público de referência** não contém coordenadas, nome, e-mail, telefone, endereço, pedido ou identificador de conta.
+- Feiras sem coordenada própria usam centro aproximado de região; isso não adiciona dado pessoal.
+- Se no futuro houver geocodificação, tiles personalizados, telemetria cartográfica ou envio de localização a terceiro, a avaliação de transparência, minimização, retenção, transferência e base legal deverá ser refeita antes da liberação.
+
+Coordenadas de localização continuam sendo dado pessoal quando associadas ou associáveis a uma pessoa e devem permanecer limitadas à finalidade informada.
