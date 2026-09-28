@@ -10,13 +10,14 @@
   color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --fe-green: #0b662f;
+  --fe-green: #0b5e3a;
   --fe-green-dark: #064a24;
   --fe-green-soft: #edf7ef;
-  --fe-green-leaf: #2aa745;
+  --fe-green-leaf: #22c55e;
   --fe-lime: #e6f1a6;
+  --fe-orange: #ff8a00;
   --fe-amber: #ffc107;
-  --fe-cream: #fff8e7;
+  --fe-cream: #fff8eb;
   --fe-earth: #8b5e34;
   --fe-bg: #faf9f1;
   --fe-ink: #172019;
@@ -25,7 +26,7 @@
   --fe-surface: #ffffff;
   --fe-surface-soft: #f7f6ee;
   --fe-text-soft: #53615a;
-  --fe-success: #0b662f;
+  --fe-success: #0b5e3a;
   --fe-success-soft: #eaf5ed;
   --fe-warning: #8a5a00;
   --fe-warning-soft: #fff4d6;
@@ -41,7 +42,7 @@
   --fe-shadow-card: 0 10px 24px rgba(30, 45, 34, 0.055);
   --fe-shadow-raised: 0 18px 36px rgba(30, 45, 34, 0.09);
   --fe-touch: 2.75rem;
-  --fe-focus: #2aa745;
+  --fe-focus: #22c55e;
 }
 
 * {
