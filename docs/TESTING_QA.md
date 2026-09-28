@@ -403,3 +403,11 @@ QA manual recomendado:
 - Entregador: aceitar corrida com GPS configurado, conferir atualização e remoção ao finalizar/cancelar;
 - negar permissão do navegador e confirmar fallback sem quebra;
 - validar 360, 390 e 412 px sem sobreposição entre casa, moto e pins de banca.
+
+## QA do catálogo completo — 28/09/2026
+
+Cobertura adicionada:
+- `marketplaceBridge.test.ts` garante que descrição e apresentação/embalagem sobrevivem à sincronização Feirante → Cliente;
+- `App.test.tsx` garante que os destaques da tela inicial exibem informações essenciais como feira, venda, peso, estoque, volume e preço.
+
+Regressão a bloquear: qualquer tela do Cliente que mostre produto em formato de compra não deve voltar a exibir apenas imagem, nome e preço.
