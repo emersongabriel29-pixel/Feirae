@@ -718,6 +718,8 @@ export default function App() {
                 onVendors={() => openScreen("vendors")}
                 onTracking={() => openOrderTracking()}
                 onAdd={addProductToCart}
+                favorites={favorites}
+                onFavorite={toggleFavorite}
               />
             )}
             {tab === "fairs" && (
