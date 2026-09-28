@@ -1,6 +1,6 @@
 # Termos jurídicos de parceiros — Feiraê
 
-Atualizado em 26/09/2026.
+Atualizado em 28/09/2026.
 
 > Documento de implementação e governança jurídica do produto. Os textos completos exibidos ao usuário ficam em `src/domain/legalTerms.ts`. Antes de produção com pessoas e documentos reais, a identidade jurídica do operador do Feiraê, o modelo financeiro, a jurisdição de operação e as regras locais precisam ser revisados por assessoria jurídica brasileira.
 
@@ -281,3 +281,14 @@ Antes de produção em cada Estado/DF e município, revisar pelo menos:
 - tratamento de dados por fornecedores contratados.
 
 A revisão jurídica não é apenas editorial: se o modelo operacional mudar, os termos, a interface, as regras de aprovação e o comportamento real também precisam mudar juntos.
+
+
+## Identidade visual e versionamento jurídico — 28/09/2026
+
+A apresentação destes termos no aplicativo passou a usar a identidade oficial definida em `BRAND_IDENTITY.md`:
+
+- símbolo canônico Feiraê;
+- Verde Feira, Verde Folha, Amarelo Feiraê, Creme Natural e Marrom Terra;
+- mesma hierarquia visual da Central de Documentos e demais superfícies do produto.
+
+Esta atualização é **somente de apresentação/branding**. O conteúdo jurídico, a versão lógica dos termos e seus fingerprints **não foram alterados** por esta revisão. Portanto, a padronização visual não deve, por si só, exigir uma nova assinatura. Qualquer mudança futura no texto jurídico material deve criar nova versão, novo fingerprint e seguir a regra de reaceite quando aplicável.
