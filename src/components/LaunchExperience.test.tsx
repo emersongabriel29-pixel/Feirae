@@ -80,7 +80,13 @@ describe("LaunchExperience", () => {
     );
 
     act(() => {
-      vi.advanceTimersByTime(2600);
+      vi.advanceTimersByTime(6999);
+    });
+
+    expect(screen.getByRole("status", { name: "Feiraê carregando" })).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
     });
 
     expect(screen.queryByRole("status", { name: "Feiraê carregando" })).not.toBeInTheDocument();
