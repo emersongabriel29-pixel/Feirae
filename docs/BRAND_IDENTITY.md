@@ -131,3 +131,15 @@ Notificações, favicon, PWA e superfícies que precisam de um ícone usam a ver
 ## 12. Correção de renderização no preview — 28/09/2026
 
 O componente React `FeiraeBrand` usa somente assets do pacote oficial: versão transparente em superfícies amplas e versão horizontal no modo compacto. Favicon, notificações e PWA usam a versão selo aprovada. Os antigos SVGs/aliases foram removidos para impedir regressões visuais.
+
+## 13. Trio operacional oficial — 28/09/2026
+
+No produto em execução, somente três versões do pacote oficial devem ser usadas de forma recorrente:
+
+- `03_logo_fundo_transparente.webp` — marca principal para login, splash reduzido, superfícies institucionais e áreas amplas;
+- `05_versao_horizontal.webp` — cabeçalhos, barras superiores e áreas com pouca altura;
+- `09_versao_selo.webp` — favicon, PWA, notificações e espaços pequenos de marca.
+
+As versões `02`, `04`, `06`, `07` e `08` permanecem no kit oficial para peças institucionais, impressão, fundo escuro, aplicações monocromáticas e materiais específicos, mas não devem ser referenciadas diretamente pelas telas comuns do app.
+
+A checagem `npm run test:brand` protege essa regra. Ela também reprova aliases antigos e confirma que as oito artes oficiais continuam presentes no repositório.

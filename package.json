@@ -13,8 +13,9 @@
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint && npm run test && npm run test:sync-policy && npm run build",
-    "check:sync": "node scripts/check-change-sync.mjs"
+    "check": "npm run lint && npm run test && npm run test:sync-policy && npm run test:brand && npm run build",
+    "check:sync": "node scripts/check-change-sync.mjs",
+    "test:brand": "node scripts/check-brand-assets.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.546.0",
