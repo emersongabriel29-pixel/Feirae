@@ -756,7 +756,15 @@ export default function App() {
               />
             )}
             {tab === "orders" && (
-              <OrdersPage orders={orders} onTracking={openOrderTracking} onBuyAgain={buyAgain} />
+              <OrdersPage
+                orders={orders}
+                onTracking={openOrderTracking}
+                onBuyAgain={buyAgain}
+                onSupport={(orderId) => {
+                  setSelectedOrderId(orderId);
+                  openScreen("chat");
+                }}
+              />
             )}
             {tab === "profile" && session && (
               <ProfilePage session={session} onScreen={openScreen} onLogout={logout} />
@@ -860,7 +868,14 @@ export default function App() {
         )}
         {screen === "payments" && <PaymentsPage onBack={() => openCustomerTab("profile")} />}
         {screen === "ratings" && <RatingsPage orders={orders} onBack={() => openCustomerTab("profile")} />}
-        {screen === "chat" && <ChatPage onBack={() => openCustomerTab("profile")} />}
+        {screen === "chat" && (
+          <ChatPage
+            orderId={selectedOrderId ?? undefined}
+            onBack={() =>
+              selectedOrderId ? openCustomerTab("orders") : openCustomerTab("profile")
+            }
+          />
+        )}
         {screen === "settings" && <SettingsPage onBack={() => openCustomerTab("profile")} />}
         {role === "feirante" && screen === "feiranteOps" && session && (
           <FeiranteOperations session={session} onAccountUpdate={updateAccountIdentity} />
