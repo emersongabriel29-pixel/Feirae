@@ -466,3 +466,24 @@ QA manual:
 - validar selects em 360, 390, 412 e 768 px;
 - conferir fundo claro, chevron verde, foco, hover e estado desabilitado;
 - testar pelo menos Chrome Android e um navegador desktop, reconhecendo que o popup nativo aberto pode ser controlado pelo sistema operacional.
+
+
+## QA — recuperação de senha — 28/09/2026
+
+Cobertura automatizada:
+
+- `localAuth.test.ts`: redefine senha de conta local, invalida a senha antiga e aceita a nova;
+- `localAuth.test.ts`: conta demo só pode ser redefinida com o papel correto;
+- `App.test.tsx`: abre **Esqueci minha senha**, redefine a conta demo e consegue entrar com a nova senha;
+- `App.test.tsx`: confirmação diferente bloqueia a redefinição.
+
+QA manual recomendado:
+
+- Cliente, Feirante e Entregador;
+- mostrar/ocultar os dois campos de senha;
+- voltar para login sem alterar a conta;
+- e-mail inexistente;
+- papel incorreto;
+- senha com menos de 6 caracteres;
+- 360, 390 e 412 px com teclado virtual aberto;
+- conferir que nenhuma senha aparece em localStorage em texto aberto.
