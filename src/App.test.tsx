@@ -172,8 +172,9 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(banksAction as HTMLElement);
     fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
 
-    expect(screen.getByText(/^pedido mínimo$/i)).toBeInTheDocument();
-    expect(screen.getByText(/R\$ 30,00/i)).toBeInTheDocument();
+    const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
+    expect(minimumState).not.toBeNull();
+    expect(within(minimumState as HTMLElement).getByText(/R\$ 30,00/i)).toBeInTheDocument();
   });
 
   it("shows the demonstration account identity instead of visitor", () => {
