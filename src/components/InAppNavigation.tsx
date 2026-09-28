@@ -18,9 +18,7 @@ function distanceKm(a: Coords, b: Coords) {
   const dLng = (b.lng - a.lng) * rad;
   const lat1 = a.lat * rad;
   const lat2 = b.lat * rad;
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
@@ -85,19 +83,12 @@ export function InAppNavigation({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section
-        className="in-app-route"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="in-app-route-title"
-      >
+      <section className="in-app-route" role="dialog" aria-modal="true" aria-labelledby="in-app-route-title">
         <header className="in-app-route__header">
           <div>
             <span className="eyebrow">MAPA FEIRAÊ</span>
             <h2 id="in-app-route-title">Sua rota sem sair do app</h2>
-            <p>
-              O Feiraê é o mapa principal. Google Maps e Waze ficam disponíveis como opções externas.
-            </p>
+            <p>O Feiraê é o mapa principal. Google Maps e Waze ficam disponíveis como opções externas.</p>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Fechar mapa">
             <X size={20} />
@@ -126,10 +117,7 @@ export function InAppNavigation({
               d="M80 420 C230 330 350 380 505 292 C642 215 772 300 935 155"
               className="in-app-route__street"
             />
-            <path
-              d="M210 40 C280 160 240 280 330 495"
-              className="in-app-route__street"
-            />
+            <path d="M210 40 C280 160 240 280 330 495" className="in-app-route__street" />
             <path
               d="M105 405 C250 324 366 363 510 286 C665 204 770 284 892 170"
               className="in-app-route__path"

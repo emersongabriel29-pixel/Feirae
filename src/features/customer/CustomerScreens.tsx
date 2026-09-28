@@ -450,12 +450,8 @@ export function ProductCard({
       (promotion) =>
         promotionIsActive(promotion) &&
         (!promotion.target ||
-          product.name
-            .toLocaleLowerCase("pt-BR")
-            .includes(promotion.target.toLocaleLowerCase("pt-BR")) ||
-          product.category
-            .toLocaleLowerCase("pt-BR")
-            .includes(promotion.target.toLocaleLowerCase("pt-BR"))),
+          product.name.toLocaleLowerCase("pt-BR").includes(promotion.target.toLocaleLowerCase("pt-BR")) ||
+          product.category.toLocaleLowerCase("pt-BR").includes(promotion.target.toLocaleLowerCase("pt-BR"))),
     ) ?? null;
   const freeShipping = Boolean(store?.absorbDeliveryFee) || activePromotion?.type === "freteGratis";
 
@@ -481,9 +477,7 @@ export function ProductCard({
         )}
         <small>{product.category}</small>
         {store && (
-          <span
-            className={store.isOpen ? "product-store-status is-open" : "product-store-status is-closed"}
-          >
+          <span className={store.isOpen ? "product-store-status is-open" : "product-store-status is-closed"}>
             {store.isOpen ? "Aberta" : "Fechada"}
           </span>
         )}
@@ -495,10 +489,7 @@ export function ProductCard({
           <h3>{product.name}</h3>
         </div>
 
-        <div
-          className="product-card__summary"
-          aria-label={`Informações resumidas de ${product.name}`}
-        >
+        <div className="product-card__summary" aria-label={`Informações resumidas de ${product.name}`}>
           <span title="Avaliação da banca">
             <Star size={11} /> {ratingLabel(metrics.rating)}
           </span>
@@ -512,17 +503,12 @@ export function ProductCard({
           <div className="product-card__price">
             <strong>{money(product.price)}</strong>
             <span>/{product.unit}</span>
-            {minimumOrder !== null && minimumOrder > 0 && (
-              <small>Pedido mín. {money(minimumOrder)}</small>
-            )}
+            {minimumOrder !== null && minimumOrder > 0 && <small>Pedido mín. {money(minimumOrder)}</small>}
             {variableWeight && <small>Peso/valor podem variar</small>}
           </div>
 
           {quantity > 0 ? (
-            <div
-              className="product-quantity-control"
-              aria-label={`Quantidade de ${product.name} na sacola`}
-            >
+            <div className="product-quantity-control" aria-label={`Quantidade de ${product.name} na sacola`}>
               <button
                 type="button"
                 onClick={() => onRemove(product.id)}
@@ -2303,11 +2289,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
             address.county ??
             "";
           const detectedNeighborhood =
-            address.suburb ??
-            address.neighbourhood ??
-            address.quarter ??
-            address.city_district ??
-            "";
+            address.suburb ?? address.neighbourhood ?? address.quarter ?? address.city_district ?? "";
           const detectedStreet =
             address.road ??
             address.pedestrian ??
@@ -2364,9 +2346,7 @@ export function AddressesPage({ onBack }: { onBack: () => void }) {
       },
       () => {
         setLocationLoading(false);
-        setLocationMessage(
-          "Não foi possível acessar o GPS. Você pode preencher o endereço manualmente.",
-        );
+        setLocationMessage("Não foi possível acessar o GPS. Você pode preencher o endereço manualmente.");
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
     );
