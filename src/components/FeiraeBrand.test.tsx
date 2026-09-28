@@ -11,9 +11,13 @@ describe("FeiraeBrand", () => {
     );
   });
 
-  it("uses the compact variant without changing the brand asset", () => {
-    render(<FeiraeBrand compact />);
+  it("supports a compact decorative variant for labelled controls", () => {
+    render(<FeiraeBrand compact decorative />);
     expect(screen.getByTestId("feirae-brand-lockup")).toHaveClass("is-compact");
-    expect(screen.getByRole("img")).toHaveAttribute("src", "/brand/feirae-logo-horizontal.svg");
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(document.querySelector(".feirae-brand-lockup__image")).toHaveAttribute(
+      "src",
+      "/brand/feirae-logo-horizontal.svg",
+    );
   });
 });
