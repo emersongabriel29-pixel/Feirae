@@ -225,6 +225,21 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/rota e o frete usam este endereço/i)).toBeInTheDocument();
   });
 
+  it("offers CEP/manual fallback when geolocation is unavailable", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getAllByRole("button", { name: /^perfil$/i })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /meus endereços/i }));
+    fireEvent.click(screen.getByRole("button", { name: /adicionar endereço/i }));
+    fireEvent.click(screen.getByRole("button", { name: /usar minha localização atual/i }));
+
+    expect(
+      screen.getByText(
+        /não foi possível acessar sua localização neste ambiente.*informar seu cep.*preencher o endereço manualmente/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("allows showing and hiding the password", () => {
     render(<App />);
     expect(screen.getByText(/a feira do seu jeito/i)).toBeInTheDocument();
