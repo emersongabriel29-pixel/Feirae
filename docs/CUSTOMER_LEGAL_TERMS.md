@@ -1,6 +1,6 @@
 # Termos do Cliente — Feiraê
 
-Atualizado em 27/09/2026.
+Atualizado em 28/09/2026.
 
 ## Objetivo
 
@@ -119,3 +119,10 @@ Também deve existir identidade completa do controlador, canal de privacidade e 
 - Decreto nº 7.962/2013: https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2013/decreto/d7962.htm
 - LGPD: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm
 - ANPD: https://www.gov.br/anpd/pt-br/acesso-a-informacao/perguntas-frequentes/perguntas-frequentes
+
+
+## Identidade visual e validade do aceite — 28/09/2026
+
+O bloco jurídico de cadastro do Cliente usa agora a identidade oficial Feiraê por meio do símbolo canônico compartilhado com o restante do app.
+
+A revisão de marca **não altera** o conteúdo dos Termos de Uso nem do Aviso de Privacidade, suas versões ou fingerprints. A apresentação visual pode evoluir sem invalidar um aceite existente; já uma alteração material do texto jurídico deve ser versionada e tratada separadamente, com novo aceite quando necessário.
