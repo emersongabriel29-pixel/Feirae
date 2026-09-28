@@ -395,7 +395,7 @@ export function Header(props: HeaderProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex min-h-16 items-center gap-3 py-2">
           <button onClick={props.onHome} className="brand" aria-label="Ir para o início do Feiraê">
-            <FeiraeBrand compact />
+            <FeiraeBrand compact decorative />
           </button>
           {props.role === "customer" && (
             <nav className="ml-3 hidden items-center gap-1 lg:flex" aria-label="Navegação principal">
