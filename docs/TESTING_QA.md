@@ -369,8 +369,17 @@ O teste estrutural evita que a splash volte silenciosamente para a composição 
 
 O teste de `LaunchExperience` valida a presença estrutural da banca, moto e pin na cena contínua. Os antigos SVGs estáticos de `public/launch/` foram removidos e não fazem mais parte da implementação.
 
-## Mapa interativo das feiras do DF — 27/09/2026
+## QA do mapa nativo das feiras do DF — 27/09/2026
 
-- `src/features/customer/FairMapPanel.test.tsx` cobre o carregamento sob demanda do Google My Maps.
-- O teste confirma que o `iframe` não é criado antes da ação do usuário, reduzindo carregamento externo desnecessário.
-- Também valida URL do mapa incorporado, `loading="lazy"`, estado acessível `aria-expanded` e acesso ao mapa completo em nova aba.
+Cobertura automatizada:
+
+- `src/domain/fairMap.test.ts` valida prioridade de coordenada exata, fallback regional, projeção dentro dos limites visuais e cálculo da feira mais próxima;
+- `src/features/customer/FairMapPanel.test.tsx` valida renderização sem `iframe`, presença dos pins, abertura direta da feira, proximidade por GPS e link externo de referência;
+- a suíte de App continua cobrindo navegação Cliente, seleção de feira, bancas e catálogo.
+
+Limites de QA:
+
+- o mapa atual não é um mapa viário navegável e não substitui teste de rota;
+- coordenadas regionais são aproximações temporárias;
+- validação visual deve conferir sobreposição de pins e legibilidade em 360, 390 e 412 px;
+- coordenadas exatas de produção devem receber casos de teste quando passarem a vir do backend.
