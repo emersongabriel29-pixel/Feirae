@@ -1536,9 +1536,7 @@ export function Checkout({
   const minimumByVendor = Object.fromEntries(
     vendorNames.map((vendorName) => [
       vendorName,
-      normalizeVendorMinimumOrder(
-        storesByVendor.get(vendorName)?.minimumOrderAmount ?? 0,
-      ),
+      normalizeVendorMinimumOrder(storesByVendor.get(vendorName)?.minimumOrderAmount ?? 0),
     ]),
   );
   const deliveryAllowed = stores.every((store) => store?.deliveryEnabled !== false);
