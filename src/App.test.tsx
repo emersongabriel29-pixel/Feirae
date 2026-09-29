@@ -374,10 +374,9 @@ describe("Feiraê customer flow", () => {
     expect(within(sitioSection2 as HTMLElement).queryByText(/mínimo r\$/i)).not.toBeInTheDocument();
   });
 
-  it("clears the whole cart from the cart drawer after confirmation", () => {
+  it("clears the whole cart from the cart drawer with in-app confirmation", () => {
     window.localStorage.removeItem("feirae:cart:cliente@feirae.test");
     window.localStorage.removeItem("feirae:cart:guest");
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
 
     render(<App />);
     loginAs("cliente");
@@ -391,9 +390,11 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
     fireEvent.click(screen.getByRole("button", { name: /limpar carrinho/i }));
 
-    expect(confirm).toHaveBeenCalledWith("Limpar todos os produtos do carrinho?");
+    expect(screen.getByRole("button", { name: /confirmar limpeza/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /manter itens/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /confirmar limpeza/i }));
+
     expect(screen.getByText(/sua sacola está vazia/i)).toBeInTheDocument();
-    confirm.mockRestore();
   });
 
   it("shows the demonstration account identity instead of visitor", () => {
@@ -802,7 +803,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/ter–dom 7h–18h/i)).toBeInTheDocument();
   });
 
-  it("offers pay-now and pay-on-delivery methods while keeping weight as an estimate", () => {
+  it("uses exact commercial presentation and keeps weight only as logistics data", () => {
     render(<App />);
     loginAs("cliente");
     const search = screen.getByPlaceholderText(/busque produtos/i);
@@ -818,8 +819,11 @@ describe("Feiraê customer flow", () => {
     expect(screen.getAllByRole("button", { name: /cartão/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /^dinheiro/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /cartão na maquininha/i })).toBeInTheDocument();
-    expect(screen.getByText(/há produtos vendidos por peso/i)).toBeInTheDocument();
-    expect(screen.getByText(/total estimado/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/1 kg/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/peso logístico estimado/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/peso\/valor podem variar/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/total estimado/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/^total$/i)).toBeInTheDocument();
     expect(screen.queryByText(/veículo indicado/i)).not.toBeInTheDocument();
   });
 
@@ -938,6 +942,24 @@ describe("Feiraê customer flow", () => {
 });
 
 describe("Feiraê role access", () => {
+  it("reopens a persisted customer session on Início instead of a stale deep link", () => {
+    window.localStorage.setItem(
+      "feirae:session",
+      JSON.stringify({ role: "customer", email: "cliente@feirae.test", name: "Cliente" }),
+    );
+    window.location.hash = "#/cliente/pedidos";
+
+    render(<App />);
+
+    expect(window.location.hash).toBe("#/cliente/inicio");
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    expect(within(mobileNavigation).getByRole("button", { name: /^início$/i })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+
   it("discards an obsolete or invalid saved profile", () => {
     window.localStorage.setItem(
       "feirae:session",
