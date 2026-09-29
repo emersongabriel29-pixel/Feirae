@@ -809,18 +809,13 @@ export default function App() {
             onBack={() => openCustomerTab("fairs")}
             onMap={openMap}
             onVendor={openVendor}
-            onAdd={addProductToCart}
-            onRemove={removeFromCart}
-            cart={cart}
-            favorites={favorites}
-            onFavorite={toggleFavorite}
           />
         )}
         {screen === "feirante" && (
           <VendorStore
             vendorName={selectedVendor}
             fairName={selectedFair}
-            onBack={() => openScreen("vendors")}
+            onBack={() => openScreen("fair")}
             onAdd={addProductToCart}
             onRemove={removeFromCart}
             cart={cart}
