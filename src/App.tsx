@@ -35,10 +35,9 @@ import { useToast } from "./hooks/useToast";
 import { useUnifiedOrderRevision } from "./hooks/useUnifiedOrderRevision";
 import { useMarketplaceRevision } from "./hooks/useMarketplaceRevision";
 import {
-  eventNow,
   migrateUnifiedOrderAccountKey,
-  patchUnifiedOrder,
   readUnifiedOrders,
+  requestCustomerCancellation,
   upsertUnifiedOrder,
 } from "./domain/orderBridge";
 import {
@@ -58,7 +57,7 @@ import {
 } from "./domain/multiVendor";
 import { sortFairsByProximity } from "./domain/fairMap";
 import { consumeWallet } from "./domain/walletBridge";
-import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
+import { reserveInventory } from "./domain/inventoryBridge";
 import {
   authenticateLocalAccount,
   resetLocalAccountPassword,
@@ -596,76 +595,9 @@ export default function App() {
     notify(`Pedido ${id} criado e vinculado à ${details.fairName}.`);
   }
 
-  function cancelOrder(orderId: string, reason: string, details: string) {
-    const at = new Intl.DateTimeFormat("pt-BR", {
-      dateStyle: "short",
-      timeStyle: "short",
-    }).format(new Date());
-    setOrders((current) =>
-      current.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              status: "Cancelado" as const,
-              cancelReason: reason,
-              cancelDetails: details,
-              events: [...(order.events ?? []), { key: "cancelled", label: "Pedido cancelado", at }],
-            }
-          : order,
-      ),
-    );
-    const unifiedOrder = readUnifiedOrders(session?.email).find((order) => order.id === orderId);
-    releaseInventory(orderId);
-    const externalRefund =
-      unifiedOrder?.paymentStatus === "authorized" ||
-      unifiedOrder?.paymentStatus === "partially_refunded" ||
-      unifiedOrder?.paymentStatus === "refund_pending"
-        ? (unifiedOrder.total ?? 0)
-        : 0;
-    const walletRestore = unifiedOrder?.walletUsed ?? 0;
-    const refundAmount = Math.round((externalRefund + walletRestore) * 100) / 100;
-    const refund =
-      unifiedOrder && refundAmount > 0
-        ? {
-            id: `refund-${orderId}-full-${Date.now()}`,
-            reason,
-            merchandiseAmount: Math.max(
-              0,
-              Math.round((unifiedOrder.subtotal - (unifiedOrder.promotionDiscount ?? 0)) * 100) / 100,
-            ),
-            deliveryAmount: unifiedOrder.customerDeliveryFee,
-            externalAmount: externalRefund,
-            walletRestoreAmount: walletRestore,
-            amount: refundAmount,
-            status: externalRefund > 0 ? ("pending_choice" as const) : ("credited" as const),
-            createdAt: new Date().toISOString(),
-          }
-        : null;
-    patchUnifiedOrder(
-      orderId,
-      {
-        status: "cancelled",
-        cancelReason: reason,
-        cancelDetails: details,
-        total: 0,
-        walletUsed: 0,
-        paymentStatus:
-          externalRefund > 0
-            ? "refund_pending"
-            : walletRestore > 0
-              ? "refunded"
-              : unifiedOrder?.paymentStatus,
-        refundAmount: Math.round(((unifiedOrder?.refundAmount ?? 0) + refundAmount) * 100) / 100,
-        refunds: refund ? [...(unifiedOrder?.refunds ?? []), refund] : unifiedOrder?.refunds,
-      },
-      eventNow(
-        "cancelled",
-        refund ? "Pedido cancelado · escolha o destino do reembolso" : "Pedido cancelado",
-        "customer",
-        { reason, details },
-      ),
-    );
-    notify(`Cancelamento do pedido ${orderId} registrado.`);
+  function requestCancellation(orderId: string, reason: string, details: string) {
+    const result = requestCustomerCancellation(orderId, reason, details);
+    notify(result.message);
   }
 
   function openOrderTracking(orderId?: string) {
@@ -841,7 +773,7 @@ export default function App() {
           <DeliveryTracking
             order={trackedOrder}
             onBack={() => openCustomerTab("orders")}
-            onCancel={cancelOrder}
+            onCancel={requestCancellation}
           />
         )}
         {screen === "checkout" && (
