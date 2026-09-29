@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import App from "./App";
 import { cancelVendorParticipation, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
