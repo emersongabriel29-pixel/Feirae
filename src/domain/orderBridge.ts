@@ -76,6 +76,23 @@ export type UnifiedSupportTicket = {
   status: "open" | "resolved";
 };
 
+export type UnifiedCustomerCancellationResponse = {
+  vendorId: string;
+  vendorName: string;
+  status: "pending" | "approved" | "declined";
+  respondedAt?: string;
+  note?: string;
+};
+
+export type UnifiedCustomerCancellationRequest = {
+  id: string;
+  reason: string;
+  details: string;
+  requestedAt: string;
+  status: "pending" | "approved" | "declined" | "partial";
+  vendorResponses: UnifiedCustomerCancellationResponse[];
+};
+
 export type UnifiedOrderRefund = {
   id: string;
   vendorId?: string;
@@ -147,6 +164,7 @@ export type UnifiedOrderRecord = {
   status: UnifiedOrderStatus;
   cancelReason?: string;
   cancelDetails?: string;
+  cancellationRequest?: UnifiedCustomerCancellationRequest;
   pickupConfirmedAt?: string;
   driver?: {
     driverKey?: string;
@@ -238,6 +256,12 @@ function normalizeOrder(order: UnifiedOrderRecord): UnifiedOrderRecord {
     items,
     vendors,
     refunds: order.refunds ?? [],
+    cancellationRequest: order.cancellationRequest
+      ? {
+          ...order.cancellationRequest,
+          vendorResponses: order.cancellationRequest.vendorResponses ?? [],
+        }
+      : undefined,
     supportTickets: order.supportTickets ?? [],
     reviews: order.reviews ?? [],
   };
@@ -356,6 +380,142 @@ export function patchVendorStatus(
       };
     }),
   );
+}
+
+export function requestCustomerCancellation(
+  orderId: string,
+  reason: string,
+  details: string,
+): { ok: boolean; message: string } {
+  const current = readRawOrders();
+  const order = current.find((item) => item.id === orderId);
+  if (!order) return { ok: false, message: "Pedido não encontrado." };
+
+  const normalized = normalizeOrder(order);
+  if (["collected", "out_for_delivery", "delivered", "cancelled"].includes(normalized.status)) {
+    return {
+      ok: false,
+      message: "Este pedido já saiu da banca. Use o suporte para tratar qualquer interrupção.",
+    };
+  }
+
+  if (normalized.cancellationRequest?.status === "pending") {
+    return { ok: false, message: "Já existe uma solicitação de cancelamento aguardando resposta." };
+  }
+
+  const activeVendors = normalized.vendors!.filter(
+    (vendor) => !["rejected", "collected", "delivered"].includes(vendor.status),
+  );
+  if (!activeVendors.length) {
+    return { ok: false, message: "Não há banca disponível para analisar o cancelamento." };
+  }
+
+  const requestedAt = new Date().toISOString();
+  const cancellationRequest: UnifiedCustomerCancellationRequest = {
+    id: `cancel-request-${orderId}-${Date.now()}`,
+    reason,
+    details,
+    requestedAt,
+    status: "pending",
+    vendorResponses: activeVendors.map((vendor) => ({
+      vendorId: vendor.vendorId,
+      vendorName: vendor.vendorName,
+      status: "pending",
+    })),
+  };
+
+  patchUnifiedOrder(
+    orderId,
+    { cancellationRequest },
+    eventNow(
+      "cancel-requested",
+      "Cliente solicitou cancelamento · aguardando resposta das bancas",
+      "customer",
+      { reason, details },
+    ),
+  );
+
+  return {
+    ok: true,
+    message:
+      activeVendors.length > 1
+        ? "Solicitação enviada às bancas. O pedido continua ativo até as respostas."
+        : "Solicitação enviada à banca. O pedido continua ativo até a resposta.",
+  };
+}
+
+function refreshCancellationRequestStatus(orderId: string) {
+  const current = readRawOrders();
+  writeUnifiedOrders(
+    current.map((order) => {
+      if (order.id !== orderId || !order.cancellationRequest) return order;
+      const responses = order.cancellationRequest.vendorResponses;
+      const pending = responses.some((response) => response.status === "pending");
+      const approved = responses.some((response) => response.status === "approved");
+      const declined = responses.some((response) => response.status === "declined");
+      const status: UnifiedCustomerCancellationRequest["status"] = pending
+        ? "pending"
+        : approved && declined
+          ? "partial"
+          : approved
+            ? "approved"
+            : "declined";
+      return normalizeOrder({
+        ...order,
+        cancellationRequest: { ...order.cancellationRequest, status },
+      });
+    }),
+  );
+}
+
+export function respondCustomerCancellation(
+  orderId: string,
+  vendorId: string,
+  decision: "approved" | "declined",
+  note = "",
+): VendorCancellationResult | null {
+  const current = readRawOrders();
+  const target = current.find((order) => order.id === orderId);
+  if (!target) return null;
+  const normalized = normalizeOrder(target);
+  const request = normalized.cancellationRequest;
+  const response = request?.vendorResponses.find((item) => item.vendorId === vendorId);
+  if (!request || !response || response.status !== "pending") return null;
+
+  const respondedAt = new Date().toISOString();
+  patchUnifiedOrder(
+    orderId,
+    {
+      cancellationRequest: {
+        ...request,
+        vendorResponses: request.vendorResponses.map((item) =>
+          item.vendorId === vendorId ? { ...item, status: decision, respondedAt, note } : item,
+        ),
+      },
+    },
+    eventNow(
+      decision === "approved" ? "cancel-request-approved" : "cancel-request-declined",
+      decision === "approved"
+        ? `${response.vendorName} aceitou o cancelamento solicitado`
+        : `${response.vendorName} não aceitou o cancelamento solicitado`,
+      "vendor",
+      { reason: request.reason, details: note },
+    ),
+  );
+
+  if (decision === "declined") {
+    refreshCancellationRequestStatus(orderId);
+    return {
+      productIds: [],
+      refund: null,
+      remainingVendorCount: normalized.vendors!.filter((vendor) => vendor.status !== "rejected").length,
+      orderCancelled: false,
+    };
+  }
+
+  const result = cancelVendorParticipation(orderId, vendorId, `Solicitação do cliente: ${request.reason}`);
+  refreshCancellationRequestStatus(orderId);
+  return result;
 }
 
 export type VendorCancellationResult = {
