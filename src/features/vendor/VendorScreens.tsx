@@ -50,6 +50,7 @@ import {
   patchUnifiedOrderItem,
   patchVendorStatus,
   readUnifiedOrders,
+  respondCustomerCancellation,
 } from "../../domain/orderBridge";
 import {
   feiraeNotificationPermission,
@@ -458,6 +459,11 @@ export function FeiranteOperations({
     ? readUnifiedOrders().find((order) => order.id === selectedOrder.id)
     : undefined;
   const accountVendorId = vendorIdFor(session.email);
+  const selectedCancellationResponse = selectedUnifiedOrder?.cancellationRequest?.vendorResponses.find(
+    (response) =>
+      response.vendorId === accountVendorId ||
+      response.vendorName === bankProfile.name,
+  );
   const vendorUnifiedOrders = readUnifiedOrders().filter((order) =>
     order.vendors?.some(
       (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
@@ -736,6 +742,32 @@ export function FeiranteOperations({
         note: update.note,
       });
     }
+  }
+
+  function respondToCancellation(order: VendorOrder, decision: "approved" | "declined") {
+    const vendorId = order.vendorId ?? vendorIdFor(session.email);
+    const result = respondCustomerCancellation(order.id, vendorId, decision);
+
+    if (!result) {
+      showNotice("A solicitação de cancelamento não está mais pendente.");
+      return;
+    }
+
+    if (decision === "approved") {
+      if (result.productIds.length) releaseInventoryItems(order.id, result.productIds);
+      updateOrder(order.id, {
+        status: "rejected",
+        rejectReason: "Cancelamento solicitado pelo cliente",
+      });
+      showNotice(
+        result.orderCancelled
+          ? `Cancelamento do pedido ${order.id} aceito. O cliente será avisado.`
+          : `Cancelamento da sua parte no pedido ${order.id} aceito. O cliente será avisado.`,
+      );
+      return;
+    }
+
+    showNotice(`Cancelamento do pedido ${order.id} não aceito. O pedido continua ativo.`);
   }
 
   function acceptOrder(order: VendorOrder) {
@@ -1171,6 +1203,36 @@ export function FeiranteOperations({
                       />
                     </div>
                   )}
+                  {selectedCancellationResponse?.status === "pending" && (
+                    <div className="cancel-panel cancellation-review-panel">
+                      <b>Cliente solicitou cancelamento</b>
+                      <p>
+                        Motivo: {selectedUnifiedOrder?.cancellationRequest?.reason ?? "Não informado"}.
+                        {selectedUnifiedOrder?.cancellationRequest?.details
+                          ? ` ${selectedUnifiedOrder.cancellationRequest.details}`
+                          : ""}
+                      </p>
+                      <p>
+                        Antes de aceitar, confirme se os produtos ainda não saíram da banca. Depois da coleta,
+                        o caso deve seguir para suporte.
+                      </p>
+                      <div className="module-action-row">
+                        <button
+                          className="secondary-action"
+                          onClick={() => respondToCancellation(selectedOrder, "declined")}
+                        >
+                          Continuar pedido
+                        </button>
+                        <button
+                          className="primary-action"
+                          onClick={() => respondToCancellation(selectedOrder, "approved")}
+                        >
+                          <XCircle size={17} /> Aceitar cancelamento
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="module-kpi-strip">
                     <article>
                       <strong>{orderWeight(selectedOrder).toFixed(1)} kg</strong>
