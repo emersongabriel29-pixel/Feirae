@@ -707,3 +707,25 @@ A ação de suporte pode usar superfície amarela/creme de apoio, sem competir c
 ### Contexto de suporte
 
 `.support-order-context` usa borda e fundo verde suave, ícone de conversa e texto curto. Ele informa qual pedido está ligado ao atendimento sem transformar o suporte em uma segunda tela de detalhe do pedido.
+
+
+## Carrinho: limpeza e erro de mínimo — 28/09/2026
+
+### cart-toolbar
+
+Faixa compacta acima dos itens da sacola. Mostra a quantidade total de unidades e a ação **Limpar carrinho** sem competir com o CTA **Finalizar pedido**.
+
+A ação cart-clear-button usa hierarquia destrutiva secundária: texto/ícone de alerta, alvo de toque mínimo e confirmação antes de apagar o conteúdo.
+
+### cart-minimum-error
+
+Substitui o antigo resumo permanente de pedido mínimo dentro da sacola.
+
+A superfície só existe em estado inválido:
+
+- título **Pedido mínimo não atingido**;
+- uma linha por banca bloqueada;
+- quanto falta;
+- valor mínimo definido por aquela banca.
+
+Quando todas as bancas atendem a regra ou não possuem mínimo configurado, a superfície não é renderizada. A página da banca continua sendo a superfície canônica para exibir o valor mínimo e o progresso da compra.
