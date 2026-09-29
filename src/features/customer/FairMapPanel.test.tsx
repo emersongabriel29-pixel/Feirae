@@ -38,7 +38,9 @@ describe("FairMapPanel", () => {
       "src",
       expect.stringContaining("openstreetmap.org/export/embed.html"),
     );
-    expect(screen.getByRole("button", { name: /selecionar feira do produtor rural/i })).toBeInTheDocument();
+    const feiraMarker = screen.getByRole("button", { name: /selecionar feira do produtor rural/i });
+    expect(feiraMarker).toBeInTheDocument();
+    expect(feiraMarker.querySelector(".lucide-store")).not.toBeNull();
   });
 
   it("seleciona o ponto antes de abrir explicitamente a feira", () => {
