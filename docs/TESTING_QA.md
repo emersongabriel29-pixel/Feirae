@@ -558,7 +558,6 @@ QA manual recomendado:
 - limpar carrinho em 360/390/412 px e confirmar que a sacola permanece aberta no estado vazio;
 - validar compra multi-banca com apenas uma das bancas abaixo do mínimo.
 
-
 ## QA — entrada premium — 28/09/2026
 
 Cobertura automatizada em `App.test.tsx`:
