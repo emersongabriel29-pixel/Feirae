@@ -656,3 +656,17 @@ Cobertura do fluxo Cliente:
 - após o bloco de produtos, a rolagem continua para a próxima banca.
 
 QA visual obrigatório em 360/390/412 px: perfil, badges e produtos devem permanecer no mesmo bloco visual, sem sobreposição ou rolagem horizontal.
+
+## QA — métricas, carrinho, cancelamento e sessão — 29/09/2026
+
+Cobertura adicionada/alterada:
+
+- carrinho usa confirmação interna e limpa os itens sem depender de diálogo nativo do navegador;
+- checkout não usa mais “Peso/valor podem variar” nem “Total estimado” para produtos de apresentação fixa;
+- políticas de farinha/grãos, folhas/ervas e pescados possuem testes de unidade;
+- solicitação de cancelamento mantém o pedido ativo enquanto aguarda as bancas;
+- multi-banca suporta aceite parcial e recusa de outra banca;
+- solicitação normal é bloqueada depois da coleta;
+- sessão de Cliente persistida em URL profunda reabre em **Início**.
+
+QA manual ainda necessário para câmera/galeria, persistência real entre sessões do navegador e confirmação visual em 360/390/412 px.
