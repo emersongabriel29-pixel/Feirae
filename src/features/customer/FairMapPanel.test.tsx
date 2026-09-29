@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Fair } from "../../types";
+import { sortFairsByProximity } from "../../domain/fairMap";
 import { FEIRAE_DF_MAP_VIEW_URL, FairMapPanel } from "./FairMapPanel";
 
 const fairs: Fair[] = [
@@ -68,6 +69,15 @@ describe("FairMapPanel", () => {
 
     expect(screen.getByRole("button", { name: /mais próxima: planaltina/i })).toBeInTheDocument();
     expect(screen.getByText(/km de você/i)).toBeInTheDocument();
+  });
+
+  it("prioriza Planaltina e depois ordena as demais feiras por distância quando a região é Planaltina", () => {
+    const sorted = sortFairsByProximity(fairs, null, "Planaltina, DF");
+
+    expect(sorted[0].place).toBe("Planaltina");
+    expect(sorted[0].distance).not.toBeNull();
+    expect(sorted[1].place).toBe("Gama");
+    expect(sorted[0].distance as number).toBeLessThan(sorted[1].distance as number);
   });
 
   it("mantém o mapa público apenas como referência externa opcional", () => {
