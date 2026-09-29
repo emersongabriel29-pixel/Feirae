@@ -76,6 +76,59 @@ export function fairMapCoordinate(fair: Fair): FairMapCoordinate | null {
   };
 }
 
+function normalizeRegionLabel(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/\b(distrito federal|df)\b/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+export function regionCoordinateFromLabel(label: string) {
+  const normalizedLabel = normalizeRegionLabel(label);
+  if (!normalizedLabel) return null;
+
+  const match = Object.entries(REGION_COORDINATES).find(([region]) => {
+    const normalizedRegion = normalizeRegionLabel(region);
+    return (
+      normalizedLabel === normalizedRegion ||
+      normalizedLabel.startsWith(`${normalizedRegion} `) ||
+      normalizedLabel.includes(` ${normalizedRegion} `) ||
+      normalizedLabel.endsWith(` ${normalizedRegion}`)
+    );
+  });
+
+  return match ? { ...match[1] } : null;
+}
+
+export function sortFairsByProximity(
+  items: Fair[],
+  userCoords: { lat: number; lng: number } | null,
+  locationLabel = "",
+) {
+  const reference = userCoords ?? regionCoordinateFromLabel(locationLabel);
+  if (!reference) return items.map((fair) => ({ ...fair, distance: null as number | null }));
+
+  return items
+    .map((fair) => {
+      const coordinate = fairMapCoordinate(fair);
+      return {
+        ...fair,
+        distance: coordinate
+          ? distanceInKm(reference.lat, reference.lng, coordinate.lat, coordinate.lng)
+          : (null as number | null),
+      };
+    })
+    .sort((a, b) => {
+      if (a.distance === null && b.distance === null) return 0;
+      if (a.distance === null) return 1;
+      if (b.distance === null) return -1;
+      return a.distance - b.distance;
+    });
+}
+
 export function projectDfCoordinate(coordinate: Pick<FairMapCoordinate, "lat" | "lng">) {
   const x = ((coordinate.lng - DF_BOUNDS.west) / (DF_BOUNDS.east - DF_BOUNDS.west)) * 100;
   const y = ((DF_BOUNDS.north - coordinate.lat) / (DF_BOUNDS.north - DF_BOUNDS.south)) * 100;
