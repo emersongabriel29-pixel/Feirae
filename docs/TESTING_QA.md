@@ -595,3 +595,9 @@ A suíte foi atualizada para acompanhar a revisão desta rodada:
 Limites: jsdom não prova permissão GPS real, carregamento dos tiles/mapa no Android, precisão da geocodificação, qualidade do traçado OSRM, upload de câmera/galeria nem regressão por pixel. Esses itens continuam exigindo QA em navegador/aparelho real antes de produção.
 
 Contagem após a união com a entrada premium: **157 testes Vitest**.
+
+## Regressão — seletor de quantidade mobile — 29/09/2026
+
+`App.test.tsx` verifica que, após adicionar um produto, o controle de quantidade mantém duas ações (remover e adicionar) ao redor do valor atual.
+
+QA visual obrigatório em 360, 390 e 412 px: confirmar que **− | 1 | +** aparece inteiro no card de duas colunas, sem cortar o botão direito e sem sobrepor preço/unidade.
