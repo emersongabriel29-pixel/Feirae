@@ -203,6 +203,27 @@ describe("Feiraê customer flow", () => {
     expect(allCategory).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("labels the fair card as Ver bancas and opens only the banks from that fair", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+
+    const fairHeading = screen.getByRole("heading", { name: /feira do produtor rural/i });
+    const fairCard = fairHeading.closest("article");
+    expect(fairCard).not.toBeNull();
+
+    fireEvent.click(
+      within(fairCard as HTMLElement).getByRole("button", {
+        name: /ver bancas da feira do produtor rural/i,
+      }),
+    );
+
+    expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
+  });
+
   it("navigates from a fair to one bank and only then shows that bank's products", () => {
     render(<App />);
     loginAs("cliente");
@@ -221,7 +242,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /ver banca/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver banca sítio da vó/i }));
     expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
   });
@@ -250,7 +271,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/hoje 06:00–12:00/i)).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /ver banca/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver banca sítio da vó/i }));
     expect(screen.getByAltText(/capa da banca sítio da vó/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
 
@@ -322,7 +343,7 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /ver banca/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver banca sítio da vó/i }));
 
     const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
     expect(minimumState).not.toBeNull();
@@ -342,7 +363,7 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /ver banca/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver banca sítio da vó/i }));
 
     expect(screen.getByText(/esta banca não exige pedido mínimo/i)).toBeInTheDocument();
   });
