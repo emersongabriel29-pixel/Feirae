@@ -32,6 +32,7 @@ import type { CustomerTab, Product, Role } from "../types";
 import { money } from "../utils";
 import { cartWeight, productWeight } from "../domain/marketplace";
 import { normalizeVendorMinimumOrder, vendorOrderSummaries } from "../domain/multiVendor";
+import { exactPresentation } from "../domain/productMeasurements";
 import { readStoreByIdentity } from "../domain/marketplaceBridge";
 import type { LegalAcceptance, LegalTerm } from "../domain/legalTerms";
 import {
@@ -1273,7 +1274,6 @@ export function CartDrawer({
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const totalWeight = cartWeight(items, cart);
   const fairName = items[0]?.fair ?? "";
-  const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const minimumByVendor = Object.fromEntries(
     Array.from(new Set(items.map((product) => product.feirante))).map((vendorName) => {
       const item = items.find((product) => product.feirante === vendorName);
@@ -1350,11 +1350,11 @@ export function CartDrawer({
                   <b>{product.name}</b>
                   <small>{product.feirante}</small>
                   <small>
-                    {cart[product.id]} {product.unit}(s) ·{" "}
+                    {cart[product.id]}× {exactPresentation(product.unit, product.packageSize)} ·{" "}
                     {productWeight(product, cart[product.id]).toLocaleString("pt-BR", {
                       maximumFractionDigits: 1,
                     })}{" "}
-                    kg
+                    kg logísticos
                   </small>
                   <strong>{money(product.price * cart[product.id])}</strong>
                   <div>
@@ -1399,15 +1399,9 @@ export function CartDrawer({
         {items.length > 0 && (
           <div className="drawer-footer">
             <p>
-              <span>Peso estimado</span>
+              <span>Peso logístico estimado</span>
               <b>{totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</b>
             </p>
-            {hasVariableWeight && (
-              <small>
-                Há item vendido por peso. Peso e valor finais podem variar na separação; o checkout mostra
-                valor estimado.
-              </small>
-            )}
             {blockedMinimums.length > 0 && (
               <div className="cart-minimum-error" role="alert">
                 <b>Pedido mínimo não atingido</b>
