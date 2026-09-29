@@ -1,3 +1,4 @@
+/* global console, process */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 
