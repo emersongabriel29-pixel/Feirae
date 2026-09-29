@@ -4,6 +4,7 @@ import {
   Bike,
   Check,
   ChevronRight,
+  Clock,
   CreditCard,
   Edit3,
   Heart,
@@ -30,6 +31,7 @@ import {
   promotionIsActive,
   readSharedStores,
   readStoreByIdentity,
+  type SharedStore,
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
 import {
@@ -731,11 +733,35 @@ export function ProfilePage({
   );
 }
 
+
+function vendorHoursInfo(store: SharedStore | undefined, fairName: string) {
+  if (!store || store.useFairHours !== false) {
+    return {
+      mode: "Horário da feira",
+      label: fairHoursForName(fairName).label,
+    };
+  }
+
+  const days = store.schedule ?? [];
+  const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  const today = days.find((item) => item.day === dayNames[new Date().getDay()]);
+  if (!today?.enabled) {
+    return { mode: "Horário personalizado", label: "Hoje fechada" };
+  }
+
+  const pause =
+    today.breakStart && today.breakEnd ? ` · pausa ${today.breakStart}–${today.breakEnd}` : "";
+  return {
+    mode: "Horário personalizado",
+    label: `Hoje ${today.open}–${today.close}${pause}`,
+  };
+}
+
 export function FairDetail({
   fairName,
   onBack,
   onMap,
-  onVendors,
+  onVendor,
   onAdd,
   onRemove,
   cart,
@@ -745,7 +771,7 @@ export function FairDetail({
   fairName: string;
   onBack: () => void;
   onMap: (destination: number | string, lng?: number) => void;
-  onVendors: () => void;
+  onVendor: (name: string) => void;
   onAdd: (id: number) => void;
   onRemove: (id: number) => void;
   cart: Record<number, number>;
@@ -759,6 +785,35 @@ export function FairDetail({
   );
   const liveProducts = marketplaceProducts(products);
   const fairProducts = liveProducts.filter((product) => product.fair === fair.name);
+  const vendorSummaryList = vendorSummaries(fairProducts, vendorMetrics);
+  const summaryByName = new Map(vendorSummaryList.map((vendor) => [vendor.name, vendor]));
+  const sharedStores = readSharedStores().filter(
+    (store) => store.fairName === fair.name && store.approved !== false,
+  );
+  const sharedStoreByName = new Map(sharedStores.map((store) => [store.name, store]));
+  const vendorNames = Array.from(
+    new Set([...vendorSummaryList.map((vendor) => vendor.name), ...sharedStores.map((store) => store.name)]),
+  );
+  const vendorShowcases = vendorNames.map((name, index) => {
+    const vendorProducts = fairProducts.filter((product) => product.feirante === name);
+    const summary = summaryByName.get(name);
+    const store = sharedStoreByName.get(name) ?? readStoreByIdentity(fair.name, name);
+    const metrics = metricForVendor(name, vendorMetrics);
+    const categoriesText =
+      store?.categories?.trim() ||
+      summary?.categories.join(" · ") ||
+      Array.from(new Set(vendorProducts.map((product) => product.category))).join(" · ") ||
+      "Produtos da feira";
+    return {
+      name,
+      index,
+      products: vendorProducts,
+      store,
+      metrics,
+      categoriesText,
+      hours: vendorHoursInfo(store, fair.name),
+    };
+  });
 
   return (
     <Panel
@@ -766,7 +821,7 @@ export function FairDetail({
       subtitle={`${fair.place} · ${fairHoursForName(fair.name).label}`}
       onBack={onBack}
     >
-      <article className="fair-profile">
+      <article className="fair-profile fair-profile--compact">
         <div className={`fair-profile__cover tone-${fairIndex % 3}`}>
           <span className="fair-profile__cover-icon" aria-hidden="true">
             <Store size={52} strokeWidth={1.7} />
@@ -777,7 +832,7 @@ export function FairDetail({
         </div>
         <div className="fair-profile__body">
           <div className="fair-profile__identity">
-            <span className="eyebrow">Perfil da feira</span>
+            <span className="eyebrow">Dentro da feira</span>
             <h2>{fair.name}</h2>
             <p>
               <MapPin size={15} /> {fair.place}
@@ -787,8 +842,8 @@ export function FairDetail({
           <div className="fair-profile__meta">
             <span>
               <Store size={15} />
-              <b>{typeof fair.feirantes === "number" ? fair.feirantes : "—"}</b>
-              <small>feirantes</small>
+              <b>{vendorShowcases.length || "—"}</b>
+              <small>bancas</small>
             </span>
             <span>
               <Star size={15} />
@@ -796,20 +851,12 @@ export function FairDetail({
               <small>avaliação</small>
             </span>
             <span>
-              <Truck size={15} />
-              <b>{fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Consultar"}</b>
-              <small>entrega</small>
-            </span>
-            <span>
               <Check size={15} />
               <b>{fairHoursForName(fair.name).label}</b>
-              <small>horário</small>
+              <small>horário da feira</small>
             </span>
           </div>
           <div className="fair-profile__actions">
-            <button type="button" onClick={onVendors} className="primary-action">
-              <Store size={17} /> Ver bancas
-            </button>
             <button
               type="button"
               onClick={() =>
@@ -819,30 +866,123 @@ export function FairDetail({
               }
               className="secondary-action"
             >
-              <MapPin size={17} /> Rota no Feiraê
+              <MapPin size={17} /> Ver no mapa
             </button>
           </div>
         </div>
       </article>
-      <SectionHeading eyebrow="Catálogo" title="Produtos desta feira" />
-      {fairProducts.length ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
-          {fairProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              quantity={cart[product.id] ?? 0}
-              onAdd={onAdd}
-              onRemove={onRemove}
-              favorite={favorites.includes(product.id)}
-              onFavorite={onFavorite}
-            />
-          ))}
+
+      <SectionHeading
+        eyebrow="Bancas"
+        title={vendorShowcases.length ? "Escolha uma banca e veja os produtos" : "Bancas desta feira"}
+      />
+
+      {vendorShowcases.length ? (
+        <div className="fair-vendor-showcases">
+          {vendorShowcases.map((vendor) => {
+            const minimum = normalizeVendorMinimumOrder(vendor.store?.minimumOrderAmount ?? 0);
+            return (
+              <section className="fair-vendor-showcase" key={vendor.name}>
+                <article className="public-vendor-profile">
+                  <div className={`public-vendor-profile__cover tone-${vendor.index % 3}`}>
+                    {vendor.store?.coverDataUrl ? (
+                      <img src={vendor.store.coverDataUrl} alt={`Capa da banca ${vendor.name}`} />
+                    ) : (
+                      <span className="public-vendor-profile__cover-placeholder" aria-hidden="true">
+                        <Store size={42} />
+                      </span>
+                    )}
+                    <div className="public-vendor-profile__avatar">
+                      {vendor.store?.logoDataUrl ? (
+                        <img src={vendor.store.logoDataUrl} alt={`Foto da banca ${vendor.name}`} />
+                      ) : (
+                        <Store size={28} aria-hidden="true" />
+                      )}
+                    </div>
+                    <span
+                      className={
+                        vendor.store ? (vendor.store.isOpen ? "vendor-open-badge is-open" : "vendor-open-badge") : "vendor-open-badge"
+                      }
+                    >
+                      {vendor.store ? (vendor.store.isOpen ? "Aberta agora" : "Fechada") : "Horário da feira"}
+                    </span>
+                  </div>
+
+                  <div className="public-vendor-profile__body">
+                    <div className="public-vendor-profile__title">
+                      <div>
+                        <small>{fair.name}</small>
+                        <h3>{vendor.name}</h3>
+                        <p>{vendor.store?.description?.trim() || vendor.categoriesText}</p>
+                      </div>
+                      <button type="button" className="mini-toggle" onClick={() => onVendor(vendor.name)}>
+                        Abrir perfil <ChevronRight size={15} />
+                      </button>
+                    </div>
+
+                    <div className="public-vendor-profile__details">
+                      <span>
+                        <Clock size={15} />
+                        <b>{vendor.hours.mode}</b>
+                        <small>{vendor.hours.label}</small>
+                      </span>
+                      <span>
+                        <Star size={15} />
+                        <b>{ratingLabel(vendor.metrics.rating)} ★</b>
+                        <small>{vendor.metrics.reviewCount} avaliações</small>
+                      </span>
+                      <span>
+                        <Store size={15} />
+                        <b>{vendor.store?.box ? `Box ${vendor.store.box}` : "Banca"}</b>
+                        <small>{vendor.categoriesText}</small>
+                      </span>
+                      {minimum > 0 && (
+                        <span>
+                          <Check size={15} />
+                          <b>Mínimo {money(minimum)}</b>
+                          <small>somente produtos da banca</small>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </article>
+
+                <div className="vendor-inline-products">
+                  <div className="vendor-inline-products__heading">
+                    <div>
+                      <span className="eyebrow">Produtos da banca</span>
+                      <h4>{vendor.name}</h4>
+                    </div>
+                    <small>{vendor.products.length} produto(s)</small>
+                  </div>
+
+                  {vendor.products.length ? (
+                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
+                      {vendor.products.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          quantity={cart[product.id] ?? 0}
+                          onAdd={onAdd}
+                          onRemove={onRemove}
+                          addDisabled={vendor.store?.isOpen === false}
+                          favorite={favorites.includes(product.id)}
+                          onFavorite={onFavorite}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <Empty title="Produtos em preparação" text="Esta banca ainda não publicou produtos." />
+                  )}
+                </div>
+              </section>
+            );
+          })}
         </div>
       ) : (
         <Empty
-          title="Catálogo em preparação"
-          text="Os feirantes desta unidade ainda cadastrarão seus produtos."
+          title="Bancas em preparação"
+          text="Os feirantes desta unidade ainda estão cadastrando suas bancas."
         />
       )}
     </Panel>
