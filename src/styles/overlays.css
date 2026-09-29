@@ -134,6 +134,21 @@
 .cart-clear-button:hover {
   background: var(--fe-surface-soft);
 }
+.cart-clear-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+.cart-clear-confirm .cart-clear-button {
+  min-height: 2.25rem;
+  border: 1px solid var(--fe-border);
+  background: var(--fe-surface);
+}
+.cart-clear-confirm .cart-clear-button.is-danger {
+  border-color: color-mix(in srgb, var(--fe-danger) 35%, var(--fe-border));
+  background: color-mix(in srgb, var(--fe-danger) 7%, var(--fe-surface));
+}
 .drawer-footer {
   border-top: 1px solid var(--fe-border);
   padding: 1rem;

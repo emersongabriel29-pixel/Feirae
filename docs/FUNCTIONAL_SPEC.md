@@ -966,3 +966,101 @@ Na aba **Feiras**, o mapa não é renderizado como bloco permanente.
 - **Rota no Feiraê** mantém o fluxo de navegação interna;
 - fechar o mapa retorna à lista no mesmo contexto;
 - marcadores usam o ícone Feiraê de banca/feira, não um pin genérico.
+
+## Feira com bancas agrupadas por catálogo — 29/09/2026
+
+A ação **Ver feira** abre uma experiência agrupada por banca.
+
+Para cada banca:
+
+- perfil e identidade visual;
+- horário herdado da feira ou horário personalizado;
+- status operacional quando disponível;
+- box/categorias, avaliação e pedido mínimo;
+- catálogo filtrado exclusivamente pelos produtos daquela banca;
+- produtos fechados não podem ser adicionados quando a banca compartilhada está fechada;
+- **Abrir perfil** continua disponível para a tela completa da banca.
+
+O catálogo não deve misturar produtos de feirantes diferentes sem indicar a banca de origem.
+
+## Feira com bancas agrupadas por perfil — 29/09/2026
+
+A ação **Ver feira** abre a lista de bancas daquela unidade, sem misturar produtos.
+
+Para cada banca na tela da feira:
+
+- perfil e identidade visual;
+- horário herdado da feira ou horário personalizado;
+- status operacional quando disponível;
+- box/categorias, avaliação, quantidade de produtos e pedido mínimo;
+- ação **Ver banca**.
+
+Ao abrir uma banca:
+
+- mostrar o perfil completo da banca;
+- abaixo dele, listar **exclusivamente os produtos daquela banca**;
+- produtos de outras bancas não aparecem nessa página;
+- se a banca compartilhada estiver fechada, os produtos não podem ser adicionados.
+
+## CTA Ver bancas na listagem de feiras — 29/09/2026
+
+Cada card de feira usa a ação principal **Ver bancas**.
+
+A ação recebe o nome da feira do próprio card e abre o contexto dessa unidade, exibindo somente suas bancas.
+
+Fluxo esperado:
+
+**Feiras → Ver bancas → bancas da feira escolhida → Ver banca → produtos daquela banca.**
+
+## Feira com bancas e produtos agrupados — 29/09/2026
+
+A ação **Ver bancas** abre o contexto da feira selecionada.
+
+Para cada banca daquela feira:
+
+- renderizar o perfil da banca;
+- abaixo do perfil, listar exclusivamente os produtos cujo `feirante` corresponde àquela banca e cuja `fair` corresponde à feira selecionada;
+- ao terminar os produtos, iniciar a próxima banca;
+- produtos de bancas diferentes nunca devem ser misturados no mesmo bloco;
+- se a banca estiver fechada, seus produtos continuam visíveis, mas a adição ao carrinho pode ser bloqueada conforme regra operacional.
+
+## Métricas e apresentação comercial dos produtos — 29/09/2026
+
+O Feiraê separa duas coisas que não podem ser confundidas:
+
+- **apresentação comercial**: aquilo que o Cliente compra e paga;
+- **peso logístico**: peso usado somente para frete, capacidade do veículo e planejamento da rota.
+
+O preço exibido ao Cliente é fechado para a apresentação cadastrada. O sistema não deve mostrar “peso/valor podem variar” sem existir um fluxo explícito de pesagem, aprovação e ajuste de pagamento.
+
+Exemplos de cadastro:
+
+- farinha: `pacote 500 g`, `pacote 1 kg` ou `saco 5 kg`; cada apresentação com seu preço;
+- cheiro-verde/coentro/couve: preferir `1 maço` ou embalagem definida;
+- filé/camarão: `1 kg`, `bandeja 500 g` ou pacote definido;
+- peixe inteiro: pode ser `1 peça` ou `1 kg`, mas a banca precisa escolher uma regra explícita;
+- frutas e verduras soltas: podem usar `1 kg`; embaladas usam unidade, bandeja, saco, caixa ou cesta com conteúdo definido;
+- ovos: dúzia, bandeja ou quantidade definida;
+- queijo: peça, pote, pacote ou kg conforme a forma real de venda.
+
+No MVP, apresentações diferentes são cadastros/SKUs distintos. Ex.: farinha 500 g e farinha 1 kg devem ter preços e estoques próprios.
+
+O editor de produto restringe as unidades sugeridas pela categoria e exige **Apresentação**. O peso logístico nunca altera silenciosamente o valor cobrado.
+
+## Cancelamento solicitado pelo Cliente — 29/09/2026
+
+O Cliente não cancela automaticamente um pedido que já foi enviado às bancas.
+
+Antes da coleta:
+
+1. Cliente toca **Solicitar cancelamento** e informa o motivo;
+2. o pedido permanece ativo;
+3. cada banca ainda participante recebe a solicitação;
+4. a banca pode **Aceitar cancelamento** ou **Continuar pedido**;
+5. se uma banca aceitar, apenas sua participação/itens são retirados, com recomposição de estoque, frete e reembolso aplicáveis;
+6. em pedido multi-banca, o cancelamento pode ser parcial;
+7. se todas as bancas aceitarem, o pedido é encerrado.
+
+Depois que a coleta já ocorreu, o fluxo normal de cancelamento é bloqueado e o caso segue para suporte/ocorrência.
+
+A decisão da banca precisa ficar registrada no histórico do pedido.

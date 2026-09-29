@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import App from "./App";
 import { cancelVendorParticipation, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
@@ -26,6 +26,48 @@ function loginAs(role: "cliente" | "feirante" | "entregador") {
 
 function openFairsMap() {
   fireEvent.click(screen.getByRole("button", { name: /mapa das feiras/i }));
+}
+
+function setVendorPresentation(fairName: string, vendorName: string) {
+  const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  window.localStorage.setItem(
+    "feirae:marketplace:v2",
+    JSON.stringify({
+      stores: [
+        {
+          accountKey: "vendor-showcase-test@feirae.test",
+          vendorId: "vendor-showcase-test",
+          storeId: "store-showcase-test",
+          name: vendorName,
+          fairName,
+          isOpen: true,
+          approved: true,
+          deliveryEnabled: true,
+          pickupEnabled: true,
+          absorbDeliveryFee: false,
+          acceptCashOnDelivery: true,
+          acceptCardOnDelivery: true,
+          minimumOrderAmount: 30,
+          description: "Produtos frescos direto da banca.",
+          categories: "Hortifruti e cestas",
+          logoDataUrl: "data:image/png;base64,Zm90bw==",
+          coverDataUrl: "data:image/png;base64,Y2FwYQ==",
+          useFairHours: false,
+          schedule: days.map((day) => ({
+            day,
+            enabled: true,
+            open: "06:00",
+            close: "12:00",
+            breakStart: "",
+            breakEnd: "",
+          })),
+          promotions: [],
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      products: [],
+    }),
+  );
 }
 
 function setVendorMinimum(fairName: string, vendorName: string, minimumOrderAmount: number) {
@@ -161,7 +203,28 @@ describe("Feiraê customer flow", () => {
     expect(allCategory).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("navigates from a native map pin to the fair, vendors and products", () => {
+  it("labels the fair card as Ver bancas and opens only the banks from that fair", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+
+    const fairHeading = screen.getByRole("heading", { name: /feira do produtor rural/i });
+    const fairCard = fairHeading.closest("article");
+    expect(fairCard).not.toBeNull();
+
+    fireEvent.click(
+      within(fairCard as HTMLElement).getByRole("button", {
+        name: /ver bancas da feira do produtor rural/i,
+      }),
+    );
+
+    expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
+  });
+
+  it("shows each bank profile with only that bank's products directly below it", () => {
     render(<App />);
     loginAs("cliente");
 
@@ -176,14 +239,47 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
 
     expect(screen.getAllByRole("heading", { name: "Feira do Produtor Rural" }).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
 
-    expect(screen.getByRole("heading", { name: /bancas e feirantes/i })).toBeInTheDocument();
-    expect(screen.getByText("Sítio da Vó")).toBeInTheDocument();
+    const sitioHeading = screen.getByRole("heading", { name: /sítio da vó/i });
+    const sitioSection = sitioHeading.closest(".fair-vendor-showcase");
+    expect(sitioSection).not.toBeNull();
+    const sitio = within(sitioSection as HTMLElement);
+    expect(sitio.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
+    expect(sitio.getByRole("heading", { name: /tomate orgânico/i })).toBeInTheDocument();
+    expect(sitio.queryByRole("heading", { name: /queijo artesanal/i })).not.toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
-    expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
-    expect(screen.getByText(/cesta de frutas/i)).toBeInTheDocument();
+  it("shows bank media and custom hours with products immediately below the same profile", () => {
+    setVendorPresentation("Feira do Produtor Rural", "Sítio da Vó");
+
+    render(<App />);
+    loginAs("cliente");
+
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+    openFairsMap();
+    fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
+
+    expect(screen.getByAltText(/capa da banca sítio da vó/i)).toHaveAttribute(
+      "src",
+      "data:image/png;base64,Y2FwYQ==",
+    );
+    expect(screen.getByAltText(/foto da banca sítio da vó/i)).toHaveAttribute(
+      "src",
+      "data:image/png;base64,Zm90bw==",
+    );
+    expect(screen.getByText(/horário personalizado/i)).toBeInTheDocument();
+    expect(screen.getByText(/hoje 06:00–12:00/i)).toBeInTheDocument();
+
+    const sitioHeading = screen.getByRole("heading", { name: /sítio da vó/i });
+    const sitioSection = sitioHeading.closest(".fair-vendor-showcase");
+    expect(sitioSection).not.toBeNull();
+    const sitio = within(sitioSection as HTMLElement);
+    expect(sitio.getByAltText(/capa da banca sítio da vó/i)).toBeInTheDocument();
+    expect(sitio.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
+
+    window.localStorage.removeItem("feirae:marketplace:v2");
   });
 
   it("blocks checkout only when the vendor-configured minimum has not been reached", () => {
@@ -240,7 +336,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("button", { name: /^waze/i })).toBeInTheDocument();
   });
 
-  it("shows the minimum chosen by the vendor on the vendor page", () => {
+  it("shows the minimum chosen by the vendor on that bank profile", () => {
     setVendorMinimum("Feira do Produtor Rural", "Sítio da Vó", 35);
 
     render(<App />);
@@ -251,12 +347,11 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
-    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
+    const sitioHeading = screen.getByRole("heading", { name: /sítio da vó/i });
+    const sitioSection = sitioHeading.closest(".fair-vendor-showcase");
+    expect(sitioSection).not.toBeNull();
 
-    const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
-    expect(minimumState).not.toBeNull();
-    expect(within(minimumState as HTMLElement).getByText(/^R\$ 35,00$/i)).toBeInTheDocument();
+    expect(within(sitioSection as HTMLElement).getByText(/mínimo r\$ 35,00/i)).toBeInTheDocument();
 
     window.localStorage.removeItem("feirae:marketplace:v2");
   });
@@ -272,16 +367,16 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
-    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
+    const sitioHeading2 = screen.getByRole("heading", { name: /sítio da vó/i });
+    const sitioSection2 = sitioHeading2.closest(".fair-vendor-showcase");
+    expect(sitioSection2).not.toBeNull();
 
-    expect(screen.getByText(/esta banca não exige pedido mínimo/i)).toBeInTheDocument();
+    expect(within(sitioSection2 as HTMLElement).queryByText(/mínimo r\$/i)).not.toBeInTheDocument();
   });
 
-  it("clears the whole cart from the cart drawer after confirmation", () => {
+  it("clears the whole cart from the cart drawer with in-app confirmation", () => {
     window.localStorage.removeItem("feirae:cart:cliente@feirae.test");
     window.localStorage.removeItem("feirae:cart:guest");
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
 
     render(<App />);
     loginAs("cliente");
@@ -295,9 +390,11 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
     fireEvent.click(screen.getByRole("button", { name: /limpar carrinho/i }));
 
-    expect(confirm).toHaveBeenCalledWith("Limpar todos os produtos do carrinho?");
+    expect(screen.getByRole("button", { name: /confirmar limpeza/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /manter itens/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /confirmar limpeza/i }));
+
     expect(screen.getByText(/sua sacola está vazia/i)).toBeInTheDocument();
-    confirm.mockRestore();
   });
 
   it("shows the demonstration account identity instead of visitor", () => {
@@ -706,7 +803,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/ter–dom 7h–18h/i)).toBeInTheDocument();
   });
 
-  it("offers pay-now and pay-on-delivery methods while keeping weight as an estimate", () => {
+  it("uses exact commercial presentation and keeps weight only as logistics data", () => {
     render(<App />);
     loginAs("cliente");
     const search = screen.getByPlaceholderText(/busque produtos/i);
@@ -722,8 +819,10 @@ describe("Feiraê customer flow", () => {
     expect(screen.getAllByRole("button", { name: /cartão/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /^dinheiro/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /cartão na maquininha/i })).toBeInTheDocument();
-    expect(screen.getByText(/há produtos vendidos por peso/i)).toBeInTheDocument();
-    expect(screen.getByText(/total estimado/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/peso logístico estimado/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/peso\/valor podem variar/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/total estimado/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/^total$/i)).toBeInTheDocument();
     expect(screen.queryByText(/veículo indicado/i)).not.toBeInTheDocument();
   });
 
@@ -842,6 +941,24 @@ describe("Feiraê customer flow", () => {
 });
 
 describe("Feiraê role access", () => {
+  it("reopens a persisted customer session on Início instead of a stale deep link", () => {
+    window.localStorage.setItem(
+      "feirae:session",
+      JSON.stringify({ role: "customer", email: "cliente@feirae.test", name: "Cliente" }),
+    );
+    window.location.hash = "#/cliente/pedidos";
+
+    render(<App />);
+
+    expect(window.location.hash).toBe("#/cliente/inicio");
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    expect(within(mobileNavigation).getByRole("button", { name: /^início$/i })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+
   it("discards an obsolete or invalid saved profile", () => {
     window.localStorage.setItem(
       "feirae:session",
@@ -873,11 +990,16 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("option", { name: /pescados e frutos do mar/i })).toBeInTheDocument();
 
     fireEvent.change(category, { target: { value: "Pescados e frutos do mar" } });
+    expect(screen.getByLabelText(/unidade de venda/i)).toHaveValue("kg");
+    expect(screen.getByText(/peixe inteiro pode ser por peça ou kg/i)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/nome do produto/i), {
       target: { value: "Tilápia fresca" },
     });
-    fireEvent.change(screen.getByLabelText(/preço por un/i), {
+    fireEvent.change(screen.getByLabelText(/preço por kg/i), {
       target: { value: "29.90" },
+    });
+    fireEvent.change(screen.getByLabelText(/^apresentação$/i), {
+      target: { value: "1 kg" },
     });
     fireEvent.click(screen.getByRole("button", { name: /salvar produto/i }));
 

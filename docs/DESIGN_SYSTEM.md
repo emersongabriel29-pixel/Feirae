@@ -781,3 +781,17 @@ O marcador Feiraê usa:
 - escala discreta no estado selecionado.
 
 O mapa completo não deve competir com filtros e cards de feira. Na listagem principal, ele é acessado por **Mapa das feiras** e aberto em superfície dedicada.
+
+## Card público de banca dentro da feira — 29/09/2026
+
+Na tela aberta por **Ver bancas**, cada banca é um bloco visual contínuo:
+
+- capa;
+- foto/logo sobreposta;
+- status da banca;
+- nome, descrição/categorias;
+- horário da feira ou horário personalizado;
+- avaliação, box, quantidade de produtos e pedido mínimo quando houver;
+- catálogo da própria banca imediatamente abaixo.
+
+No mobile, os produtos ficam em grid de duas colunas. Ao terminar o catálogo de uma banca, começa o perfil da próxima banca.

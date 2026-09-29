@@ -32,6 +32,7 @@ import {
 import { fairs } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
 import { vehicleRules } from "../../domain/marketplace";
+import { measurementPolicyForCategory } from "../../domain/productMeasurements";
 import {
   DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
   MAX_VENDOR_MINIMUM_ORDER_AMOUNT,
@@ -50,6 +51,7 @@ import {
   patchUnifiedOrderItem,
   patchVendorStatus,
   readUnifiedOrders,
+  respondCustomerCancellation,
 } from "../../domain/orderBridge";
 import {
   feiraeNotificationPermission,
@@ -81,7 +83,6 @@ import {
   initialVendorSchedule,
   newVendorBankProfile,
   productCategories,
-  productSaleUnits,
   vendorDocumentStatusLabel,
   vendorOrderStatusLabel,
   type VendorBankProfile,
@@ -458,6 +459,11 @@ export function FeiranteOperations({
     ? readUnifiedOrders().find((order) => order.id === selectedOrder.id)
     : undefined;
   const accountVendorId = vendorIdFor(session.email);
+  const selectedCancellationResponse = selectedUnifiedOrder?.cancellationRequest?.vendorResponses.find(
+    (response) =>
+      response.vendorId === accountVendorId ||
+      response.vendorName === bankProfile.name,
+  );
   const vendorUnifiedOrders = readUnifiedOrders().filter((order) =>
     order.vendors?.some(
       (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
@@ -597,6 +603,12 @@ export function FeiranteOperations({
       acceptCashOnDelivery: deliverySettings.acceptCashOnDelivery,
       acceptCardOnDelivery: deliverySettings.acceptCardOnDelivery,
       minimumOrderAmount: normalizeVendorMinimumOrder(bankProfile.minimumOrderAmount),
+      description: bankProfile.description,
+      categories: bankProfile.categories,
+      logoDataUrl: bankProfile.logoDataUrl,
+      coverDataUrl: bankProfile.coverDataUrl,
+      useFairHours,
+      schedule: scheduleForStatus,
       box: bankProfile.box,
       corridor: bankProfile.corridor,
       sector: bankProfile.sector,
@@ -608,10 +620,14 @@ export function FeiranteOperations({
     });
   }, [
     bankProfile.box,
+    bankProfile.categories,
+    bankProfile.coverDataUrl,
     bankProfile.corridor,
+    bankProfile.description,
     bankProfile.fairName,
     bankProfile.internalX,
     bankProfile.internalY,
+    bankProfile.logoDataUrl,
     bankProfile.name,
     bankProfile.minimumOrderAmount,
     bankProfile.reference,
@@ -623,7 +639,9 @@ export function FeiranteOperations({
     deliverySettings.acceptCardOnDelivery,
     effectiveStoreOpen,
     promotions,
+    scheduleForStatus,
     session.email,
+    useFairHours,
     vendorItems,
     approvalStatus,
   ]);
@@ -726,6 +744,32 @@ export function FeiranteOperations({
     }
   }
 
+  function respondToCancellation(order: VendorOrder, decision: "approved" | "declined") {
+    const vendorId = order.vendorId ?? vendorIdFor(session.email);
+    const result = respondCustomerCancellation(order.id, vendorId, decision);
+
+    if (!result) {
+      showNotice("A solicitação de cancelamento não está mais pendente.");
+      return;
+    }
+
+    if (decision === "approved") {
+      if (result.productIds.length) releaseInventoryItems(order.id, result.productIds);
+      updateOrder(order.id, {
+        status: "rejected",
+        rejectReason: "Cancelamento solicitado pelo cliente",
+      });
+      showNotice(
+        result.orderCancelled
+          ? `Cancelamento do pedido ${order.id} aceito. O cliente será avisado.`
+          : `Cancelamento da sua parte no pedido ${order.id} aceito. O cliente será avisado.`,
+      );
+      return;
+    }
+
+    showNotice(`Cancelamento do pedido ${order.id} não aceito. O pedido continua ativo.`);
+  }
+
   function acceptOrder(order: VendorOrder) {
     if (approvalStatus !== "Aprovado") {
       showNotice("Finalize a aprovação documental antes de aceitar pedidos.");
@@ -801,8 +845,13 @@ export function FeiranteOperations({
 
   function saveProduct(event: FormEvent) {
     event.preventDefault();
-    if (!productDraft.name.trim() || productDraft.price <= 0 || productDraft.weightKg <= 0) {
-      showNotice("Informe nome, preço e peso logístico válidos.");
+    if (
+      !productDraft.name.trim() ||
+      !productDraft.packageSize.trim() ||
+      productDraft.price <= 0 ||
+      productDraft.weightKg <= 0
+    ) {
+      showNotice("Informe nome, apresentação, preço e peso logístico válidos.");
       return;
     }
     if (!productCategories.some((category) => category === productDraft.category)) {
@@ -1159,6 +1208,36 @@ export function FeiranteOperations({
                       />
                     </div>
                   )}
+                  {selectedCancellationResponse?.status === "pending" && (
+                    <div className="cancel-panel cancellation-review-panel">
+                      <b>Cliente solicitou cancelamento</b>
+                      <p>
+                        Motivo: {selectedUnifiedOrder?.cancellationRequest?.reason ?? "Não informado"}.
+                        {selectedUnifiedOrder?.cancellationRequest?.details
+                          ? ` ${selectedUnifiedOrder.cancellationRequest.details}`
+                          : ""}
+                      </p>
+                      <p>
+                        Antes de aceitar, confirme se os produtos ainda não saíram da banca. Depois da coleta,
+                        o caso deve seguir para suporte.
+                      </p>
+                      <div className="module-action-row">
+                        <button
+                          className="secondary-action"
+                          onClick={() => respondToCancellation(selectedOrder, "declined")}
+                        >
+                          Continuar pedido
+                        </button>
+                        <button
+                          className="primary-action"
+                          onClick={() => respondToCancellation(selectedOrder, "approved")}
+                        >
+                          <XCircle size={17} /> Aceitar cancelamento
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="module-kpi-strip">
                     <article>
                       <strong>{orderWeight(selectedOrder).toFixed(1)} kg</strong>
@@ -1458,9 +1537,22 @@ export function FeiranteOperations({
                         Categoria do produto
                         <select
                           value={productDraft.category}
-                          onChange={(event) =>
-                            setProductDraft((current) => ({ ...current, category: event.target.value }))
-                          }
+                          onChange={(event) => {
+                            const category = event.target.value;
+                            const policy = measurementPolicyForCategory(category);
+                            setProductDraft((current) => ({
+                              ...current,
+                              category,
+                              saleUnit:
+                                !current.category || !policy.allowedUnits.includes(current.saleUnit)
+                                  ? policy.defaultUnit
+                                  : current.saleUnit,
+                              packageSize:
+                                current.packageSize && current.packageSize !== "1 un"
+                                  ? current.packageSize
+                                  : policy.examples[0],
+                            }));
+                          }}
                           required
                         >
                           <option value="" disabled>
@@ -1482,10 +1574,13 @@ export function FeiranteOperations({
                             setProductDraft((current) => ({ ...current, saleUnit: event.target.value }))
                           }
                         >
-                          {productSaleUnits.map((unit) => (
+                          {measurementPolicyForCategory(productDraft.category).allowedUnits.map((unit) => (
                             <option key={unit}>{unit}</option>
                           ))}
                         </select>
+                        <small>
+                          {measurementPolicyForCategory(productDraft.category).note}
+                        </small>
                       </label>
                       <label>
                         Preço por {productDraft.saleUnit}
@@ -1509,8 +1604,14 @@ export function FeiranteOperations({
                           onChange={(event) =>
                             setProductDraft((current) => ({ ...current, packageSize: event.target.value }))
                           }
-                          placeholder="Ex.: bandeja 500 g, 1 maço"
+                          placeholder={`Ex.: ${measurementPolicyForCategory(productDraft.category).examples.join(" · ")}`}
+                          required
                         />
+                        <small>
+                          Esta apresentação é o que o cliente compra. Ex.: farinha pacote 500 g ou 1 kg,
+                          cheiro-verde 1 maço, peixe 1 kg ou 1 peça. Apresentações com preço/estoque diferentes
+                          devem ser cadastradas separadamente.
+                        </small>
                       </label>
                       <label>
                         Peso logístico por item (kg)
@@ -1526,6 +1627,9 @@ export function FeiranteOperations({
                             }))
                           }
                         />
+                        <small>
+                          Usado para frete e capacidade do veículo. Não altera o preço da apresentação vendida.
+                        </small>
                       </label>
                       <label>
                         Estoque atual

@@ -607,3 +607,66 @@ A cobertura existente foi ajustada sem alterar a contagem total:
 - filtros de região continuam limitando os pontos entregues ao mapa.
 
 QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
+
+## QA — perfil de banca e produtos dentro da feira — 29/09/2026
+
+Cobertura adicionada ao fluxo Cliente:
+
+- **Ver feira** mostra a banca sem exigir a etapa intermediária “Ver bancas”;
+- produtos da banca aparecem logo abaixo do card de perfil;
+- capa e foto/logo compartilhadas são renderizadas;
+- horário personalizado é identificado e mostra o horário do dia;
+- **Abrir perfil** continua levando à tela completa da banca;
+- pedido mínimo continua disponível no perfil completo.
+
+QA visual obrigatório em 360/390/412 px: capa, avatar, badges, horário e grid de produtos não podem sobrepor nem gerar rolagem horizontal.
+
+## QA — perfil de banca e produtos dentro da banca — 29/09/2026
+
+Cobertura do fluxo Cliente:
+
+- **Ver feira** mostra os cards das bancas sem exibir produtos;
+- capa, foto/logo e horário personalizado aparecem no card da banca;
+- **Ver banca** abre a página individual;
+- somente depois de abrir a banca aparecem os produtos dela;
+- produtos de outras bancas não devem aparecer nessa página;
+- voltar da banca retorna à feira;
+- pedido mínimo continua disponível no perfil completo.
+
+QA visual obrigatório em 360/390/412 px: capa, avatar, badges, horário e grid de produtos não podem sobrepor nem gerar rolagem horizontal.
+
+## QA — Ver bancas por feira — 29/09/2026
+
+Teste adicionado para garantir que:
+
+- o card da feira mostra **Ver bancas**;
+- a ação é vinculada à feira daquele card;
+- ao abrir, aparece uma banca pertencente à feira escolhida;
+- nenhum produto aparece antes de entrar em uma banca específica.
+
+## QA — Ver bancas com produtos agrupados — 29/09/2026
+
+Cobertura do fluxo Cliente:
+
+- o card da feira mostra **Ver bancas**;
+- a ação abre a feira selecionada;
+- cada banca exibe perfil, mídia e horário;
+- os produtos daquela banca aparecem imediatamente abaixo do perfil;
+- um produto de outra banca não pode aparecer dentro do bloco da banca atual;
+- após o bloco de produtos, a rolagem continua para a próxima banca.
+
+QA visual obrigatório em 360/390/412 px: perfil, badges e produtos devem permanecer no mesmo bloco visual, sem sobreposição ou rolagem horizontal.
+
+## QA — métricas, carrinho, cancelamento e sessão — 29/09/2026
+
+Cobertura adicionada/alterada:
+
+- carrinho usa confirmação interna e limpa os itens sem depender de diálogo nativo do navegador;
+- checkout não usa mais “Peso/valor podem variar” nem “Total estimado” para produtos de apresentação fixa;
+- políticas de farinha/grãos, folhas/ervas e pescados possuem testes de unidade;
+- solicitação de cancelamento mantém o pedido ativo enquanto aguarda as bancas;
+- multi-banca suporta aceite parcial e recusa de outra banca;
+- solicitação normal é bloqueada depois da coleta;
+- sessão de Cliente persistida em URL profunda reabre em **Início**.
+
+QA manual ainda necessário para câmera/galeria, persistência real entre sessões do navegador e confirmação visual em 360/390/412 px.
