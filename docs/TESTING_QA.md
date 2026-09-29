@@ -595,3 +595,15 @@ A suíte foi atualizada para acompanhar a revisão desta rodada:
 Limites: jsdom não prova permissão GPS real, carregamento dos tiles/mapa no Android, precisão da geocodificação, qualidade do traçado OSRM, upload de câmera/galeria nem regressão por pixel. Esses itens continuam exigindo QA em navegador/aparelho real antes de produção.
 
 Contagem após a união com a entrada premium: **157 testes Vitest**.
+
+## QA — mapa das feiras sob demanda — 29/09/2026
+
+A cobertura existente foi ajustada sem alterar a contagem total:
+
+- a aba **Feiras** não deve renderizar o mapa completo antes da ação do usuário;
+- **Mapa das feiras** abre um diálogo dedicado;
+- seleção de pin → Abrir feira → Bancas → produto continua funcionando;
+- testes do `FairMapPanel` verificam que o marcador da feira usa o ícone `.lucide-store`;
+- filtros de região continuam limitando os pontos entregues ao mapa.
+
+QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
