@@ -656,16 +656,15 @@ Os marcadores deixam de usar o símbolo genérico de localização. Cada feira p
 
 ## Feira → bancas com perfil e produtos — 29/09/2026
 
-Ao tocar **Ver feira**, a tela interna mostra **somente os cards das bancas/feirantes daquela feira**.
+Ao tocar **Ver bancas**, a tela abre as bancas daquela feira específica.
 
-Cada card da banca mostra capa, foto/logo, nome, descrição/categorias, situação da banca, horário e informações essenciais.
+Cada banca aparece como um bloco completo:
 
-**Os produtos não aparecem na tela geral da feira.** Ao tocar **Ver banca**, abre o perfil daquela banca e, rolando para baixo, aparecem **somente os produtos daquela banca**.
+1. perfil da banca com capa, foto/logo, nome, descrição, status, horário e informações principais;
+2. imediatamente abaixo, aparecem **somente os produtos daquela banca**;
+3. terminando os produtos, a rolagem segue para a próxima banca, que repete o mesmo padrão: perfil → produtos.
 
-Se o feirante usa o horário oficial da feira, a interface identifica **Horário da feira**. Se ele configurou agenda própria, mostra **Horário personalizado** e o horário de hoje.
-
-Quando capa ou foto/logo ainda não foram cadastradas, o card mantém um placeholder visual consistente sem inventar imagem.
-
+Assim, os produtos nunca ficam misturados entre bancas e não é necessário abrir outra tela para começar a ver o catálogo da banca.
 ## CTA da feira → Ver bancas — 29/09/2026
 
 Na listagem de Feiras, o botão principal passa de **Ver feira** para **Ver bancas**.
