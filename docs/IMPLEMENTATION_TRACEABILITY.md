@@ -471,3 +471,20 @@ Continua sem SDK proprietário de mapas. O protótipo usa serviços públicos e 
 - O conteúdo de antecedentes **não é classificado automaticamente** e uma anotação não reprova automaticamente; o protótipo apenas controla envio/status de revisão.
 
 Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam ser refletidos no backend/Storage/RLS antes de produção.
+
+## Perfil público da banca no marketplace — 29/09/2026
+
+`SharedStore` passou a compartilhar, de forma opcional:
+
+- `description`;
+- `categories`;
+- `logoDataUrl`;
+- `coverDataUrl`;
+- `useFairHours`;
+- `schedule`.
+
+`FeiranteOperations` sincroniza esses campos a partir de **Minha banca** e **Horários**.
+
+`FairDetail` consome os dados compartilhados para montar os cards públicos. Bancas estáticas sem mídia compartilhada usam placeholders e herdam o horário da feira.
+
+Não houve migration nesta rodada: o protótipo persiste esses campos no marketplace local existente. Produção deve mover mídia para Storage e os campos de perfil/agenda para o backend.
