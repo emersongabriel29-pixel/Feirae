@@ -808,7 +808,11 @@ export default function App() {
             fairName={selectedFair}
             onBack={() => openCustomerTab("fairs")}
             onMap={openMap}
-            onVendor={openVendor}
+            onAdd={addProductToCart}
+            onRemove={removeFromCart}
+            cart={cart}
+            favorites={favorites}
+            onFavorite={toggleFavorite}
           />
         )}
         {screen === "feirante" && (
