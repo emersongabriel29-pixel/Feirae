@@ -707,3 +707,11 @@ A ação de suporte pode usar superfície amarela/creme de apoio, sem competir c
 ### Contexto de suporte
 
 `.support-order-context` usa borda e fundo verde suave, ícone de conversa e texto curto. Ele informa qual pedido está ligado ao atendimento sem transformar o suporte em uma segunda tela de detalhe do pedido.
+
+
+## Padrões de carrinho e proximidade — 28/09/2026
+
+- ações destrutivas de carrinho usam texto explícito (“Limpar carrinho”) e ícone de lixeira;
+- validações que impedem a finalização usam o padrão `.inline-error` e não cards informativos permanentes;
+- informações de pedido mínimo pertencem à banca; no carrinho aparecem apenas quando há bloqueio;
+- listas de feiras devem refletir proximidade do cliente antes de destaque editorial quando houver contexto de localização.
