@@ -221,7 +221,7 @@ describe("Feiraê customer flow", () => {
     );
 
     expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
   });
 
   it("shows each bank profile with only that bank's products directly below it", () => {
