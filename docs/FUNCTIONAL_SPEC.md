@@ -1023,3 +1023,26 @@ Para cada banca daquela feira:
 - ao terminar os produtos, iniciar a próxima banca;
 - produtos de bancas diferentes nunca devem ser misturados no mesmo bloco;
 - se a banca estiver fechada, seus produtos continuam visíveis, mas a adição ao carrinho pode ser bloqueada conforme regra operacional.
+
+## Métricas e apresentação comercial dos produtos — 29/09/2026
+
+O Feiraê separa duas coisas que não podem ser confundidas:
+
+- **apresentação comercial**: aquilo que o Cliente compra e paga;
+- **peso logístico**: peso usado somente para frete, capacidade do veículo e planejamento da rota.
+
+O preço exibido ao Cliente é fechado para a apresentação cadastrada. O sistema não deve mostrar “peso/valor podem variar” sem existir um fluxo explícito de pesagem, aprovação e ajuste de pagamento.
+
+Exemplos de cadastro:
+
+- farinha: `pacote 500 g`, `pacote 1 kg` ou `saco 5 kg`; cada apresentação com seu preço;
+- cheiro-verde/coentro/couve: preferir `1 maço` ou embalagem definida;
+- filé/camarão: `1 kg`, `bandeja 500 g` ou pacote definido;
+- peixe inteiro: pode ser `1 peça` ou `1 kg`, mas a banca precisa escolher uma regra explícita;
+- frutas e verduras soltas: podem usar `1 kg`; embaladas usam unidade, bandeja, saco, caixa ou cesta com conteúdo definido;
+- ovos: dúzia, bandeja ou quantidade definida;
+- queijo: peça, pote, pacote ou kg conforme a forma real de venda.
+
+No MVP, apresentações diferentes são cadastros/SKUs distintos. Ex.: farinha 500 g e farinha 1 kg devem ter preços e estoques próprios.
+
+O editor de produto restringe as unidades sugeridas pela categoria e exige **Apresentação**. O peso logístico nunca altera silenciosamente o valor cobrado.
