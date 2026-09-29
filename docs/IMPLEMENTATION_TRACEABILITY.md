@@ -478,8 +478,8 @@ Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam 
 
 `FeiranteOperations` sincroniza esses campos a partir de **Minha banca** e **Horários**.
 
-`FairDetail` usa esses dados apenas para montar os cards das bancas da feira.
+`FairDetail` agrupa os dados por banca e, para cada banca, filtra o catálogo por `product.feirante === vendor.name` dentro da feira selecionada.
 
-`VendorStore` usa o mesmo perfil no topo e filtra o catálogo por `vendorName + fairName`, garantindo que a página individual mostre **somente os produtos da banca selecionada**.
+O resultado público segue a ordem **perfil da banca → produtos da banca → próxima banca**.
 
 Não houve migration nesta rodada: o protótipo persiste esses campos no marketplace local existente. Produção deve mover mídia para Storage e os campos de perfil/agenda para o backend.
