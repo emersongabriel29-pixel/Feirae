@@ -569,7 +569,6 @@ O suporte vinculado mostra o identificador do pedido antes do chat e o protocolo
 
 Em largura móvel, card de pedido e ações podem empilhar. Os grupos de banca do checkout preservam hierarquia e não devem gerar rolagem horizontal.
 
-
 ## Localização, feira mais próxima e carrinho — 28/09/2026
 
 ### Feira mais próxima
