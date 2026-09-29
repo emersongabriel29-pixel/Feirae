@@ -762,21 +762,11 @@ export function FairDetail({
   onBack,
   onMap,
   onVendor,
-  onAdd,
-  onRemove,
-  cart,
-  favorites,
-  onFavorite,
 }: {
   fairName: string;
   onBack: () => void;
   onMap: (destination: number | string, lng?: number) => void;
   onVendor: (name: string) => void;
-  onAdd: (id: number) => void;
-  onRemove: (id: number) => void;
-  cart: Record<number, number>;
-  favorites: number[];
-  onFavorite: (id: number) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
   const fairIndex = Math.max(
@@ -807,7 +797,7 @@ export function FairDetail({
     return {
       name,
       index,
-      products: vendorProducts,
+      productCount: vendorProducts.length,
       store,
       metrics,
       categoriesText,
@@ -915,8 +905,8 @@ export function FairDetail({
                         <h3>{vendor.name}</h3>
                         <p>{vendor.store?.description?.trim() || vendor.categoriesText}</p>
                       </div>
-                      <button type="button" className="mini-toggle" onClick={() => onVendor(vendor.name)}>
-                        Abrir perfil <ChevronRight size={15} />
+                      <button type="button" className="mini-toggle active" onClick={() => onVendor(vendor.name)}>
+                        Ver banca <ChevronRight size={15} />
                       </button>
                     </div>
 
@@ -936,6 +926,11 @@ export function FairDetail({
                         <b>{vendor.store?.box ? `Box ${vendor.store.box}` : "Banca"}</b>
                         <small>{vendor.categoriesText}</small>
                       </span>
+                      <span>
+                        <Package size={15} />
+                        <b>{vendor.productCount} produto(s)</b>
+                        <small>toque em Ver banca</small>
+                      </span>
                       {minimum > 0 && (
                         <span>
                           <Check size={15} />
@@ -947,34 +942,6 @@ export function FairDetail({
                   </div>
                 </article>
 
-                <div className="vendor-inline-products">
-                  <div className="vendor-inline-products__heading">
-                    <div>
-                      <span className="eyebrow">Produtos da banca</span>
-                      <h4>{vendor.name}</h4>
-                    </div>
-                    <small>{vendor.products.length} produto(s)</small>
-                  </div>
-
-                  {vendor.products.length ? (
-                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
-                      {vendor.products.map((product) => (
-                        <ProductCard
-                          key={product.id}
-                          product={product}
-                          quantity={cart[product.id] ?? 0}
-                          onAdd={onAdd}
-                          onRemove={onRemove}
-                          addDisabled={vendor.store?.isOpen === false}
-                          favorite={favorites.includes(product.id)}
-                          onFavorite={onFavorite}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <Empty title="Produtos em preparação" text="Esta banca ainda não publicou produtos." />
-                  )}
-                </div>
               </section>
             );
           })}
@@ -1105,14 +1072,77 @@ export function VendorStore({
       }
       onBack={onBack}
     >
-      <div className="detail-banner">
-        <div>
-          <Store size={30} />
-          <h2>{vendorName}</h2>
-          <p>
-            Produtos selecionados direto da feira · {ratingLabel(metrics.rating)} ★ ({metrics.reviewCount}) ·{" "}
-            {minutesLabel(metrics.deliveryMinutes)} · entrega a partir de {money(metrics.deliveryFee)}
-          </p>
+      <article className="public-vendor-profile public-vendor-profile--store">
+        <div className="public-vendor-profile__cover tone-0">
+          {sharedStore?.coverDataUrl ? (
+            <img src={sharedStore.coverDataUrl} alt={`Capa da banca ${vendorName}`} />
+          ) : (
+            <span className="public-vendor-profile__cover-placeholder" aria-hidden="true">
+              <Store size={46} />
+            </span>
+          )}
+          <div className="public-vendor-profile__avatar">
+            {sharedStore?.logoDataUrl ? (
+              <img src={sharedStore.logoDataUrl} alt={`Foto da banca ${vendorName}`} />
+            ) : (
+              <Store size={30} aria-hidden="true" />
+            )}
+          </div>
+          <span
+            className={
+              sharedStore ? (sharedStore.isOpen ? "vendor-open-badge is-open" : "vendor-open-badge") : "vendor-open-badge"
+            }
+          >
+            {sharedStore ? (sharedStore.isOpen ? "Aberta agora" : "Fechada") : "Horário da feira"}
+          </span>
+        </div>
+
+        <div className="public-vendor-profile__body">
+          <div className="public-vendor-profile__title">
+            <div>
+              <small>{fairName}</small>
+              <h2>{vendorName}</h2>
+              <p>
+                {sharedStore?.description?.trim() ||
+                  sharedStore?.categories?.trim() ||
+                  Array.from(new Set(vendorProducts.map((product) => product.category))).join(" · ") ||
+                  "Produtos da feira"}
+              </p>
+            </div>
+            <button
+              className={storeFavorite ? "mini-toggle active" : "mini-toggle"}
+              onClick={onStoreFavorite}
+            >
+              <Heart size={15} className={storeFavorite ? "fill-red-500 text-red-500" : ""} />
+              {storeFavorite ? "Favorita" : "Favoritar"}
+            </button>
+          </div>
+
+          <div className="public-vendor-profile__details">
+            <span>
+              <Clock size={15} />
+              <b>{vendorHoursInfo(sharedStore, fairName).mode}</b>
+              <small>{vendorHoursInfo(sharedStore, fairName).label}</small>
+            </span>
+            <span>
+              <Star size={15} />
+              <b>{ratingLabel(metrics.rating)} ★</b>
+              <small>{metrics.reviewCount} avaliações</small>
+            </span>
+            <span>
+              <Truck size={15} />
+              <b>{minutesLabel(metrics.deliveryMinutes)}</b>
+              <small>entrega a partir de {money(metrics.deliveryFee)}</small>
+            </span>
+            {sharedStore?.box && (
+              <span>
+                <Store size={15} />
+                <b>Box {sharedStore.box}</b>
+                <small>{sharedStore.categories || "Banca da feira"}</small>
+              </span>
+            )}
+          </div>
+
           <div className={minimumReached ? "vendor-minimum-state is-met" : "vendor-minimum-state"}>
             <span>Pedido mínimo</span>
             {minimumOrderAmount > 0 ? (
@@ -1129,14 +1159,9 @@ export function VendorStore({
             )}
           </div>
         </div>
-        <button
-          className={storeFavorite ? "secondary-action light active" : "secondary-action light"}
-          onClick={onStoreFavorite}
-        >
-          <Heart size={17} className={storeFavorite ? "fill-red-500 text-red-500" : ""} />
-          {storeFavorite ? "Banca favorita" : "Favoritar banca"}
-        </button>
-      </div>
+      </article>
+
+      <SectionHeading eyebrow="Produtos da banca" title={vendorName} />
       {vendorProducts.length ? (
         <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {vendorProducts.map((product) => (
