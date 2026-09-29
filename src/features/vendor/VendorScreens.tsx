@@ -32,6 +32,7 @@ import {
 import { fairs } from "../../data";
 import { fairHoursForName } from "../../domain/fairHours";
 import { vehicleRules } from "../../domain/marketplace";
+import { measurementPolicyForCategory } from "../../domain/productMeasurements";
 import {
   DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
   MAX_VENDOR_MINIMUM_ORDER_AMOUNT,
@@ -845,8 +846,13 @@ export function FeiranteOperations({
 
   function saveProduct(event: FormEvent) {
     event.preventDefault();
-    if (!productDraft.name.trim() || productDraft.price <= 0 || productDraft.weightKg <= 0) {
-      showNotice("Informe nome, preço e peso logístico válidos.");
+    if (
+      !productDraft.name.trim() ||
+      !productDraft.packageSize.trim() ||
+      productDraft.price <= 0 ||
+      productDraft.weightKg <= 0
+    ) {
+      showNotice("Informe nome, apresentação, preço e peso logístico válidos.");
       return;
     }
     if (!productCategories.some((category) => category === productDraft.category)) {
@@ -1532,8 +1538,20 @@ export function FeiranteOperations({
                         Categoria do produto
                         <select
                           value={productDraft.category}
-                          onChange={(event) =>
-                            setProductDraft((current) => ({ ...current, category: event.target.value }))
+                          onChange={(event) => {
+                            const category = event.target.value;
+                            const policy = measurementPolicyForCategory(category);
+                            setProductDraft((current) => ({
+                              ...current,
+                              category,
+                              saleUnit: policy.allowedUnits.includes(current.saleUnit)
+                                ? current.saleUnit
+                                : policy.defaultUnit,
+                              packageSize:
+                                current.packageSize && current.packageSize !== "1 un"
+                                  ? current.packageSize
+                                  : policy.examples[0],
+                            }));
                           }
                           required
                         >
@@ -1556,10 +1574,15 @@ export function FeiranteOperations({
                             setProductDraft((current) => ({ ...current, saleUnit: event.target.value }))
                           }
                         >
-                          {productSaleUnits.map((unit) => (
-                            <option key={unit}>{unit}</option>
-                          ))}
+                          {measurementPolicyForCategory(productDraft.category)
+                            .allowedUnits.filter((unit) => productSaleUnits.includes(unit as never))
+                            .map((unit) => (
+                              <option key={unit}>{unit}</option>
+                            ))}
                         </select>
+                        <small>
+                          {measurementPolicyForCategory(productDraft.category).note}
+                        </small>
                       </label>
                       <label>
                         Preço por {productDraft.saleUnit}
@@ -1583,8 +1606,13 @@ export function FeiranteOperations({
                           onChange={(event) =>
                             setProductDraft((current) => ({ ...current, packageSize: event.target.value }))
                           }
-                          placeholder="Ex.: bandeja 500 g, 1 maço"
+                          placeholder={`Ex.: ${measurementPolicyForCategory(productDraft.category).examples.join(" · ")}`}
+                          required
                         />
+                        <small>
+                          Esta apresentação é o que o cliente compra. Ex.: farinha pacote 500 g ou 1 kg,
+                          cheiro-verde 1 maço, peixe 1 kg ou 1 peça.
+                        </small>
                       </label>
                       <label>
                         Peso logístico por item (kg)
@@ -1600,6 +1628,9 @@ export function FeiranteOperations({
                             }))
                           }
                         />
+                        <small>
+                          Usado para frete e capacidade do veículo. Não altera o preço da apresentação vendida.
+                        </small>
                       </label>
                       <label>
                         Estoque atual
