@@ -83,6 +83,7 @@ import { OrderRouteMap } from "../../components/OrderRouteMap";
 
 export function HomePage({
   onTab,
+  nearestFairName,
   onFair,
   onVendors,
   onTracking,
@@ -93,6 +94,7 @@ export function HomePage({
   onFavorite,
 }: {
   onTab: (tab: CustomerTab) => void;
+  nearestFairName: string;
   onFair: (name: string) => void;
   onVendors: () => void;
   onTracking: () => void;
@@ -144,7 +146,7 @@ export function HomePage({
             icon={<MapPin size={22} />}
             title="Feiras próximas"
             text="Estado, cidade e feira"
-            onClick={() => onFair(fairs[0].name)}
+            onClick={() => onFair(nearestFairName)}
           />
           <QuickAction
             icon={<Store size={22} />}
@@ -860,9 +862,9 @@ export function VendorStore({
     (product) => product.feirante === vendorName && product.fair === fairName,
   );
   const sharedStore = readStoreByIdentity(fairName, vendorName);
-  const minimumOrderAmount = normalizeVendorMinimumOrder(
-    sharedStore?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
-  );
+  const minimumOrderAmount = sharedStore
+    ? normalizeVendorMinimumOrder(sharedStore.minimumOrderAmount)
+    : DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT;
   const metrics = metricForVendor(vendorName, vendorMetrics);
   const vendorCartSubtotal = vendorProducts.reduce(
     (sum, product) => sum + product.price * (cart[product.id] ?? 0),
