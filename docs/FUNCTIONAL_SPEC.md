@@ -1001,3 +1001,13 @@ Ao abrir uma banca:
 - abaixo dele, listar **exclusivamente os produtos daquela banca**;
 - produtos de outras bancas não aparecem nessa página;
 - se a banca compartilhada estiver fechada, os produtos não podem ser adicionados.
+
+## CTA Ver bancas na listagem de feiras — 29/09/2026
+
+Cada card de feira usa a ação principal **Ver bancas**.
+
+A ação recebe o nome da feira do próprio card e abre o contexto dessa unidade, exibindo somente suas bancas.
+
+Fluxo esperado:
+
+**Feiras → Ver bancas → bancas da feira escolhida → Ver banca → produtos daquela banca.**
