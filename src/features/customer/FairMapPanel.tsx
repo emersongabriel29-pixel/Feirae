@@ -31,7 +31,7 @@ export function FairMapPanel({
       <div className="fair-map-panel__glow" aria-hidden="true" />
       <div className="fair-map-panel__intro">
         <span className="fair-map-panel__mark" aria-hidden="true">
-          <img src="/feirae-mark.svg" alt="" />
+          <img src="/brand/09_versao_selo.webp" alt="" />
         </span>
         <div>
           <span className="fair-map-panel__eyebrow">
