@@ -955,8 +955,8 @@ export function FairDetail({
                 <div className="vendor-inline-products">
                   <div className="vendor-inline-products__heading">
                     <div>
-                      <span className="eyebrow">Produtos da banca</span>
-                      <h4>{vendor.name}</h4>
+                      <span className="eyebrow">Catálogo da banca</span>
+                      <h4>Produtos</h4>
                     </div>
                     <small>{vendor.products.length} produto(s)</small>
                   </div>
