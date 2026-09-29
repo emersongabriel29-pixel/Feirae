@@ -133,7 +133,7 @@ export function HomePage({
             <MapPin size={27} />
           </span>
           <strong className="hero-illustration__brand">
-            <img src="/feirae-mark.svg" alt="" />
+            <img src="/brand/03_logo_fundo_transparente.webp" alt="" />
           </strong>
           <i className="hero-illustration__route" />
         </div>
@@ -308,7 +308,7 @@ export function FairCard({
           <Store size={46} strokeWidth={1.7} />
         </span>
         <span className="fair-cover-mark" aria-hidden="true">
-          <img src="/feirae-mark.svg" alt="" />
+          <img src="/brand/09_versao_selo.webp" alt="" />
         </span>
         <small>{fairHoursForName(fair.name).label}</small>
       </div>
