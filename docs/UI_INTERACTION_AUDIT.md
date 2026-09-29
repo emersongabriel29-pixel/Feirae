@@ -605,7 +605,6 @@ O valor mínimo pertence à configuração da banca:
 - somente quando uma banca está abaixo do valor exigido, o carrinho mostra um erro objetivo com banca, valor faltante e mínimo;
 - **Finalizar pedido** permanece bloqueado enquanto existir ao menos uma banca abaixo do mínimo.
 
-
 ## Entrada premium antes da autenticação — 28/09/2026
 
 A abertura do Feiraê passa a separar **marca/primeira impressão** de **autenticação operacional**.
