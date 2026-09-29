@@ -12,7 +12,7 @@
     "test:sync-policy": "node --test scripts/change-sync-policy-checks.mjs",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write docs/DESIGN_SYSTEM.md docs/TESTING_QA.md docs/UI_INTERACTION_AUDIT.md scripts/check-brand-assets.mjs src/App.tsx src/components/AppComponents.tsx src/features/customer/CustomerScreens.tsx && git diff --color=never -- docs/DESIGN_SYSTEM.md docs/TESTING_QA.md docs/UI_INTERACTION_AUDIT.md scripts/check-brand-assets.mjs src/App.tsx src/components/AppComponents.tsx src/features/customer/CustomerScreens.tsx && exit 1",
     "check": "npm run lint && npm run test && npm run test:sync-policy && npm run test:brand && npm run build",
     "check:sync": "node scripts/check-change-sync.mjs",
     "test:brand": "node scripts/check-brand-assets.mjs"
