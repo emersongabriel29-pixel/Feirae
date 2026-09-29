@@ -728,3 +728,27 @@ A superfície só existe em estado inválido:
 - valor mínimo definido por aquela banca.
 
 Quando todas as bancas atendem a regra ou não possuem mínimo configurado, a superfície não é renderizada. A página da banca continua sendo a superfície canônica para exibir o valor mínimo e o progresso da compra.
+
+## Entrada premium / welcome — 28/09/2026
+
+A entrada premium usa uma composição editorial própria sem alterar o design system das telas internas.
+
+### Estrutura
+
+- `.welcome-page`: fundo externo verde e enquadramento da experiência;
+- `.welcome-shell`: superfície creme em tela cheia, com respiro e profundidade;
+- `.welcome-brand`: usa diretamente a marca oficial transparente;
+- `.welcome-benefits`: três benefícios com ícones simples e hierarquia curta;
+- `.welcome-market-scene`: ilustração vetorial própria com banca, frutas e verduras;
+- `.welcome-primary`: CTA verde **Entrar**;
+- `.welcome-secondary`: CTA contornado **Criar conta**;
+- `.welcome-back`: ação secundária que retorna do formulário para a abertura.
+
+### Regras visuais
+
+- fotografia/ilustração rica é reservada à abertura, campanhas e superfícies promocionais;
+- telas operacionais continuam limpas e funcionais;
+- a marca aprovada não é redesenhada nem substituída pela referência visual;
+- nenhum texto ou botão faz parte da imagem de fundo: conteúdo permanece HTML acessível e responsivo;
+- em desktop, a abertura vira um painel central com sombra; no mobile, ocupa o viewport inteiro;
+- `prefers-reduced-motion` continua respeitado pelo sistema global.

@@ -3,7 +3,17 @@ import { describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { cancelVendorParticipation, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
+function openAuth(mode: "login" | "signup" = "login") {
+  if (screen.queryByRole("radiogroup", { name: /tipo de acesso/i })) return;
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: mode === "login" ? /^entrar$/i : /^criar conta$/i,
+    }),
+  );
+}
+
 function loginAs(role: "cliente" | "feirante" | "entregador") {
+  openAuth("login");
   fireEvent.click(screen.getByRole("radio", { name: new RegExp(role, "i") }));
   fireEvent.change(screen.getByLabelText(/e-mail/i), {
     target: { value: `${role}@feirae.test` },
@@ -325,13 +335,16 @@ describe("Feiraê customer flow", () => {
     ).toBeInTheDocument();
   });
 
-  it("allows showing and hiding the password", () => {
+  it("shows the premium welcome and then allows showing and hiding the password", () => {
     render(<App />);
     expect(screen.getByText(/a feira do seu jeito/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /da banca até você/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(/compre de feirantes locais, gerencie sua banca ou faça entregas/i),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /da feira até você/i })).toBeInTheDocument();
+    expect(screen.getByText(/^produtos frescos$/i)).toBeInTheDocument();
+    expect(screen.getByText(/entrega rápida/i)).toBeInTheDocument();
+    expect(screen.getByText(/compra confiável/i)).toBeInTheDocument();
+    expect(screen.queryByRole("radiogroup", { name: /tipo de acesso/i })).not.toBeInTheDocument();
+
+    openAuth("login");
     const password = screen.getByPlaceholderText(/digite sua senha/i);
     expect(password).toHaveAttribute("type", "password");
     fireEvent.click(screen.getByRole("button", { name: /mostrar senha/i }));
@@ -340,6 +353,7 @@ describe("Feiraê customer flow", () => {
 
   it("recovers a demo password from the login screen", () => {
     render(<App />);
+    openAuth("login");
 
     fireEvent.click(screen.getByRole("button", { name: /esqueci minha senha/i }));
     expect(screen.getByRole("heading", { name: /redefina sua senha/i })).toBeInTheDocument();
@@ -368,6 +382,7 @@ describe("Feiraê customer flow", () => {
 
   it("blocks password recovery when confirmation does not match", () => {
     render(<App />);
+    openAuth("login");
 
     fireEvent.click(screen.getByRole("button", { name: /esqueci minha senha/i }));
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
@@ -386,6 +401,7 @@ describe("Feiraê customer flow", () => {
 
   it("rejects an incorrect password instead of ignoring it", () => {
     render(<App />);
+    openAuth("login");
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
       target: { value: "cliente@feirae.test" },
     });
@@ -400,6 +416,7 @@ describe("Feiraê customer flow", () => {
 
   it("clears stale authentication errors when switching flow, role or editing the email", () => {
     render(<App />);
+    openAuth("login");
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
       target: { value: "naoexiste@feirae.app" },
     });
@@ -490,6 +507,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("heading", { name: /olá, cliente atualizada/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /sair da conta/i }));
+    openAuth("login");
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
       target: { value: "cliente.nova@feirae.app" },
     });
@@ -800,6 +818,8 @@ describe("Feiraê role access", () => {
       JSON.stringify({ role: "admin", email: "admin@feirae.test", name: "Admin" }),
     );
     render(<App />);
+    expect(screen.getByRole("heading", { name: /da feira até você/i })).toBeInTheDocument();
+    openAuth("login");
     expect(screen.getByRole("heading", { name: /como você vai usar o aplicativo/i })).toBeInTheDocument();
   });
 
@@ -1045,6 +1065,7 @@ describe("Feiraê role access", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /sair/i }));
     window.localStorage.removeItem(`feirae:vendor-documents:${email}`);
+    openAuth("login");
 
     fireEvent.click(screen.getByRole("radio", { name: /feirante/i }));
     fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: email } });
@@ -1408,11 +1429,16 @@ describe("Feiraê role access", () => {
     expect(screen.getAllByRole("button", { name: /assinar eletronicamente/i })).toHaveLength(2);
   });
 
-  it("only allows changing the profile after logout", () => {
+  it("returns to the branded welcome before allowing another profile after logout", () => {
     render(<App />);
     loginAs("feirante");
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /sair/i }));
+
+    expect(screen.getByRole("heading", { name: /da feira até você/i })).toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+
+    openAuth("login");
     expect(screen.getByRole("heading", { name: /como você vai usar o aplicativo/i })).toBeInTheDocument();
     expect(screen.getAllByRole("radio")).toHaveLength(3);
   });

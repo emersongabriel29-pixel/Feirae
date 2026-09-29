@@ -32,11 +32,11 @@ npm run build
 
 | Arquivo                                       |  Testes |
 | --------------------------------------------- | ------: |
-| `src/App.test.tsx`                            |      66 |
+| `src/App.test.tsx`                            |      68 |
 | `src/components/LaunchExperience.test.tsx`    |       4 |
 | `src/components/FeiraeBrand.test.tsx`         |       2 |
 | `src/components/OrderRouteMap.test.tsx`       |       3 |
-| `src/features/customer/FairMapPanel.test.tsx` |       4 |
+| `src/features/customer/FairMapPanel.test.tsx` |       5 |
 | `src/domain/orderBridge.test.ts`              |      11 |
 | `src/domain/feiraeNotifications.test.ts`      |       6 |
 | `src/domain/legalTerms.test.ts`               |       8 |
@@ -46,17 +46,17 @@ npm run build
 | `src/domain/fairInternalRouting.test.ts`      |       4 |
 | `src/domain/fairMap.test.ts`                  |       4 |
 | `src/domain/inventoryBridge.test.ts`          |       4 |
-| `src/domain/localAuth.test.ts`                |       4 |
+| `src/domain/localAuth.test.ts`                |       6 |
 | `src/domain/marketplace.test.ts`              |       4 |
 | `src/domain/session.test.ts`                  |       3 |
 | `src/utils.test.ts`                           |       4 |
-| **Total Vitest**                              | **153** |
+| **Total Vitest**                              | **156** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 66 testes cobrem explicitamente:
+Os 68 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -213,7 +213,7 @@ Os 66 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 153 testes Vitest NÃO comprovam diretamente
+## 5. O que os 156 testes Vitest NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -557,3 +557,28 @@ QA manual recomendado:
 - testar banca com mínimo 0, sem configuração legada e com valor customizado;
 - limpar carrinho em 360/390/412 px e confirmar que a sacola permanece aberta no estado vazio;
 - validar compra multi-banca com apenas uma das bancas abaixo do mínimo.
+
+## QA — entrada premium — 28/09/2026
+
+Cobertura automatizada em `App.test.tsx`:
+
+- a abertura aparece antes dos campos de autenticação;
+- exibe **Da feira até você**, Produtos frescos, Entrega rápida e Compra confiável;
+- o radiogroup Cliente/Feirante/Entregador não fica exposto antes do CTA;
+- **Entrar** abre a autenticação existente;
+- exibir/ocultar senha continua funcionando;
+- recuperação de senha continua acessível após a abertura;
+- cadastro continua acessível diretamente por **Criar conta**;
+- logout retorna à abertura premium e só depois permite nova escolha de perfil.
+
+Contagem Vitest da base desta rodada permanece **156 testes**; os casos de autenticação foram adaptados para a nova etapa sem remover cobertura existente.
+
+QA visual recomendado:
+
+- 360, 390 e 412 px em Android;
+- viewport baixo (~667–720 px) sem esconder CTAs;
+- 768 px e desktop com painel central;
+- conferir logo oficial sem distorção;
+- verificar que a ilustração não encobre textos ou botões;
+- testar Entrar → Voltar à abertura e Criar conta → autenticação;
+- confirmar contraste e alvos de toque dos dois CTAs.

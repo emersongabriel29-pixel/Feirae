@@ -11,6 +11,7 @@ import {
   FileCheck2,
   FileSignature,
   Home,
+  Leaf,
   LocateFixed,
   LogOut,
   MapPin,
@@ -22,6 +23,7 @@ import {
   ShoppingBag,
   Store,
   Trash2,
+  Truck,
   User,
   X,
 } from "lucide-react";
@@ -58,6 +60,7 @@ export function LoginPage({
   ) => string | null;
   onResetPassword: (role: Role, email: string, newPassword: string) => string | null;
 }) {
+  const [welcomeVisible, setWelcomeVisible] = useState(true);
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
   const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
   const [email, setEmail] = useState("");
@@ -114,6 +117,19 @@ export function LoginPage({
     if (nextMode !== "signup") resetCustomerLegalChoice();
   }
 
+  function openAuth(nextMode: "login" | "signup") {
+    changeMode(nextMode);
+    setWelcomeVisible(false);
+  }
+
+  function returnToWelcome() {
+    setWelcomeVisible(true);
+    setFormError("");
+    setFormSuccess("");
+    setPassword("");
+    setConfirmPassword("");
+  }
+
   function changeRole(nextRole: Role) {
     setSelectedRole(nextRole);
     setFormError("");
@@ -166,6 +182,64 @@ export function LoginPage({
     setFormError(error ?? "");
   }
 
+  if (welcomeVisible) {
+    return (
+      <main className="welcome-page">
+        <section className="welcome-shell">
+          <span className="welcome-orb welcome-orb--one" aria-hidden="true" />
+          <span className="welcome-orb welcome-orb--two" aria-hidden="true" />
+          <span className="welcome-leaf welcome-leaf--one" aria-hidden="true" />
+          <span className="welcome-leaf welcome-leaf--two" aria-hidden="true" />
+
+          <div className="welcome-copy">
+            <FeiraeBrand className="welcome-brand" priority />
+            <span className="welcome-kicker">A feira do seu jeito</span>
+            <h1>Da feira até você.</h1>
+            <p>Produtos frescos, feirantes locais e entrega do seu jeito em uma experiência simples.</p>
+
+            <div className="welcome-benefits" aria-label="Benefícios do Feiraê">
+              <div>
+                <span aria-hidden="true">
+                  <Leaf size={21} />
+                </span>
+                <b>Produtos frescos</b>
+                <small>Direto das bancas</small>
+              </div>
+              <div>
+                <span aria-hidden="true">
+                  <Truck size={21} />
+                </span>
+                <b>Entrega rápida</b>
+                <small>Rota acompanhada</small>
+              </div>
+              <div>
+                <span aria-hidden="true">
+                  <ShieldCheck size={21} />
+                </span>
+                <b>Compra confiável</b>
+                <small>Do pedido à entrega</small>
+              </div>
+            </div>
+          </div>
+
+          <div className="welcome-market-scene" aria-hidden="true">
+            <img src="/art/welcome-market-scene.svg" alt="" />
+          </div>
+
+          <div className="welcome-actions">
+            <button type="button" className="welcome-primary" onClick={() => openAuth("login")}>
+              Entrar <ChevronRight size={22} />
+            </button>
+            <button type="button" className="welcome-secondary" onClick={() => openAuth("signup")}>
+              Criar conta
+            </button>
+            <small>Cliente, feirante ou entregador</small>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className={`login-page auth-mode-${mode}`}>
       <section className="login-showcase">
@@ -183,6 +257,9 @@ export function LoginPage({
       </section>
       <section className="login-content">
         <div className="login-form-wrap">
+          <button type="button" className="welcome-back" onClick={returnToWelcome}>
+            <ArrowLeft size={16} /> Voltar à abertura
+          </button>
           <span className="eyebrow">Acesso ao Feiraê</span>
           <div className="auth-switch" role="tablist" aria-label="Entrar ou criar conta">
             <button
