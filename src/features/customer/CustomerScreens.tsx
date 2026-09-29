@@ -61,6 +61,7 @@ import type { Address, CustomerTab, DemoOrder, DemoSession, Fair, Product, Scree
 import { money } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
 import { readFileForLocalStorage } from "../../domain/storedFile";
+import { exactPresentation } from "../../domain/productMeasurements";
 import {
   cartWeight,
   metricForVendor,
@@ -488,7 +489,6 @@ export function ProductCard({
   addDisabled?: boolean;
 }) {
   const metrics = metricForVendor(product.feirante, vendorMetrics);
-  const variableWeight = ["kg", "g"].includes(product.unit);
   const store = readStoreByIdentity(product.fair, product.feirante);
   const minimumOrder =
     store && typeof store.minimumOrderAmount === "number"
@@ -552,8 +552,8 @@ export function ProductCard({
           <div className="product-card__price">
             <strong>{money(product.price)}</strong>
             <span>/{product.unit}</span>
+            <small>{exactPresentation(product.unit, product.packageSize)}</small>
             {minimumOrder !== null && minimumOrder > 0 && <small>Pedido mín. {money(minimumOrder)}</small>}
-            {variableWeight && <small>Peso/valor podem variar</small>}
           </div>
 
           {quantity > 0 ? (
@@ -1849,7 +1849,6 @@ export function Checkout({
   >(scopedStorageKey("feirae:cards-v3"), []);
   const defaultAddress = addresses.find((address) => address.isDefault) ?? addresses[0];
   const totalWeight = cartWeight(items, cart);
-  const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
   const fairName = items[0]?.fair ?? "Feiraê";
   const vendorNames = Array.from(new Set(items.map((product) => product.feirante)));
   const vendorCount = vendorNames.length;
@@ -2112,16 +2111,6 @@ export function Checkout({
             </div>
           )}
 
-          {hasVariableWeight && (
-            <div className="region-strip">
-              <Package size={18} />
-              <div>
-                <b>Há produtos vendidos por peso</b>
-                <p>Peso e valor são estimados até a separação e ficam registrados no mesmo pedido.</p>
-              </div>
-            </div>
-          )}
-
           <Step title="Itens do pedido">
             <div className="checkout-vendor-list">
               {vendorMinimums.map((vendorSummary) => {
@@ -2194,7 +2183,7 @@ export function Checkout({
               <b>{money(subtotal)}</b>
             </p>
             <p>
-              <span>Peso estimado</span>
+              <span>Peso logístico estimado</span>
               <b>{totalWeight.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</b>
             </p>
             {fulfillment === "delivery" && (
@@ -2243,7 +2232,7 @@ export function Checkout({
               <b>{payment}</b>
             </p>
             <p className="total">
-              <span>{hasVariableWeight ? "Total estimado" : "Total"}</span>
+              <span>Total</span>
               <b>{money(total)}</b>
             </p>
           </div>
