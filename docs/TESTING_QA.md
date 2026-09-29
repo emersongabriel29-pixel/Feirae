@@ -643,3 +643,16 @@ Teste adicionado para garantir que:
 - a ação é vinculada à feira daquele card;
 - ao abrir, aparece uma banca pertencente à feira escolhida;
 - nenhum produto aparece antes de entrar em uma banca específica.
+
+## QA — Ver bancas com produtos agrupados — 29/09/2026
+
+Cobertura do fluxo Cliente:
+
+- o card da feira mostra **Ver bancas**;
+- a ação abre a feira selecionada;
+- cada banca exibe perfil, mídia e horário;
+- os produtos daquela banca aparecem imediatamente abaixo do perfil;
+- um produto de outra banca não pode aparecer dentro do bloco da banca atual;
+- após o bloco de produtos, a rolagem continua para a próxima banca.
+
+QA visual obrigatório em 360/390/412 px: perfil, badges e produtos devem permanecer no mesmo bloco visual, sem sobreposição ou rolagem horizontal.
