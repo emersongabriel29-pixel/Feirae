@@ -57,7 +57,7 @@ describe("multiVendor", () => {
     ).toEqual({ allowed: true });
   });
 
-  it("keeps R$ 30 only as the fallback for bancas without a configured minimum", () => {
+  it("treats an unconfigured minimum as no minimum while keeping R$ 30 as the demo suggestion", () => {
     const items = [
       { id: 1, feirante: "Banca A", price: 20 },
       { id: 2, feirante: "Banca B", price: 15 },
@@ -72,7 +72,7 @@ describe("multiVendor", () => {
         subtotal: 40,
         promotionDiscount: 0,
         eligibleSubtotal: 40,
-        minimumOrderAmount: 30,
+        minimumOrderAmount: 0,
         missingForMinimum: 0,
         meetsMinimum: true,
       },
@@ -81,9 +81,9 @@ describe("multiVendor", () => {
         subtotal: 15,
         promotionDiscount: 0,
         eligibleSubtotal: 15,
-        minimumOrderAmount: 30,
-        missingForMinimum: 15,
-        meetsMinimum: false,
+        minimumOrderAmount: 0,
+        missingForMinimum: 0,
+        meetsMinimum: true,
       },
     ]);
   });
@@ -128,7 +128,7 @@ describe("multiVendor", () => {
   });
 
   it("normalizes configured minimums to the platform range", () => {
-    expect(normalizeVendorMinimumOrder(undefined)).toBe(30);
+    expect(normalizeVendorMinimumOrder(undefined)).toBe(0);
     expect(normalizeVendorMinimumOrder(-10)).toBe(0);
     expect(normalizeVendorMinimumOrder(22.555)).toBe(22.56);
     expect(normalizeVendorMinimumOrder(500)).toBe(MAX_VENDOR_MINIMUM_ORDER_AMOUNT);
