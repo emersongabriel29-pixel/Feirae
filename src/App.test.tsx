@@ -28,6 +28,48 @@ function openFairsMap() {
   fireEvent.click(screen.getByRole("button", { name: /mapa das feiras/i }));
 }
 
+function setVendorPresentation(fairName: string, vendorName: string) {
+  const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  window.localStorage.setItem(
+    "feirae:marketplace:v2",
+    JSON.stringify({
+      stores: [
+        {
+          accountKey: "vendor-showcase-test@feirae.test",
+          vendorId: "vendor-showcase-test",
+          storeId: "store-showcase-test",
+          name: vendorName,
+          fairName,
+          isOpen: true,
+          approved: true,
+          deliveryEnabled: true,
+          pickupEnabled: true,
+          absorbDeliveryFee: false,
+          acceptCashOnDelivery: true,
+          acceptCardOnDelivery: true,
+          minimumOrderAmount: 30,
+          description: "Produtos frescos direto da banca.",
+          categories: "Hortifruti e cestas",
+          logoDataUrl: "data:image/png;base64,Zm90bw==",
+          coverDataUrl: "data:image/png;base64,Y2FwYQ==",
+          useFairHours: false,
+          schedule: days.map((day) => ({
+            day,
+            enabled: true,
+            open: "06:00",
+            close: "12:00",
+            breakStart: "",
+            breakEnd: "",
+          })),
+          promotions: [],
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      products: [],
+    }),
+  );
+}
+
 function setVendorMinimum(fairName: string, vendorName: string, minimumOrderAmount: number) {
   window.localStorage.setItem(
     "feirae:marketplace:v2",
@@ -182,6 +224,33 @@ describe("Feiraê customer flow", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /abrir perfil/i }));
     expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
+  });
+
+  it("shows each bank profile, custom hours and its products directly inside the fair", () => {
+    setVendorPresentation("Feira do Produtor Rural", "Sítio da Vó");
+
+    render(<App />);
+    loginAs("cliente");
+
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+    openFairsMap();
+    fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
+
+    expect(screen.getByAltText(/capa da banca sítio da vó/i)).toHaveAttribute(
+      "src",
+      "data:image/png;base64,Y2FwYQ==",
+    );
+    expect(screen.getByAltText(/foto da banca sítio da vó/i)).toHaveAttribute(
+      "src",
+      "data:image/png;base64,Zm90bw==",
+    );
+    expect(screen.getByText(/horário personalizado/i)).toBeInTheDocument();
+    expect(screen.getByText(/hoje 06:00–12:00/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
+
+    window.localStorage.removeItem("feirae:marketplace:v2");
   });
 
   it("blocks checkout only when the vendor-configured minimum has not been reached", () => {
