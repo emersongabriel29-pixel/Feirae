@@ -1608,7 +1608,8 @@ export function FeiranteOperations({
                         />
                         <small>
                           Esta apresentação é o que o cliente compra. Ex.: farinha pacote 500 g ou 1 kg,
-                          cheiro-verde 1 maço, peixe 1 kg ou 1 peça.
+                          cheiro-verde 1 maço, peixe 1 kg ou 1 peça. Apresentações com preço/estoque diferentes
+                          devem ser cadastradas separadamente.
                         </small>
                       </label>
                       <label>
