@@ -535,7 +535,6 @@ QA funcional/manual desta rodada:
 - validar responsividade dos novos agrupamentos em 360, 390 e 412 px;
 - confirmar que busca, stepper de quantidade, GPS, mapa interno e regras já existentes não sofreram regressão.
 
-
 ## QA — proximidade, carrinho e mínimo por banca — 28/09/2026
 
 Cobertura automatizada adicionada:
