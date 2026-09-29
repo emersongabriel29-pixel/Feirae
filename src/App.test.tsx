@@ -211,9 +211,10 @@ describe("Feiraê customer flow", () => {
     render(<App />);
     loginAs("cliente");
 
-    const banksAction = screen.getByText(/^Bancas$/i).closest("button");
-    expect(banksAction).not.toBeNull();
-    fireEvent.click(banksAction as HTMLElement);
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
 
     const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
@@ -229,9 +230,10 @@ describe("Feiraê customer flow", () => {
     render(<App />);
     loginAs("cliente");
 
-    const banksAction = screen.getByText(/^Bancas$/i).closest("button");
-    expect(banksAction).not.toBeNull();
-    fireEvent.click(banksAction as HTMLElement);
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
 
     expect(screen.getByText(/esta banca não exige pedido mínimo/i)).toBeInTheDocument();
