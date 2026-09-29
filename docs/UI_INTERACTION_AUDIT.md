@@ -665,3 +665,11 @@ Cada card da banca mostra capa, foto/logo, nome, descrição/categorias, situaç
 Se o feirante usa o horário oficial da feira, a interface identifica **Horário da feira**. Se ele configurou agenda própria, mostra **Horário personalizado** e o horário de hoje.
 
 Quando capa ou foto/logo ainda não foram cadastradas, o card mantém um placeholder visual consistente sem inventar imagem.
+
+## CTA da feira → Ver bancas — 29/09/2026
+
+Na listagem de Feiras, o botão principal passa de **Ver feira** para **Ver bancas**.
+
+Ao tocar, o app abre diretamente a tela da feira com **somente as bancas daquela feira selecionada**.
+
+Os produtos continuam fora dessa tela: só aparecem depois que o cliente toca **Ver banca** em uma banca específica.
