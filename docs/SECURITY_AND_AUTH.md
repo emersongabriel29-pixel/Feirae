@@ -369,3 +369,18 @@ Produção deve substituir `resetLocalAccountPassword` por fluxo do provedor de 
 - revogação/rotação de sessões após redefinição quando aplicável;
 - trilha de auditoria server-side sem registrar senha, OTP ou token em texto aberto;
 - proteção contra reutilização de token e ataques automatizados.
+
+## Revisão de arquivos de identidade — 28/09/2026
+
+Foto de entregador e certidões de antecedentes foram adicionadas ao protótipo local de onboarding.
+
+Estado atual:
+
+- arquivo é lido como Data URL e persistido localmente;
+- limite padrão do helper continua 1,5 MB;
+- o input de foto restringe a seleção a JPG/PNG/WebP no frontend;
+- não há reconhecimento facial;
+- não há consulta automática de antecedentes;
+- não há decisão automática baseada no conteúdo do documento.
+
+Isso **não é arquitetura de produção**. Antes de liberar dados reais, mover foto/documentos para Storage privado, validar conteúdo/magic bytes no servidor, aplicar antivírus quando cabível, RLS/RBAC, URLs assinadas, trilha de auditoria, retenção e controles contra IDOR. O status de aprovação deve ser gravado por ação autorizada do backend/admin, não confiado ao cliente.
