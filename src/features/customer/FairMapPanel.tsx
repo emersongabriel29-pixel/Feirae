@@ -100,7 +100,7 @@ export function FairMapPanel({
                 aria-pressed={selected}
                 title={point.fair.name}
               >
-                <MapPin size={selected ? 24 : 20} />
+                <Store size={selected ? 23 : 19} strokeWidth={2.2} />
               </button>
             );
           })}

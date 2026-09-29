@@ -24,6 +24,10 @@ function loginAs(role: "cliente" | "feirante" | "entregador") {
   fireEvent.click(screen.getByRole("button", { name: new RegExp(`entrar como ${role}`, "i") }));
 }
 
+function openFairsMap() {
+  fireEvent.click(screen.getByRole("button", { name: /mapa das feiras/i }));
+}
+
 function setVendorMinimum(fairName: string, vendorName: string, minimumOrderAmount: number) {
   window.localStorage.setItem(
     "feirae:marketplace:v2",
@@ -164,6 +168,9 @@ describe("Feiraê customer flow", () => {
     const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
     fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
 
+    expect(screen.queryByLabelText(/mapa das feiras do distrito federal/i)).not.toBeInTheDocument();
+    openFairsMap();
+    expect(screen.getByRole("dialog", { name: /mapa das feiras/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/mapa das feiras do distrito federal/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
@@ -241,6 +248,7 @@ describe("Feiraê customer flow", () => {
 
     const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
     fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+    openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
     fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
@@ -261,6 +269,7 @@ describe("Feiraê customer flow", () => {
 
     const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
     fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+    openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
     fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));

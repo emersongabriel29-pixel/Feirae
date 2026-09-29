@@ -209,6 +209,7 @@ export function FairsPage({
     a.localeCompare(b, "pt-BR"),
   );
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [mapOpen, setMapOpen] = useState(false);
   const filteredItems = selectedRegion
     ? officialItems.filter((fair) => fair.place === selectedRegion)
     : officialItems;
@@ -245,13 +246,56 @@ export function FairsPage({
         </label>
       </div>
 
-      <FairMapPanel
-        fairItems={filteredItems}
-        userCoords={userCoords}
-        onRequestLocation={onRequestLocation}
-        onFair={onFair}
-        onRoute={onMap}
-      />
+      <button type="button" className="fair-map-launcher" onClick={() => setMapOpen(true)}>
+        <span className="fair-map-launcher__icon" aria-hidden="true">
+          <Store size={22} />
+        </span>
+        <span className="fair-map-launcher__copy">
+          <b>Mapa das feiras</b>
+          <small>Veja as feiras do DF no Mapa Feiraê</small>
+        </span>
+        <ChevronRight size={20} aria-hidden="true" />
+      </button>
+
+      {mapOpen && (
+        <div
+          className="fair-map-dialog-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setMapOpen(false);
+          }}
+        >
+          <section className="fair-map-dialog" role="dialog" aria-modal="true" aria-label="Mapa das feiras">
+            <header className="fair-map-dialog__header">
+              <div>
+                <span className="eyebrow">Mapa Feiraê</span>
+                <h2>Mapa das feiras</h2>
+                <p>Escolha uma feira no mapa, abra o perfil ou trace a rota.</p>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setMapOpen(false)}
+                aria-label="Fechar mapa das feiras"
+              >
+                <XCircle size={22} />
+              </button>
+            </header>
+            <div className="fair-map-dialog__body">
+              <FairMapPanel
+                fairItems={filteredItems}
+                userCoords={userCoords}
+                onRequestLocation={onRequestLocation}
+                onFair={(name) => {
+                  setMapOpen(false);
+                  onFair(name);
+                }}
+                onRoute={onMap}
+              />
+            </div>
+          </section>
+        </div>
+      )}
 
       <div className="mt-7">
         <SectionHeading

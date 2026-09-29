@@ -954,3 +954,15 @@ Abrir uma feira inicia pelo perfil da unidade (identidade visual, local, endere�
 ### Entregador
 
 Aprovação operacional também depende de foto de perfil e documento de antecedentes em análise/aprovação, sem regra de reprovação automática por conteúdo no frontend.
+
+## Descoberta de feiras no mapa — 29/09/2026
+
+Na aba **Feiras**, o mapa não é renderizado como bloco permanente.
+
+- **Mapa das feiras** abre a superfície dedicada;
+- o mapa respeita o filtro de Cidade/região ativo;
+- tocar no marcador apenas seleciona a feira;
+- **Abrir feira** entra no perfil da unidade;
+- **Rota no Feiraê** mantém o fluxo de navegação interna;
+- fechar o mapa retorna à lista no mesmo contexto;
+- marcadores usam o ícone Feiraê de banca/feira, não um pin genérico.

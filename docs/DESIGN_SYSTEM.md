@@ -767,3 +767,17 @@ Regras reforçadas nesta rodada:
 - perfil de Feira deve preservar a mesma capa/marca entre listagem e detalhe;
 - mapas devem usar base cartográfica real quando apresentados como mapa. Ilustração de mapa só pode ser usada quando explicitamente tratada como ilustração, nunca como rota;
 - ação Voltar visível permanece no topo esquerdo, visualmente leve, complementando o gesto/botão nativo do sistema.
+
+## Marcador cartográfico da Feiraê — 29/09/2026
+
+Em mapas de descoberta de feiras, não usar o pin genérico como identidade principal da unidade.
+
+O marcador Feiraê usa:
+
+- corpo verde com contorno branco;
+- ícone de **banca/feira** no centro;
+- pequena ponta inferior para indicar a coordenada;
+- halo amarelo/verde para seleção e proximidade;
+- escala discreta no estado selecionado.
+
+O mapa completo não deve competir com filtros e cards de feira. Na listagem principal, ele é acessado por **Mapa das feiras** e aberto em superfície dedicada.

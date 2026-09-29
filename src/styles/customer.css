@@ -2510,3 +2510,152 @@ html.compact-product-cards .product-card--compact .product-card__body {
   padding-inline: 0.55rem;
   color: var(--fe-green-dark);
 }
+
+/* Fairs map: keep the list light and open the Feiraê map only when requested. */
+.fair-map-launcher {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(23, 107, 58, 0.16);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #f0f8ef, #fbf8e8);
+  padding: 0.78rem 0.9rem;
+  color: var(--fe-green-dark);
+  text-align: left;
+  box-shadow: 0 5px 16px rgba(23, 107, 58, 0.05);
+}
+.fair-map-launcher__icon {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  place-items: center;
+  border-radius: 0.85rem;
+  background: var(--fe-green);
+  color: white;
+}
+.fair-map-launcher__copy {
+  min-width: 0;
+}
+.fair-map-launcher__copy b,
+.fair-map-launcher__copy small {
+  display: block;
+}
+.fair-map-launcher__copy b {
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+.fair-map-launcher__copy small {
+  margin-top: 0.12rem;
+  overflow: hidden;
+  color: var(--fe-muted);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fair-map-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: end center;
+  background: rgba(7, 36, 19, 0.46);
+  padding: 0;
+  backdrop-filter: blur(4px);
+}
+.fair-map-dialog {
+  width: min(100%, 760px);
+  max-height: 94dvh;
+  overflow: auto;
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: var(--fe-surface);
+  box-shadow: 0 -18px 50px rgba(7, 36, 19, 0.25);
+}
+.fair-map-dialog__header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--fe-border);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 1rem;
+  backdrop-filter: blur(12px);
+}
+.fair-map-dialog__header h2 {
+  margin-top: 0.18rem;
+  color: var(--fe-ink);
+  font-size: 1.25rem;
+  font-weight: 950;
+}
+.fair-map-dialog__header p {
+  margin-top: 0.18rem;
+  color: var(--fe-muted);
+  font-size: 0.72rem;
+}
+.fair-map-dialog__body {
+  padding: 0.8rem;
+}
+.fair-map-dialog__body .fair-map-panel {
+  margin-top: 0;
+}
+
+/* Feiraê marker: the fair/store icon is the map identity instead of a generic location pin. */
+.native-fair-map__pin {
+  width: 2.55rem;
+  height: 2.55rem;
+  transform: translate(-50%, -100%);
+  border: 2px solid white;
+  border-radius: 0.9rem;
+  background: var(--fe-green);
+  color: white;
+  rotate: 0deg;
+  box-shadow: 0 7px 16px rgba(15, 75, 38, 0.28);
+}
+.native-fair-map__pin::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -0.28rem;
+  width: 0.58rem;
+  height: 0.58rem;
+  transform: translateX(-50%) rotate(45deg);
+  border-right: 2px solid white;
+  border-bottom: 2px solid white;
+  border-radius: 0.08rem;
+  background: inherit;
+}
+.native-fair-map__pin svg {
+  position: relative;
+  z-index: 1;
+  rotate: 0deg;
+}
+.native-fair-map__pin:hover,
+.native-fair-map__pin:focus-visible,
+.native-fair-map__pin.is-selected {
+  transform: translate(-50%, -100%) scale(1.14);
+  background: var(--fe-green-dark);
+}
+.native-fair-map__pin.is-selected {
+  box-shadow:
+    0 0 0 3px rgba(246, 190, 63, 0.9),
+    0 9px 20px rgba(10, 63, 31, 0.3);
+}
+.native-fair-map__pin.is-nearest::after {
+  inset: -0.38rem;
+  border-radius: 1.15rem;
+}
+
+@media (min-width: 760px) {
+  .fair-map-dialog-backdrop {
+    place-items: center;
+    padding: 1.5rem;
+  }
+  .fair-map-dialog {
+    border-radius: 1.5rem;
+  }
+}

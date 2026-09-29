@@ -638,3 +638,18 @@ A revisão por capturas reais de Android gerou as seguintes correções no Clien
 - mapas decorativos foram removidos dos fluxos revisados. Quando não há coordenada/GPS suficiente, a interface informa a limitação em vez de inventar posição ou percurso.
 
 QA visual ainda obrigatório em 360, 390 e 412 px, especialmente para stepper, checkout, perfil da feira, mapa e teclado virtual.
+
+## Feiras — mapa sob demanda e pin Feiraê — 29/09/2026
+
+A tela **Feiras** deixa de exibir o mapa completo no fluxo principal.
+
+Nova hierarquia:
+
+1. filtros Estado e Cidade/região;
+2. atalho compacto **Mapa das feiras**;
+3. lista de feiras disponíveis;
+4. mapa abre somente quando o usuário pedir.
+
+O mapa abre em uma superfície dedicada sobre a tela, mantendo localização, seleção de feira, abrir perfil e rota.
+
+Os marcadores deixam de usar o símbolo genérico de localização. Cada feira passa a usar o **ícone de banca/feira do próprio Feiraê** dentro de um marcador com ponta, preservando seleção e destaque de feira mais próxima.
