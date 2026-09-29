@@ -784,15 +784,14 @@ O mapa completo não deve competir com filtros e cards de feira. Na listagem pri
 
 ## Card público de banca dentro da feira — 29/09/2026
 
-Na tela geral da feira, o card público da banca usa:
+Na tela aberta por **Ver bancas**, cada banca é um bloco visual contínuo:
 
-- capa em largura total;
-- foto/logo sobreposta à base da capa;
-- badge **Aberta agora / Fechada / Horário da feira**;
-- nome e descrição/categorias;
-- blocos compactos para horário, avaliação, box, quantidade de produtos e pedido mínimo quando houver;
-- ação **Ver banca**.
+- capa;
+- foto/logo sobreposta;
+- status da banca;
+- nome, descrição/categorias;
+- horário da feira ou horário personalizado;
+- avaliação, box, quantidade de produtos e pedido mínimo quando houver;
+- catálogo da própria banca imediatamente abaixo.
 
-Os produtos **não** são exibidos dentro do card nem entre uma banca e outra na tela geral da feira.
-
-Na página individual da banca, o mesmo perfil aparece no topo e os produtos daquela banca vêm logo abaixo, em grid de duas colunas no mobile.
+No mobile, os produtos ficam em grid de duas colunas. Ao terminar o catálogo de uma banca, começa o perfil da próxima banca.
