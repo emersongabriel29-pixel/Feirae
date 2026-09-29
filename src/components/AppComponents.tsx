@@ -1270,6 +1270,7 @@ export function CartDrawer({
   onClear: () => void;
   onCheckout: () => void;
 }) {
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const totalWeight = cartWeight(items, cart);
   const fairName = items[0]?.fair ?? "";
   const hasVariableWeight = items.some((product) => ["kg", "g"].includes(product.unit));
@@ -1310,9 +1311,35 @@ export function CartDrawer({
               <small>
                 {items.reduce((sum, product) => sum + (cart[product.id] ?? 0), 0)} item(ns) na sacola
               </small>
-              <button type="button" className="cart-clear-button" onClick={onClear}>
-                <Trash2 size={16} /> Limpar carrinho
-              </button>
+              {clearConfirmOpen ? (
+                <span className="cart-clear-confirm" role="group" aria-label="Confirmar limpeza do carrinho">
+                  <button
+                    type="button"
+                    className="cart-clear-button is-danger"
+                    onClick={() => {
+                      onClear();
+                      setClearConfirmOpen(false);
+                    }}
+                  >
+                    Confirmar limpeza
+                  </button>
+                  <button
+                    type="button"
+                    className="cart-clear-button"
+                    onClick={() => setClearConfirmOpen(false)}
+                  >
+                    Manter itens
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="cart-clear-button"
+                  onClick={() => setClearConfirmOpen(true)}
+                >
+                  <Trash2 size={16} /> Limpar carrinho
+                </button>
+              )}
             </div>
           )}
           {items.length ? (
