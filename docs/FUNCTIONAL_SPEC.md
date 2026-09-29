@@ -1011,3 +1011,15 @@ A ação recebe o nome da feira do próprio card e abre o contexto dessa unidade
 Fluxo esperado:
 
 **Feiras → Ver bancas → bancas da feira escolhida → Ver banca → produtos daquela banca.**
+
+## Feira com bancas e produtos agrupados — 29/09/2026
+
+A ação **Ver bancas** abre o contexto da feira selecionada.
+
+Para cada banca daquela feira:
+
+- renderizar o perfil da banca;
+- abaixo do perfil, listar exclusivamente os produtos cujo `feirante` corresponde àquela banca e cuja `fair` corresponde à feira selecionada;
+- ao terminar os produtos, iniciar a próxima banca;
+- produtos de bancas diferentes nunca devem ser misturados no mesmo bloco;
+- se a banca estiver fechada, seus produtos continuam visíveis, mas a adição ao carrinho pode ser bloqueada conforme regra operacional.
