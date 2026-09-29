@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Crosshair, ExternalLink, LocateFixed, MapPin, Navigation, Sparkles, Store } from "lucide-react";
+import { Crosshair, LocateFixed, MapPin, Navigation, Sparkles, Store } from "lucide-react";
 import { fairMapPoints, nearestFairPoint, projectDfCoordinate } from "../../domain/fairMap";
 import type { Fair } from "../../types";
 
-export const FEIRAE_DF_MAP_VIEW_URL =
-  "https://www.google.com/maps/d/viewer?mid=1DIWDxyR1EKjC-0VEI2PSj-AjSqP9GElB";
+const DF_OSM_EMBED_URL =
+  "https://www.openstreetmap.org/export/embed.html?bbox=-48.3%2C-16.1%2C-47.3%2C-15.45&layer=mapnik";
 
 export function FairMapPanel({
   fairItems,
@@ -37,11 +37,8 @@ export function FairMapPanel({
           <span className="fair-map-panel__eyebrow">
             <Sparkles size={14} /> Mapa Feiraê
           </span>
-          <h2 id="fair-map-title">Feiras do DF dentro do próprio app</h2>
-          <p>
-            Toque em um ponto para escolher a feira. Depois abra a feira, veja as bancas e chegue aos produtos
-            sem sair do Feiraê.
-          </p>
+          <h2 id="fair-map-title">Feiras perto de você</h2>
+          <p>Mapa real do Distrito Federal. Toque em um ponto para ver a feira e traçar a rota.</p>
         </div>
       </div>
 
@@ -61,40 +58,17 @@ export function FairMapPanel({
             {nearest.distanceKm.toFixed(1)} km
           </button>
         ) : null}
-
-        <a
-          className="fair-map-panel__secondary"
-          href={FEIRAE_DF_MAP_VIEW_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Mapa público de referência <ExternalLink size={16} />
-        </a>
       </div>
 
-      <div className="native-fair-map" aria-label="Mapa nativo das feiras do Distrito Federal">
+      <div className="native-fair-map" aria-label="Mapa das feiras do Distrito Federal">
         <div className="native-fair-map__canvas">
-          <svg
-            className="native-fair-map__background"
-            viewBox="0 0 1000 650"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient id="feirae-map-land" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0%" stopColor="#edf6df" />
-                <stop offset="100%" stopColor="#dfeee4" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M80 90 C210 35 405 52 540 92 C710 142 845 118 930 205 C974 250 934 341 872 386 C808 432 824 526 710 566 C548 622 385 588 282 548 C160 500 74 452 58 344 C45 254 18 152 80 90Z"
-              fill="url(#feirae-map-land)"
-            />
-            <path d="M116 430 C290 350 418 362 570 260 C704 170 805 184 908 122" />
-            <path d="M116 202 C270 222 350 297 486 315 C628 334 721 274 870 314" />
-            <path d="M302 92 C325 205 370 278 356 410 C347 490 392 542 470 586" />
-            <path d="M651 104 C620 204 608 287 650 375 C680 440 665 505 625 570" />
-          </svg>
+          <iframe
+            className="native-fair-map__background native-fair-map__osm"
+            title="Mapa OpenStreetMap das feiras do Distrito Federal"
+            src={DF_OSM_EMBED_URL}
+            loading="lazy"
+            tabIndex={-1}
+          />
 
           {userPoint && (
             <span
@@ -121,10 +95,7 @@ export function FairMapPanel({
                   .filter(Boolean)
                   .join(" ")}
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                onClick={() => {
-                  setSelectedFairName(point.fair.name);
-                  onFair(point.fair.name);
-                }}
+                onClick={() => setSelectedFairName(point.fair.name)}
                 aria-label={`Selecionar ${point.fair.name}`}
                 aria-pressed={selected}
                 title={point.fair.name}
@@ -155,7 +126,7 @@ export function FairMapPanel({
               <small>
                 {selectedPoint.coordinate.precision === "exact"
                   ? "Localização cadastrada"
-                  : "Posição aproximada pela região"}
+                  : "Referência aproximada da região"}
               </small>
               <strong>{selectedPoint.fair.name}</strong>
               <p>
@@ -191,8 +162,8 @@ export function FairMapPanel({
       </div>
 
       <p className="fair-map-panel__notice">
-        Os pontos sem coordenada própria usam a região como referência visual e de distância aproximada. Rotas
-        continuam usando o endereço cadastrado da feira.
+        © OpenStreetMap contributors. Pontos sem coordenada própria usam a região como referência até a feira
+        ter sua localização exata cadastrada.
       </p>
     </section>
   );
