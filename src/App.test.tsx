@@ -82,7 +82,11 @@ describe("Feiraê customer flow", () => {
     const productCard = within(card as HTMLElement);
 
     fireEvent.click(productCard.getByRole("button", { name: /adicionar cesta de frutas à sacola/i }));
-    expect(productCard.getByLabelText(/1 unidade de cesta de frutas na sacola/i)).toHaveTextContent("1");
+    const quantityValue = productCard.getByLabelText(/1 unidade de cesta de frutas na sacola/i);
+    expect(quantityValue).toHaveTextContent("1");
+    const quantityControl = quantityValue.closest(".product-quantity-control");
+    expect(quantityControl).not.toBeNull();
+    expect(within(quantityControl as HTMLElement).getAllByRole("button")).toHaveLength(2);
 
     fireEvent.click(
       productCard.getByRole("button", { name: /adicionar mais uma unidade de cesta de frutas/i }),

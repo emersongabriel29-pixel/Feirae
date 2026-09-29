@@ -767,3 +767,14 @@ Regras reforçadas nesta rodada:
 - perfil de Feira deve preservar a mesma capa/marca entre listagem e detalhe;
 - mapas devem usar base cartográfica real quando apresentados como mapa. Ilustração de mapa só pode ser usada quando explicitamente tratada como ilustração, nunca como rota;
 - ação Voltar visível permanece no topo esquerdo, visualmente leve, complementando o gesto/botão nativo do sistema.
+
+## Controle de quantidade em cards móveis — 29/09/2026
+
+Em grid de produtos com duas colunas, o estado selecionado não deve disputar a mesma linha com o preço quando isso puder comprimir o stepper.
+
+Para `<= 640px`:
+
+- preço fica na primeira linha;
+- `− | quantidade | +` ocupa a segunda linha;
+- as três células têm largura igual;
+- nenhum botão pode ser cortado pela borda do card.

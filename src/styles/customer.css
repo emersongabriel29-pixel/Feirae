@@ -2510,3 +2510,34 @@ html.compact-product-cards .product-card--compact .product-card__body {
   padding-inline: 0.55rem;
   color: var(--fe-green-dark);
 }
+
+
+/* Mobile product grid: keep − quantity + fully visible in two-column cards. */
+@media (max-width: 640px) {
+  .product-card--compact .product-card__purchase:has(.product-quantity-control) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.48rem;
+  }
+
+  .product-card--compact .product-quantity-control {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 2.35rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .product-card--compact .product-quantity-control button,
+  .product-card--compact .product-quantity-control__value {
+    width: 100%;
+    min-width: 0;
+    height: 2.35rem;
+  }
+
+  .product-card--compact .product-quantity-control button svg {
+    display: block;
+    flex: none;
+  }
+}

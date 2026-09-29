@@ -638,3 +638,11 @@ A revisão por capturas reais de Android gerou as seguintes correções no Clien
 - mapas decorativos foram removidos dos fluxos revisados. Quando não há coordenada/GPS suficiente, a interface informa a limitação em vez de inventar posição ou percurso.
 
 QA visual ainda obrigatório em 360, 390 e 412 px, especialmente para stepper, checkout, perfil da feira, mapa e teclado virtual.
+
+## Correção do seletor de quantidade em grid móvel — 29/09/2026
+
+Captura real em Android mostrou que o controle `− 1 +` ainda podia cortar o botão direito em cards de produto de duas colunas.
+
+A correção final no mobile (`<= 640px`) faz o bloco de compra do card selecionado usar duas linhas: preço primeiro e seletor de quantidade abaixo, ocupando a largura disponível. O seletor passa a usar três colunas iguais e não depende mais do espaço restante ao lado do preço.
+
+Critério visual: os três elementos **− | quantidade | +** devem permanecer integralmente visíveis em 360, 390 e 412 px.
