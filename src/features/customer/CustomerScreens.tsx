@@ -33,7 +33,6 @@ import {
 } from "../../domain/marketplaceBridge";
 import { currentAccountKey, scopedStorageKey } from "../../domain/storage";
 import {
-  DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
   MAX_VENDORS_PER_ORDER,
   MULTI_VENDOR_EXTRA_STOP_FEE,
   calculateMultiVendorDeliveryFee,
@@ -56,8 +55,8 @@ import {
   feiraeNotificationPermission,
   requestFeiraeNotificationPermission,
 } from "../../domain/feiraeNotifications";
-import type { Address, CustomerTab, DemoOrder, DemoSession, Product, Screen } from "../../types";
-import { money, sortFairsByDistance } from "../../utils";
+import type { Address, CustomerTab, DemoOrder, DemoSession, Fair, Product, Screen } from "../../types";
+import { money } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
 import {
   cartWeight,
@@ -91,6 +90,7 @@ export function HomePage({
   cart,
   favorites,
   onFavorite,
+  nearestFairName,
 }: {
   onTab: (tab: CustomerTab) => void;
   onFair: (name: string) => void;
@@ -101,6 +101,7 @@ export function HomePage({
   cart: Record<number, number>;
   favorites: number[];
   onFavorite: (id: number) => void;
+  nearestFairName: string;
 }) {
   const liveProducts = marketplaceProducts(products);
   return (
@@ -144,7 +145,7 @@ export function HomePage({
             icon={<MapPin size={22} />}
             title="Feiras próximas"
             text="Estado, cidade e feira"
-            onClick={() => onFair(fairs[0].name)}
+            onClick={() => onFair(nearestFairName)}
           />
           <QuickAction
             icon={<Store size={22} />}
@@ -192,6 +193,8 @@ export function HomePage({
     </div>
   );
 }
+type FairWithDistance = Fair & { distance: number | null };
+
 export function FairsPage({
   fairItems,
   userCoords,
@@ -199,7 +202,7 @@ export function FairsPage({
   onFair,
   onMap,
 }: {
-  fairItems: ReturnType<typeof sortFairsByDistance>;
+  fairItems: FairWithDistance[];
   userCoords: { lat: number; lng: number } | null;
   onRequestLocation: () => void;
   onFair: (name: string) => void;
@@ -293,7 +296,7 @@ export function FairCard({
   onFair,
   onMap,
 }: {
-  fair: ReturnType<typeof sortFairsByDistance>[number];
+  fair: FairWithDistance;
   index: number;
   onFair: (name: string) => void;
   onMap: (destination: number | string, lng?: number) => void;
@@ -860,9 +863,7 @@ export function VendorStore({
     (product) => product.feirante === vendorName && product.fair === fairName,
   );
   const sharedStore = readStoreByIdentity(fairName, vendorName);
-  const minimumOrderAmount = normalizeVendorMinimumOrder(
-    sharedStore?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
-  );
+  const minimumOrderAmount = normalizeVendorMinimumOrder(sharedStore?.minimumOrderAmount ?? 0);
   const metrics = metricForVendor(vendorName, vendorMetrics);
   const vendorCartSubtotal = vendorProducts.reduce(
     (sum, product) => sum + product.price * (cart[product.id] ?? 0),
@@ -1536,7 +1537,7 @@ export function Checkout({
     vendorNames.map((vendorName) => [
       vendorName,
       normalizeVendorMinimumOrder(
-        storesByVendor.get(vendorName)?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
+        storesByVendor.get(vendorName)?.minimumOrderAmount ?? 0,
       ),
     ]),
   );
