@@ -125,6 +125,30 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/cesta de frutas/i)).toBeInTheDocument();
   });
 
+  it("opens the closest Planaltina fair from the default customer location", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const nearbyAction = screen.getByText(/^Feiras próximas$/i).closest("button");
+    expect(nearbyAction).not.toBeNull();
+    fireEvent.click(nearbyAction as HTMLElement);
+
+    expect(screen.getByText(/Planaltina ·/i)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Feira da Torre de TV/i })).not.toBeInTheDocument();
+  });
+
+  it("clears every item from the cart", () => {
+    render(<App />);
+    loginAs("cliente");
+    fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
+    fireEvent.click(screen.getByRole("button", { name: /adicionar planta ornamental/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /limpar carrinho/i }));
+
+    expect(screen.getByText(/sua sacola está vazia/i)).toBeInTheDocument();
+  });
+
   it("completes the local demo checkout without leaving a blank screen", () => {
     render(<App />);
     loginAs("cliente");
