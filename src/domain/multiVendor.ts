@@ -5,7 +5,7 @@ export const MIN_VENDOR_ORDER_AMOUNT = DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT;
 export const MULTI_VENDOR_EXTRA_STOP_FEE = 2.5;
 
 export function normalizeVendorMinimumOrder(value: number | undefined) {
-  if (value === undefined || !Number.isFinite(value)) return DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT;
+  if (value === undefined || !Number.isFinite(value)) return 0;
   return Math.min(MAX_VENDOR_MINIMUM_ORDER_AMOUNT, Math.max(0, Math.round(value * 100) / 100));
 }
 
