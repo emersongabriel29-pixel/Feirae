@@ -1551,7 +1551,7 @@ export function FeiranteOperations({
                                   ? current.packageSize
                                   : policy.examples[0],
                             }));
-                          }
+                          }}
                           required
                         >
                           <option value="" disabled>
