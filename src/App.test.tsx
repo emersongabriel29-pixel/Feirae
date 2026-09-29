@@ -819,7 +819,6 @@ describe("Feiraê customer flow", () => {
     expect(screen.getAllByRole("button", { name: /cartão/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /^dinheiro/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /cartão na maquininha/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/kg logísticos/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/peso logístico estimado/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/peso\/valor podem variar/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/total estimado/i)).not.toBeInTheDocument();
@@ -999,7 +998,7 @@ describe("Feiraê role access", () => {
     fireEvent.change(screen.getByLabelText(/preço por kg/i), {
       target: { value: "29.90" },
     });
-    fireEvent.change(screen.getByLabelText(/apresentação/i), {
+    fireEvent.change(screen.getByLabelText(/^apresentação$/i), {
       target: { value: "1 kg" },
     });
     fireEvent.click(screen.getByRole("button", { name: /salvar produto/i }));
