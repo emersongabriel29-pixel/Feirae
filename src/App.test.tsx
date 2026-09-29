@@ -224,7 +224,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
   });
 
-  it("navigates from a fair to one bank and only then shows that bank's products", () => {
+  it("shows each bank profile with only that bank's products directly below it", () => {
     render(<App />);
     loginAs("cliente");
 
@@ -239,15 +239,17 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
 
     expect(screen.getAllByRole("heading", { name: "Feira do Produtor Rural" }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /ver banca sítio da vó/i }));
-    expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
+    const sitioHeading = screen.getByRole("heading", { name: /sítio da vó/i });
+    const sitioSection = sitioHeading.closest(".fair-vendor-showcase");
+    expect(sitioSection).not.toBeNull();
+    const sitio = within(sitioSection as HTMLElement);
+    expect(sitio.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
+    expect(sitio.getByRole("heading", { name: /tomate orgânico/i })).toBeInTheDocument();
+    expect(sitio.queryByRole("heading", { name: /queijo artesanal/i })).not.toBeInTheDocument();
   });
 
-  it("shows bank media and custom hours on the fair card, then products only inside that bank", () => {
+  it("shows bank media and custom hours with products immediately below the same profile", () => {
     setVendorPresentation("Feira do Produtor Rural", "Sítio da Vó");
 
     render(<App />);
@@ -269,11 +271,13 @@ describe("Feiraê customer flow", () => {
     );
     expect(screen.getByText(/horário personalizado/i)).toBeInTheDocument();
     expect(screen.getByText(/hoje 06:00–12:00/i)).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /ver banca sítio da vó/i }));
-    expect(screen.getByAltText(/capa da banca sítio da vó/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
+    const sitioHeading = screen.getByRole("heading", { name: /sítio da vó/i });
+    const sitioSection = sitioHeading.closest(".fair-vendor-showcase");
+    expect(sitioSection).not.toBeNull();
+    const sitio = within(sitioSection as HTMLElement);
+    expect(sitio.getByAltText(/capa da banca sítio da vó/i)).toBeInTheDocument();
+    expect(sitio.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
 
     window.localStorage.removeItem("feirae:marketplace:v2");
   });
@@ -343,7 +347,9 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /ver banca sítio da vó/i }));
+    const sitioHeading = screen.getByRole("heading", { name: /sítio da vó/i });
+    const sitioSection = sitioHeading.closest(".fair-vendor-showcase");
+    expect(sitioSection).not.toBeNull();
 
     const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
     expect(minimumState).not.toBeNull();
@@ -363,7 +369,9 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /ver banca sítio da vó/i }));
+    const sitioHeading2 = screen.getByRole("heading", { name: /sítio da vó/i });
+    const sitioSection2 = sitioHeading2.closest(".fair-vendor-showcase");
+    expect(sitioSection2).not.toBeNull();
 
     expect(screen.getByText(/esta banca não exige pedido mínimo/i)).toBeInTheDocument();
   });
