@@ -1,3 +1,4 @@
+/* global console, process */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 
@@ -19,7 +20,10 @@ const runtimeAssets = new Set([
 ]);
 
 const reservedAssets = officialAssets
-  .filter((name) => !["03_logo_fundo_transparente.webp", "05_versao_horizontal.webp", "09_versao_selo.webp"].includes(name))
+  .filter(
+    (name) =>
+      !["03_logo_fundo_transparente.webp", "05_versao_horizontal.webp", "09_versao_selo.webp"].includes(name),
+  )
   .map((name) => `/brand/${name}`);
 
 const legacyAssets = [
@@ -38,9 +42,7 @@ function collect(path) {
   return readdirSync(path).flatMap((name) => collect(join(path, name)));
 }
 
-const files = roots
-  .flatMap(collect)
-  .filter((path) => extensions.has(extname(path)));
+const files = roots.flatMap(collect).filter((path) => extensions.has(extname(path)));
 
 const violations = [];
 const usage = new Map([...runtimeAssets].map((asset) => [asset, []]));

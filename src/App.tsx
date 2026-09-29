@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
-import { filterProducts, money, sortFairsByDistance } from "./utils";
+import { filterProducts, money } from "./utils";
 import { usePersistentState } from "./usePersistentState";
 import { CartDrawer, Header, LoginPage, MobileNavigation } from "./components/AppComponents";
 import { InAppNavigation } from "./components/InAppNavigation";
@@ -51,12 +51,12 @@ import {
 import { scopedStorageKey } from "./domain/storage";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import {
-  DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
   MULTI_VENDOR_EXTRA_STOP_FEE,
   allocatePromotionAcrossVendors,
   normalizeVendorMinimumOrder,
   vendorOrderSummaries,
 } from "./domain/multiVendor";
+import { sortFairsByProximity } from "./domain/fairMap";
 import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 import {
@@ -172,7 +172,23 @@ export default function App() {
     if (query.trim()) return matches;
     return matches.filter((product) => product.fair === selectedFair);
   }, [catalog, query, category, selectedFair]);
-  const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
+  const fairsWithDistance = useMemo(
+    () => sortFairsByProximity(fairs, coords, locationLabel),
+    [coords, locationLabel],
+  );
+  const nearestOfficialFair = useMemo(
+    () => fairsWithDistance.find((fair) => fair.source !== "demo") ?? null,
+    [fairsWithDistance],
+  );
+  const autoSelectedLocationRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (role !== "customer" || !nearestOfficialFair) return;
+    const locationKey = coords ? `${coords.lat.toFixed(4)},${coords.lng.toFixed(4)}` : locationLabel;
+    if (autoSelectedLocationRef.current === locationKey) return;
+    autoSelectedLocationRef.current = locationKey;
+    setSelectedFair(nearestOfficialFair.name);
+  }, [coords, locationLabel, nearestOfficialFair, role, setSelectedFair]);
   const trackedOrder =
     orders.find((order) => order.id === selectedOrderId) ??
     orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
@@ -362,6 +378,13 @@ export default function App() {
     if (!cartFairName) setSelectedFair(product.fair);
     addToCart(id);
   }
+  function clearCart() {
+    if (!Object.keys(cart).length) return;
+    if (!window.confirm("Limpar todos os produtos do carrinho?")) return;
+    setCart({});
+    notify("Carrinho limpo.");
+  }
+
   function requestLocation() {
     if (!gpsEnabled) {
       notify("Ative o uso de localização nas Configurações para ordenar feiras próximas.");
@@ -420,10 +443,7 @@ export default function App() {
       Array.from(new Set(cartProducts.map((product) => product.feirante))).map((vendorName) => {
         const product = cartProducts.find((item) => item.feirante === vendorName);
         const store = product ? readStoreByIdentity(product.fair, vendorName) : undefined;
-        return [
-          vendorName,
-          normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT),
-        ];
+        return [vendorName, normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? 0)];
       }),
     );
     const minimumSummaries = vendorOrderSummaries(
@@ -730,6 +750,7 @@ export default function App() {
                 cart={cart}
                 favorites={favorites}
                 onFavorite={toggleFavorite}
+                nearestFairName={nearestOfficialFair?.name ?? fairs[0].name}
               />
             )}
             {tab === "fairs" && (
@@ -896,7 +917,7 @@ export default function App() {
           onAdd={addProductToCart}
           onRemove={removeFromCart}
           onClose={() => setCartOpen(false)}
-          onBuyAgain={() => buyAgain()}
+          onClear={clearCart}
           onCheckout={() => openScreen("checkout")}
         />
       )}

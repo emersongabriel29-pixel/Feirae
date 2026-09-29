@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { cancelVendorParticipation, readUnifiedOrders, upsertUnifiedOrder } from "./domain/orderBridge";
 
@@ -12,6 +12,34 @@ function loginAs(role: "cliente" | "feirante" | "entregador") {
     target: { value: "123456" },
   });
   fireEvent.click(screen.getByRole("button", { name: new RegExp(`entrar como ${role}`, "i") }));
+}
+
+function setVendorMinimum(fairName: string, vendorName: string, minimumOrderAmount: number) {
+  window.localStorage.setItem(
+    "feirae:marketplace:v2",
+    JSON.stringify({
+      stores: [
+        {
+          accountKey: "vendor-minimum-test@feirae.test",
+          vendorId: "vendor-minimum-test",
+          storeId: "store-minimum-test",
+          name: vendorName,
+          fairName,
+          isOpen: true,
+          approved: true,
+          deliveryEnabled: true,
+          pickupEnabled: true,
+          absorbDeliveryFee: false,
+          acceptCashOnDelivery: true,
+          acceptCardOnDelivery: true,
+          minimumOrderAmount,
+          promotions: [],
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      products: [],
+    }),
+  );
 }
 
 describe("Feiraê customer flow", () => {
@@ -71,13 +99,13 @@ describe("Feiraê customer flow", () => {
     expect(window.location.hash).toBe("#/cliente/produtos");
   });
 
-  it("keeps the Feiraê home identity in vector artwork", () => {
+  it("keeps the approved Feiraê identity on the home artwork", () => {
     const { container } = render(<App />);
     loginAs("cliente");
 
     expect(container.querySelector(".hero-illustration__brand img")).toHaveAttribute(
       "src",
-      "/feirae-mark.svg",
+      "/brand/03_logo_fundo_transparente.webp",
     );
     expect(container.querySelectorAll(".hero-illustration__icon")).toHaveLength(3);
   });
@@ -125,27 +153,41 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByText(/cesta de frutas/i)).toBeInTheDocument();
   });
 
-  it("completes the local demo checkout without leaving a blank screen", () => {
+  it("blocks checkout only when the vendor-configured minimum has not been reached", () => {
+    window.localStorage.removeItem("feirae:cart:cliente@feirae.test");
+    window.localStorage.removeItem("feirae:cart:guest");
+    setVendorMinimum("Feira do Produtor Rural", "Sítio da Vó", 30);
+
     render(<App />);
     loginAs("cliente");
-    fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
-    fireEvent.click(screen.getByRole("button", { name: /adicionar planta ornamental/i }));
+
+    const productHeading = screen.getByRole("heading", { name: /cesta de frutas/i });
+    const card = productHeading.closest("article");
+    expect(card).not.toBeNull();
+    fireEvent.click(
+      within(card as HTMLElement).getByRole("button", { name: /adicionar cesta de frutas à sacola/i }),
+    );
     fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
+
     const checkoutButton = screen.getByRole("button", { name: /finalizar pedido/i });
     expect(checkoutButton).toBeDisabled();
-    expect(screen.getAllByText(/verde cerrado/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/faltam r\$ 2,00/i).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("button", { name: /adicionar uma unidade de planta ornamental/i }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/pedido mínimo não atingido/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/faltam r\$ 5,10/i);
+    expect(screen.queryByText(/mínimo atingido/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /adicionar uma unidade de cesta de frutas/i }));
     expect(checkoutButton).toBeEnabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
     fireEvent.click(checkoutButton);
     expect(screen.getByRole("heading", { name: /finalizar pedido/i })).toBeInTheDocument();
     expect(screen.getByText(/frete estimado/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^a calcular$/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/o frete só entra no total depois que um endereço/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
     expect(screen.getByRole("heading", { name: /meus pedidos/i })).toBeInTheDocument();
     expect(screen.getByText(/recebido/i)).toBeInTheDocument();
+
+    window.localStorage.removeItem("feirae:marketplace:v2");
   });
 
   it("opens Feiraê navigation before offering external map apps", () => {
@@ -163,18 +205,60 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("button", { name: /^waze/i })).toBeInTheDocument();
   });
 
-  it("shows the R$30 minimum when opening a vendor", () => {
+  it("shows the minimum chosen by the vendor on the vendor page", () => {
+    setVendorMinimum("Feira do Produtor Rural", "Sítio da Vó", 35);
+
     render(<App />);
     loginAs("cliente");
 
-    const banksAction = screen.getByText(/^Bancas$/i).closest("button");
-    expect(banksAction).not.toBeNull();
-    fireEvent.click(banksAction as HTMLElement);
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
 
     const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
     expect(minimumState).not.toBeNull();
-    expect(within(minimumState as HTMLElement).getByText(/^R\$ 30,00$/i)).toBeInTheDocument();
+    expect(within(minimumState as HTMLElement).getByText(/^R\$ 35,00$/i)).toBeInTheDocument();
+
+    window.localStorage.removeItem("feirae:marketplace:v2");
+  });
+
+  it("does not invent a minimum for a vendor that has not configured one", () => {
+    window.localStorage.removeItem("feirae:marketplace:v2");
+
+    render(<App />);
+    loginAs("cliente");
+
+    const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
+    fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
+
+    expect(screen.getByText(/esta banca não exige pedido mínimo/i)).toBeInTheDocument();
+  });
+
+  it("clears the whole cart from the cart drawer after confirmation", () => {
+    window.localStorage.removeItem("feirae:cart:cliente@feirae.test");
+    window.localStorage.removeItem("feirae:cart:guest");
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<App />);
+    loginAs("cliente");
+
+    const productHeading = screen.getByRole("heading", { name: /cesta de frutas/i });
+    const card = productHeading.closest("article");
+    expect(card).not.toBeNull();
+    fireEvent.click(
+      within(card as HTMLElement).getByRole("button", { name: /adicionar cesta de frutas à sacola/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /abrir sacola com 1 unidade/i }));
+    fireEvent.click(screen.getByRole("button", { name: /limpar carrinho/i }));
+
+    expect(confirm).toHaveBeenCalledWith("Limpar todos os produtos do carrinho?");
+    expect(screen.getByText(/sua sacola está vazia/i)).toBeInTheDocument();
+    confirm.mockRestore();
   });
 
   it("shows the demonstration account identity instead of visitor", () => {
