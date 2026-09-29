@@ -199,17 +199,17 @@ export function LoginPage({
 
             <div className="welcome-benefits" aria-label="Benefícios do Feiraê">
               <div>
-                <span aria-hidden="true"><Leaf size={21} /></span>
+                <span aria-hidden="true">\n                  <Leaf size={21} />\n                </span>
                 <b>Produtos frescos</b>
                 <small>Direto das bancas</small>
               </div>
               <div>
-                <span aria-hidden="true"><Truck size={21} /></span>
+                <span aria-hidden="true">\n                  <Truck size={21} />\n                </span>
                 <b>Entrega rápida</b>
                 <small>Rota acompanhada</small>
               </div>
               <div>
-                <span aria-hidden="true"><ShieldCheck size={21} /></span>
+                <span aria-hidden="true">\n                  <ShieldCheck size={21} />\n                </span>
                 <b>Compra confiável</b>
                 <small>Do pedido à entrega</small>
               </div>
