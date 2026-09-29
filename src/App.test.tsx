@@ -991,11 +991,16 @@ describe("Feiraê role access", () => {
     expect(screen.getByRole("option", { name: /pescados e frutos do mar/i })).toBeInTheDocument();
 
     fireEvent.change(category, { target: { value: "Pescados e frutos do mar" } });
+    expect(screen.getByLabelText(/unidade de venda/i)).toHaveValue("kg");
+    expect(screen.getByText(/peixe inteiro pode ser por peça ou kg/i)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/nome do produto/i), {
       target: { value: "Tilápia fresca" },
     });
-    fireEvent.change(screen.getByLabelText(/preço por un/i), {
+    fireEvent.change(screen.getByLabelText(/preço por kg/i), {
       target: { value: "29.90" },
+    });
+    fireEvent.change(screen.getByLabelText(/apresentação/i), {
+      target: { value: "1 kg" },
     });
     fireEvent.click(screen.getByRole("button", { name: /salvar produto/i }));
 
