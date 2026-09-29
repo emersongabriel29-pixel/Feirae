@@ -20,6 +20,19 @@
   height: 2.75rem;
 }
 
+
+.welcome-brand.feirae-brand-lockup {
+  justify-content: center;
+}
+
+.welcome-brand .feirae-brand-lockup__image {
+  width: auto;
+  height: clamp(8.5rem, 24vw, 11.5rem);
+  max-width: min(100%, 18.5rem);
+  object-position: center;
+  filter: drop-shadow(0 14px 30px rgba(2, 55, 25, 0.13));
+}
+
 .login-brand.feirae-brand-lockup {
   position: relative;
   z-index: 1;
