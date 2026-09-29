@@ -1,0 +1,25 @@
+name: Prettier Diagnostic
+
+on:
+  push:
+    branches:
+      - ux/fairs-map-entry
+
+permissions:
+  contents: read
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Show Prettier diff
+        run: |
+          npx prettier --write src/features/customer/CustomerScreens.tsx src/styles/customer.css
+          git diff -- src/features/customer/CustomerScreens.tsx src/styles/customer.css
