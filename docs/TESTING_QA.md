@@ -32,7 +32,7 @@ npm run build
 
 | Arquivo                                       |  Testes |
 | --------------------------------------------- | ------: |
-| `src/App.test.tsx`                            |      68 |
+| `src/App.test.tsx`                            |      69 |
 | `src/components/LaunchExperience.test.tsx`    |       4 |
 | `src/components/FeiraeBrand.test.tsx`         |       2 |
 | `src/components/OrderRouteMap.test.tsx`       |       3 |
@@ -50,13 +50,13 @@ npm run build
 | `src/domain/marketplace.test.ts`              |       4 |
 | `src/domain/session.test.ts`                  |       3 |
 | `src/utils.test.ts`                           |       4 |
-| **Total Vitest**                              | **156** |
+| **Total Vitest**                              | **157** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 68 testes cobrem explicitamente:
+Os 69 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -213,7 +213,7 @@ Os 68 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 156 testes Vitest NÃO comprovam diretamente
+## 5. O que os 157 testes Vitest NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -378,12 +378,12 @@ O teste de `LaunchExperience` valida a presença estrutural da banca, moto e pin
 Cobertura automatizada:
 
 - `src/domain/fairMap.test.ts` valida prioridade de coordenada exata, fallback regional, projeção dentro dos limites visuais e cálculo da feira mais próxima;
-- `src/features/customer/FairMapPanel.test.tsx` valida renderização sem `iframe`, presença dos pins, abertura direta da feira, proximidade por GPS e link externo de referência;
+- `src/features/customer/FairMapPanel.test.tsx` valida base OpenStreetMap, presença/seleção dos pins, abertura explícita da feira, proximidade por GPS e envio do endereço correto para a rota interna;
 - a suíte de App continua cobrindo navegação Cliente, seleção de feira, bancas e catálogo.
 
 Limites de QA:
 
-- o mapa atual não é um mapa viário navegável e não substitui teste de rota;
+- o painel usa base viária real do OpenStreetMap, mas jsdom não comprova carregamento de tiles, precisão geográfica nem navegação em aparelho real;
 - coordenadas regionais são aproximações temporárias;
 - validação visual deve conferir sobreposição de pins e legibilidade em 360, 390 e 412 px;
 - coordenadas exatas de produção devem receber casos de teste quando passarem a vir do backend.
@@ -397,7 +397,7 @@ Limites de QA:
 - ícone/label **Casa do cliente**;
 - marcador do Entregador com GPS;
 - texto de atualização do GPS;
-- fallback honesto por etapa quando não existe GPS;
+- ausência de marcador fictício quando não existe GPS do entregador;
 - substituição da casa por **Retirada na feira** em pedidos pickup.
 
 QA manual recomendado:
@@ -582,3 +582,16 @@ QA visual recomendado:
 - verificar que a ilustração não encobre textos ou botões;
 - testar Entrar → Voltar à abertura e Criar conta → autenticação;
 - confirmar contraste e alvos de toque dos dois CTAs.
+
+## QA — revisão móvel de checkout, perfil e mapas reais — 28/09/2026
+
+A suíte foi atualizada para acompanhar a revisão desta rodada:
+
+- `App.test.tsx`: CTA compacto da Home, resumo de entrega sem “Frete base/Frete estimado”, diálogo de rota real, foto opcional do Cliente, foto obrigatória do Entregador e coerência entre feira selecionada e região exibida;
+- `FairMapPanel.test.tsx`: exige base do OpenStreetMap, seleção explícita de pin antes de abrir a feira e envio do endereço correto para a rota interna;
+- `OrderRouteMap.test.tsx`: rejeita marcador estimado/falso de entregador quando não existe GPS real;
+- Documentos do Entregador: cobertura inclui a presença de **certidões de antecedentes para análise**.
+
+Limites: jsdom não prova permissão GPS real, carregamento dos tiles/mapa no Android, precisão da geocodificação, qualidade do traçado OSRM, upload de câmera/galeria nem regressão por pixel. Esses itens continuam exigindo QA em navegador/aparelho real antes de produção.
+
+Contagem após a união com a entrada premium: **157 testes Vitest**.
