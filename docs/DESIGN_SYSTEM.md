@@ -752,3 +752,18 @@ A entrada premium usa uma composição editorial própria sem alterar o design s
 - nenhum texto ou botão faz parte da imagem de fundo: conteúdo permanece HTML acessível e responsivo;
 - em desktop, a abertura vira um painel central com sombra; no mobile, ocupa o viewport inteiro;
 - `prefers-reduced-motion` continua respeitado pelo sistema global.
+
+## Ajustes de composição mobile — 28/09/2026
+
+Direção mantida: **não redesenhar o Feiraê**. A identidade verde/creme, bordas arredondadas, tipografia forte e amarelo como acento permanecem.
+
+Regras reforçadas nesta rodada:
+
+- hero institucional não deve ocupar a maior parte da primeira dobra; priorizar conteúdo útil;
+- amarelo deve ser reservado para uma ação de alta prioridade, não para múltiplos atalhos concorrentes;
+- informação operacional repetida deve ser condensada em `strip`, badge ou ajuda contextual;
+- cards de checkout devem privilegiar `Subtotal → Entrega → Total`;
+- controles de quantidade em grid de duas colunas devem caber em 320–412 px sem clipping;
+- perfil de Feira deve preservar a mesma capa/marca entre listagem e detalhe;
+- mapas devem usar base cartográfica real quando apresentados como mapa. Ilustração de mapa só pode ser usada quando explicitamente tratada como ilustração, nunca como rota;
+- ação Voltar visível permanece no topo esquerdo, visualmente leve, complementando o gesto/botão nativo do sistema.
