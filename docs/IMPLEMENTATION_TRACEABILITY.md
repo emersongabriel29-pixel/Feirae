@@ -474,17 +474,12 @@ Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam 
 
 ## Perfil público da banca no marketplace — 29/09/2026
 
-`SharedStore` passou a compartilhar, de forma opcional:
-
-- `description`;
-- `categories`;
-- `logoDataUrl`;
-- `coverDataUrl`;
-- `useFairHours`;
-- `schedule`.
+`SharedStore` compartilha opcionalmente descrição, categorias, logo, capa, origem do horário e agenda.
 
 `FeiranteOperations` sincroniza esses campos a partir de **Minha banca** e **Horários**.
 
-`FairDetail` consome os dados compartilhados para montar os cards públicos. Bancas estáticas sem mídia compartilhada usam placeholders e herdam o horário da feira.
+`FairDetail` usa esses dados apenas para montar os cards das bancas da feira.
+
+`VendorStore` usa o mesmo perfil no topo e filtra o catálogo por `vendorName + fairName`, garantindo que a página individual mostre **somente os produtos da banca selecionada**.
 
 Não houve migration nesta rodada: o protótipo persiste esses campos no marketplace local existente. Produção deve mover mídia para Storage e os campos de perfil/agenda para o backend.
