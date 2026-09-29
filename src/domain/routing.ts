@@ -6,6 +6,7 @@ export type GeoPoint = {
 export type RouteMetrics = {
   distanceKm: number;
   durationMinutes: number;
+  geometry: GeoPoint[];
 };
 
 export async function geocodeAddress(address: string): Promise<GeoPoint | null> {
@@ -32,17 +33,26 @@ export async function drivingRoute(origin: GeoPoint, destination: GeoPoint): Pro
   try {
     const coordinates = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
     const response = await fetch(
-      `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=false&steps=false`,
+      `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&steps=false&geometries=geojson`,
     );
     if (!response.ok) return null;
     const data = (await response.json()) as {
-      routes?: Array<{ distance?: number; duration?: number }>;
+      routes?: Array<{
+        distance?: number;
+        duration?: number;
+        geometry?: { coordinates?: Array<[number, number]> };
+      }>;
     };
     const route = data.routes?.[0];
     if (typeof route?.distance !== "number" || typeof route.duration !== "number") return null;
+    const geometry =
+      route.geometry?.coordinates
+        ?.filter(([lng, lat]) => Number.isFinite(lat) && Number.isFinite(lng))
+        .map(([lng, lat]) => ({ lat, lng })) ?? [];
     return {
       distanceKm: Math.round((route.distance / 1000) * 10) / 10,
       durationMinutes: Math.max(1, Math.round(route.duration / 60)),
+      geometry,
     };
   } catch {
     return null;
