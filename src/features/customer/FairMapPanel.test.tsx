@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Fair } from "../../types";
 import { sortFairsByProximity } from "../../domain/fairMap";
-import { FEIRAE_DF_MAP_VIEW_URL, FairMapPanel } from "./FairMapPanel";
+import { FairMapPanel } from "./FairMapPanel";
 
 const fairs: Fair[] = [
   {
@@ -22,7 +22,7 @@ const fairs: Fair[] = [
 ];
 
 describe("FairMapPanel", () => {
-  it("renderiza os pontos do mapa dentro do Feiraê sem iframe externo", () => {
+  it("usa um mapa viário real do OpenStreetMap por baixo dos pontos do Feiraê", () => {
     render(
       <FairMapPanel
         fairItems={fairs}
@@ -33,12 +33,15 @@ describe("FairMapPanel", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Mapa nativo das feiras do Distrito Federal")).toBeInTheDocument();
+    expect(screen.getByLabelText("Mapa das feiras do Distrito Federal")).toBeInTheDocument();
+    expect(screen.getByTitle("Mapa OpenStreetMap das feiras do Distrito Federal")).toHaveAttribute(
+      "src",
+      expect.stringContaining("openstreetmap.org/export/embed.html"),
+    );
     expect(screen.getByRole("button", { name: /selecionar feira do produtor rural/i })).toBeInTheDocument();
-    expect(screen.queryByTitle("Mapa das feiras do Distrito Federal")).not.toBeInTheDocument();
   });
 
-  it("abre a feira selecionada a partir do ponto do mapa", () => {
+  it("seleciona o ponto antes de abrir explicitamente a feira", () => {
     const onFair = vi.fn();
 
     render(
@@ -52,7 +55,9 @@ describe("FairMapPanel", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira permanente do gama/i }));
+    expect(onFair).not.toHaveBeenCalled();
 
+    fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
     expect(onFair).toHaveBeenCalledWith("Feira Permanente do Gama");
   });
 
@@ -80,20 +85,22 @@ describe("FairMapPanel", () => {
     expect(sorted[0].distance as number).toBeLessThan(sorted[1].distance as number);
   });
 
-  it("mantém o mapa público apenas como referência externa opcional", () => {
+  it("envia o endereço da feira selecionada para a rota interna", () => {
+    const onRoute = vi.fn();
+
     render(
       <FairMapPanel
         fairItems={fairs}
         userCoords={null}
         onRequestLocation={vi.fn()}
         onFair={vi.fn()}
-        onRoute={vi.fn()}
+        onRoute={onRoute}
       />,
     );
 
-    const link = screen.getByRole("link", { name: /mapa público de referência/i });
-    expect(link).toHaveAttribute("href", FEIRAE_DF_MAP_VIEW_URL);
-    expect(link).toHaveAttribute("target", "_blank");
-    expect(link.getAttribute("rel")).toContain("noopener");
+    fireEvent.click(screen.getByRole("button", { name: /selecionar feira permanente do gama/i }));
+    fireEvent.click(screen.getByRole("button", { name: /rota no feiraê/i }));
+
+    expect(onRoute).toHaveBeenCalledWith("Área Especial, Quadra 01, Setor Norte, Gama - DF");
   });
 });
