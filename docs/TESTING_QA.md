@@ -620,3 +620,17 @@ Cobertura adicionada ao fluxo Cliente:
 - pedido mínimo continua disponível no perfil completo.
 
 QA visual obrigatório em 360/390/412 px: capa, avatar, badges, horário e grid de produtos não podem sobrepor nem gerar rolagem horizontal.
+
+## QA — perfil de banca e produtos dentro da banca — 29/09/2026
+
+Cobertura do fluxo Cliente:
+
+- **Ver feira** mostra os cards das bancas sem exibir produtos;
+- capa, foto/logo e horário personalizado aparecem no card da banca;
+- **Ver banca** abre a página individual;
+- somente depois de abrir a banca aparecem os produtos dela;
+- produtos de outras bancas não devem aparecer nessa página;
+- voltar da banca retorna à feira;
+- pedido mínimo continua disponível no perfil completo.
+
+QA visual obrigatório em 360/390/412 px: capa, avatar, badges, horário e grid de produtos não podem sobrepor nem gerar rolagem horizontal.
