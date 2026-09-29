@@ -29,7 +29,7 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   {
-    files: ["scripts/**/*.mjs"],
+    files: ["scripts/check-brand-assets.mjs"],
     languageOptions: { globals: globals.node },
   },
 );
