@@ -336,7 +336,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("button", { name: /^waze/i })).toBeInTheDocument();
   });
 
-  it("shows the minimum chosen by the vendor on the vendor page", () => {
+  it("shows the minimum chosen by the vendor on that bank profile", () => {
     setVendorMinimum("Feira do Produtor Rural", "Sítio da Vó", 35);
 
     render(<App />);
@@ -351,9 +351,7 @@ describe("Feiraê customer flow", () => {
     const sitioSection = sitioHeading.closest(".fair-vendor-showcase");
     expect(sitioSection).not.toBeNull();
 
-    const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
-    expect(minimumState).not.toBeNull();
-    expect(within(minimumState as HTMLElement).getByText(/^R\$ 35,00$/i)).toBeInTheDocument();
+    expect(within(sitioSection as HTMLElement).getByText(/mínimo r\$ 35,00/i)).toBeInTheDocument();
 
     window.localStorage.removeItem("feirae:marketplace:v2");
   });
@@ -373,7 +371,7 @@ describe("Feiraê customer flow", () => {
     const sitioSection2 = sitioHeading2.closest(".fair-vendor-showcase");
     expect(sitioSection2).not.toBeNull();
 
-    expect(screen.getByText(/esta banca não exige pedido mínimo/i)).toBeInTheDocument();
+    expect(within(sitioSection2 as HTMLElement).queryByText(/mínimo r\$/i)).not.toBeInTheDocument();
   });
 
   it("clears the whole cart from the cart drawer after confirmation", () => {
