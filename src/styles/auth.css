@@ -23,7 +23,7 @@
   bottom: clamp(-3.5rem, -5vw, -1.5rem);
   width: clamp(11rem, 30vw, 18rem);
   aspect-ratio: 1;
-  background: url("/feirae-mark.svg") center / contain no-repeat;
+  background: url("/brand/09_versao_selo.webp") center / contain no-repeat;
   opacity: 0.1;
   rotate: -8deg;
 }
