@@ -254,3 +254,23 @@ As regras abaixo são referência regulatória e precisam ser revalidadas quando
   https://www.gov.br/dnit/pt-br/assuntos/noticias/motofretista-e-mototaxista-o-que-diz-a-lei
 
 O código atual não consulta automaticamente nenhuma dessas fontes.
+
+## Entregador — revisão 28/09/2026
+
+Antes de liberar corridas, o fluxo local exige:
+
+1. dados pessoais mínimos;
+2. **foto de perfil do entregador**;
+3. veículo quando aplicável;
+4. documento oficial e comprovante de residência;
+5. **certidões de antecedentes para análise**, conforme política operacional/localidade;
+6. CNH/CRLV quando o veículo exigir;
+7. curso/autorização de motofrete quando aplicável;
+8. termos vigentes aceitos;
+9. todos os itens obrigatórios com status aprovado.
+
+A foto comum é usada para identificação visual no protótipo; **não há reconhecimento facial/biometria**.
+
+O documento de antecedentes entra em fluxo de revisão. Uma anotação não deve ser convertida pelo frontend em reprovação automática. Casos com necessidade de esclarecimento permanecem em análise e a política final deve ser validada juridicamente por localidade/atividade antes de produção.
+
+Impacto administrativo futuro: a gestão precisa visualizar documento, status, motivo de correção, histórico de revisão e responsável pela decisão. O protótipo local não implementa KYC, consulta automática a bases públicas ou decisão automatizada.
