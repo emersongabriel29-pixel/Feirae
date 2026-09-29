@@ -966,3 +966,19 @@ Na aba **Feiras**, o mapa não é renderizado como bloco permanente.
 - **Rota no Feiraê** mantém o fluxo de navegação interna;
 - fechar o mapa retorna à lista no mesmo contexto;
 - marcadores usam o ícone Feiraê de banca/feira, não um pin genérico.
+
+## Feira com bancas agrupadas por catálogo — 29/09/2026
+
+A ação **Ver feira** abre uma experiência agrupada por banca.
+
+Para cada banca:
+
+- perfil e identidade visual;
+- horário herdado da feira ou horário personalizado;
+- status operacional quando disponível;
+- box/categorias, avaliação e pedido mínimo;
+- catálogo filtrado exclusivamente pelos produtos daquela banca;
+- produtos fechados não podem ser adicionados quando a banca compartilhada está fechada;
+- **Abrir perfil** continua disponível para a tela completa da banca.
+
+O catálogo não deve misturar produtos de feirantes diferentes sem indicar a banca de origem.
