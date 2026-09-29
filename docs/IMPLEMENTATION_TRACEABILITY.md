@@ -451,3 +451,23 @@ A página de gestão é, nesta etapa, um **shell visual**. Ela não altera o sta
 - **CTA Finalizar pedido:** `AppComponents.tsx::CartDrawer`.
 - **Mínimo fixo por banca:** `CartDrawer` mostra `minimumOrderAmount` e progresso separadamente.
 - **Proteção de regressão:** `App.test.tsx`.
+
+## Revisão de rastreabilidade — 28/09/2026
+
+### Mapas e rotas
+
+- `FairMapPanel.tsx`: usa uma base viária real do **OpenStreetMap** para o DF; pins sem coordenada exata continuam usando referência regional explicitamente marcada como aproximada.
+- `InAppNavigation.tsx`: geocodifica destinos textuais com Nominatim, solicita geometria completa ao OSRM e desenha o percurso real sobre a base OpenStreetMap.
+- `OrderRouteMap.tsx`: usa a mesma abordagem para acompanhamento. Sem GPS do entregador, não inventa marcador de posição; sem coordenada interna de box, não inventa posição de banca.
+- `routing.ts`: `drivingRoute()` agora retorna distância, duração **e geometria GeoJSON convertida em pontos**.
+
+Continua sem SDK proprietário de mapas. O protótipo usa serviços públicos e precisa de provedor/SLA próprio antes de produção.
+
+### Perfil e aprovação
+
+- Cliente: `feirae:account:<email>` passa a poder conter `photoDataUrl`; foto é opcional no protótipo.
+- Entregador: `feirae:delivery-account:<email>` contém `photoDataUrl`; foto é requisito para ficar operacional.
+- Entregador: `feirae:delivery-documents:<email>` inclui `background_check` (“Certidões de antecedentes para análise”).
+- O conteúdo de antecedentes **não é classificado automaticamente** e uma anotação não reprova automaticamente; o protótipo apenas controla envio/status de revisão.
+
+Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam ser refletidos no backend/Storage/RLS antes de produção.

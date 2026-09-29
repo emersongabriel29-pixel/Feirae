@@ -1,7 +1,15 @@
-import { useMemo, useState } from "react";
-import { Crosshair, ExternalLink, House, MapPin, Navigation, Route, Store, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Crosshair, ExternalLink, House, MapPin, Route, Store, X } from "lucide-react";
+import { drivingRoute, geocodeAddress, type GeoPoint, type RouteMetrics } from "../domain/routing";
 
-type Coords = { lat: number; lng: number };
+type Coords = GeoPoint;
+
+type MapBounds = {
+  north: number;
+  south: number;
+  west: number;
+  east: number;
+};
 
 function parseCoordinateTarget(destination: string): Coords | null {
   const match = destination.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
@@ -22,6 +30,44 @@ function distanceKm(a: Coords, b: Coords) {
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
+function mapBounds(points: Coords[]): MapBounds | null {
+  if (!points.length) return null;
+  const lats = points.map((point) => point.lat);
+  const lngs = points.map((point) => point.lng);
+  const north = Math.max(...lats);
+  const south = Math.min(...lats);
+  const east = Math.max(...lngs);
+  const west = Math.min(...lngs);
+  const latSpan = Math.max(0.006, north - south);
+  const lngSpan = Math.max(0.008, east - west);
+  const latPadding = latSpan * 0.2;
+  const lngPadding = lngSpan * 0.2;
+  return {
+    north: Math.min(85, north + latPadding),
+    south: Math.max(-85, south - latPadding),
+    east: Math.min(180, east + lngPadding),
+    west: Math.max(-180, west - lngPadding),
+  };
+}
+
+function mercatorY(lat: number) {
+  const clamped = Math.max(-85, Math.min(85, lat));
+  const radians = (clamped * Math.PI) / 180;
+  return Math.log(Math.tan(Math.PI / 4 + radians / 2));
+}
+
+function projectPoint(point: Coords, bounds: MapBounds) {
+  const x = ((point.lng - bounds.west) / Math.max(0.000001, bounds.east - bounds.west)) * 100;
+  const northY = mercatorY(bounds.north);
+  const southY = mercatorY(bounds.south);
+  const pointY = mercatorY(point.lat);
+  const y = ((northY - pointY) / Math.max(0.000001, northY - southY)) * 100;
+  return {
+    x: Math.min(100, Math.max(0, x)),
+    y: Math.min(100, Math.max(0, y)),
+  };
+}
+
 export function InAppNavigation({
   destination,
   onClose,
@@ -31,11 +77,77 @@ export function InAppNavigation({
   onClose: () => void;
   initialCoords?: Coords | null;
 }) {
+  const parsedTarget = useMemo(() => parseCoordinateTarget(destination), [destination]);
   const [origin, setOrigin] = useState<Coords | null>(initialCoords ?? null);
+  const [geocodeResult, setGeocodeResult] = useState<{
+    destination: string;
+    point: Coords | null;
+  }>({ destination: "", point: null });
+  const [routeResult, setRouteResult] = useState<{
+    key: string;
+    route: RouteMetrics | null;
+  }>({ key: "", route: null });
   const [locating, setLocating] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
-  const targetCoords = useMemo(() => parseCoordinateTarget(destination), [destination]);
-  const distance = origin && targetCoords ? distanceKm(origin, targetCoords) : null;
+
+  useEffect(() => {
+    if (parsedTarget) return;
+    let active = true;
+    void geocodeAddress(destination).then((point) => {
+      if (active) setGeocodeResult({ destination, point });
+    });
+    return () => {
+      active = false;
+    };
+  }, [destination, parsedTarget]);
+
+  const targetCoords =
+    parsedTarget ?? (geocodeResult.destination === destination ? geocodeResult.point : null);
+  const routeKey =
+    origin && targetCoords
+      ? `${origin.lat.toFixed(6)},${origin.lng.toFixed(6)}->${targetCoords.lat.toFixed(6)},${targetCoords.lng.toFixed(6)}`
+      : "";
+
+  useEffect(() => {
+    if (!origin || !targetCoords || !routeKey) return;
+    let active = true;
+    void drivingRoute(origin, targetCoords).then((nextRoute) => {
+      if (active) setRouteResult({ key: routeKey, route: nextRoute });
+    });
+    return () => {
+      active = false;
+    };
+  }, [origin, routeKey, targetCoords]);
+
+  const route = routeResult.key === routeKey ? routeResult.route : null;
+  const geocoding = !parsedTarget && geocodeResult.destination !== destination;
+  const routeLoading = Boolean(routeKey && routeResult.key !== routeKey);
+  const routeFailed =
+    (!parsedTarget && geocodeResult.destination === destination && geocodeResult.point === null) ||
+    (routeResult.key === routeKey && routeKey !== "" && routeResult.route === null);
+
+  const mapPoints = useMemo(() => {
+    const points = route?.geometry?.length ? route.geometry : [];
+    return [...(origin ? [origin] : []), ...(targetCoords ? [targetCoords] : []), ...points];
+  }, [origin, route, targetCoords]);
+  const bounds = useMemo(() => mapBounds(mapPoints), [mapPoints]);
+  const routePolyline = useMemo(() => {
+    if (!bounds || !route?.geometry?.length) return "";
+    return route.geometry
+      .map((point) => {
+        const projected = projectPoint(point, bounds);
+        return `${(projected.x * 10).toFixed(1)},${(projected.y * 5.2).toFixed(1)}`;
+      })
+      .join(" ");
+  }, [bounds, route]);
+  const originPosition = origin && bounds ? projectPoint(origin, bounds) : null;
+  const destinationPosition = targetCoords && bounds ? projectPoint(targetCoords, bounds) : null;
+  const straightDistance = origin && targetCoords ? distanceKm(origin, targetCoords) : null;
+  const osmEmbedUrl = bounds
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(
+        `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`,
+      )}&layer=mapnik`
+    : "";
 
   function updateLocation() {
     if (!navigator.geolocation) {
@@ -48,7 +160,7 @@ export function InAppNavigation({
       ({ coords }) => {
         setOrigin({ lat: coords.latitude, lng: coords.longitude });
         setLocating(false);
-        setLocationMessage("Sua posição foi atualizada no mapa do Feiraê.");
+        setLocationMessage("Sua posição foi atualizada. Recalculando a rota real...");
       },
       () => {
         setLocating(false);
@@ -59,8 +171,10 @@ export function InAppNavigation({
   }
 
   function openGoogleMaps() {
+    const originQuery = origin ? `&origin=${origin.lat},${origin.lng}` : "";
+    const destinationQuery = targetCoords ? `${targetCoords.lat},${targetCoords.lng}` : destination;
     window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`,
+      `https://www.google.com/maps/dir/?api=1${originQuery}&destination=${encodeURIComponent(destinationQuery)}`,
       "_blank",
       "noopener,noreferrer",
     );
@@ -87,67 +201,64 @@ export function InAppNavigation({
         <header className="in-app-route__header">
           <div>
             <span className="eyebrow">MAPA FEIRAÊ</span>
-            <h2 id="in-app-route-title">Sua rota sem sair do app</h2>
-            <p>O Feiraê é o mapa principal. Google Maps e Waze ficam disponíveis como opções externas.</p>
+            <h2 id="in-app-route-title">Rota real dentro do app</h2>
+            <p>
+              Mapa OpenStreetMap com percurso calculado pelo OSRM. Google Maps e Waze continuam como opções
+              externas.
+            </p>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Fechar mapa">
             <X size={20} />
           </button>
         </header>
 
-        <div className="in-app-route__map" aria-label="Mapa de rota dentro do Feiraê">
-          <svg viewBox="0 0 1000 520" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="inAppRouteLand" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#f7f6e9" />
-                <stop offset="100%" stopColor="#e1f2e5" />
-              </linearGradient>
-              <linearGradient id="inAppRouteLine" x1="0" x2="1">
-                <stop offset="0%" stopColor="#0B5E3A" />
-                <stop offset="70%" stopColor="#22C55E" />
-                <stop offset="100%" stopColor="#FF8A00" />
-              </linearGradient>
-            </defs>
-            <rect width="1000" height="520" fill="url(#inAppRouteLand)" />
-            <path
-              d="M50 110 C210 170 330 118 460 180 C590 242 725 186 950 250"
-              className="in-app-route__street"
+        <div className="in-app-route__map" aria-label="Mapa real de rota dentro do Feiraê">
+          {osmEmbedUrl ? (
+            <iframe
+              className="in-app-route__osm"
+              title="Mapa OpenStreetMap da rota"
+              src={osmEmbedUrl}
+              loading="lazy"
             />
-            <path
-              d="M80 420 C230 330 350 380 505 292 C642 215 772 300 935 155"
-              className="in-app-route__street"
-            />
-            <path d="M210 40 C280 160 240 280 330 495" className="in-app-route__street" />
-            <path
-              d="M105 405 C250 324 366 363 510 286 C665 204 770 284 892 170"
-              className="in-app-route__path"
-              stroke="url(#inAppRouteLine)"
-            />
-          </svg>
+          ) : (
+            <div className="in-app-route__map-placeholder">Localize-se para exibir o mapa da rota.</div>
+          )}
 
-          <div className="in-app-route__origin">
-            <span>
-              <Crosshair size={21} />
-            </span>
-            <b>{origin ? "Você" : "Sua localização"}</b>
-          </div>
+          {bounds && routePolyline && (
+            <svg viewBox="0 0 1000 520" preserveAspectRatio="none" aria-hidden="true">
+              <polyline className="in-app-route__path-real" points={routePolyline} />
+            </svg>
+          )}
 
-          <div className="in-app-route__destination">
-            <span>
-              {destination.toLocaleLowerCase("pt-BR").includes("feira") ? (
-                <Store size={21} />
-              ) : (
-                <House size={21} />
-              )}
-            </span>
-            <b>Destino</b>
-          </div>
+          {originPosition && (
+            <div
+              className="in-app-route__origin"
+              style={{ left: `${originPosition.x}%`, top: `${originPosition.y}%` }}
+            >
+              <span>
+                <Crosshair size={21} />
+              </span>
+              <b>Você</b>
+            </div>
+          )}
 
-          <div className="in-app-route__vehicle">
-            <span>
-              <Navigation size={19} />
-            </span>
-          </div>
+          {destinationPosition && (
+            <div
+              className="in-app-route__destination"
+              style={{ left: `${destinationPosition.x}%`, top: `${destinationPosition.y}%` }}
+            >
+              <span>
+                {destination.toLocaleLowerCase("pt-BR").includes("feira") ? (
+                  <Store size={21} />
+                ) : (
+                  <House size={21} />
+                )}
+              </span>
+              <b>Destino</b>
+            </div>
+          )}
+
+          <small className="in-app-route__attribution">© OpenStreetMap contributors · rota OSRM</small>
         </div>
 
         <div className="in-app-route__details">
@@ -161,11 +272,17 @@ export function InAppNavigation({
           <div>
             <Route size={18} />
             <span>
-              <small>Distância</small>
+              <small>Rota</small>
               <b>
-                {distance !== null
-                  ? `~${distance.toFixed(1)} km em linha reta`
-                  : "Calculada durante a navegação"}
+                {route
+                  ? `${route.distanceKm.toLocaleString("pt-BR")} km · ~${route.durationMinutes} min`
+                  : geocoding || routeLoading
+                    ? "Calculando percurso real..."
+                    : routeFailed
+                      ? "Não foi possível calcular a rota agora"
+                      : straightDistance !== null
+                        ? `${straightDistance.toFixed(1)} km em linha reta · aguardando rota`
+                        : "Use sua localização para calcular"}
               </b>
             </span>
           </div>

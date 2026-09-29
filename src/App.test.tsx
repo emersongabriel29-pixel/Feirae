@@ -98,11 +98,26 @@ describe("Feiraê customer flow", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the selected fair region instead of mixing it with the device location", () => {
+    render(<App />);
+    loginAs("cliente");
+
+    const contextButton = screen.getByRole("button", { expanded: false });
+    fireEvent.click(contextButton);
+    fireEvent.change(screen.getByLabelText(/^feira$/i), {
+      target: { value: "Feira da Torre de TV" },
+    });
+
+    expect(contextButton).toHaveTextContent("Feira da Torre de TV");
+    expect(contextButton).toHaveTextContent("Plano Piloto");
+    expect(contextButton).not.toHaveTextContent("Planaltina, DF");
+  });
+
   it("opens the catalog from the home page", () => {
     render(<App />);
     loginAs("cliente");
     expect(screen.getAllByRole("button", { name: /^início$/i }).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver ofertas de hoje/i }));
     expect(screen.getByRole("heading", { name: /produtos da feira/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^laticínios$/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^queijos$/i })).not.toBeInTheDocument();
@@ -128,7 +143,7 @@ describe("Feiraê customer flow", () => {
     const homeNavigation = within(mobileNavigation).getByRole("button", { name: /^início$/i });
     expect(homeNavigation).toHaveAttribute("aria-current", "page");
 
-    fireEvent.click(screen.getByRole("button", { name: /explorar produtos/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver ofertas de hoje/i }));
 
     const productsNavigation = within(mobileNavigation).getByRole("button", { name: /^produtos$/i });
     expect(productsNavigation).toHaveAttribute("aria-current", "page");
@@ -149,10 +164,11 @@ describe("Feiraê customer flow", () => {
     const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
     fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
 
-    expect(screen.getByLabelText(/mapa nativo das feiras/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/mapa das feiras do distrito federal/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
 
-    expect(screen.getByRole("heading", { name: "Feira do Produtor Rural" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Feira do Produtor Rural" }).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
 
     expect(screen.getByRole("heading", { name: /bancas e feirantes/i })).toBeInTheDocument();
@@ -191,7 +207,9 @@ describe("Feiraê customer flow", () => {
 
     fireEvent.click(checkoutButton);
     expect(screen.getByRole("heading", { name: /finalizar pedido/i })).toBeInTheDocument();
-    expect(screen.getByText(/frete estimado/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^entrega$/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/frete base/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/frete estimado/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /retirada/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar pedido/i }));
     expect(screen.getByRole("heading", { name: /meus pedidos/i })).toBeInTheDocument();
@@ -209,8 +227,8 @@ describe("Feiraê customer flow", () => {
     expect(routeButtons.length).toBeGreaterThan(0);
     fireEvent.click(routeButtons[0]);
 
-    expect(screen.getByRole("dialog", { name: /sua rota sem sair do app/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/mapa de rota dentro do feiraê/i)).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /rota real dentro do app/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/mapa real de rota dentro do feiraê/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /google maps/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^waze/i })).toBeInTheDocument();
   });
@@ -224,6 +242,7 @@ describe("Feiraê customer flow", () => {
     const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
     fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
     fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
 
@@ -243,6 +262,7 @@ describe("Feiraê customer flow", () => {
     const mobileNavigation = screen.getByRole("navigation", { name: /navegação móvel/i });
     fireEvent.click(within(mobileNavigation).getByRole("button", { name: /^feiras$/i }));
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
+    fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
     fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
     fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
 
@@ -290,6 +310,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByLabelText(/data de nascimento/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^cep$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^endereço$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^foto de perfil$/i)).toBeInTheDocument();
   });
 
   it("uses structured address fields and does not promise delivery before calculation", () => {
@@ -1338,6 +1359,7 @@ describe("Feiraê role access", () => {
     expect(screen.getByLabelText(/^cnh$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/categoria da cnh/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/chave pix/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/foto do entregador/i)).toBeInTheDocument();
   });
 
   it("persists the typed delivery support detail in a real local protocol", () => {
@@ -1390,6 +1412,7 @@ describe("Feiraê role access", () => {
     expect(screen.getByText(/curso\/autorização de motofrete/i)).toBeInTheDocument();
     expect(screen.getByText(/cnh compatível e válida/i)).toBeInTheDocument();
     expect(screen.getByText(/crlv-e do veículo/i)).toBeInTheDocument();
+    expect(screen.getByText(/certidões de antecedentes para análise/i)).toBeInTheDocument();
     expect(screen.getByText(/arquivos e validação/i)).toBeInTheDocument();
     expect(screen.getByText(/importante antes de enviar/i)).toBeInTheDocument();
   });

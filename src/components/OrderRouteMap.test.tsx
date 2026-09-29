@@ -62,7 +62,7 @@ describe("OrderRouteMap", () => {
     expect(screen.getByText(/gps do entregador atualizado/i)).toBeInTheDocument();
   });
 
-  it("não finge GPS em tempo real quando só existe a etapa operacional", () => {
+  it("não desenha posição falsa quando o entregador ainda não compartilhou GPS", () => {
     render(
       <OrderRouteMap
         order={order({
@@ -73,9 +73,8 @@ describe("OrderRouteMap", () => {
       />,
     );
 
-    expect(screen.getByLabelText(/posição estimada do entregador/i)).toBeInTheDocument();
-    expect(screen.getByText(/posição representada pela etapa do pedido/i)).toBeInTheDocument();
-    expect(screen.getByText(/só vira posição GPS/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/posição estimada do entregador/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/gps ainda não compartilhado pelo entregador/i)).toBeInTheDocument();
   });
 
   it("troca a casa por retirada na feira em pedidos de retirada", () => {
@@ -86,7 +85,7 @@ describe("OrderRouteMap", () => {
       />,
     );
 
-    expect(screen.getAllByText(/retirada na feira/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/retirada na feira/i)).toBeInTheDocument();
     expect(screen.queryByText(/^casa do cliente$/i)).not.toBeInTheDocument();
   });
 });

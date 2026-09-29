@@ -58,6 +58,7 @@ import {
 import type { Address, CustomerTab, DemoOrder, DemoSession, Fair, Product, Screen } from "../../types";
 import { money } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
+import { readFileForLocalStorage } from "../../domain/storedFile";
 import {
   cartWeight,
   metricForVendor,
@@ -108,17 +109,12 @@ export function HomePage({
     <div className="space-y-12">
       <section className="hero">
         <div className="relative z-10 max-w-2xl">
-          <span className="eyebrow light">Marketplace de feiras locais</span>
+          <span className="eyebrow light">DA FEIRA ATÉ VOCÊ</span>
           <h1>A feira que você gosta, agora mais perto.</h1>
-          <p>
-            Descubra produtos locais, apoie feirantes e escolha entre receber em casa ou retirar na feira.
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
+          <p>Produtos frescos, feirantes locais e a liberdade de receber em casa ou retirar na feira.</p>
+          <div className="mt-6 flex flex-wrap gap-3">
             <button onClick={() => onTab("products")} className="primary-action amber">
-              Explorar produtos <ChevronRight size={18} />
-            </button>
-            <button onClick={() => onTab("fairs")} className="secondary-action light">
-              Encontrar uma feira
+              Ver ofertas de hoje <ChevronRight size={18} />
             </button>
           </div>
         </div>
@@ -640,6 +636,16 @@ export function ProfilePage({
   onScreen: (screen: Screen) => void;
   onLogout: () => void;
 }) {
+  let storedPhotoDataUrl = "";
+  try {
+    const storedAccount = window.localStorage.getItem(scopedStorageKey("feirae:account"));
+    if (storedAccount) {
+      const parsed = JSON.parse(storedAccount) as { photoDataUrl?: string };
+      storedPhotoDataUrl = parsed.photoDataUrl ?? "";
+    }
+  } catch {
+    storedPhotoDataUrl = "";
+  }
   const links: Array<[string, string, ReactNode, Screen]> = [
     ["Minha conta", "Editar nome, telefone, e-mail e senha", <User />, "account"],
     ["Meus endereços", "Gerencie locais de entrega", <MapPin />, "addresses"],
@@ -654,7 +660,7 @@ export function ProfilePage({
     <section className="mx-auto max-w-3xl">
       <div className="profile-hero">
         <div className="avatar">
-          <User />
+          {storedPhotoDataUrl ? <img src={storedPhotoDataUrl} alt={`Foto de ${session.name}`} /> : <User />}
         </div>
         <div>
           <small>CONTA · CLIENTE</small>
@@ -703,6 +709,10 @@ export function FairDetail({
   onFavorite: (id: number) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
+  const fairIndex = Math.max(
+    0,
+    fairs.findIndex((item) => item.name === fair.name),
+  );
   const liveProducts = marketplaceProducts(products);
   const fairProducts = liveProducts.filter((product) => product.fair === fair.name);
 
@@ -712,34 +722,64 @@ export function FairDetail({
       subtitle={`${fair.place} · ${fairHoursForName(fair.name).label}`}
       onBack={onBack}
     >
-      <div className="detail-banner">
-        <div>
-          <span className="eyebrow light">Feira selecionada</span>
-          <h2>Compre de quem faz a cidade acontecer.</h2>
-          <p>
-            {typeof fair.feirantes === "number"
-              ? `${fair.feirantes} feirantes cadastrados nesta feira.`
-              : "Cadastro de feirantes em atualização."}
-          </p>
-          {fair.address && <p>{fair.address}</p>}
+      <article className="fair-profile">
+        <div className={`fair-profile__cover tone-${fairIndex % 3}`}>
+          <span className="fair-profile__cover-icon" aria-hidden="true">
+            <Store size={52} strokeWidth={1.7} />
+          </span>
+          <span className="fair-profile__logo" aria-hidden="true">
+            <img src="/brand/09_versao_selo.webp" alt="" />
+          </span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={onVendors} className="primary-action amber">
-            <Store size={17} /> Ver bancas
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              typeof fair.lat === "number" && typeof fair.lng === "number"
-                ? onMap(fair.lat, fair.lng)
-                : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
-            }
-            className="secondary-action light"
-          >
-            <MapPin size={17} /> Rota no Feiraê
-          </button>
+        <div className="fair-profile__body">
+          <div className="fair-profile__identity">
+            <span className="eyebrow">Perfil da feira</span>
+            <h2>{fair.name}</h2>
+            <p>
+              <MapPin size={15} /> {fair.place}
+              {fair.address ? ` · ${fair.address}` : ""}
+            </p>
+          </div>
+          <div className="fair-profile__meta">
+            <span>
+              <Store size={15} />
+              <b>{typeof fair.feirantes === "number" ? fair.feirantes : "—"}</b>
+              <small>feirantes</small>
+            </span>
+            <span>
+              <Star size={15} />
+              <b>{typeof fair.rating === "number" ? ratingLabel(fair.rating) : "Nova"}</b>
+              <small>avaliação</small>
+            </span>
+            <span>
+              <Truck size={15} />
+              <b>{fair.deliveryMinutes ? minutesLabel(fair.deliveryMinutes) : "Consultar"}</b>
+              <small>entrega</small>
+            </span>
+            <span>
+              <Check size={15} />
+              <b>{fairHoursForName(fair.name).label}</b>
+              <small>horário</small>
+            </span>
+          </div>
+          <div className="fair-profile__actions">
+            <button type="button" onClick={onVendors} className="primary-action">
+              <Store size={17} /> Ver bancas
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                typeof fair.lat === "number" && typeof fair.lng === "number"
+                  ? onMap(fair.lat, fair.lng)
+                  : onMap(fair.address ?? `${fair.name}, ${fair.place}, DF`)
+              }
+              className="secondary-action"
+            >
+              <MapPin size={17} /> Rota no Feiraê
+            </button>
+          </div>
         </div>
-      </div>
+      </article>
       <SectionHeading eyebrow="Catálogo" title="Produtos desta feira" />
       {fairProducts.length ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
@@ -1756,27 +1796,22 @@ export function Checkout({
             )}
           </div>
 
-          <div className="form-card compact">
-            <span className="eyebrow">Pedido mínimo por banca</span>
+          <div
+            className="checkout-minimum-strip"
+            title="O pedido mínimo considera somente produtos da banca; frete e taxas não entram nessa conta."
+          >
             {vendorMinimums.map((summary) => (
-              <p key={summary.vendorName}>
-                <strong>{summary.vendorName}</strong> ·{" "}
-                {summary.minimumOrderAmount > 0 ? (
-                  <>
-                    mínimo {money(summary.minimumOrderAmount)} · considerado {money(summary.eligibleSubtotal)}{" "}
-                    {summary.meetsMinimum
-                      ? "✓ mínimo atingido"
-                      : `· faltam ${money(summary.missingForMinimum)}`}
-                  </>
-                ) : (
-                  <>sem pedido mínimo ✓</>
-                )}
-              </p>
+              <div key={summary.vendorName}>
+                <span>{summary.vendorName}</span>
+                <b className={summary.meetsMinimum ? "is-ok" : "is-blocked"}>
+                  {summary.minimumOrderAmount > 0
+                    ? summary.meetsMinimum
+                      ? `Mínimo ${money(summary.minimumOrderAmount)} ✓ atingido`
+                      : `Faltam ${money(summary.missingForMinimum)} · mín. ${money(summary.minimumOrderAmount)}`
+                    : "Sem pedido mínimo ✓"}
+                </b>
+              </div>
             ))}
-            <small>
-              Cada banca define o próprio mínimo. Frete e taxas não contam; descontos financiados pela própria
-              banca reduzem o valor de produtos considerado.
-            </small>
           </div>
 
           {availableWallet > 0 && (
@@ -1878,27 +1913,7 @@ export function Checkout({
             {fulfillment === "delivery" && (
               <>
                 <p>
-                  <span>Frete base</span>
-                  <b>{freightReady ? money(fallbackDeliveryFee) : "A calcular"}</b>
-                </p>
-                {freightReady && vendorCount > 1 && (
-                  <p>
-                    <span>Coletas adicionais ({vendorCount - 1})</span>
-                    <b>{money((vendorCount - 1) * MULTI_VENDOR_EXTRA_STOP_FEE)}</b>
-                  </p>
-                )}
-                <p>
-                  <span>Frete estimado</span>
-                  <b>{freightReady ? money(calculatedDeliveryFee) : "A calcular"}</b>
-                </p>
-                {freightReady && deliverySubsidy > 0 && (
-                  <p>
-                    <span>Subsídio de entrega</span>
-                    <b>−{money(deliverySubsidy)}</b>
-                  </p>
-                )}
-                <p>
-                  <span>Você paga de entrega</span>
+                  <span>Entrega</span>
                   <b>
                     {freightReady
                       ? customerDeliveryFee
@@ -1907,10 +1922,17 @@ export function Checkout({
                       : "A calcular"}
                   </b>
                 </p>
-                {!freightReady && (
+                {freightReady && deliverySubsidy > 0 && (
+                  <small>Benefício de frete aplicado: −{money(deliverySubsidy)}.</small>
+                )}
+                {freightReady && vendorCount > 1 && (
                   <small>
-                    O frete só entra no total depois que um endereço de entrega estiver disponível.
+                    {vendorCount} bancas no pedido; coletas adicionais já incluídas na entrega (
+                    {money((vendorCount - 1) * MULTI_VENDOR_EXTRA_STOP_FEE)} na composição).
                   </small>
+                )}
+                {!freightReady && (
+                  <small>O valor da entrega aparece depois que um endereço estiver disponível.</small>
                 )}
               </>
             )}
@@ -1932,10 +1954,6 @@ export function Checkout({
             <p>
               <span>Pagamento</span>
               <b>{payment}</b>
-            </p>
-            <p>
-              <span>WhatsApp</span>
-              <b>{whatsappConsent ? "Autorizado" : "Não autorizado"}</b>
             </p>
             <p className="total">
               <span>{hasVariableWeight ? "Total estimado" : "Total"}</span>
@@ -2670,6 +2688,7 @@ export function AccountPage({
     complement: "",
     city: "Planaltina",
     state: "DF",
+    photoDataUrl: "",
   };
   const [profile, setProfile] = usePersistentState(scopedStorageKey("feirae:account"), initialProfile);
   const [draft, setDraft] = useState({ ...profile, newPassword: "" });
@@ -2690,6 +2709,7 @@ export function AccountPage({
       complement: draft.complement.trim(),
       city: draft.city.trim(),
       state: draft.state.trim().toUpperCase(),
+      photoDataUrl: draft.photoDataUrl ?? "",
     };
     const error = onAccountUpdate(nextProfile.name, nextProfile.email, draft.newPassword.trim() || undefined);
     if (error) {
@@ -2725,6 +2745,45 @@ export function AccountPage({
       onBack={onBack}
     >
       <form className="form-card max-w-2xl" onSubmit={submit}>
+        <div className="account-photo-field">
+          <div className="account-photo-field__preview">
+            {draft.photoDataUrl ? <img src={draft.photoDataUrl} alt="Prévia da foto de perfil" /> : <User />}
+          </div>
+          <div>
+            <b>Foto de perfil</b>
+            <small>Opcional para clientes. JPG, PNG ou WebP de até 1,5 MB neste protótipo.</small>
+            <label className="secondary-action account-photo-field__button">
+              Escolher foto
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => {
+                  const selected = event.target.files?.[0];
+                  if (!selected) return;
+                  void readFileForLocalStorage(selected)
+                    .then((stored) => {
+                      setDraft((current) => ({ ...current, photoDataUrl: stored.dataUrl }));
+                      setFormError("");
+                    })
+                    .catch((error: unknown) =>
+                      setFormError(
+                        error instanceof Error ? error.message : "Não foi possível carregar a foto.",
+                      ),
+                    );
+                }}
+              />
+            </label>
+            {draft.photoDataUrl && (
+              <button
+                type="button"
+                className="account-photo-field__remove"
+                onClick={() => setDraft((current) => ({ ...current, photoDataUrl: "" }))}
+              >
+                Remover foto
+              </button>
+            )}
+          </div>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label>
             Nome completo

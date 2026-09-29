@@ -1,43 +1,18 @@
+import { useEffect, useMemo, useState } from "react";
 import { Bike, Clock, House, MapPin, Navigation, Store } from "lucide-react";
 import { fairs } from "../data";
 import { fairMapCoordinate } from "../domain/fairMap";
 import type { UnifiedOrderRecord } from "../domain/orderBridge";
-import { distanceInKm } from "../utils";
+import { drivingRoute, geocodeAddress, type GeoPoint, type RouteMetrics } from "../domain/routing";
 
 type OrderRouteAudience = "customer" | "vendor" | "delivery";
-
-function statusPosition(order: UnifiedOrderRecord) {
-  if (order.status === "delivered") return 86;
-  if (order.status === "out_for_delivery") return 68;
-  if (order.status === "collected") return 48;
-  if (order.status === "driver_assigned") return 23;
-  return 14;
-}
-
-function projectedDriverPosition(order: UnifiedOrderRecord) {
-  const live = order.driver?.location;
-  if (!live) return statusPosition(order);
-  if (!["collected", "out_for_delivery", "delivered"].includes(order.status)) return statusPosition(order);
-
-  const fair = fairs.find((item) => item.name === order.fairName);
-  const fairCoordinate = fair ? fairMapCoordinate(fair) : null;
-  if (!fairCoordinate || typeof order.customerLat !== "number" || typeof order.customerLng !== "number") {
-    return statusPosition(order);
-  }
-
-  const toDriver = distanceInKm(fairCoordinate.lat, fairCoordinate.lng, live.lat, live.lng);
-  const toCustomer = distanceInKm(live.lat, live.lng, order.customerLat, order.customerLng);
-  const total = toDriver + toCustomer;
-  if (!Number.isFinite(total) || total <= 0) return statusPosition(order);
-
-  return Math.min(84, Math.max(42, 38 + (toDriver / total) * 46));
-}
+type MapBounds = { north: number; south: number; west: number; east: number };
 
 function audienceCopy(audience: OrderRouteAudience) {
   if (audience === "delivery") {
     return {
       eyebrow: "Sua rota Feiraê",
-      title: "Feira, bancas e casa do cliente",
+      title: "Feira, coleta e casa do cliente",
     };
   }
   if (audience === "vendor") {
@@ -61,6 +36,42 @@ function gpsFreshness(updatedAt: string) {
   return `GPS do entregador atualizado há ${minutes} min`;
 }
 
+function mercatorY(lat: number) {
+  const clamped = Math.max(-85, Math.min(85, lat));
+  const radians = (clamped * Math.PI) / 180;
+  return Math.log(Math.tan(Math.PI / 4 + radians / 2));
+}
+
+function mapBounds(points: GeoPoint[]): MapBounds | null {
+  if (!points.length) return null;
+  const lats = points.map((point) => point.lat);
+  const lngs = points.map((point) => point.lng);
+  const north = Math.max(...lats);
+  const south = Math.min(...lats);
+  const east = Math.max(...lngs);
+  const west = Math.min(...lngs);
+  const latSpan = Math.max(0.006, north - south);
+  const lngSpan = Math.max(0.008, east - west);
+  return {
+    north: Math.min(85, north + latSpan * 0.2),
+    south: Math.max(-85, south - latSpan * 0.2),
+    east: Math.min(180, east + lngSpan * 0.2),
+    west: Math.max(-180, west - lngSpan * 0.2),
+  };
+}
+
+function projectPoint(point: GeoPoint, bounds: MapBounds) {
+  const x = ((point.lng - bounds.west) / Math.max(0.000001, bounds.east - bounds.west)) * 100;
+  const northY = mercatorY(bounds.north);
+  const southY = mercatorY(bounds.south);
+  const pointY = mercatorY(point.lat);
+  const y = ((northY - pointY) / Math.max(0.000001, northY - southY)) * 100;
+  return {
+    x: Math.min(100, Math.max(0, x)),
+    y: Math.min(100, Math.max(0, y)),
+  };
+}
+
 export function OrderRouteMap({
   order,
   audience,
@@ -74,17 +85,105 @@ export function OrderRouteMap({
 }) {
   const copy = audienceCopy(audience);
   const pickupStops = order.route?.pickupStops ?? [];
+  const liveLocation = order.driver?.location;
   const driverVisible =
     order.fulfillment === "delivery" &&
     Boolean(order.driver) &&
     !["received", "preparing", "ready_for_pickup", "cancelled"].includes(order.status);
-  const driverLeft = projectedDriverPosition(order);
-  const liveLocation = order.driver?.location;
   const destinationLabel =
     order.customerAddress ??
     order.customerCity ??
     (order.fulfillment === "pickup" ? order.fairName : "Cliente");
   const fairLabel = order.fairName;
+  const fairCoords = useMemo<GeoPoint | null>(() => {
+    const fair = fairs.find((item) => item.name === order.fairName);
+    const reference = fair ? fairMapCoordinate(fair) : null;
+    return reference ? { lat: reference.lat, lng: reference.lng } : null;
+  }, [order.fairName]);
+  const explicitCustomerCoords = useMemo<GeoPoint | null>(
+    () =>
+      typeof order.customerLat === "number" && typeof order.customerLng === "number"
+        ? { lat: order.customerLat, lng: order.customerLng }
+        : null,
+    [order.customerLat, order.customerLng],
+  );
+  const [geocodeResult, setGeocodeResult] = useState<{
+    address: string;
+    point: GeoPoint | null;
+  }>({ address: "", point: null });
+  const [routeResult, setRouteResult] = useState<{
+    key: string;
+    route: RouteMetrics | null;
+  }>({ key: "", route: null });
+
+  useEffect(() => {
+    if (explicitCustomerCoords || order.fulfillment !== "delivery" || !order.customerAddress) return;
+    let active = true;
+    const address = order.customerAddress;
+    void geocodeAddress(address).then((point) => {
+      if (active) setGeocodeResult({ address, point });
+    });
+    return () => {
+      active = false;
+    };
+  }, [explicitCustomerCoords, order.customerAddress, order.fulfillment]);
+
+  const customerCoords =
+    explicitCustomerCoords ??
+    (order.customerAddress && geocodeResult.address === order.customerAddress ? geocodeResult.point : null);
+  const routeOrigin = useMemo<GeoPoint | null>(
+    () => (liveLocation ? { lat: liveLocation.lat, lng: liveLocation.lng } : fairCoords),
+    [fairCoords, liveLocation],
+  );
+  const routeKey =
+    order.fulfillment === "delivery" && routeOrigin && customerCoords
+      ? `${routeOrigin.lat.toFixed(6)},${routeOrigin.lng.toFixed(6)}->${customerCoords.lat.toFixed(6)},${customerCoords.lng.toFixed(6)}`
+      : "";
+
+  useEffect(() => {
+    if (!routeKey || !routeOrigin || !customerCoords) return;
+    let active = true;
+    void drivingRoute(routeOrigin, customerCoords).then((route) => {
+      if (active) setRouteResult({ key: routeKey, route });
+    });
+    return () => {
+      active = false;
+    };
+  }, [customerCoords, routeKey, routeOrigin]);
+
+  const liveRoute = routeResult.key === routeKey ? routeResult.route : null;
+  const routeLoading = Boolean(routeKey && routeResult.key !== routeKey);
+
+  const routePoints = useMemo(
+    () => [
+      ...(fairCoords ? [fairCoords] : []),
+      ...(liveLocation ? [{ lat: liveLocation.lat, lng: liveLocation.lng }] : []),
+      ...(customerCoords ? [customerCoords] : []),
+      ...(liveRoute?.geometry ?? []),
+    ],
+    [customerCoords, fairCoords, liveLocation, liveRoute],
+  );
+  const bounds = useMemo(() => mapBounds(routePoints), [routePoints]);
+  const fairPosition = fairCoords && bounds ? projectPoint(fairCoords, bounds) : null;
+  const driverPosition =
+    liveLocation && bounds ? projectPoint({ lat: liveLocation.lat, lng: liveLocation.lng }, bounds) : null;
+  const customerPosition = customerCoords && bounds ? projectPoint(customerCoords, bounds) : null;
+  const routePolyline = useMemo(() => {
+    if (!bounds || !liveRoute?.geometry.length) return "";
+    return liveRoute.geometry
+      .map((point) => {
+        const projected = projectPoint(point, bounds);
+        return `${(projected.x * 10).toFixed(1)},${(projected.y * 4.2).toFixed(1)}`;
+      })
+      .join(" ");
+  }, [bounds, liveRoute]);
+  const osmEmbedUrl = bounds
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(
+        `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`,
+      )}&layer=mapnik`
+    : "";
+  const displayedKm = liveRoute?.distanceKm ?? order.route?.totalKm;
+  const displayedMinutes = liveRoute?.durationMinutes ?? order.route?.etaMinutes;
 
   return (
     <section className="order-route-map" aria-label="Mapa Feiraê de acompanhamento do pedido">
@@ -93,76 +192,49 @@ export function OrderRouteMap({
           <span>{copy.eyebrow}</span>
           <h3>{copy.title}</h3>
         </div>
-        {order.route && (
+        {typeof displayedKm === "number" && typeof displayedMinutes === "number" && (
           <small>
-            <Clock size={14} /> {order.route.etaMinutes} min · {order.route.totalKm.toLocaleString("pt-BR")}{" "}
-            km
+            <Clock size={14} /> {displayedMinutes} min · {displayedKm.toLocaleString("pt-BR")} km
           </small>
         )}
       </div>
 
       <div className="order-route-map__canvas">
-        <svg viewBox="0 0 1000 420" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="routeMapBg" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="#f7fbed" />
-              <stop offset="100%" stopColor="#e3f0e7" />
-            </linearGradient>
-            <linearGradient id="routeMapLine" x1="0" x2="1">
-              <stop offset="0%" stopColor="#176b3a" />
-              <stop offset="72%" stopColor="#47a14c" />
-              <stop offset="100%" stopColor="#f0b83e" />
-            </linearGradient>
-          </defs>
-          <rect width="1000" height="420" fill="url(#routeMapBg)" />
-          <path
-            className="order-route-map__road"
-            d="M50 335 C190 260 240 300 340 220 C455 128 538 280 655 214 C760 154 842 175 950 92"
+        {osmEmbedUrl ? (
+          <iframe
+            className="order-route-map__osm"
+            title="Mapa OpenStreetMap do acompanhamento"
+            src={osmEmbedUrl}
+            loading="lazy"
+            tabIndex={-1}
           />
-          <path
-            className="order-route-map__route"
-            d="M95 318 C220 256 265 278 350 220 C470 138 555 270 655 210 C760 150 835 162 900 112"
-            stroke="url(#routeMapLine)"
-          />
-          <path className="order-route-map__street" d="M110 116 C300 160 410 130 560 86" />
-          <path className="order-route-map__street" d="M430 360 C570 300 710 312 890 270" />
-        </svg>
+        ) : (
+          <div className="order-route-map__placeholder">Aguardando coordenadas reais da rota.</div>
+        )}
 
-        <div className="order-route-map__fair" style={{ left: "34%", top: "52%" }}>
-          <span>
-            <Store size={23} />
-          </span>
-          <b>Feira</b>
-        </div>
+        {bounds && routePolyline && (
+          <svg viewBox="0 0 1000 420" preserveAspectRatio="none" aria-hidden="true">
+            <polyline className="order-route-map__route-real" points={routePolyline} />
+          </svg>
+        )}
 
-        {pickupStops.slice(0, 5).map((stop, index) => {
-          const left = 28 + index * 3.3;
-          const top = 66 - (index % 2) * 10;
-          const highlighted = Boolean(
-            highlightVendorName &&
-            stop.vendorName.toLocaleLowerCase("pt-BR") === highlightVendorName.toLocaleLowerCase("pt-BR"),
-          );
-          return (
-            <div
-              key={stop.storeId || `${stop.vendorName}-${index}`}
-              className={highlighted ? "order-route-map__bank is-highlighted" : "order-route-map__bank"}
-              style={{ left: `${left}%`, top: `${top}%` }}
-              title={stop.vendorName}
-            >
-              <span>{index + 1}</span>
-            </div>
-          );
-        })}
-
-        {driverVisible && (
+        {fairPosition && (
           <div
-            className={liveLocation ? "order-route-map__driver is-live" : "order-route-map__driver"}
-            style={{ left: `${driverLeft}%`, top: "43%" }}
-            aria-label={
-              liveLocation
-                ? "Posição do entregador por GPS"
-                : "Posição estimada do entregador pela etapa do pedido"
-            }
+            className="order-route-map__fair"
+            style={{ left: `${fairPosition.x}%`, top: `${fairPosition.y}%` }}
+          >
+            <span>
+              <Store size={23} />
+            </span>
+            <b>Feira</b>
+          </div>
+        )}
+
+        {driverVisible && driverPosition && (
+          <div
+            className="order-route-map__driver is-live"
+            style={{ left: `${driverPosition.x}%`, top: `${driverPosition.y}%` }}
+            aria-label="Posição do entregador por GPS"
           >
             <span>
               <Bike size={22} />
@@ -171,21 +243,19 @@ export function OrderRouteMap({
           </div>
         )}
 
-        {order.fulfillment === "delivery" ? (
-          <div className="order-route-map__home" style={{ left: "89%", top: "22%" }}>
+        {order.fulfillment === "delivery" && customerPosition && (
+          <div
+            className="order-route-map__home"
+            style={{ left: `${customerPosition.x}%`, top: `${customerPosition.y}%` }}
+          >
             <span>
               <House size={24} />
             </span>
             <b>Casa do cliente</b>
           </div>
-        ) : (
-          <div className="order-route-map__pickup" style={{ left: "88%", top: "23%" }}>
-            <span>
-              <MapPin size={23} />
-            </span>
-            <b>Retirada na feira</b>
-          </div>
         )}
+
+        <small className="order-route-map__attribution">© OpenStreetMap contributors · rota OSRM</small>
       </div>
 
       <div className="order-route-map__summary">
@@ -199,7 +269,7 @@ export function OrderRouteMap({
         <div>
           {order.fulfillment === "delivery" ? <House size={17} /> : <MapPin size={17} />}
           <span>
-            <small>{order.fulfillment === "delivery" ? "Casa do cliente" : "Retirada"}</small>
+            <small>{order.fulfillment === "delivery" ? "Casa do cliente" : "Retirada na feira"}</small>
             <b>{destinationLabel}</b>
           </span>
         </div>
@@ -211,19 +281,21 @@ export function OrderRouteMap({
               <b>
                 {liveLocation
                   ? gpsFreshness(liveLocation.updatedAt)
-                  : "Posição representada pela etapa do pedido"}
+                  : "GPS ainda não compartilhado pelo entregador"}
               </b>
             </span>
           </div>
         )}
       </div>
 
-      {driverVisible && !liveLocation && (
+      {pickupStops.length > 0 && (
         <p className="order-route-map__accuracy">
-          A moto mostra a etapa operacional do pedido. Ela só vira posição GPS quando o entregador compartilha
-          localização durante a corrida.
+          {pickupStops.length} banca(s) compõem a coleta dentro da feira
+          {highlightVendorName ? ` · foco atual: ${highlightVendorName}` : ""}. O mapa público não inventa
+          posições de box sem coordenadas internas cadastradas.
         </p>
       )}
+      {routeLoading && <p className="order-route-map__accuracy">Atualizando percurso real...</p>}
       {liveLocation && (
         <p className="order-route-map__accuracy">
           GPS compartilhado pelo entregador durante a corrida

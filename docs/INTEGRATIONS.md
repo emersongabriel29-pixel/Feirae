@@ -293,3 +293,16 @@ Durante corrida ativa, quando o Entregador já configurou GPS, o frontend usa a 
 O snapshot é salvo em `UnifiedOrderRecord.driver.location` com latitude, longitude, precisão e timestamp.
 
 Limite atual: a sincronização é local ao protótipo. Não existe WebSocket, Supabase Realtime ou serviço dedicado de telemetria. Para produção, criar um `DriverLocationRepository` autenticado com TTL, autorização por pedido e descarte após a finalidade.
+
+## Mapas internos — revisão 28/09/2026
+
+O protótipo passou a usar as integrações públicas de forma visível no próprio app:
+
+- **OpenStreetMap export/embed:** base cartográfica das feiras e dos painéis de rota;
+- **Nominatim Search:** geocodificação de destino textual;
+- **OSRM público:** distância, duração e geometria completa da rota `driving`;
+- Google Maps/Waze permanecem somente como alternativas externas.
+
+Fallback de integridade: se geocodificação/rota falhar, a interface informa que não foi possível calcular; não reutiliza um desenho estático como se fosse percurso real.
+
+Os endpoints públicos não oferecem SLA para produção. Antes de lançamento, definir provedor/limites, cache, política de uso, observabilidade, fallback e tratamento de indisponibilidade.

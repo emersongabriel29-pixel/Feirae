@@ -622,3 +622,19 @@ Fluxo:
 9. logout retorna à entrada premium antes de permitir nova escolha de perfil.
 
 A tela premium é deliberadamente restrita à porta de entrada. Home, Feiras, Produtos, Pedidos, Perfil, Feirante e Entregador mantêm a linguagem operacional já aprovada.
+
+## Revisão de UX — 28/09/2026: simplificação após auditoria móvel
+
+A revisão por capturas reais de Android gerou as seguintes correções no Cliente:
+
+- o hero da Home preserva a identidade verde do Feiraê, mas ficou mais compacto e com uma única ação principal;
+- o contexto do cabeçalho separa **feira selecionada** de **localização do aparelho**, evitando combinações incorretas como feira do Plano Piloto com legenda “Planaltina, DF”;
+- o botão **Voltar** continua no topo esquerdo, porém sem o grande bloco branco. O histórico do navegador já usa `pushState/popstate`, portanto o botão/gesto nativo de voltar continua funcional;
+- o pedido mínimo no checkout virou uma faixa compacta por banca e ganha ênfase apenas quando bloqueia a compra;
+- o resumo financeiro mostra uma única linha **Entrega** ao Cliente; frete-base e composição permanecem dados de cálculo, não cobranças duplicadas;
+- consentimento de WhatsApp não aparece no resumo financeiro;
+- o stepper `− quantidade +` recebeu dimensões menores para não cortar o botão direito em grid móvel de duas colunas;
+- abrir uma feira agora inicia por um **perfil da feira** com capa, marca, local, horário, avaliação, entrega e ações, antes do catálogo;
+- mapas decorativos foram removidos dos fluxos revisados. Quando não há coordenada/GPS suficiente, a interface informa a limitação em vez de inventar posição ou percurso.
+
+QA visual ainda obrigatório em 360, 390 e 412 px, especialmente para stepper, checkout, perfil da feira, mapa e teclado virtual.
