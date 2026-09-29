@@ -568,3 +568,14 @@ O suporte vinculado mostra o identificador do pedido antes do chat e o protocolo
 ### Responsividade
 
 Em largura móvel, card de pedido e ações podem empilhar. Os grupos de banca do checkout preservam hierarquia e não devem gerar rolagem horizontal.
+
+
+## Ajuste de localização e carrinho — 28/09/2026
+
+- a localização do cliente controla a feira inicial e a ordenação de Feiras;
+- “Planaltina, DF” prioriza feiras de Planaltina e, em seguida, as demais por proximidade;
+- “Feiras próximas” abre a feira oficial mais próxima do contexto atual;
+- carrinho oferece “Limpar carrinho” e não oferece “Comprar novamente”;
+- pedido mínimo continua visível ao abrir a banca quando configurado;
+- no carrinho, pedido mínimo só aparece em estado de erro quando impede a finalização;
+- mínimo é decisão do feirante: R$ 0,00/ausente significa sem exigência.
