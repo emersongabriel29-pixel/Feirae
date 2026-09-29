@@ -1335,8 +1335,12 @@ export function DeliveryTracking({
   const pendingSubstitutions =
     unifiedOrder?.items.filter((item) => item.unavailable && item.note?.trim()) ?? [];
   const needsSupport = collected;
+  const cancellationRequest = unifiedOrder?.cancellationRequest;
+  const cancellationPending = cancellationRequest?.status === "pending";
   const otherSelected = cancelReason === "Outro";
-  const canSubmit = Boolean(cancelReason && (!otherSelected || cancelDetails.trim()));
+  const canSubmit = Boolean(
+    !cancellationPending && cancelReason && (!otherSelected || cancelDetails.trim()),
+  );
   const alreadyReviewed =
     reviews.some((review) => review.orderId === order.id) ||
     Boolean(unifiedOrder?.reviews?.some((review) => review.authorRole === "customer"));
@@ -1621,82 +1625,118 @@ export function DeliveryTracking({
 
           {order.status !== "Entregue" && order.status !== "Cancelado" && (
             <div className="cancel-panel">
-              <b>{needsSupport ? "Pedir ajuda com este pedido" : "Cancelar pedido"}</b>
+              <b>{needsSupport ? "Pedir ajuda com este pedido" : "Solicitar cancelamento"}</b>
               <p>
                 {needsSupport
                   ? "Depois da coleta, qualquer interrupção vira uma ocorrência de suporte."
-                  : "Antes da coleta, escolha o motivo do cancelamento."}
+                  : cancellationPending
+                    ? "A solicitação foi enviada. O pedido continua ativo até as bancas responderem."
+                    : "O cancelamento não é automático. Escolha o motivo e envie para as bancas analisarem."}
               </p>
-              <select
-                value={cancelReason}
-                onChange={(event) => {
-                  setCancelReason(event.target.value);
-                  setRequestSent(false);
-                }}
-              >
-                <option value="">Escolha um motivo</option>
-                {needsSupport ? (
-                  <>
-                    <option>Endereço incorreto</option>
-                    <option>Pedido chegou com problema</option>
-                    <option>Não consigo receber agora</option>
-                    <option>Outro</option>
-                  </>
-                ) : (
-                  <>
-                    <option>Pedi por engano</option>
-                    <option>Endereço incorreto</option>
-                    <option>Demora no atendimento</option>
-                    <option>Quero alterar o pedido</option>
-                    <option>Problema com pagamento</option>
-                    <option>Não preciso mais</option>
-                    <option>Outro</option>
-                  </>
-                )}
-              </select>
-              {otherSelected && (
-                <label>
-                  Descreva o motivo
-                  <textarea
-                    rows={3}
-                    value={cancelDetails}
-                    onChange={(event) => setCancelDetails(event.target.value)}
-                    placeholder="Conte o que aconteceu"
-                    required
-                  />
-                </label>
+
+              {cancellationPending && cancellationRequest ? (
+                <div className="operation-list detailed">
+                  {cancellationRequest.vendorResponses.map((response) => (
+                    <article key={response.vendorId}>
+                      <Store size={16} />
+                      <div>
+                        <b>{response.vendorName}</b>
+                        <small>
+                          {response.status === "pending"
+                            ? "Aguardando resposta"
+                            : response.status === "approved"
+                              ? "Cancelamento aceito"
+                              : "Cancelamento não aceito"}
+                        </small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={cancelReason}
+                    onChange={(event) => {
+                      setCancelReason(event.target.value);
+                      setRequestSent(false);
+                    }}
+                  >
+                    <option value="">Escolha um motivo</option>
+                    {needsSupport ? (
+                      <>
+                        <option>Endereço incorreto</option>
+                        <option>Pedido chegou com problema</option>
+                        <option>Não consigo receber agora</option>
+                        <option>Outro</option>
+                      </>
+                    ) : (
+                      <>
+                        <option>Pedi por engano</option>
+                        <option>Endereço incorreto</option>
+                        <option>Demora no atendimento</option>
+                        <option>Quero alterar o pedido</option>
+                        <option>Problema com pagamento</option>
+                        <option>Não preciso mais</option>
+                        <option>Outro</option>
+                      </>
+                    )}
+                  </select>
+                  {otherSelected && (
+                    <label>
+                      Descreva o motivo
+                      <textarea
+                        rows={3}
+                        value={cancelDetails}
+                        onChange={(event) => setCancelDetails(event.target.value)}
+                        placeholder="Conte o que aconteceu"
+                        required
+                      />
+                    </label>
+                  )}
+                  <button
+                    className="secondary-action"
+                    disabled={!canSubmit}
+                    onClick={() => {
+                      if (needsSupport) {
+                        appendSupportTicket(order.id, {
+                          id: `SUP-${order.id}-${(unifiedOrder?.supportTickets?.length ?? 0) + 1}`,
+                          actor: "customer",
+                          topic: cancelReason,
+                          details: cancelDetails.trim(),
+                          createdAt: new Date().toISOString(),
+                          priority: "normal",
+                          status: "open",
+                        });
+                        setRequestSent(true);
+                      } else {
+                        onCancel(order.id, cancelReason, cancelDetails.trim());
+                        setRequestSent(true);
+                      }
+                    }}
+                  >
+                    <XCircle size={17} />{" "}
+                    {needsSupport ? "Abrir solicitação de suporte" : "Enviar solicitação de cancelamento"}
+                  </button>
+                </>
               )}
-              <button
-                className="secondary-action"
-                disabled={!canSubmit}
-                onClick={() => {
-                  if (needsSupport) {
-                    appendSupportTicket(order.id, {
-                      id: `SUP-${order.id}-${(unifiedOrder?.supportTickets?.length ?? 0) + 1}`,
-                      actor: "customer",
-                      topic: cancelReason,
-                      details: cancelDetails.trim(),
-                      createdAt: new Date().toISOString(),
-                      priority: "normal",
-                      status: "open",
-                    });
-                    setRequestSent(true);
-                  } else {
-                    onCancel(order.id, cancelReason, cancelDetails.trim());
-                    setRequestSent(true);
-                  }
-                }}
-              >
-                <XCircle size={17} />{" "}
-                {needsSupport ? "Abrir solicitação de suporte" : "Confirmar cancelamento"}
-              </button>
-              {requestSent && (
+
+              {requestSent && !cancellationPending && (
                 <p className="inline-success">
                   {needsSupport
                     ? "Solicitação registrada no histórico do pedido."
-                    : "Cancelamento registrado no histórico do pedido."}
+                    : "Solicitação enviada. O pedido continua ativo até a banca responder."}
                 </p>
               )}
+
+              {cancellationRequest &&
+                cancellationRequest.status !== "pending" &&
+                cancellationRequest.status !== "approved" && (
+                  <p className="inline-warning">
+                    {cancellationRequest.status === "partial"
+                      ? "Algumas bancas aceitaram e outras não. Confira o pedido atualizado ou abra o suporte."
+                      : "A banca não aceitou o cancelamento. O pedido continua ativo."}
+                  </p>
+                )}
             </div>
           )}
 
