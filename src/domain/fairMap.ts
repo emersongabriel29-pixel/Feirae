@@ -60,12 +60,17 @@ function nameOffset(name: string) {
   return { lat, lng };
 }
 
+export function regionMapCoordinate(place: string): FairMapCoordinate | null {
+  const region = REGION_COORDINATES[place];
+  return region ? { ...region, precision: "region" } : null;
+}
+
 export function fairMapCoordinate(fair: Fair): FairMapCoordinate | null {
   if (typeof fair.lat === "number" && typeof fair.lng === "number") {
     return { lat: fair.lat, lng: fair.lng, precision: "exact" };
   }
 
-  const region = REGION_COORDINATES[fair.place];
+  const region = regionMapCoordinate(fair.place);
   if (!region) return null;
   const offset = nameOffset(fair.name);
 
