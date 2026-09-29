@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { fairs, initialOrders, products } from "./data";
 import type { DemoOrder, Role } from "./types";
-import { filterProducts, money, sortFairsByDistance } from "./utils";
+import { distanceInKm, filterProducts, money } from "./utils";
 import { usePersistentState } from "./usePersistentState";
 import { CartDrawer, Header, LoginPage, MobileNavigation } from "./components/AppComponents";
 import { InAppNavigation } from "./components/InAppNavigation";
@@ -49,6 +49,7 @@ import {
   registerPromotionUsage,
 } from "./domain/marketplaceBridge";
 import { scopedStorageKey } from "./domain/storage";
+import { fairMapCoordinate, regionMapCoordinate } from "./domain/fairMap";
 import { storeIdFor, vendorIdFor } from "./domain/identity";
 import {
   DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
@@ -172,7 +173,32 @@ export default function App() {
     if (query.trim()) return matches;
     return matches.filter((product) => product.fair === selectedFair);
   }, [catalog, query, category, selectedFair]);
-  const fairsWithDistance = useMemo(() => sortFairsByDistance(fairs, coords), [coords]);
+  const fairsWithDistance = useMemo(() => {
+    const regionName = locationLabel.split(",")[0]?.trim() ?? "";
+    const regionCoordinate = regionMapCoordinate(regionName);
+    const reference = coords ?? (regionCoordinate ? { lat: regionCoordinate.lat, lng: regionCoordinate.lng } : null);
+
+    return fairs
+      .map((fair) => {
+        const coordinate = fairMapCoordinate(fair);
+        return {
+          ...fair,
+          distance:
+            reference && coordinate
+              ? distanceInKm(reference.lat, reference.lng, coordinate.lat, coordinate.lng)
+              : null,
+        };
+      })
+      .sort((a, b) => {
+        const aSameRegion = a.place === regionName;
+        const bSameRegion = b.place === regionName;
+        if (aSameRegion !== bSameRegion) return aSameRegion ? -1 : 1;
+        if (a.distance === null && b.distance === null) return a.name.localeCompare(b.name, "pt-BR");
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      });
+  }, [coords, locationLabel]);
   const trackedOrder =
     orders.find((order) => order.id === selectedOrderId) ??
     orders.find((order) => !["Entregue", "Cancelado"].includes(order.status)) ??
@@ -375,15 +401,43 @@ export default function App() {
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
       ({ coords: current }) => {
-        setCoords({ lat: current.latitude, lng: current.longitude });
-        setLocationLabel("Localização atual");
+        const currentCoords = { lat: current.latitude, lng: current.longitude };
+        setCoords(currentCoords);
+        const nearest = fairs
+          .filter((fair) => fair.source !== "demo")
+          .map((fair) => {
+            const coordinate = fairMapCoordinate(fair);
+            return coordinate
+              ? {
+                  fair,
+                  distance: distanceInKm(
+                    currentCoords.lat,
+                    currentCoords.lng,
+                    coordinate.lat,
+                    coordinate.lng,
+                  ),
+                }
+              : null;
+          })
+          .filter((item): item is { fair: (typeof fairs)[number]; distance: number } => Boolean(item))
+          .sort((a, b) => a.distance - b.distance)[0];
+        if (nearest) {
+          setSelectedFair(nearest.fair.name);
+          setLocationLabel(`${nearest.fair.place}, DF`);
+        } else {
+          setLocationLabel("Localização atual");
+        }
         setLocationLoading(false);
-        notify("Feiras ordenadas pela sua proximidade.");
+        notify("Feiras ordenadas da mais próxima para a mais distante.");
       },
       () => {
         setLocationLabel("Planaltina, DF");
+        const nearestPlanaltina = fairsWithDistance.find(
+          (fair) => fair.source !== "demo" && fair.place === "Planaltina",
+        );
+        if (nearestPlanaltina) setSelectedFair(nearestPlanaltina.name);
         setLocationLoading(false);
-        notify("Não foi possível acessar o GPS. Mantivemos a região informada.");
+        notify("Não foi possível acessar o GPS. Mostramos primeiro as feiras de Planaltina.");
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
     );
@@ -422,7 +476,9 @@ export default function App() {
         const store = product ? readStoreByIdentity(product.fair, vendorName) : undefined;
         return [
           vendorName,
-          normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT),
+          store
+            ? normalizeVendorMinimumOrder(store.minimumOrderAmount)
+            : DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
         ];
       }),
     );
@@ -722,6 +778,9 @@ export default function App() {
             {tab === "home" && (
               <HomePage
                 onTab={openCustomerTab}
+                nearestFairName={
+                  fairsWithDistance.find((fair) => fair.source !== "demo")?.name ?? fairs[0].name
+                }
                 onFair={openFair}
                 onVendors={() => openScreen("vendors")}
                 onTracking={() => openOrderTracking()}
@@ -896,7 +955,10 @@ export default function App() {
           onAdd={addProductToCart}
           onRemove={removeFromCart}
           onClose={() => setCartOpen(false)}
-          onBuyAgain={() => buyAgain()}
+          onClear={() => {
+            setCart({});
+            notify("Carrinho limpo.");
+          }}
           onCheckout={() => openScreen("checkout")}
         />
       )}
