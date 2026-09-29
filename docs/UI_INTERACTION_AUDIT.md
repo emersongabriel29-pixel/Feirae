@@ -672,3 +672,12 @@ Na listagem de Feiras, o botão principal passa de **Ver feira** para **Ver banc
 Ao tocar, o app abre diretamente a tela da feira com **somente as bancas daquela feira selecionada**.
 
 Os produtos continuam fora dessa tela: só aparecem depois que o cliente toca **Ver banca** em uma banca específica.
+
+## Carrinho, métricas, cancelamento e abertura do app — 29/09/2026
+
+A revisão do vídeo gerou quatro ajustes:
+
+- **Limpar carrinho:** remove dependência de `window.confirm`, que pode ser bloqueado no preview. A confirmação passa a acontecer dentro do próprio drawer com **Confirmar limpeza / Manter itens**.
+- **Métricas:** remove o aviso genérico “Peso/valor podem variar”. O card mostra a apresentação comercial exata e o carrinho/checkout tratam peso apenas como **peso logístico estimado**.
+- **Cancelamento:** muda de ação imediata para **Solicitar cancelamento**, aguardando resposta das bancas antes de retirar itens/gerar reembolso.
+- **Abertura do app:** sessão válida persistida sempre volta para a raiz do papel. Para Cliente, abre **Início** mesmo que a URL anterior estivesse em Pedidos, Perfil ou outra tela. Sem sessão, abre a entrada com Entrar/Criar conta.
