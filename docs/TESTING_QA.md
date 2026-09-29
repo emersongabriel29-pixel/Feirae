@@ -634,3 +634,12 @@ Cobertura do fluxo Cliente:
 - pedido mínimo continua disponível no perfil completo.
 
 QA visual obrigatório em 360/390/412 px: capa, avatar, badges, horário e grid de produtos não podem sobrepor nem gerar rolagem horizontal.
+
+## QA — Ver bancas por feira — 29/09/2026
+
+Teste adicionado para garantir que:
+
+- o card da feira mostra **Ver bancas**;
+- a ação é vinculada à feira daquele card;
+- ao abrir, aparece uma banca pertencente à feira escolhida;
+- nenhum produto aparece antes de entrar em uma banca específica.
