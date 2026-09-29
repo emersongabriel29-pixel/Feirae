@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fairs } from "../data";
 import type { CustomerTab, Role, Screen } from "../types";
 import { routeForRole } from "../domain/session";
@@ -15,6 +15,7 @@ export function updateHash(route: string, replace = false) {
 }
 
 export function useAppNavigation(role: Role | null, onNavigate?: () => void) {
+  const firstRoleSyncRef = useRef<Role | null>(null);
   const [tab, setTab] = useState<CustomerTab>("home");
   const [screen, setScreen] = useState<Screen>("main");
   const [selectedFair, setSelectedFair] = useState(fairs[0].name);
@@ -26,8 +27,14 @@ export function useAppNavigation(role: Role | null, onNavigate?: () => void) {
 
   useEffect(() => {
     if (!role) {
+      firstRoleSyncRef.current = null;
       if (window.location.hash !== "#/entrar") updateHash("/entrar", true);
       return;
+    }
+
+    if (firstRoleSyncRef.current !== role) {
+      firstRoleSyncRef.current = role;
+      updateHash(routeForRole(role), true);
     }
 
     function syncFromUrl() {
@@ -90,10 +97,6 @@ export function useAppNavigation(role: Role | null, onNavigate?: () => void) {
       setScreen("main");
       setTab("home");
       updateHash("/cliente/inicio", true);
-    }
-
-    if (!window.location.hash || window.location.hash === "#/entrar") {
-      updateHash(routeForRole(role), true);
     }
 
     syncFromUrl();
