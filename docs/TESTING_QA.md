@@ -525,7 +525,7 @@ Cobertura automatizada em `App.test.tsx`:
 - a página da banca continua expondo o pedido mínimo configurado;
 - pedidos ativos usam a ação **Acompanhar pedido**, enquanto pedidos concluídos preservam **Ver detalhes**;
 - os fluxos de detalhe e cancelamento continuam acessíveis após a mudança de rótulo;
-- a suíte completa registra **153/153 testes Vitest** aprovados antes da verificação documental.
+- a suíte completa registrava **153/153 testes Vitest** aprovados antes desta nova rodada.
 
 QA funcional/manual desta rodada:
 
@@ -534,3 +534,27 @@ QA funcional/manual desta rodada:
 - validar **Preciso de ajuda** a partir do card do pedido e conferir o vínculo do protocolo ao pedido correto;
 - validar responsividade dos novos agrupamentos em 360, 390 e 412 px;
 - confirmar que busca, stepper de quantidade, GPS, mapa interno e regras já existentes não sofreram regressão.
+
+
+## QA — proximidade, carrinho e mínimo por banca — 28/09/2026
+
+Cobertura automatizada adicionada:
+
+- região **Planaltina, DF** prioriza feiras de Planaltina e mantém as demais em ordem crescente de distância aproximada quando o GPS não estiver disponível;
+- **Feiras próximas** usa a feira oficial mais próxima da localização/região atual, em vez do primeiro item fixo do cadastro;
+- **Limpar carrinho** pede confirmação e remove todos os itens da sacola;
+- banca sem valor mínimo configurado não recebe mínimo inventado pelo Cliente;
+- banca com mínimo definido pelo Feirante mostra esse valor na página da banca;
+- carrinho não repete o resumo de mínimo quando a regra foi atendida;
+- se faltar valor, o carrinho exibe **Pedido mínimo não atingido**, informa quanto falta e bloqueia **Finalizar pedido**;
+- ao atingir o mínimo configurado, o erro desaparece e a finalização é liberada.
+
+Com os novos casos, a suíte passa a ter **156 testes Vitest** previstos nesta rodada.
+
+QA manual recomendado:
+
+- simular Planaltina sem GPS e conferir Planaltina primeiro, seguida das demais regiões por proximidade;
+- ativar GPS e confirmar que a ordem passa a usar a coordenada real;
+- testar banca com mínimo 0, sem configuração legada e com valor customizado;
+- limpar carrinho em 360/390/412 px e confirmar que a sacola permanece aberta no estado vazio;
+- validar compra multi-banca com apenas uma das bancas abaixo do mínimo.
