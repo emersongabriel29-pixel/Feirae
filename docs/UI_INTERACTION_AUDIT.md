@@ -653,3 +653,19 @@ Nova hierarquia:
 O mapa abre em uma superfície dedicada sobre a tela, mantendo localização, seleção de feira, abrir perfil e rota.
 
 Os marcadores deixam de usar o símbolo genérico de localização. Cada feira passa a usar o **ícone de banca/feira do próprio Feiraê** dentro de um marcador com ponta, preservando seleção e destaque de feira mais próxima.
+
+## Feira → bancas com perfil e produtos — 29/09/2026
+
+Ao tocar **Ver feira** na listagem, a tela interna deixa de mostrar um catálogo misturado de toda a feira.
+
+Nova sequência:
+
+1. identidade resumida da feira;
+2. cards das bancas/feirantes daquela unidade;
+3. cada card mostra capa, foto/logo, nome, descrição/categorias, situação da banca, horário e informações essenciais;
+4. logo abaixo do perfil da banca aparecem **os produtos daquela banca**;
+5. a rolagem continua para a próxima banca e seus respectivos produtos.
+
+Se o feirante usa o horário oficial da feira, a interface identifica **Horário da feira**. Se ele configurou agenda própria, mostra **Horário personalizado** e o horário de hoje.
+
+Quando capa ou foto/logo ainda não foram cadastradas, o card mantém um placeholder visual consistente sem inventar imagem.
