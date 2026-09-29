@@ -1199,10 +1199,7 @@ export function CartDrawer({
     Array.from(new Set(items.map((product) => product.feirante))).map((vendorName) => {
       const item = items.find((product) => product.feirante === vendorName);
       const store = item ? readStoreByIdentity(item.fair, vendorName) : undefined;
-      return [
-        vendorName,
-        normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? 0),
-      ];
+      return [vendorName, normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? 0)];
     }),
   );
   const vendorSummaries = vendorOrderSummaries(items, cart, minimumByVendor);
