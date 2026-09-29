@@ -178,6 +178,7 @@ export function DeliveryOperations({
       cep: "",
       city: "Planaltina",
       state: "DF",
+      photoDataUrl: seedDemoData ? "/brand/09_versao_selo.webp" : "",
     },
   );
   const [deliveryAccountDraft, setDeliveryAccountDraft] = useState({
@@ -232,7 +233,17 @@ export function DeliveryOperations({
         ]
       : [],
   );
-  const defaultDeliveryDocuments = [
+  type DeliveryDocument = {
+    id: string;
+    name: string;
+    description: string;
+    status: "pending" | "under_review" | "approved" | "correction_required";
+    fileName: string;
+    file?: StoredFile;
+    expiresAt: string;
+  };
+
+  const defaultDeliveryDocuments: DeliveryDocument[] = [
     {
       id: "identity",
       name: "Documento oficial com foto",
@@ -247,6 +258,15 @@ export function DeliveryOperations({
       description: "Comprovante ou declaração de residência.",
       status: "approved" as const,
       fileName: "residencia.pdf",
+      expiresAt: "",
+    },
+    {
+      id: "background_check",
+      name: "Certidões de antecedentes para análise",
+      description:
+        "Documento analisado conforme a atividade e a localidade. Uma anotação não causa reprovação automática; casos que exigem esclarecimento ficam em análise.",
+      status: "approved" as const,
+      fileName: "antecedentes-demo.pdf",
       expiresAt: "",
     },
     {
@@ -274,17 +294,18 @@ export function DeliveryOperations({
       expiresAt: "",
     },
   ].map((document) => (seedDemoData ? document : { ...document, status: "pending" as const, fileName: "" }));
-  const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<
-    {
-      id: string;
-      name: string;
-      description: string;
-      status: "pending" | "under_review" | "approved" | "correction_required";
-      fileName: string;
-      file?: StoredFile;
-      expiresAt: string;
-    }[]
-  >(`feirae:delivery-documents:${session.email}`, defaultDeliveryDocuments);
+  const [deliveryDocuments, setDeliveryDocuments] = usePersistentState<DeliveryDocument[]>(
+    `feirae:delivery-documents:${session.email}`,
+    defaultDeliveryDocuments,
+  );
+  const normalizedDeliveryDocuments = [
+    ...defaultDeliveryDocuments.map(
+      (fallback) => deliveryDocuments.find((document) => document.id === fallback.id) ?? fallback,
+    ),
+    ...deliveryDocuments.filter(
+      (document) => !defaultDeliveryDocuments.some((fallback) => fallback.id === document.id),
+    ),
+  ];
 
   const [legalAcceptances, setLegalAcceptances] = usePersistentState<LegalAcceptance[]>(
     `feirae:delivery-legal-acceptances:${session.email}`,
@@ -663,27 +684,31 @@ export function DeliveryOperations({
   const requiredDocumentIds = [
     "identity",
     "address",
+    "background_check",
     ...(hasMotorizedVehicle ? ["cnh", "crlv"] : []),
     ...(hasMoto ? ["motofrete"] : []),
   ];
+  const deliveryPhotoReady = Boolean(deliveryAccount.photoDataUrl);
   const deliveryTermsAccepted = allRequiredTermsAccepted(legalAcceptances, deliveryRequiredTerms, "delivery");
   const approvalStatus = !deliveryTermsAccepted
     ? "Termos pendentes"
-    : requiredDocumentIds.every(
-          (id) => deliveryDocuments.find((document) => document.id === id)?.status === "approved",
-        )
-      ? "Aprovado"
-      : deliveryDocuments.some(
-            (document) =>
-              requiredDocumentIds.includes(document.id) && document.status === "correction_required",
+    : !deliveryPhotoReady
+      ? "Foto pendente"
+      : requiredDocumentIds.every(
+            (id) => normalizedDeliveryDocuments.find((document) => document.id === id)?.status === "approved",
           )
-        ? "Correção necessária"
-        : deliveryDocuments.some(
-              (document) => requiredDocumentIds.includes(document.id) && document.status === "under_review",
+        ? "Aprovado"
+        : normalizedDeliveryDocuments.some(
+              (document) =>
+                requiredDocumentIds.includes(document.id) && document.status === "correction_required",
             )
-          ? "Em análise"
-          : "Documentação pendente";
-  const deliveryRequiredDocuments = deliveryDocuments.filter((document) =>
+          ? "Correção necessária"
+          : normalizedDeliveryDocuments.some(
+                (document) => requiredDocumentIds.includes(document.id) && document.status === "under_review",
+              )
+            ? "Em análise"
+            : "Documentação pendente";
+  const deliveryRequiredDocuments = normalizedDeliveryDocuments.filter((document) =>
     requiredDocumentIds.includes(document.id),
   );
   const deliveryTermsSigned = deliveryRequiredTerms.filter((term) =>
@@ -709,7 +734,7 @@ export function DeliveryOperations({
       Math.max(1, deliveryRequiredTerms.length + deliveryRequiredDocuments.length)) *
       100,
   );
-  const filteredDeliveryDocuments = deliveryDocuments.filter((document) => {
+  const filteredDeliveryDocuments = normalizedDeliveryDocuments.filter((document) => {
     if (documentFilter === "Pendentes") return document.status === "pending";
     if (documentFilter === "Em análise") return document.status === "under_review";
     if (documentFilter === "Aprovados") return document.status === "approved";
@@ -747,7 +772,9 @@ export function DeliveryOperations({
     return end >= start ? current >= start && current <= end : current >= start || current <= end;
   })();
   const availableNow = online && scheduleAllowsNow && approvalStatus === "Aprovado";
-  const deliveryAccountReady = Boolean(deliveryAccount.cpf.trim() && deliveryAccount.phone.trim());
+  const deliveryAccountReady = Boolean(
+    deliveryAccount.cpf.trim() && deliveryAccount.phone.trim() && deliveryAccount.photoDataUrl,
+  );
   const deliveryOnboardingTarget = !deliveryAccountReady
     ? "Conta"
     : vehicles.length === 0
@@ -1380,8 +1407,8 @@ export function DeliveryOperations({
             <OperationalOnboardingCard
               title="Complete seu cadastro para entregar"
               status={approvalStatus}
-              text="Corridas só são liberadas depois dos dados pessoais, veículo e documentos obrigatórios estarem prontos e aprovados."
-              steps={["Conta", "Veículo", "Documentos", "Aprovação"]}
+              text="Corridas só são liberadas depois da foto de perfil, dados pessoais, veículo, documentos e análises obrigatórias estarem prontos e aprovados."
+              steps={["Conta e foto", "Veículo", "Documentos", "Aprovação"]}
               action={
                 deliveryOnboardingTarget === "Conta"
                   ? "Completar minha conta"
@@ -2395,6 +2422,7 @@ export function DeliveryOperations({
                       cep: deliveryAccountDraft.cep.trim(),
                       city: deliveryAccountDraft.city.trim(),
                       state: deliveryAccountDraft.state.trim().toUpperCase(),
+                      photoDataUrl: deliveryAccountDraft.photoDataUrl ?? "",
                     };
                     const error = onAccountUpdate(
                       nextAccount.name,
@@ -2420,6 +2448,65 @@ export function DeliveryOperations({
                     window.setTimeout(() => setAccountSaved(false), 2200);
                   }}
                 >
+                  <div className="account-photo-field">
+                    <div className="account-photo-field__preview">
+                      {deliveryAccountDraft.photoDataUrl ? (
+                        <img src={deliveryAccountDraft.photoDataUrl} alt="Prévia da foto do entregador" />
+                      ) : (
+                        <Upload size={24} />
+                      )}
+                    </div>
+                    <div>
+                      <b>Foto do entregador · obrigatória</b>
+                      <small>
+                        Usada para identificação no perfil e na entrega. Este protótipo não faz reconhecimento
+                        facial. JPG, PNG ou WebP de até 1,5 MB.
+                      </small>
+                      <label className="secondary-action account-photo-field__button">
+                        {deliveryAccountDraft.photoDataUrl ? "Trocar foto" : "Adicionar foto"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          aria-label="Foto do entregador"
+                          onChange={(event) => {
+                            const selected = event.target.files?.[0];
+                            if (!selected) return;
+                            if (!["image/jpeg", "image/png", "image/webp"].includes(selected.type)) {
+                              setAccountError("Use uma imagem JPG, PNG ou WebP.");
+                              return;
+                            }
+                            void readFileForLocalStorage(selected)
+                              .then((stored) => {
+                                setDeliveryAccountDraft((current) => ({
+                                  ...current,
+                                  photoDataUrl: stored.dataUrl,
+                                }));
+                                setAccountError("");
+                              })
+                              .catch((error: unknown) =>
+                                setAccountError(
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Não foi possível carregar a foto.",
+                                ),
+                              );
+                          }}
+                        />
+                      </label>
+                      {deliveryAccountDraft.photoDataUrl && !seedDemoData && (
+                        <button
+                          type="button"
+                          className="account-photo-field__remove"
+                          onClick={() =>
+                            setDeliveryAccountDraft((current) => ({ ...current, photoDataUrl: "" }))
+                          }
+                        >
+                          Remover foto
+                        </button>
+                      )}
+                      {seedDemoData && <small>Conta de demonstração usa uma imagem de exemplo.</small>}
+                    </div>
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label>
                       Nome completo
@@ -2777,8 +2864,20 @@ export function DeliveryOperations({
                                     if (!file) return;
                                     void readFileForLocalStorage(file)
                                       .then((stored) => {
-                                        setDeliveryDocuments((current) =>
-                                          current.map((item) =>
+                                        setDeliveryDocuments((current) => {
+                                          const merged = [
+                                            ...defaultDeliveryDocuments.map(
+                                              (fallback) =>
+                                                current.find((item) => item.id === fallback.id) ?? fallback,
+                                            ),
+                                            ...current.filter(
+                                              (item) =>
+                                                !defaultDeliveryDocuments.some(
+                                                  (fallback) => fallback.id === item.id,
+                                                ),
+                                            ),
+                                          ];
+                                          return merged.map((item) =>
                                             item.id === document.id
                                               ? {
                                                   ...item,
@@ -2787,8 +2886,8 @@ export function DeliveryOperations({
                                                   status: "under_review",
                                                 }
                                               : item,
-                                          ),
-                                        );
+                                          );
+                                        });
                                         if (requiredNow) setOnline(false);
                                       })
                                       .catch((error: Error) => setIncidentNotice(error.message));
