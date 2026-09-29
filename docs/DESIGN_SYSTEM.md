@@ -781,3 +781,17 @@ O marcador Feiraê usa:
 - escala discreta no estado selecionado.
 
 O mapa completo não deve competir com filtros e cards de feira. Na listagem principal, ele é acessado por **Mapa das feiras** e aberto em superfície dedicada.
+
+## Card público de banca dentro da feira — 29/09/2026
+
+O perfil público de banca dentro da Feira usa hierarquia própria:
+
+- capa em largura total;
+- foto/logo sobreposta à base da capa;
+- badge **Aberta agora / Fechada / Horário da feira**;
+- nome e descrição/categorias;
+- blocos compactos para horário, avaliação, box e pedido mínimo quando houver;
+- ação **Abrir perfil** como opção secundária;
+- produtos da banca imediatamente abaixo do perfil, em grid de duas colunas no mobile.
+
+Fotos cadastradas pelo feirante devem ser reaproveitadas; sem mídia, usar placeholder de banca/Feiraê em vez de imagem genérica externa.
