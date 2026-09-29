@@ -380,7 +380,6 @@ export default function App() {
   }
   function clearCart() {
     if (!Object.keys(cart).length) return;
-    if (!window.confirm("Limpar todos os produtos do carrinho?")) return;
     setCart({});
     notify("Carrinho limpo.");
   }
