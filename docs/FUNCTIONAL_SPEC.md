@@ -930,3 +930,27 @@ Regras:
 - edição preserva a categoria existente;
 - a categoria é sincronizada para o catálogo compartilhado e usada pelos filtros do Cliente;
 - categorias não cadastradas na lista oficial não devem ser persistidas pelo formulário.
+
+## Ajustes funcionais da experiência Cliente/Entregador — 28/09/2026
+
+### Checkout
+
+- pedido mínimo continua sendo validado por banca;
+- quando atingido, a informação aparece de forma compacta; quando não atingido, continua bloqueando a finalização;
+- o resumo do Cliente apresenta uma única linha **Entrega**. Frete-base, adicional multi-banca e subsídios continuam compondo o cálculo, mas não são apresentados como cobranças duplicadas;
+- consentimento de WhatsApp permanece preferência/atributo do pedido e não é item financeiro.
+
+### Feira
+
+Abrir uma feira inicia pelo perfil da unidade (identidade visual, local, endereço, horário, avaliação/feirantes/entrega quando disponíveis), seguido por ações e catálogo.
+
+### Mapas
+
+- rota exibida como rota deve ser derivada de coordenadas reais/geocodificação;
+- sem GPS do entregador, não mostrar posição fictícia;
+- posições de banca/box só podem ser desenhadas quando houver coordenadas internas suficientes;
+- Google Maps e Waze são alternativas externas, não o mapa principal.
+
+### Entregador
+
+Aprovação operacional também depende de foto de perfil e documento de antecedentes em análise/aprovação, sem regra de reprovação automática por conteúdo no frontend.
