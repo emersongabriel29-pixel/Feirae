@@ -203,7 +203,7 @@ describe("Feiraê customer flow", () => {
     expect(allCategory).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("navigates from a native map pin to the fair, vendors and products", () => {
+  it("navigates from a fair to one bank and only then shows that bank's products", () => {
     render(<App />);
     loginAs("cliente");
 
@@ -219,14 +219,14 @@ describe("Feiraê customer flow", () => {
 
     expect(screen.getAllByRole("heading", { name: "Feira do Produtor Rural" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
-    expect(screen.getByText(/produtos da banca/i)).toBeInTheDocument();
-    expect(screen.getByText(/cesta de frutas/i)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /abrir perfil/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver banca/i }));
     expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
   });
 
-  it("shows each bank profile, custom hours and its products directly inside the fair", () => {
+  it("shows bank media and custom hours on the fair card, then products only inside that bank", () => {
     setVendorPresentation("Feira do Produtor Rural", "Sítio da Vó");
 
     render(<App />);
@@ -248,6 +248,10 @@ describe("Feiraê customer flow", () => {
     );
     expect(screen.getByText(/horário personalizado/i)).toBeInTheDocument();
     expect(screen.getByText(/hoje 06:00–12:00/i)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /cesta de frutas/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /ver banca/i }));
+    expect(screen.getByAltText(/capa da banca sítio da vó/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /cesta de frutas/i })).toBeInTheDocument();
 
     window.localStorage.removeItem("feirae:marketplace:v2");
@@ -318,7 +322,7 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir perfil/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver banca/i }));
 
     const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
     expect(minimumState).not.toBeNull();
@@ -338,7 +342,7 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /abrir perfil/i }));
+    fireEvent.click(screen.getByRole("button", { name: /ver banca/i }));
 
     expect(screen.getByText(/esta banca não exige pedido mínimo/i)).toBeInTheDocument();
   });
