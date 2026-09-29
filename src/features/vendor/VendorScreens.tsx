@@ -1543,9 +1543,10 @@ export function FeiranteOperations({
                             setProductDraft((current) => ({
                               ...current,
                               category,
-                              saleUnit: policy.allowedUnits.includes(current.saleUnit)
-                                ? current.saleUnit
-                                : policy.defaultUnit,
+                              saleUnit:
+                                !current.category || !policy.allowedUnits.includes(current.saleUnit)
+                                  ? policy.defaultUnit
+                                  : current.saleUnit,
                               packageSize:
                                 current.packageSize && current.packageSize !== "1 un"
                                   ? current.packageSize
