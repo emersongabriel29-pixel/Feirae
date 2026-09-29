@@ -729,7 +729,6 @@ A superfície só existe em estado inválido:
 
 Quando todas as bancas atendem a regra ou não possuem mínimo configurado, a superfície não é renderizada. A página da banca continua sendo a superfície canônica para exibir o valor mínimo e o progresso da compra.
 
-
 ## Entrada premium / welcome — 28/09/2026
 
 A entrada premium usa uma composição editorial própria sem alterar o design system das telas internas.
