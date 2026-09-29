@@ -708,7 +708,6 @@ A ação de suporte pode usar superfície amarela/creme de apoio, sem competir c
 
 `.support-order-context` usa borda e fundo verde suave, ícone de conversa e texto curto. Ele informa qual pedido está ligado ao atendimento sem transformar o suporte em uma segunda tela de detalhe do pedido.
 
-
 ## Carrinho: limpeza e erro de mínimo — 28/09/2026
 
 ### cart-toolbar
