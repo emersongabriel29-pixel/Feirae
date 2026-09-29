@@ -184,9 +184,7 @@ export default function App() {
 
   useEffect(() => {
     if (role !== "customer" || !nearestOfficialFair) return;
-    const locationKey = coords
-      ? `${coords.lat.toFixed(4)},${coords.lng.toFixed(4)}`
-      : locationLabel;
+    const locationKey = coords ? `${coords.lat.toFixed(4)},${coords.lng.toFixed(4)}` : locationLabel;
     if (autoSelectedLocationRef.current === locationKey) return;
     autoSelectedLocationRef.current = locationKey;
     setSelectedFair(nearestOfficialFair.name);
@@ -445,10 +443,7 @@ export default function App() {
       Array.from(new Set(cartProducts.map((product) => product.feirante))).map((vendorName) => {
         const product = cartProducts.find((item) => item.feirante === vendorName);
         const store = product ? readStoreByIdentity(product.fair, vendorName) : undefined;
-        return [
-          vendorName,
-          normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? 0),
-        ];
+        return [vendorName, normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? 0)];
       }),
     );
     const minimumSummaries = vendorOrderSummaries(
