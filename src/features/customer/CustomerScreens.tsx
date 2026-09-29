@@ -765,12 +765,20 @@ export function FairDetail({
   fairName,
   onBack,
   onMap,
-  onVendor,
+  onAdd,
+  onRemove,
+  cart,
+  favorites,
+  onFavorite,
 }: {
   fairName: string;
   onBack: () => void;
   onMap: (destination: number | string, lng?: number) => void;
-  onVendor: (name: string) => void;
+  onAdd: (id: number) => void;
+  onRemove: (id: number) => void;
+  cart: Record<number, number>;
+  favorites: number[];
+  onFavorite: (id: number) => void;
 }) {
   const fair = fairs.find((item) => item.name === fairName) ?? fairs[0];
   const fairIndex = Math.max(
@@ -801,6 +809,7 @@ export function FairDetail({
     return {
       name,
       index,
+      products: vendorProducts,
       productCount: vendorProducts.length,
       store,
       metrics,
@@ -868,7 +877,7 @@ export function FairDetail({
 
       <SectionHeading
         eyebrow="Bancas"
-        title={vendorShowcases.length ? "Escolha uma banca e veja os produtos" : "Bancas desta feira"}
+        title={vendorShowcases.length ? "Bancas e produtos desta feira" : "Bancas desta feira"}
       />
 
       {vendorShowcases.length ? (
@@ -909,14 +918,6 @@ export function FairDetail({
                         <h3>{vendor.name}</h3>
                         <p>{vendor.store?.description?.trim() || vendor.categoriesText}</p>
                       </div>
-                      <button
-                        type="button"
-                        className="mini-toggle active"
-                        onClick={() => onVendor(vendor.name)}
-                        aria-label={`Ver banca ${vendor.name}`}
-                      >
-                        Ver banca <ChevronRight size={15} />
-                      </button>
                     </div>
 
                     <div className="public-vendor-profile__details">
@@ -938,7 +939,7 @@ export function FairDetail({
                       <span>
                         <Package size={15} />
                         <b>{vendor.productCount} produto(s)</b>
-                        <small>toque em Ver banca</small>
+                        <small>logo abaixo do perfil</small>
                       </span>
                       {minimum > 0 && (
                         <span>
@@ -951,6 +952,34 @@ export function FairDetail({
                   </div>
                 </article>
 
+                <div className="vendor-inline-products">
+                  <div className="vendor-inline-products__heading">
+                    <div>
+                      <span className="eyebrow">Produtos da banca</span>
+                      <h4>{vendor.name}</h4>
+                    </div>
+                    <small>{vendor.products.length} produto(s)</small>
+                  </div>
+
+                  {vendor.products.length ? (
+                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
+                      {vendor.products.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          quantity={cart[product.id] ?? 0}
+                          onAdd={onAdd}
+                          onRemove={onRemove}
+                          addDisabled={vendor.store?.isOpen === false}
+                          favorite={favorites.includes(product.id)}
+                          onFavorite={onFavorite}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <Empty title="Produtos em preparação" text="Esta banca ainda não publicou produtos." />
+                  )}
+                </div>
               </section>
             );
           })}
