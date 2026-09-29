@@ -339,7 +339,7 @@ describe("Feiraê customer flow", () => {
     render(<App />);
     expect(screen.getByText(/a feira do seu jeito/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /da feira até você/i })).toBeInTheDocument();
-    expect(screen.getByText(/produtos frescos/i)).toBeInTheDocument();
+    expect(screen.getByText(/^produtos frescos$/i)).toBeInTheDocument();
     expect(screen.getByText(/entrega rápida/i)).toBeInTheDocument();
     expect(screen.getByText(/compra confiável/i)).toBeInTheDocument();
     expect(screen.queryByRole("radiogroup", { name: /tipo de acesso/i })).not.toBeInTheDocument();
@@ -507,6 +507,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getByRole("heading", { name: /olá, cliente atualizada/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /sair da conta/i }));
+    openAuth("login");
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
       target: { value: "cliente.nova@feirae.app" },
     });
@@ -817,6 +818,8 @@ describe("Feiraê role access", () => {
       JSON.stringify({ role: "admin", email: "admin@feirae.test", name: "Admin" }),
     );
     render(<App />);
+    expect(screen.getByRole("heading", { name: /da feira até você/i })).toBeInTheDocument();
+    openAuth("login");
     expect(screen.getByRole("heading", { name: /como você vai usar o aplicativo/i })).toBeInTheDocument();
   });
 
