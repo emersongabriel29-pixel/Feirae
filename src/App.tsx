@@ -709,6 +709,7 @@ export default function App() {
         tab={tab}
         query={query}
         selectedFair={selectedFair}
+        selectedFairPlace={fairs.find((fair) => fair.name === selectedFair)?.place ?? "Distrito Federal"}
         locationLabel={locationLabel}
         locationLoading={locationLoading}
         notifications={notifications}
