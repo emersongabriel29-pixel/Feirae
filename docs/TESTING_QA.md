@@ -32,7 +32,7 @@ npm run build
 
 | Arquivo                                       |  Testes |
 | --------------------------------------------- | ------: |
-| `src/App.test.tsx`                            |      66 |
+| `src/App.test.tsx`                            |      68 |
 | `src/components/LaunchExperience.test.tsx`    |       4 |
 | `src/components/FeiraeBrand.test.tsx`         |       2 |
 | `src/components/OrderRouteMap.test.tsx`       |       3 |
@@ -50,13 +50,13 @@ npm run build
 | `src/domain/marketplace.test.ts`              |       4 |
 | `src/domain/session.test.ts`                  |       3 |
 | `src/utils.test.ts`                           |       4 |
-| **Total Vitest**                              | **153** |
+| **Total Vitest**                              | **155** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
 ## 3. Cobertura comprovada de App.test.tsx
 
-Os 66 testes cobrem explicitamente:
+Os 68 testes cobrem explicitamente:
 
 ### Cliente
 
@@ -534,3 +534,15 @@ QA funcional/manual desta rodada:
 - validar **Preciso de ajuda** a partir do card do pedido e conferir o vínculo do protocolo ao pedido correto;
 - validar responsividade dos novos agrupamentos em 360, 390 e 412 px;
 - confirmar que busca, stepper de quantidade, GPS, mapa interno e regras já existentes não sofreram regressão.
+
+
+## QA — localização, carrinho e pedido mínimo — 28/09/2026
+
+- localização padrão “Planaltina, DF” abre uma feira de Planaltina em vez de manter a Torre de TV;
+- feiras são priorizadas pela região do cliente e depois ordenadas por distância aproximada;
+- GPS real redefine a feira selecionada para a oficial mais próxima;
+- carrinho possui ação “Limpar carrinho” e remove todos os itens;
+- pedido mínimo deixou de ser obrigatório por padrão: sem configuração do feirante significa sem mínimo;
+- bancas demonstrativas mantêm R$ 30,00 apenas como configuração seed;
+- no carrinho, o mínimo não ocupa um card permanente: aparece somente como erro quando alguma banca não atingiu o valor configurado;
+- “Comprar novamente” permanece em Pedidos, não dentro do carrinho.
