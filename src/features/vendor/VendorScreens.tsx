@@ -83,7 +83,6 @@ import {
   initialVendorSchedule,
   newVendorBankProfile,
   productCategories,
-  productSaleUnits,
   vendorDocumentStatusLabel,
   vendorOrderStatusLabel,
   type VendorBankProfile,
@@ -1574,11 +1573,9 @@ export function FeiranteOperations({
                             setProductDraft((current) => ({ ...current, saleUnit: event.target.value }))
                           }
                         >
-                          {measurementPolicyForCategory(productDraft.category)
-                            .allowedUnits.filter((unit) => productSaleUnits.includes(unit as never))
-                            .map((unit) => (
-                              <option key={unit}>{unit}</option>
-                            ))}
+                          {measurementPolicyForCategory(productDraft.category).allowedUnits.map((unit) => (
+                            <option key={unit}>{unit}</option>
+                          ))}
                         </select>
                         <small>
                           {measurementPolicyForCategory(productDraft.category).note}
