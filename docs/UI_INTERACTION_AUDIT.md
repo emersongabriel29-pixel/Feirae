@@ -604,3 +604,22 @@ O valor mínimo pertence à configuração da banca:
 - o carrinho não repete cartão/resumo de mínimo quando está tudo válido;
 - somente quando uma banca está abaixo do valor exigido, o carrinho mostra um erro objetivo com banca, valor faltante e mínimo;
 - **Finalizar pedido** permanece bloqueado enquanto existir ao menos uma banca abaixo do mínimo.
+
+
+## Entrada premium antes da autenticação — 28/09/2026
+
+A abertura do Feiraê passa a separar **marca/primeira impressão** de **autenticação operacional**.
+
+Fluxo:
+
+1. ao chegar sem sessão, o usuário vê uma tela de entrada em tela cheia;
+2. a tela usa somente a identidade oficial do Feiraê e uma ilustração própria de feira, sem copiar a interface interna;
+3. os três benefícios resumem a proposta: **Produtos frescos**, **Entrega rápida** e **Compra confiável**;
+4. existem somente dois CTAs principais: **Entrar** e **Criar conta**;
+5. **Entrar** abre o fluxo existente de autenticação;
+6. **Criar conta** abre diretamente o fluxo existente de cadastro;
+7. a autenticação mantém escolha Cliente/Feirante/Entregador, recuperação de senha, termos e validações já implementados;
+8. **Voltar à abertura** retorna à capa sem perder a identidade do app;
+9. logout retorna à entrada premium antes de permitir nova escolha de perfil.
+
+A tela premium é deliberadamente restrita à porta de entrada. Home, Feiras, Produtos, Pedidos, Perfil, Feirante e Entregador mantêm a linguagem operacional já aprovada.
