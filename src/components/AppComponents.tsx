@@ -1184,7 +1184,7 @@ export function CartDrawer({
   onAdd,
   onRemove,
   onClose,
-  onBuyAgain,
+  onClear,
   onCheckout,
 }: {
   items: Product[];
@@ -1193,7 +1193,7 @@ export function CartDrawer({
   onAdd: (id: number) => void;
   onRemove: (id: number, all?: boolean) => void;
   onClose: () => void;
-  onBuyAgain: () => void;
+  onClear: () => void;
   onCheckout: () => void;
 }) {
   const totalWeight = cartWeight(items, cart);
@@ -1205,13 +1205,14 @@ export function CartDrawer({
       const store = item ? readStoreByIdentity(item.fair, vendorName) : undefined;
       return [
         vendorName,
-        normalizeVendorMinimumOrder(store?.minimumOrderAmount ?? DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT),
+        store
+          ? normalizeVendorMinimumOrder(store.minimumOrderAmount)
+          : DEFAULT_VENDOR_MINIMUM_ORDER_AMOUNT,
       ];
     }),
   );
   const vendorSummaries = vendorOrderSummaries(items, cart, minimumByVendor);
   const minimumMet = vendorSummaries.every((summary) => summary.meetsMinimum);
-  const firstBlockedMinimum = vendorSummaries.find((summary) => !summary.meetsMinimum);
   return (
     <div
       className="drawer-backdrop"
@@ -1232,11 +1233,13 @@ export function CartDrawer({
           </button>
         </div>
         <div className="drawer-body">
-          <button className="repeat-order-button" onClick={onBuyAgain}>
-            <ShoppingBag size={17} />
-            Comprar novamente
-            <small>Repetir itens da última feira</small>
-          </button>
+          {items.length > 0 && (
+            <button type="button" className="repeat-order-button" onClick={onClear}>
+              <Trash2 size={17} />
+              Limpar carrinho
+              <small>Remover todos os itens desta compra</small>
+            </button>
+          )}
           {items.length ? (
             items.map((product) => (
               <article className="cart-item" key={product.id}>
@@ -1303,29 +1306,19 @@ export function CartDrawer({
                 valor estimado.
               </small>
             )}
-            <div className="surface-card">
-              <span className="eyebrow">Pedido mínimo por banca</span>
-              {vendorSummaries.map((summary) => (
-                <div className="cart-minimum-row" key={summary.vendorName}>
-                  <p>
-                    <span>{summary.vendorName}</span>
-                    <b>
-                      {summary.minimumOrderAmount > 0
-                        ? `Pedido mínimo ${money(summary.minimumOrderAmount)}`
-                        : "Sem pedido mínimo"}
-                    </b>
-                  </p>
-                  {summary.minimumOrderAmount > 0 && (
-                    <small>
-                      {summary.meetsMinimum
-                        ? "Mínimo atingido."
-                        : `Faltam ${money(summary.missingForMinimum)} para liberar o pedido.`}
-                    </small>
-                  )}
-                </div>
-              ))}
-              <small>O valor mínimo da banca é fixo. Frete e taxas não entram nessa conta.</small>
-            </div>
+            {!minimumMet && (
+              <div className="inline-error" role="alert">
+                <b>Pedido mínimo não atingido</b>
+                {vendorSummaries
+                  .filter((summary) => !summary.meetsMinimum)
+                  .map((summary) => (
+                    <span key={summary.vendorName}>
+                      {summary.vendorName}: faltam {money(summary.missingForMinimum)} para atingir o mínimo de{" "}
+                      {money(summary.minimumOrderAmount)}.
+                    </span>
+                  ))}
+              </div>
+            )}
             <p>
               <span>Subtotal</span>
               <b>{money(subtotal)}</b>
@@ -1333,12 +1326,7 @@ export function CartDrawer({
             <button onClick={onCheckout} disabled={!minimumMet} className="primary-action w-full">
               Finalizar pedido
             </button>
-            {!minimumMet && firstBlockedMinimum && (
-              <small>
-                {firstBlockedMinimum.vendorName}: faltam {money(firstBlockedMinimum.missingForMinimum)} para
-                atingir o mínimo de {money(firstBlockedMinimum.minimumOrderAmount)}.
-              </small>
-            )}
+
           </div>
         )}
       </aside>
