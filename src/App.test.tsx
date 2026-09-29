@@ -71,13 +71,13 @@ describe("Feiraê customer flow", () => {
     expect(window.location.hash).toBe("#/cliente/produtos");
   });
 
-  it("keeps the Feiraê home identity in vector artwork", () => {
+  it("keeps the approved Feiraê seal in the home artwork", () => {
     const { container } = render(<App />);
     loginAs("cliente");
 
     expect(container.querySelector(".hero-illustration__brand img")).toHaveAttribute(
       "src",
-      "/feirae-mark.svg",
+      "/brand/09_versao_selo.webp",
     );
     expect(container.querySelectorAll(".hero-illustration__icon")).toHaveLength(3);
   });
