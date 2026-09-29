@@ -568,3 +568,40 @@ O suporte vinculado mostra o identificador do pedido antes do chat e o protocolo
 ### Responsividade
 
 Em largura móvel, card de pedido e ações podem empilhar. Os grupos de banca do checkout preservam hierarquia e não devem gerar rolagem horizontal.
+
+
+## Localização, feira mais próxima e carrinho — 28/09/2026
+
+### Feira mais próxima
+
+Quando o Cliente tem coordenadas reais, a ordenação usa a distância até os pontos cadastrados ou referências regionais das feiras. Quando o GPS não está disponível, a região conhecida — por exemplo **Planaltina, DF** — vira a referência de proximidade.
+
+Regras:
+
+1. feiras da região atual aparecem primeiro;
+2. as demais seguem da mais próxima para a mais distante;
+3. o atalho **Feiras próximas** abre a feira oficial mais próxima, não o primeiro registro estático;
+4. a seleção automática da feira acompanha mudança real de localização, mas não deve ficar sobrescrevendo a escolha manual do Cliente;
+5. feiras sem coordenada própria continuam usando a referência regional aproximada e a rota final usa o endereço cadastrado.
+
+### Limpar carrinho
+
+A sacola não usa mais **Comprar novamente** como ação de topo. Histórico e repetição de compra permanecem em **Pedidos**.
+
+Na sacola existe **Limpar carrinho**:
+
+- ação destrutiva secundária;
+- pede confirmação;
+- remove todos os itens;
+- mantém a sacola aberta e mostra o estado vazio.
+
+### Pedido mínimo
+
+O valor mínimo pertence à configuração da banca:
+
+- **sem valor configurado** = sem mínimo;
+- **valor configurado pelo Feirante** = usar exatamente esse valor;
+- a página da banca é o lugar principal para comunicar o mínimo e o progresso;
+- o carrinho não repete cartão/resumo de mínimo quando está tudo válido;
+- somente quando uma banca está abaixo do valor exigido, o carrinho mostra um erro objetivo com banca, valor faltante e mínimo;
+- **Finalizar pedido** permanece bloqueado enquanto existir ao menos uma banca abaixo do mínimo.
