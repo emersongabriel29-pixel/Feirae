@@ -1046,3 +1046,21 @@ Exemplos de cadastro:
 No MVP, apresentações diferentes são cadastros/SKUs distintos. Ex.: farinha 500 g e farinha 1 kg devem ter preços e estoques próprios.
 
 O editor de produto restringe as unidades sugeridas pela categoria e exige **Apresentação**. O peso logístico nunca altera silenciosamente o valor cobrado.
+
+## Cancelamento solicitado pelo Cliente — 29/09/2026
+
+O Cliente não cancela automaticamente um pedido que já foi enviado às bancas.
+
+Antes da coleta:
+
+1. Cliente toca **Solicitar cancelamento** e informa o motivo;
+2. o pedido permanece ativo;
+3. cada banca ainda participante recebe a solicitação;
+4. a banca pode **Aceitar cancelamento** ou **Continuar pedido**;
+5. se uma banca aceitar, apenas sua participação/itens são retirados, com recomposição de estoque, frete e reembolso aplicáveis;
+6. em pedido multi-banca, o cancelamento pode ser parcial;
+7. se todas as bancas aceitarem, o pedido é encerrado.
+
+Depois que a coleta já ocorreu, o fluxo normal de cancelamento é bloqueado e o caso segue para suporte/ocorrência.
+
+A decisão da banca precisa ficar registrada no histórico do pedido.
