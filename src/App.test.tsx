@@ -819,7 +819,7 @@ describe("Feiraê customer flow", () => {
     expect(screen.getAllByRole("button", { name: /cartão/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /^dinheiro/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /cartão na maquininha/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/1 kg/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/kg logísticos/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/peso logístico estimado/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/peso\/valor podem variar/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/total estimado/i)).not.toBeInTheDocument();
