@@ -808,7 +808,7 @@ export default function App() {
             fairName={selectedFair}
             onBack={() => openCustomerTab("fairs")}
             onMap={openMap}
-            onVendors={() => openScreen("vendors")}
+            onVendor={openVendor}
             onAdd={addProductToCart}
             onRemove={removeFromCart}
             cart={cart}
