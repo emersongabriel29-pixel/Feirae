@@ -982,3 +982,22 @@ Para cada banca:
 - **Abrir perfil** continua disponível para a tela completa da banca.
 
 O catálogo não deve misturar produtos de feirantes diferentes sem indicar a banca de origem.
+
+## Feira com bancas agrupadas por perfil — 29/09/2026
+
+A ação **Ver feira** abre a lista de bancas daquela unidade, sem misturar produtos.
+
+Para cada banca na tela da feira:
+
+- perfil e identidade visual;
+- horário herdado da feira ou horário personalizado;
+- status operacional quando disponível;
+- box/categorias, avaliação, quantidade de produtos e pedido mínimo;
+- ação **Ver banca**.
+
+Ao abrir uma banca:
+
+- mostrar o perfil completo da banca;
+- abaixo dele, listar **exclusivamente os produtos daquela banca**;
+- produtos de outras bancas não aparecem nessa página;
+- se a banca compartilhada estiver fechada, os produtos não podem ser adicionados.
