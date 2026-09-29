@@ -607,3 +607,16 @@ A cobertura existente foi ajustada sem alterar a contagem total:
 - filtros de região continuam limitando os pontos entregues ao mapa.
 
 QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
+
+## QA — perfil de banca e produtos dentro da feira — 29/09/2026
+
+Cobertura adicionada ao fluxo Cliente:
+
+- **Ver feira** mostra a banca sem exigir a etapa intermediária “Ver bancas”;
+- produtos da banca aparecem logo abaixo do card de perfil;
+- capa e foto/logo compartilhadas são renderizadas;
+- horário personalizado é identificado e mostra o horário do dia;
+- **Abrir perfil** continua levando à tela completa da banca;
+- pedido mínimo continua disponível no perfil completo.
+
+QA visual obrigatório em 360/390/412 px: capa, avatar, badges, horário e grid de produtos não podem sobrepor nem gerar rolagem horizontal.
