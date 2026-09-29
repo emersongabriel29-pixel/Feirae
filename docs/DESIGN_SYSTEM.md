@@ -784,14 +784,15 @@ O mapa completo não deve competir com filtros e cards de feira. Na listagem pri
 
 ## Card público de banca dentro da feira — 29/09/2026
 
-O perfil público de banca dentro da Feira usa hierarquia própria:
+Na tela geral da feira, o card público da banca usa:
 
 - capa em largura total;
 - foto/logo sobreposta à base da capa;
 - badge **Aberta agora / Fechada / Horário da feira**;
 - nome e descrição/categorias;
-- blocos compactos para horário, avaliação, box e pedido mínimo quando houver;
-- ação **Abrir perfil** como opção secundária;
-- produtos da banca imediatamente abaixo do perfil, em grid de duas colunas no mobile.
+- blocos compactos para horário, avaliação, box, quantidade de produtos e pedido mínimo quando houver;
+- ação **Ver banca**.
 
-Fotos cadastradas pelo feirante devem ser reaproveitadas; sem mídia, usar placeholder de banca/Feiraê em vez de imagem genérica externa.
+Os produtos **não** são exibidos dentro do card nem entre uma banca e outra na tela geral da feira.
+
+Na página individual da banca, o mesmo perfil aparece no topo e os produtos daquela banca vêm logo abaixo, em grid de duas colunas no mobile.
