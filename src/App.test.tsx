@@ -176,14 +176,12 @@ describe("Feiraê customer flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
 
     expect(screen.getAllByRole("heading", { name: "Feira do Produtor Rural" }).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
-
-    expect(screen.getByRole("heading", { name: /bancas e feirantes/i })).toBeInTheDocument();
-    expect(screen.getByText("Sítio da Vó")).toBeInTheDocument();
-
-    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
-    expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sítio da vó/i })).toBeInTheDocument();
+    expect(screen.getByText(/produtos da banca/i)).toBeInTheDocument();
     expect(screen.getByText(/cesta de frutas/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /abrir perfil/i }));
+    expect(screen.getByRole("heading", { level: 1, name: /sítio da vó/i })).toBeInTheDocument();
   });
 
   it("blocks checkout only when the vendor-configured minimum has not been reached", () => {
@@ -251,8 +249,7 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
-    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /abrir perfil/i }));
 
     const minimumState = screen.getByText(/^pedido mínimo$/i).closest("div");
     expect(minimumState).not.toBeNull();
@@ -272,8 +269,7 @@ describe("Feiraê customer flow", () => {
     openFairsMap();
     fireEvent.click(screen.getByRole("button", { name: /selecionar feira do produtor rural/i }));
     fireEvent.click(screen.getByRole("button", { name: /abrir feira/i }));
-    fireEvent.click(screen.getByRole("button", { name: /ver bancas/i }));
-    fireEvent.click(screen.getAllByRole("button", { name: /ver banca/i })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /abrir perfil/i }));
 
     expect(screen.getByText(/esta banca não exige pedido mínimo/i)).toBeInTheDocument();
   });
