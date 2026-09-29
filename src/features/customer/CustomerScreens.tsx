@@ -380,8 +380,12 @@ export function FairCard({
           </span>
         </div>
         <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
-          <button onClick={() => onFair(fair.name)} className="primary-action">
-            Ver feira
+          <button
+            onClick={() => onFair(fair.name)}
+            className="primary-action"
+            aria-label={`Ver bancas da ${fair.name}`}
+          >
+            Ver bancas
           </button>
           <button
             onClick={() =>
@@ -905,7 +909,12 @@ export function FairDetail({
                         <h3>{vendor.name}</h3>
                         <p>{vendor.store?.description?.trim() || vendor.categoriesText}</p>
                       </div>
-                      <button type="button" className="mini-toggle active" onClick={() => onVendor(vendor.name)}>
+                      <button
+                        type="button"
+                        className="mini-toggle active"
+                        onClick={() => onVendor(vendor.name)}
+                        aria-label={`Ver banca ${vendor.name}`}
+                      >
                         Ver banca <ChevronRight size={15} />
                       </button>
                     </div>
