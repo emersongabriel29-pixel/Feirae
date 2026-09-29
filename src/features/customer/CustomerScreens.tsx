@@ -265,12 +265,7 @@ export function FairsPage({
             if (event.target === event.currentTarget) setMapOpen(false);
           }}
         >
-          <section
-            className="fair-map-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mapa das feiras"
-          >
+          <section className="fair-map-dialog" role="dialog" aria-modal="true" aria-label="Mapa das feiras">
             <header className="fair-map-dialog__header">
               <div>
                 <span className="eyebrow">Mapa Feiraê</span>
