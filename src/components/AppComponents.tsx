@@ -536,6 +536,7 @@ type HeaderProps = {
   tab: CustomerTab;
   query: string;
   selectedFair: string;
+  selectedFairPlace: string;
   locationLabel: string;
   locationLoading: boolean;
   notifications: number;
@@ -631,7 +632,7 @@ export function Header(props: HeaderProps) {
               <MapPin size={16} />
               <span>
                 <b>{props.selectedFair}</b>
-                <small>{props.locationLoading ? "Localizando…" : props.locationLabel}</small>
+                <small>{props.selectedFairPlace}</small>
               </span>
               <ChevronRight size={17} />
             </button>
