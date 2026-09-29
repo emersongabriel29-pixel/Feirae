@@ -401,3 +401,20 @@ Para produção, o envio de link/código de recuperação passa a envolver o e-m
 - canal para contestação de redefinição não reconhecida;
 - descarte de tokens/OTPs após uso ou expiração;
 - ausência de senha, token ou OTP em analytics, logs de aplicação e ferramentas de suporte.
+
+## Foto de perfil e documentos de antecedentes — revisão 28/09/2026
+
+A revisão de onboarding adiciona dois pontos de minimização e transparência:
+
+- **Cliente:** foto de perfil é opcional.
+- **Entregador:** foto é requisito operacional de identificação no protótipo. Não há extração biométrica, reconhecimento facial ou comparação automática de identidade.
+- **Entregador:** certidões de antecedentes podem ser solicitadas para análise conforme política e localidade. O frontend não interpreta conteúdo nem toma decisão automática de reprovação.
+
+Para produção:
+
+- definir base legal, finalidade, necessidade e prazo de retenção de cada documento;
+- restringir acesso por função e registrar auditoria de visualização/decisão;
+- armazenar arquivos fora do bundle/localStorage, com Storage privado e URLs assinadas;
+- permitir correção/atualização e tratar descarte ao fim da finalidade/retensão aplicável;
+- evitar exposição de foto/documentos em logs, analytics e URLs;
+- se no futuro houver reconhecimento facial ou outro tratamento biométrico para identificação única, revisar o fluxo como tratamento de dado biométrico sensível antes da implementação.
