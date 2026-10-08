@@ -1333,6 +1333,7 @@ export function DeliveryOperations({
                         driver: {
                           driverKey: session.email,
                           name: deliveryAccount.name || session.name,
+                          phone: deliveryAccount.phone?.trim() || undefined,
                           vehicle: compatibleVehicle.type,
                           plateMasked: compatibleVehicle.plate
                             ? `***${compatibleVehicle.plate.slice(-4)}`
