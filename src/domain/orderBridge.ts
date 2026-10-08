@@ -151,6 +151,7 @@ export type UnifiedOrderRecord = {
   driver?: {
     driverKey?: string;
     name: string;
+    phone?: string;
     vehicle: string;
     plateMasked?: string;
     etaMinutes?: number;
