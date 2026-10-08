@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Minus,
   Package,
+  Phone,
   Plus,
   Settings,
   Star,
@@ -1306,6 +1307,15 @@ export function DeliveryTracking({
             </div>
           )}
           {order.fulfillment === "delivery" && ["Coleta", "Em rota", "Entregue"].includes(order.status) && (
+            <>
+            <DeliveryContactCard
+              orderId={order.id}
+              driver={
+                ["driver_assigned", "collected", "out_for_delivery"].includes(unifiedOrder?.status ?? "")
+                  ? unifiedOrder?.driver
+                  : undefined
+              }
+            />
             <div className="surface-card">
               <span className="eyebrow">Entrega</span>
               {order.driver ? (
@@ -1341,6 +1351,7 @@ export function DeliveryTracking({
                 <p>Os dados do entregador aparecem aqui assim que a corrida for aceita.</p>
               )}
             </div>
+            </>
           )}
         </div>
         <div className="surface-card">
@@ -3314,6 +3325,68 @@ export function RatingsPage({ orders, onBack }: { orders: DemoOrder[]; onBack: (
         <p className="operation-footnote">Você ainda não enviou avaliações.</p>
       )}
     </Panel>
+  );
+}
+export function DeliveryContactCard({
+  orderId,
+  driver,
+}: {
+  orderId: string;
+  driver?: { name: string; phone?: string; vehicle?: string; plateMasked?: string };
+}) {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = usePersistentState<string[]>(`feirae:delivery-chat:${orderId}`, []);
+  const connected = Boolean(driver);
+  const phone = driver?.phone?.trim() ?? "";
+
+  function sendMessage(event: FormEvent) {
+    event.preventDefault();
+    const value = message.trim();
+    if (!value || !connected) return;
+    setMessages((current) => [...current, value]);
+    setMessage("");
+  }
+
+  if (!connected) return null;
+
+  return (
+    <div className="surface-card delivery-contact-card">
+      <span className="eyebrow">Contato com o entregador</span>
+      <div className="delivery-contact-card__identity">
+        <div>
+          <h3>{driver.name}</h3>
+          <p>{driver.vehicle ?? "Entregador Feiraê"}{driver.plateMasked ? ` · placa ${driver.plateMasked}` : ""}</p>
+        </div>
+        <span className="delivery-contact-card__status">Conectado ao pedido</span>
+      </div>
+      <div className="module-action-row">
+        {phone ? (
+          <a className="primary-action" href={`tel:${phone.replace(/[^+\\d]/g, "")}`} aria-label={`Ligar para ${driver.name}`}>
+            <Phone size={17} /> Ligar
+          </a>
+        ) : (
+          <span className="operation-footnote">Telefone não informado pelo entregador.</span>
+        )}
+      </div>
+      <div className="chat-card delivery-contact-card__chat">
+        <div className="chat-messages" aria-live="polite">
+          {messages.length ? messages.map((text, index) => (
+            <p key={`delivery-chat-${index}`} className="sent">{text}</p>
+          )) : <p className="received">Você pode falar com o entregador durante a entrega.</p>}
+        </div>
+        <form onSubmit={sendMessage}>
+          <label className="sr-only" htmlFor={`delivery-message-${orderId}`}>Mensagem para o entregador</label>
+          <input
+            id={`delivery-message-${orderId}`}
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Mensagem para o entregador…"
+          />
+          <button type="submit" aria-label="Enviar mensagem" disabled={!message.trim()}><MessageCircle /></button>
+        </form>
+      </div>
+      <small className="operation-footnote">O contato fica disponível somente enquanto o pedido estiver em entrega.</small>
+    </div>
   );
 }
 export function ChatPage({ onBack, orderId }: { onBack: () => void; orderId?: string }) {
