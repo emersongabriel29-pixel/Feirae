@@ -3355,7 +3355,10 @@ export function DeliveryContactCard({
       <div className="delivery-contact-card__identity">
         <div>
           <h3>{driver.name}</h3>
-          <p>{driver.vehicle ?? "Entregador Feiraê"}{driver.plateMasked ? ` · placa ${driver.plateMasked}` : ""}</p>
+          <p>
+            {driver.vehicle ?? "Entregador Feiraê"}
+            {driver.plateMasked ? ` · placa ${driver.plateMasked}` : ""}
+          </p>
         </div>
         <span className="delivery-contact-card__status">Conectado ao pedido</span>
       </div>
