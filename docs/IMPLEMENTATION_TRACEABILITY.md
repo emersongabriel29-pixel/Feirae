@@ -472,7 +472,6 @@ Continua sem SDK proprietário de mapas. O protótipo usa serviços públicos e 
 
 Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam ser refletidos no backend/Storage/RLS antes de produção.
 
-
 ## Atualização de 18/10/2026 — PR #67
 
 | Alteração | Arquivos | Evidência | Limite |
