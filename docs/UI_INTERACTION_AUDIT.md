@@ -653,3 +653,10 @@ Nova hierarquia:
 O mapa abre em uma superfície dedicada sobre a tela, mantendo localização, seleção de feira, abrir perfil e rota.
 
 Os marcadores deixam de usar o símbolo genérico de localização. Cada feira passa a usar o **ícone de banca/feira do próprio Feiraê** dentro de um marcador com ponta, preservando seleção e destaque de feira mais próxima.
+
+
+## Atualização de 18/10/2026 — cartão de contato do entregador
+
+Em `src/features/customer/CustomerScreens.tsx`, a guarda de renderização do cartão de contato verifica a existência do objeto `driver`, usado pelo componente, em vez de depender de um booleano que não estreitava o tipo para o TypeScript. A alteração não redesenha a tela nem prova que o contato esteja integrado a um serviço real.
+
+Validar posteriormente os estados com entregador, sem entregador e dados incompletos, incluindo acessibilidade, responsividade e uso de contato somente quando autorizado.
