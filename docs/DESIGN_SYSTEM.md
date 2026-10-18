@@ -781,3 +781,8 @@ O marcador Feiraê usa:
 - escala discreta no estado selecionado.
 
 O mapa completo não deve competir com filtros e cards de feira. Na listagem principal, ele é acessado por **Mapa das feiras** e aberto em superfície dedicada.
+
+
+## Atualização de 18/10/2026 — preservação visual
+
+A alteração do PR #67 não introduz uma nova linguagem visual: corrige apenas a condição de renderização do cartão de contato do entregador. Continuam obrigatórios o logotipo aprovado, a identidade verde e branca, os textos institucionais e a adaptação ao contexto de feiras locais. Repositórios externos podem servir de referência técnica, mas não autorizam copiar marca ou substituir telas existentes.
