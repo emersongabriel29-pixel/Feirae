@@ -135,15 +135,15 @@ Portanto:
 Fonte: `src/domain/vehicles.ts`.
 
 | Tipo                         | Capacidade padrão |
-| ---------------------------- | ----------------: |
-| Bicicleta                    |             10 kg |
-| Bicicleta cargueira/triciclo |             40 kg |
-| Moto                         |             12 kg |
-| Moto com baú                 |             20 kg |
-| Carro                        |             80 kg |
-| Utilitário/Pickup            |            250 kg |
-| Van                          |            500 kg |
-| Outro                        |             10 kg |
+| ---------------------------- | ----------------- |
+| Bicicleta                    | 10 kg             |
+| Bicicleta cargueira/triciclo | 40 kg             |
+| Moto                         | 12 kg             |
+| Moto com baú                 | 20 kg             |
+| Carro                        | 80 kg             |
+| Utilitário/Pickup            | 250 kg            |
+| Van                          | 500 kg            |
+| Outro                        | 10 kg             |
 
 `Outro` atualmente não exige placa por `requiresPlate()`. Isso é comportamento atual, não decisão regulatória final.
 
@@ -474,8 +474,8 @@ Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam 
 
 ## Atualização de 18/10/2026 — PR #67
 
-| Alteração | Arquivos | Evidência | Limite |
-|---|---|---|---|
-| Limitar desconto promocional | `src/domain/multiVendor.ts`, `src/domain/multiVendor.test.ts` | Testes de regressão no PR #67; `npm run check` passou no SHA consultado | CI completo falhou na sincronização documental; aguarda nova execução |
-| Corrigir guarda de contato do entregador | `src/features/customer/CustomerScreens.tsx` | Compilação TypeScript passou em `npm run check` no SHA consultado | Não comprova integração operacional cliente-entregador |
-| Referências técnicas externas | `docs/REUSE_INTEGRATION_PLAN.md` | Plano registra oportunidades, dependências e critérios | Não declara código externo incorporado nem funcionalidade pronta |
+| Alteração                                | Arquivos                                                      | Evidência                                                               | Limite                                                                |
+| ---------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Limitar desconto promocional             | `src/domain/multiVendor.ts`, `src/domain/multiVendor.test.ts` | Testes de regressão no PR #67; `npm run check` passou no SHA consultado | CI completo falhou na sincronização documental; aguarda nova execução |
+| Corrigir guarda de contato do entregador | `src/features/customer/CustomerScreens.tsx`                   | Compilação TypeScript passou em `npm run check` no SHA consultado       | Não comprova integração operacional cliente-entregador                |
+| Referências técnicas externas            | `docs/REUSE_INTEGRATION_PLAN.md`                              | Plano registra oportunidades, dependências e critérios                  | Não declara código externo incorporado nem funcionalidade pronta      |
