@@ -21,15 +21,15 @@ O repositório oficial continua sendo `emersongabriel29-pixel/Feirae`; seu códi
 
 ## Matriz inicial de oportunidades
 
-| Área | Referência técnica identificada | Incorporação proposta | Pré-condição |
-|---|---|---|---|
-| Pedidos multi-banca | Código atual do Feiraê e padrões de marketplace multi-vendedor | Preservar o domínio existente e alinhar estado global, estado por banca e alocação financeira | Contratos e testes de transição |
-| Estoque | Padrões de reserva transacional/RPC em aplicações de supermercado | Reserva, expiração, liberação e consumo atômicos | Migration, serviço server-side, RLS e testes concorrentes |
-| Pagamentos e recebíveis | Padrões de backend com validação autoritativa | Lançamentos por banca/recebedor e entregador; nunca confiar em valores enviados pelo cliente | Provedor autorizado, idempotência, ledger e revisão de segurança |
-| Mapas e despacho | OSRM/Valhalla e código atual `src/domain/routing.ts` | Rota externa e ordenação de coletas; coordenadas de cada box tratadas separadamente | Coordenadas confiáveis e modo de transporte correto |
-| Persistência e acesso | Supabase/Postgres e políticas RLS | Migrar gradualmente de estado local para dados compartilhados | Matriz de permissões e testes em banco descartável |
-| Catálogo e imagens | Padrões de storefront/PWA | Adaptar upload, apresentação e cache ao catálogo de cada banca | Licença compatível, Storage e autorização |
-| Gestão | Padrões de painel operacional | Configurações de taxas, veículos, regiões, cadastros e auditoria no app separado Feirae-Gestao | Confirmar repositório e contratos administrativos |
+| Área                    | Referência técnica identificada                                   | Incorporação proposta                                                                          | Pré-condição                                                     |
+| ----------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Pedidos multi-banca     | Código atual do Feiraê e padrões de marketplace multi-vendedor    | Preservar o domínio existente e alinhar estado global, estado por banca e alocação financeira  | Contratos e testes de transição                                  |
+| Estoque                 | Padrões de reserva transacional/RPC em aplicações de supermercado | Reserva, expiração, liberação e consumo atômicos                                               | Migration, serviço server-side, RLS e testes concorrentes        |
+| Pagamentos e recebíveis | Padrões de backend com validação autoritativa                     | Lançamentos por banca/recebedor e entregador; nunca confiar em valores enviados pelo cliente   | Provedor autorizado, idempotência, ledger e revisão de segurança |
+| Mapas e despacho        | OSRM/Valhalla e código atual `src/domain/routing.ts`              | Rota externa e ordenação de coletas; coordenadas de cada box tratadas separadamente            | Coordenadas confiáveis e modo de transporte correto              |
+| Persistência e acesso   | Supabase/Postgres e políticas RLS                                 | Migrar gradualmente de estado local para dados compartilhados                                  | Matriz de permissões e testes em banco descartável               |
+| Catálogo e imagens      | Padrões de storefront/PWA                                         | Adaptar upload, apresentação e cache ao catálogo de cada banca                                 | Licença compatível, Storage e autorização                        |
+| Gestão                  | Padrões de painel operacional                                     | Configurações de taxas, veículos, regiões, cadastros e auditoria no app separado Feirae-Gestao | Confirmar repositório e contratos administrativos                |
 
 ## Salvaguardas aprendidas na comparação
 
