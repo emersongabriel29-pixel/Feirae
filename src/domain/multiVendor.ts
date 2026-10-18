@@ -109,15 +109,23 @@ export function allocatePromotionAcrossVendors<T extends { id: number; feirante:
   const total = summaries.reduce((sum, item) => sum + item.subtotal, 0);
   if (!summaries.length) return [];
 
+  // A promotion must never discount more than the order's merchandise total.
+  // Round first so the proportional allocations and the final remainder use cents.
+  const safeDiscount = Number.isFinite(promotionDiscount)
+    ? Math.min(total, Math.max(0, Math.round(promotionDiscount * 100) / 100))
+    : 0;
+
   let allocated = 0;
   return summaries.map((summary, index) => {
-    const discount =
+    const remaining = Math.max(0, Math.round((safeDiscount - allocated) * 100) / 100);
+    const proportional =
       index === summaries.length - 1
-        ? Math.max(0, Math.round((promotionDiscount - allocated) * 100) / 100)
+        ? remaining
         : total > 0
-          ? Math.max(0, Math.round(promotionDiscount * (summary.subtotal / total) * 100) / 100)
+          ? Math.round((safeDiscount * (summary.subtotal / total)) * 100) / 100
           : 0;
-    allocated += discount;
+    const discount = Math.min(summary.subtotal, remaining, Math.max(0, proportional));
+    allocated = Math.round((allocated + discount) * 100) / 100;
     return {
       ...summary,
       promotionDiscount: discount,
