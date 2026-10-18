@@ -100,7 +100,9 @@ export type VendorFinancialAllocation = VendorOrderSummary & {
   netMerchandise: number;
 };
 
-export function allocatePromotionAcrossVendors<T extends { id: number; feirante: string; price: number }>(
+export function allocatePromotionAcrossVendors<
+  T extends { id: number; feirante: string; price: number },
+>(
   items: T[],
   cart: Record<number, number>,
   promotionDiscount: number,
