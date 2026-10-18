@@ -967,7 +967,6 @@ Na aba **Feiras**, o mapa não é renderizado como bloco permanente.
 - fechar o mapa retorna à lista no mesmo contexto;
 - marcadores usam o ícone Feiraê de banca/feira, não um pin genérico.
 
-
 ## Atualização de 18/10/2026 — alocação de promoções entre bancas
 
 A função `allocatePromotionAcrossVendors` deve limitar o desconto válido ao subtotal agregado das mercadorias, tratar valores negativos ou não finitos como zero, distribuir em centavos e nunca alocar a uma banca desconto maior que seu subtotal. Os testes adicionados no PR #67 cobrem desconto acima do total e valores negativos/NaN.
