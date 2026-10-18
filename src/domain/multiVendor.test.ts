@@ -156,7 +156,6 @@ describe("multiVendor", () => {
     ]);
   });
 
-
   it("caps a promotion at the total merchandise value", () => {
     const items = [
       { id: 1, feirante: "Banca A", price: 10 },
@@ -164,7 +163,12 @@ describe("multiVendor", () => {
     ];
     const allocation = allocatePromotionAcrossVendors(items, { 1: 1, 2: 1 }, 50);
 
-    expect(allocation.map(({ promotionDiscount, netMerchandise }) => ({ promotionDiscount, netMerchandise }))).toEqual([
+    expect(
+      allocation.map(({ promotionDiscount, netMerchandise }) => ({
+        promotionDiscount,
+        netMerchandise,
+      })),
+    ).toEqual([
       { promotionDiscount: 10, netMerchandise: 0 },
       { promotionDiscount: 5, netMerchandise: 0 },
     ]);
