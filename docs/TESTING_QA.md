@@ -608,7 +608,6 @@ A cobertura existente foi ajustada sem alterar a contagem total:
 
 QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
 
-
 ## Atualização de 18/10/2026 — PR #67
 
 A revisão inclui testes de regressão em `src/domain/multiVendor.test.ts` para limitar o desconto promocional ao total de mercadorias e neutralizar descontos negativos ou não finitos. A execução de CI do SHA `36c02db68288208c5951e94bc66ea0da8d181b0a` concluiu `npm run check` com sucesso, incluindo testes e build. A etapa de sincronização falhou porque faltavam atualizações simultâneas em documentos obrigatórios; esse SHA ainda não tem CI completo aprovado.
