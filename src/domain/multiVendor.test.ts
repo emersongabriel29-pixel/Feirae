@@ -156,6 +156,32 @@ describe("multiVendor", () => {
     ]);
   });
 
+
+  it("caps a promotion at the total merchandise value", () => {
+    const items = [
+      { id: 1, feirante: "Banca A", price: 10 },
+      { id: 2, feirante: "Banca B", price: 5 },
+    ];
+    const allocation = allocatePromotionAcrossVendors(items, { 1: 1, 2: 1 }, 50);
+
+    expect(allocation.map(({ promotionDiscount, netMerchandise }) => ({ promotionDiscount, netMerchandise }))).toEqual([
+      { promotionDiscount: 10, netMerchandise: 0 },
+      { promotionDiscount: 5, netMerchandise: 0 },
+    ]);
+    expect(allocation.reduce((sum, item) => sum + item.promotionDiscount, 0)).toBe(15);
+  });
+
+  it("treats negative and non-finite promotion values as zero", () => {
+    const items = [{ id: 1, feirante: "Banca A", price: 10 }];
+
+    expect(allocatePromotionAcrossVendors(items, { 1: 1 }, -5)[0]).toEqual(
+      expect.objectContaining({ promotionDiscount: 0, netMerchandise: 10 }),
+    );
+    expect(allocatePromotionAcrossVendors(items, { 1: 1 }, Number.NaN)[0]).toEqual(
+      expect.objectContaining({ promotionDiscount: 0, netMerchandise: 10 }),
+    );
+  });
+
   it("charges one base freight plus a small extra-stop fee for each additional vendor", () => {
     expect(MULTI_VENDOR_EXTRA_STOP_FEE).toBe(2.5);
     expect(calculateMultiVendorDeliveryFee(12, 1)).toBe(12);
