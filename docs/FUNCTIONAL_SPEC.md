@@ -966,3 +966,14 @@ Na aba **Feiras**, o mapa não é renderizado como bloco permanente.
 - **Rota no Feiraê** mantém o fluxo de navegação interna;
 - fechar o mapa retorna à lista no mesmo contexto;
 - marcadores usam o ícone Feiraê de banca/feira, não um pin genérico.
+
+
+## Atualização de 18/10/2026 — alocação de promoções entre bancas
+
+A função `allocatePromotionAcrossVendors` deve limitar o desconto válido ao subtotal agregado das mercadorias, tratar valores negativos ou não finitos como zero, distribuir em centavos e nunca alocar a uma banca desconto maior que seu subtotal. Os testes adicionados no PR #67 cobrem desconto acima do total e valores negativos/NaN.
+
+Esse cálculo no frontend não substitui validação server-side. Antes de pagamentos reais, o backend deverá recalcular preços e descontos com dados autoritativos.
+
+## Estratégia de reaproveitamento técnico
+
+O Feiraê permanece o projeto principal. Soluções externas devem ser inspecionadas por funcionalidade, dependências, licença, segurança e testes, e adaptadas aos contratos existentes. Prioridades identificadas: estados separados por pedido e por banca; reserva transacional de estoque; validação server-side do mínimo de R$ 30 por banca quando configurado; ledger por recebedor; políticas RLS; coordenadas de cada box e despacho. A matriz detalhada está em `docs/REUSE_INTEGRATION_PLAN.md`.
