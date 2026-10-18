@@ -471,3 +471,12 @@ Continua sem SDK proprietário de mapas. O protótipo usa serviços públicos e 
 - O conteúdo de antecedentes **não é classificado automaticamente** e uma anotação não reprova automaticamente; o protótipo apenas controla envio/status de revisão.
 
 Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam ser refletidos no backend/Storage/RLS antes de produção.
+
+
+## Atualização de 18/10/2026 — PR #67
+
+| Alteração | Arquivos | Evidência | Limite |
+|---|---|---|---|
+| Limitar desconto promocional | `src/domain/multiVendor.ts`, `src/domain/multiVendor.test.ts` | Testes de regressão no PR #67; `npm run check` passou no SHA consultado | CI completo falhou na sincronização documental; aguarda nova execução |
+| Corrigir guarda de contato do entregador | `src/features/customer/CustomerScreens.tsx` | Compilação TypeScript passou em `npm run check` no SHA consultado | Não comprova integração operacional cliente-entregador |
+| Referências técnicas externas | `docs/REUSE_INTEGRATION_PLAN.md` | Plano registra oportunidades, dependências e critérios | Não declara código externo incorporado nem funcionalidade pronta |
