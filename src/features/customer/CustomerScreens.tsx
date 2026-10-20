@@ -3347,7 +3347,7 @@ export function DeliveryContactCard({
     setMessage("");
   }
 
-  if (!connected) return null;
+  if (!connected || !driver) return null;
 
   return (
     <div className="surface-card delivery-contact-card">
