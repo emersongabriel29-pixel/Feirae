@@ -411,16 +411,11 @@ export function FeiranteOperations({
     const sharedOrders = readUnifiedOrders().filter(
       (order) =>
         order.fairName === bankProfile.fairName &&
-        (order.vendors?.some(
-          (vendor) =>
-            vendor.storeId === selectedStoreId ||
-            (selectedBankId === "primary" && !vendor.storeId && vendor.vendorId === accountVendorId),
-        ) ??
-          order.items.some(
-            (item) =>
-              item.storeId === selectedStoreId ||
-              (selectedBankId === "primary" && !item.storeId && item.vendor === bankProfile.name),
-          )),
+        (order.vendors?.some((vendor) => vendor.storeId === selectedStoreId) ??
+          order.items.some((item) => item.storeId === selectedStoreId)) ||
+          (selectedBankId === "primary" &&
+            (order.vendors?.filter((vendor) => vendor.vendorName === bankProfile.name).length === 1 ||
+              order.items.filter((item) => item.vendor === bankProfile.name).length === 1)),
     );
     if (!sharedOrders.length) return;
 
@@ -438,15 +433,18 @@ export function FeiranteOperations({
     setOrders((current) => {
       const byId = new Map(current.map((order) => [order.id, order]));
       sharedOrders.forEach((record) => {
-        const vendorState = record.vendors?.find(
-          (vendor) =>
-            vendor.storeId === selectedStoreId ||
-            (selectedBankId === "primary" && !vendor.storeId && vendor.vendorId === accountVendorId),
-        );
+        const exactVendorState = record.vendors?.find((vendor) => vendor.storeId === selectedStoreId);
+        const legacyVendorMatches =
+          selectedBankId === "primary"
+            ? record.vendors?.filter((vendor) => vendor.vendorName === bankProfile.name) ?? []
+            : [];
+        const vendorState =
+          exactVendorState ?? (legacyVendorMatches.length === 1 ? legacyVendorMatches[0] : undefined);
         const resolvedVendorId = vendorState?.vendorId ?? accountVendorId;
+        const resolvedStoreId = vendorState?.storeId ?? selectedStoreId;
         const items = record.items.filter(
           (item) =>
-            item.storeId === selectedStoreId ||
+            item.storeId === resolvedStoreId ||
             (selectedBankId === "primary" && !item.storeId && item.vendor === bankProfile.name),
         );
         const currentOrder = byId.get(record.id);
@@ -469,6 +467,7 @@ export function FeiranteOperations({
           id: record.id,
           fulfillment: record.fulfillment,
           vendorId: resolvedVendorId,
+          storeId: resolvedStoreId,
           customer: record.customerName,
           createdAt: new Intl.DateTimeFormat("pt-BR", {
             dateStyle: "short",
