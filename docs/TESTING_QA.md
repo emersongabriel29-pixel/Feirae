@@ -613,6 +613,7 @@ QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o 
 A revisão inclui testes de regressão em `src/domain/multiVendor.test.ts` para limitar o desconto promocional ao total de mercadorias e neutralizar descontos negativos ou não finitos. A execução de CI do SHA `36c02db68288208c5951e94bc66ea0da8d181b0a` concluiu `npm run check` com sucesso, incluindo testes e build. A etapa de sincronização falhou porque faltavam atualizações simultâneas em documentos obrigatórios; esse SHA ainda não tem CI completo aprovado.
 
 A suíte não comprova integração real com Supabase, RLS em banco, reserva concorrente de estoque, pagamentos reais ou rotas internas de boxes; esses cenários exigem testes de integração/aceitação.
+
 ## QA de schema — estado individual por banca — 19/10/2026
 
 A revisão estática da migration `0004_order_vendor_state_machine.sql` verificou a presença de enum próprio, conversão dos estados existentes, RLS de leitura, revogação de escrita direta, checagem de identidade do feirante, bloqueio de linhas, validação de transições, justificativa de rejeição e registro de eventos.
