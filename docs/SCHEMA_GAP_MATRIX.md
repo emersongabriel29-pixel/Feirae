@@ -73,11 +73,9 @@ No `orderBridge`, a participação de banca usa:
 - `delivered`
 - `rejected`
 
-SQL `order_vendors.status` reutiliza `public.order_status`.
+Antes da migration `0004_order_vendor_state_machine.sql`, SQL `order_vendors.status` reutilizava `public.order_status`.
 
-Problema objetivo: o enum SQL não possui `pending`, `ready` nem `rejected`, portanto o schema atual não consegue persistir fielmente o estado por banca usado pelo frontend.
-
-Correção necessária: criar enum próprio, por exemplo `order_vendor_status`, e migrar `order_vendors.status`.
+A migration `0004` nesta branch cria `public.order_vendor_status` e migra a coluna para os estados específicos da participação. A correção está preparada no repositório, mas ainda depende de validação em um banco de desenvolvimento correto e de integração do frontend com o RPC.
 
 A retirada multi-banca também depende desse estado por banca: uma participação pode estar `delivered` enquanto o pedido global continua `ready_for_pickup`; somente todas as participações `delivered` encerram o pedido. O backend precisa derivar essa transição atomicamente.
 
