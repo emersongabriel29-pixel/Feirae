@@ -488,7 +488,9 @@ export function cancelVendorParticipation(
         ...normalized,
         vendors,
         items: normalized.items.map((item) =>
-          item.vendorId === vendorId ? { ...item, cancelled: true } : item,
+          item.vendorId === vendorId && (!storeId || item.storeId === storeId)
+            ? { ...item, cancelled: true }
+            : item,
         ),
         subtotal: nextSubtotal,
         promotionDiscount: nextPromotionDiscount,
