@@ -976,3 +976,14 @@ Esse cálculo no frontend não substitui validação server-side. Antes de pagam
 ## Estratégia de reaproveitamento técnico
 
 O Feiraê permanece o projeto principal. Soluções externas devem ser inspecionadas por funcionalidade, dependências, licença, segurança e testes, e adaptadas aos contratos existentes. Prioridades identificadas: estados separados por pedido e por banca; reserva transacional de estoque; validação server-side do mínimo de R$ 30 por banca quando configurado; ledger por recebedor; políticas RLS; coordenadas de cada box e despacho. A matriz detalhada está em `docs/REUSE_INTEGRATION_PLAN.md`.
+## Máquina de estados por banca — 19/10/2026
+
+Cada banca participante de um pedido multi-banca possui seu próprio estado operacional, separado do estado geral do pedido. A migration proposta `0004_order_vendor_state_machine.sql` introduz o enum específico e um RPC para transições autenticadas.
+
+- A banca pode aceitar, preparar, marcar como pronta e concluir sua participação; rejeições exigem justificativa.
+- Na entrega, a participação progride de pronta para coletada e depois entregue.
+- Na retirada pelo cliente, a participação progride de pronta para entregue.
+- O pedido geral só avança conforme as bancas ativas alcançam o marco aplicável; uma banca rejeitada não deve impedir que as demais continuem.
+- Alterações devem gerar eventos auditáveis.
+
+A implementação no banco ainda precisa ser aplicada e validada no ambiente correto. A interface atual permanece baseada em `localStorage`; este contrato não significa que o app já esteja sincronizado com Supabase.
