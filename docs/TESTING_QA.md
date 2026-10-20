@@ -619,6 +619,7 @@ A suíte não comprova integração real com Supabase, RLS em banco, reserva con
 A revisão estática da migration `0004_order_vendor_state_machine.sql` verificou a presença de enum próprio, conversão dos estados existentes, RLS de leitura, revogação de escrita direta, checagem de identidade do feirante, bloqueio de linhas, validação de transições, justificativa de rejeição e registro de eventos.
 
 Ainda pendente de execução real:
+
 - aplicar a migration em banco de desenvolvimento confirmado como Feiraê;
 - testar políticas com cliente proprietário/alheio, feirante vinculado/alheio e usuário anônimo;
 - testar transições permitidas e recusadas para entrega e retirada;
