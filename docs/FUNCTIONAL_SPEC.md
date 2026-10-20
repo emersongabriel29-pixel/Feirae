@@ -987,3 +987,5 @@ Cada banca participante de um pedido multi-banca possui seu próprio estado oper
 - Alterações devem gerar eventos auditáveis.
 
 A implementação no banco ainda precisa ser aplicada e validada no ambiente correto. A interface atual permanece baseada em `localStorage`; este contrato não significa que o app já esteja sincronizado com Supabase.
+
+Contrato de chamada: `public.update_order_vendor_status` é o ponto de entrada do banco, restrito a usuários autenticados. A lógica com privilégios fica no schema não exposto `private`; o frontend ainda não chama esse contrato.
