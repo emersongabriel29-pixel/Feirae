@@ -267,7 +267,7 @@ Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HE
 
 Arquivo: `supabase/migrations/0004_order_vendor_state_machine.sql`.
 
-Esta migration altera o tipo de `order_vendors.status`, ativa RLS na tabela, cria políticas de leitura e disponibiliza o RPC autenticado `private.update_order_vendor_status`. Ela é uma mudança de schema e exige revisão em ambiente de desenvolvimento antes de qualquer aplicação.
+Esta migration altera o tipo de `order_vendors.status`, ativa RLS na tabela, cria políticas de leitura e disponibiliza o RPC público restrito `public.update_order_vendor_status`, que delega a implementação ao schema não exposto `private`. Ela é uma mudança de schema e exige revisão em ambiente de desenvolvimento antes de qualquer aplicação.
 
 Checklist obrigatório antes de aplicar:
 1. Confirmar que o projeto Supabase selecionado pertence ao Feiraê. A conexão consultada durante a implementação apresenta outro nome e histórico de migrations; não aplicar nela.
