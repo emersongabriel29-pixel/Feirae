@@ -780,7 +780,7 @@ export function FeiranteOperations({
           unavailable: update.unavailable,
           note: update.note,
         },
-        selectedStoreId,
+        order.storeId ?? selectedStoreId,
       );
     }
   }
@@ -797,21 +797,21 @@ export function FeiranteOperations({
       vendorId,
       "accepted",
       eventNow("vendor-confirmed", "Confirmado pela banca", "vendor"),
-      selectedStoreId,
+      order.storeId ?? selectedStoreId,
     );
     patchVendorStatus(
       order.id,
       vendorId,
       "preparing",
       eventNow("preparing", "Em separação", "vendor"),
-      selectedStoreId,
+      order.storeId ?? selectedStoreId,
     );
     showNotice(`Pedido ${order.id} aceito. Cliente notificado.`);
   }
 
   function rejectOrder(order: VendorOrder) {
     const vendorId = order.vendorId ?? vendorIdFor(session.email);
-    const result = cancelVendorParticipation(order.id, vendorId, rejectReason, selectedStoreId);
+    const result = cancelVendorParticipation(order.id, vendorId, rejectReason, order.storeId ?? selectedStoreId);
     updateOrder(order.id, { status: "rejected", rejectReason });
     if (result?.productIds.length) releaseInventoryItems(order.id, result.productIds);
 
@@ -847,7 +847,7 @@ export function FeiranteOperations({
         order.fulfillment === "pickup" ? "Pronto para retirada" : "Pronto para coleta",
         "vendor",
       ),
-      selectedStoreId,
+      order.storeId ?? selectedStoreId,
     );
     showNotice(
       order.fulfillment === "pickup"
