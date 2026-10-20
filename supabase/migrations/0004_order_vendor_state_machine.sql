@@ -80,7 +80,6 @@ grant select on public.order_vendors to authenticated;
 
 create schema if not exists private;
 revoke all on schema private from public, anon, authenticated;
-grant usage on schema private to authenticated;
 
 create or replace function private.update_order_vendor_status(
   p_order_id uuid,
@@ -282,10 +281,7 @@ $$;
 
 revoke all on function private.update_order_vendor_status(
   uuid, uuid, public.order_vendor_status, text
-) from public, anon;
-grant execute on function private.update_order_vendor_status(
-  uuid, uuid, public.order_vendor_status, text
-) to authenticated;
+) from PUBLIC, anon, authenticated;
 
 -- Public API wrapper: only authenticated callers can execute it. The implementation remains
 -- in the non-exposed private schema and performs the ownership and transition checks.
@@ -300,9 +296,9 @@ returns table (
   new_vendor_status public.order_vendor_status
 )
 language sql
-security invoker
+security definer
 set search_path = ''
-as $$
+as $
   select *
   from private.update_order_vendor_status(p_order_id, p_vendor_id, p_status, p_reason);
 $$;
