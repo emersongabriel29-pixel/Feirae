@@ -396,3 +396,16 @@ A próxima migration não deve ser genérica. Ela precisa, no mínimo:
 10. completar RLS/policies;
 11. testar tudo em banco descartável antes de staging;
 12. validar server-side o pedido mínimo por banca e persistir snapshot da regra aplicada.
+## Atualização — máquina de estados por banca — 19/10/2026
+
+A migration proposta `0004_order_vendor_state_machine.sql` prepara uma coluna de status específica para cada participação em `order_vendors`, em vez de reutilizar `public.order_status`.
+
+- Enum por banca: `pending`, `accepted`, `preparing`, `ready`, `collected`, `delivered`, `rejected`.
+- Conversão de valores existentes: estados globais são mapeados para o estado de participação mais conservador compatível.
+- RLS: leitura limitada ao cliente dono do pedido e ao feirante vinculado à banca.
+- Escrita: clientes anonimizados e clientes autenticados não recebem permissão de escrita direta na tabela; o RPC autenticado valida a identidade do feirante, bloqueia linhas do pedido e verifica transições.
+- Derivação global: a função atualiza o pedido quando todas as bancas alcançam um marco compatível e registra eventos de auditoria.
+
+**Status:** migration criada na branch da PR, ainda não aplicada a banco algum. A conexão Supabase disponível aponta para um projeto cujo nome e histórico de migrations não correspondem claramente ao Feiraê; não foi alterada. Antes de aplicar, confirmar o projeto correto, revisar o schema remoto, executar a migration em ambiente de desenvolvimento e validar RLS/RPC com usuários de cliente, feirante e não autenticado.
+
+**Limite atual:** o frontend ainda usa `localStorage` e não chama este RPC. A migration prepara o contrato server-side; não torna os pedidos do app persistentes no Supabase por si só.
