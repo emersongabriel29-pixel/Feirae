@@ -505,17 +505,13 @@ export function FeiranteOperations({
     ? readUnifiedOrders().find((order) => order.id === selectedOrder.id)
     : undefined;
   const accountVendorId = vendorIdFor(session.email);
-  const vendorUnifiedOrders = readUnifiedOrders().filter((order) =>
-    order.vendors?.some(
-      (vendor) =>
-        vendor.storeId === selectedStoreId ||
-        (selectedBankId === "primary" && !vendor.storeId && vendor.vendorId === accountVendorId),
-    ) ??
-    order.items.some(
-      (item) =>
-        item.storeId === selectedStoreId ||
-        (selectedBankId === "primary" && !item.storeId && item.vendor === bankProfile.name),
-    ),
+  const vendorUnifiedOrders = readUnifiedOrders().filter(
+    (order) =>
+      (order.vendors?.some((vendor) => vendor.storeId === selectedStoreId) ??
+        order.items.some((item) => item.storeId === selectedStoreId)) ||
+      (selectedBankId === "primary" &&
+        (order.vendors?.filter((vendor) => vendor.vendorName === bankProfile.name).length === 1 ||
+          order.items.filter((item) => item.vendor === bankProfile.name).length === 1)),
   );
   const pendingVendorReviewOrders = vendorUnifiedOrders.filter(
     (order) =>
