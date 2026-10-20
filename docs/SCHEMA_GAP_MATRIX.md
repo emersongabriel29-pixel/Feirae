@@ -407,3 +407,5 @@ A migration proposta `0004_order_vendor_state_machine.sql` prepara uma coluna de
 **Status:** migration criada na branch da PR, ainda não aplicada a banco algum. A conexão Supabase disponível aponta para um projeto cujo nome e histórico de migrations não correspondem claramente ao Feiraê; não foi alterada. Antes de aplicar, confirmar o projeto correto, revisar o schema remoto, executar a migration em ambiente de desenvolvimento e validar RLS/RPC com usuários de cliente, feirante e não autenticado.
 
 **Limite atual:** o frontend ainda usa `localStorage` e não chama este RPC. A migration prepara o contrato server-side; não torna os pedidos do app persistentes no Supabase por si só.
+
+O ponto de entrada para a aplicação, quando a integração for implementada, é `public.update_order_vendor_status`. Ele é executável apenas por `authenticated` e delega à função de implementação no schema não exposto `private`, que valida a identidade e a transição.
