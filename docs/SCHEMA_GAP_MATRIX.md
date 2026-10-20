@@ -394,6 +394,7 @@ A próxima migration não deve ser genérica. Ela precisa, no mínimo:
 10. completar RLS/policies;
 11. testar tudo em banco descartável antes de staging;
 12. validar server-side o pedido mínimo por banca e persistir snapshot da regra aplicada.
+
 ## Atualização — máquina de estados por banca — 19/10/2026
 
 A migration proposta `0004_order_vendor_state_machine.sql` prepara uma coluna de status específica para cada participação em `order_vendors`, em vez de reutilizar `public.order_status`.
