@@ -255,7 +255,8 @@ export function FeiranteOperations({
   );
   const selectedStoreId =
     selectedBankId === "primary"
-      ? storeIdFor(bankProfile.fairName, session.email || bankProfile.name)
+      ? readSharedStores().find((store) => store.accountKey === session.email)?.storeId ??
+        storeIdFor(bankProfile.fairName, session.email || bankProfile.name)
       : storeIdFor(bankProfile.fairName, `${session.email}-${selectedBankId}`);
   const [useFairHours, setUseFairHours] = usePersistentState<boolean>(
     vendorStateKey("use-fair-hours"),
