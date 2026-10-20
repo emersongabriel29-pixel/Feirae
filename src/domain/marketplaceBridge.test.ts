@@ -114,7 +114,7 @@ describe("marketplace bridge", () => {
       acceptCashOnDelivery: true,
       acceptCardOnDelivery: true,
       promotions: [],
-    } as const;
+    };
 
     syncVendorMarketplace({
       ...common,
@@ -149,11 +149,11 @@ describe("marketplace bridge", () => {
 
     expect(readSharedStores()).toHaveLength(2);
     expect(readSharedStores().map((store) => store.box).sort()).toEqual(["A", "B"]);
-    expect(marketplaceProducts(base).map((product) => product.name)).toEqual([
+    expect(marketplaceProducts([]).map((product) => product.name)).toEqual([
       "Maçã da banca A",
       "Banana da banca B",
     ]);
-    expect(new Set(marketplaceProducts(base).map((product) => product.storeId)).size).toBe(2);
+    expect(new Set(marketplaceProducts([]).map((product) => product.storeId)).size).toBe(2);
   });
 
   it("applies a valid coupon and consumes its usage count", () => {
