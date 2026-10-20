@@ -1,6 +1,6 @@
 # Documentação do Feiraê
 
-Atualizado em 27/09/2026 após Sincronização Mestre código ↔ testes ↔ migrations ↔ UI/UX ↔ deploy.
+Atualizado em 19/10/2026 após revisão de requisitos para múltiplas bancas e veículos.
 
 ## Regra de interpretação
 
