@@ -166,6 +166,24 @@ describe("unified order bridge", () => {
     expect(order.items.find((item) => item.storeId === "store:b")?.actualWeightKg).toBeUndefined();
   });
 
+  it("cancels only the selected stall when one vendor owns multiple stalls", () => {
+    seedOrder();
+    const original = readUnifiedOrders()[0];
+    patchUnifiedOrder("FE-MULTI", {
+      items: original.items.map((item) => ({ ...item, vendorId: "vendor:shared" })),
+      vendors: original.vendors?.map((vendor) => ({ ...vendor, vendorId: "vendor:shared" })),
+      vendorFinancials: original.vendorFinancials?.map((entry) => ({ ...entry, vendorId: "vendor:shared" })),
+    });
+
+    cancelVendorParticipation("FE-MULTI", "vendor:shared", "Banca fechada", "store:a");
+    const order = readUnifiedOrders()[0];
+
+    expect(order.vendors?.find((vendor) => vendor.storeId === "store:a")?.status).toBe("rejected");
+    expect(order.vendors?.find((vendor) => vendor.storeId === "store:b")?.status).toBe("pending");
+    expect(order.items.find((item) => item.storeId === "store:a")?.cancelled).toBe(true);
+    expect(order.items.find((item) => item.storeId === "store:b")?.cancelled).not.toBe(true);
+  });
+
   it("derives ordered pickup stops for a multi-vendor route", () => {
     seedOrder();
     patchUnifiedOrder("FE-MULTI", {
