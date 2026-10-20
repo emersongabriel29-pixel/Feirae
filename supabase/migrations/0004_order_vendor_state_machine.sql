@@ -45,6 +45,9 @@ alter table public.order_vendors
 
 alter table public.order_vendors enable row level security;
 
+create index if not exists order_vendors_vendor_order_idx
+  on public.order_vendors (vendor_id, order_id);
+
 drop policy if exists "customers view their order vendor rows" on public.order_vendors;
 create policy "customers view their order vendor rows"
   on public.order_vendors
