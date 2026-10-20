@@ -263,6 +263,7 @@ Requisitos atuais:
 - o link opcional para o Google My Maps é apenas navegação externa.
 
 Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HERE ou outro SDK com credenciais, a configuração, limites, política de chaves, CSP e fallback deverão ser documentados aqui antes do deploy.
+
 ## Migration 0004 — estado por banca — 19/10/2026
 
 Arquivo: `supabase/migrations/0004_order_vendor_state_machine.sql`.
