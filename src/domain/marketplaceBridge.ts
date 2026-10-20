@@ -220,10 +220,7 @@ export function readSharedStores() {
 
 export function readStoreByIdentity(fairName: string, vendorName: string, storeId?: string) {
   const current = readMarketplace();
-  if (storeId) {
-    const exactStore = current.stores.find((store) => store.storeId === storeId);
-    if (exactStore) return exactStore;
-  }
+  if (storeId) return current.stores.find((store) => store.storeId === storeId);
   return current.stores.find(
     (store) =>
       store.fairName === fairName &&
