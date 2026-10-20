@@ -976,6 +976,7 @@ Esse cálculo no frontend não substitui validação server-side. Antes de pagam
 ## Estratégia de reaproveitamento técnico
 
 O Feiraê permanece o projeto principal. Soluções externas devem ser inspecionadas por funcionalidade, dependências, licença, segurança e testes, e adaptadas aos contratos existentes. Prioridades identificadas: estados separados por pedido e por banca; reserva transacional de estoque; validação server-side do mínimo de R$ 30 por banca quando configurado; ledger por recebedor; políticas RLS; coordenadas de cada box e despacho. A matriz detalhada está em `docs/REUSE_INTEGRATION_PLAN.md`.
+
 ## Máquina de estados por banca — 19/10/2026
 
 Cada banca participante de um pedido multi-banca possui seu próprio estado operacional, separado do estado geral do pedido. A migration proposta `0004_order_vendor_state_machine.sql` introduz o enum específico e um RPC para transições autenticadas.
