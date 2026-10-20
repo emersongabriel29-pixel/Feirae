@@ -626,3 +626,5 @@ Ainda pendente de execução real:
 - integrar e testar o cliente frontend sem depender de `localStorage`.
 
 Nenhum teste de banco remoto foi executado e nenhuma migration foi aplicada nesta rodada.
+
+O RPC previsto para a futura integração do cliente é `public.update_order_vendor_status`; a implementação privilegiada fica em `private`. Ainda falta testar a chamada via Data API com sessão autenticada após confirmar o projeto e aplicar a migration em ambiente de desenvolvimento.
