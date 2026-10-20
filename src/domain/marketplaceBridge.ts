@@ -120,6 +120,7 @@ export function migrateMarketplaceAccountKey(oldEmail: string, newEmail: string)
 
 export function syncVendorMarketplace(input: {
   accountKey: string;
+  storeId?: string;
   name: string;
   fairName: string;
   isOpen: boolean;
@@ -152,9 +153,10 @@ export function syncVendorMarketplace(input: {
   }>;
 }) {
   const current = readMarketplace();
-  const previousStore = current.stores.find((store) => store.accountKey === input.accountKey);
-  const vendorId = previousStore?.vendorId ?? vendorIdFor(input.accountKey || input.name);
-  const storeId = previousStore?.storeId ?? storeIdFor(input.fairName, input.accountKey || input.name);
+  const vendorId = vendorIdFor(input.accountKey || input.name);
+  const requestedStoreId = input.storeId ?? storeIdFor(input.fairName, input.accountKey || input.name);
+  const previousStore = current.stores.find((store) => store.storeId === requestedStoreId);
+  const storeId = previousStore?.storeId ?? requestedStoreId;
   const store: SharedStore = {
     accountKey: input.accountKey,
     vendorId,
@@ -205,7 +207,7 @@ export function syncVendorMarketplace(input: {
   }));
 
   writeMarketplace({
-    stores: [...current.stores.filter((item) => item.accountKey !== input.accountKey), store],
+    stores: [...current.stores.filter((item) => item.storeId !== storeId), store],
     products: [...current.products.filter((item) => item.storeId !== storeId), ...products],
   });
 }
@@ -214,8 +216,12 @@ export function readSharedStores() {
   return readMarketplace().stores;
 }
 
-export function readStoreByIdentity(fairName: string, vendorName: string) {
+export function readStoreByIdentity(fairName: string, vendorName: string, storeId?: string) {
   const current = readMarketplace();
+  if (storeId) {
+    const exactStore = current.stores.find((store) => store.storeId === storeId);
+    if (exactStore) return exactStore;
+  }
   return current.stores.find(
     (store) =>
       store.fairName === fairName &&
