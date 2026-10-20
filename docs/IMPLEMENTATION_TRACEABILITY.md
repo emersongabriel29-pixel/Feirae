@@ -479,6 +479,7 @@ Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam 
 | Limitar desconto promocional             | `src/domain/multiVendor.ts`, `src/domain/multiVendor.test.ts` | Testes de regressão no PR #67; `npm run check` passou no SHA consultado | CI completo falhou na sincronização documental; aguarda nova execução |
 | Corrigir guarda de contato do entregador | `src/features/customer/CustomerScreens.tsx`                   | Compilação TypeScript passou em `npm run check` no SHA consultado       | Não comprova integração operacional cliente-entregador                |
 | Referências técnicas externas            | `docs/REUSE_INTEGRATION_PLAN.md`                              | Plano registra oportunidades, dependências e critérios                  | Não declara código externo incorporado nem funcionalidade pronta      |
+
 ## Estado por banca — 19/10/2026
 
 - Adicionada na branch `fix/multi-vendor-promotion-allocation` a migration `0004_order_vendor_state_machine.sql`.
