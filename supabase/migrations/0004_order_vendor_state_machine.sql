@@ -25,15 +25,18 @@ alter table public.order_vendors
   alter column status type public.order_vendor_status
   using (
     case status::text
+      when 'pending' then 'pending'
       when 'pending_payment' then 'pending'
       when 'paid' then 'accepted'
       when 'accepted' then 'accepted'
       when 'preparing' then 'preparing'
+      when 'ready' then 'ready'
       when 'ready_for_pickup' then 'ready'
       when 'driver_assigned' then 'ready'
       when 'collected' then 'collected'
       when 'out_for_delivery' then 'collected'
       when 'delivered' then 'delivered'
+      when 'rejected' then 'rejected'
       when 'canceled' then 'rejected'
       when 'refunded' then 'rejected'
       else 'pending'
