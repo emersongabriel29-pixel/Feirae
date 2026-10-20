@@ -203,6 +203,10 @@ export function DeliveryOperations({
         ]
       : [],
   );
+  const [selectedVehicleByDelivery, setSelectedVehicleByDelivery] = usePersistentState<Record<string, string>>(
+    `feirae:delivery-vehicle-assignment:${session.email}`,
+    {},
+  );
 
   const [deliveryLedger, setDeliveryLedger] = usePersistentState<
     {
@@ -783,10 +787,15 @@ export function DeliveryOperations({
   const vehicleReady = (vehicle: DeliveryVehicle) =>
     !requiresPlate(vehicle.type) ||
     (vehicle.documentStatus === "approved" && isValidBrazilianPlate(vehicle.plate));
-  const compatibleVehicleForWeight = (weight: number) =>
+  const compatibleVehiclesForWeight = (weight: number) =>
     [...activeVehicles]
       .filter((vehicle) => vehicle.capacityKg >= weight && vehicleReady(vehicle))
-      .sort((a, b) => a.capacityKg - b.capacityKg)[0] ?? null;
+      .sort((a, b) => a.capacityKg - b.capacityKg);
+  const compatibleVehicleForWeight = (weight: number, deliveryId?: string) => {
+    const compatible = compatibleVehiclesForWeight(weight);
+    const selectedId = deliveryId ? selectedVehicleByDelivery[deliveryId] : undefined;
+    return compatible.find((vehicle) => vehicle.id === selectedId) ?? compatible[0] ?? null;
+  };
   const visibleDeliveries = deliveries
     .filter((delivery) => delivery.available !== false)
     .filter((delivery) => delivery.totalDistanceKm <= deliveryPreferences.radiusKm)
@@ -934,7 +943,9 @@ export function DeliveryOperations({
   const currentPickupStop =
     currentStage < pickupStagesLength ? activePickupStops[Math.floor(currentStage / 2)] : undefined;
   const headingToPickup = currentStage < pickupStagesLength;
-  const activeDeliveryVehicle = activeDelivery ? compatibleVehicleForWeight(activeDelivery.weight) : null;
+  const activeDeliveryVehicle = activeDelivery
+    ? compatibleVehicleForWeight(activeDelivery.weight, activeDelivery.id)
+    : null;
   const activeDeliverySection = activeDelivery ? (
     <section className="active-delivery">
       <span className="eyebrow">Entrega em andamento</span>
@@ -1291,7 +1302,8 @@ export function DeliveryOperations({
         visibleDeliveries
           .filter((delivery) => delivery.id !== effectiveAccepted)
           .map((delivery) => {
-            const compatibleVehicle = compatibleVehicleForWeight(delivery.weight);
+            const compatibleVehicles = compatibleVehiclesForWeight(delivery.weight);
+            const compatibleVehicle = compatibleVehicleForWeight(delivery.weight, delivery.id);
             return (
               <article className="delivery-row" key={delivery.id}>
                 <span>
@@ -1317,11 +1329,37 @@ export function DeliveryOperations({
                       : "Nenhum veículo ativo/documentado suporta o peso"}
                     {" · "}ganho {delivery.fee}
                   </small>
+                  {compatibleVehicles.length > 1 && (
+                    <label className="delivery-vehicle-choice">
+                      Veículo para esta entrega
+                      <select
+                        value={compatibleVehicle?.id ?? ""}
+                        onChange={(event) =>
+                          setSelectedVehicleByDelivery((current) => ({
+                            ...current,
+                            [delivery.id]: event.target.value,
+                          }))
+                        }
+                        disabled={!availableNow || effectiveAccepted !== null}
+                      >
+                        {compatibleVehicles.map((vehicle) => (
+                          <option key={vehicle.id} value={vehicle.id}>
+                            {vehicle.type}{vehicle.brandModel ? ` · ${vehicle.brandModel}` : ""} · {vehicle.capacityKg} kg
+                            {vehicle.plate ? ` · final ${vehicle.plate.slice(-4)}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                 </div>
                 <button
                   disabled={!availableNow || effectiveAccepted !== null || !compatibleVehicle}
                   onClick={() => {
                     if (!compatibleVehicle || !availableNow) return;
+                    setSelectedVehicleByDelivery((current) => ({
+                      ...current,
+                      [delivery.id]: compatibleVehicle.id,
+                    }));
                     setAccepted(delivery.id);
                     setStage(0);
                     setCancelReason("");
