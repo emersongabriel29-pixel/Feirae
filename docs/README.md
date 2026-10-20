@@ -39,6 +39,8 @@ Um documento de requisito não é prova de implementação.
 
 ## Produto
 
+- [MULTIPLE_STALLS_AND_VEHICLES.md](MULTIPLE_STALLS_AND_VEHICLES.md) — regras e lacunas para múltiplas bancas por feirante e múltiplos veículos por entregador.
+
 - [FIGMA_DESIGN_STUDIO.md](FIGMA_DESIGN_STUDIO.md) — ligação entre Figma e GitHub, fonte de verdade e fluxo de sincronização.
 - [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) — comportamento atual e limites.
 - [ORDER_FULFILLMENT_FLOW.md](ORDER_FULFILLMENT_FLOW.md) — pedido e entrega.
