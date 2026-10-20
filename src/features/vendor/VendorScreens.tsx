@@ -253,6 +253,10 @@ export function FeiranteOperations({
     vendorStateKey("bank"),
     seedDemoData ? initialBankProfile : newVendorBankProfile(session.name),
   );
+  const selectedStoreId =
+    selectedBankId === "primary"
+      ? storeIdFor(bankProfile.fairName, session.email || bankProfile.name)
+      : storeIdFor(bankProfile.fairName, `${session.email}-${selectedBankId}`);
   const [useFairHours, setUseFairHours] = usePersistentState<boolean>(
     vendorStateKey("use-fair-hours"),
     true,
@@ -390,11 +394,7 @@ export function FeiranteOperations({
   }, [setPromotions]);
 
   useEffect(() => {
-    const sharedStore = readStoreByIdentity(
-      bankProfile.fairName,
-      bankProfile.name,
-      selectedBankId === "primary" ? undefined : storeIdFor(bankProfile.fairName, `${session.email}-${selectedBankId}`),
-    );
+    const sharedStore = readStoreByIdentity(bankProfile.fairName, bankProfile.name, selectedStoreId);
     if (!sharedStore) return;
     setPromotions((current) =>
       current.map((promotion) => {
@@ -404,7 +404,7 @@ export function FeiranteOperations({
           : promotion;
       }),
     );
-  }, [bankProfile.fairName, bankProfile.name, selectedBankId, session.email, setPromotions]);
+  }, [bankProfile.fairName, bankProfile.name, selectedStoreId, setPromotions]);
 
   useEffect(() => {
     const accountVendorId = vendorIdFor(session.email);
@@ -412,9 +412,15 @@ export function FeiranteOperations({
       (order) =>
         order.fairName === bankProfile.fairName &&
         (order.vendors?.some(
-          (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+          (vendor) =>
+            vendor.storeId === selectedStoreId ||
+            (selectedBankId === "primary" && !vendor.storeId && vendor.vendorId === accountVendorId),
         ) ??
-          order.items.some((item) => item.vendor === bankProfile.name)),
+          order.items.some(
+            (item) =>
+              item.storeId === selectedStoreId ||
+              (selectedBankId === "primary" && !item.storeId && item.vendor === bankProfile.name),
+          )),
     );
     if (!sharedOrders.length) return;
 
@@ -433,11 +439,15 @@ export function FeiranteOperations({
       const byId = new Map(current.map((order) => [order.id, order]));
       sharedOrders.forEach((record) => {
         const vendorState = record.vendors?.find(
-          (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+          (vendor) =>
+            vendor.storeId === selectedStoreId ||
+            (selectedBankId === "primary" && !vendor.storeId && vendor.vendorId === accountVendorId),
         );
         const resolvedVendorId = vendorState?.vendorId ?? accountVendorId;
         const items = record.items.filter(
-          (item) => item.vendorId === resolvedVendorId || item.vendor === bankProfile.name,
+          (item) =>
+            item.storeId === selectedStoreId ||
+            (selectedBankId === "primary" && !item.storeId && item.vendor === bankProfile.name),
         );
         const currentOrder = byId.get(record.id);
         const localStatus =
@@ -489,7 +499,7 @@ export function FeiranteOperations({
       });
       return Array.from(byId.values());
     });
-  }, [bankProfile.fairName, bankProfile.name, session.email, setOrders, unifiedOrderRevision]);
+  }, [bankProfile.fairName, bankProfile.name, selectedStoreId, selectedBankId, session.email, setOrders, unifiedOrderRevision]);
 
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
   const selectedUnifiedOrder = selectedOrder
@@ -498,7 +508,14 @@ export function FeiranteOperations({
   const accountVendorId = vendorIdFor(session.email);
   const vendorUnifiedOrders = readUnifiedOrders().filter((order) =>
     order.vendors?.some(
-      (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
+      (vendor) =>
+        vendor.storeId === selectedStoreId ||
+        (selectedBankId === "primary" && !vendor.storeId && vendor.vendorId === accountVendorId),
+    ) ??
+    order.items.some(
+      (item) =>
+        item.storeId === selectedStoreId ||
+        (selectedBankId === "primary" && !item.storeId && item.vendor === bankProfile.name),
     ),
   );
   const pendingVendorReviewOrders = vendorUnifiedOrders.filter(
@@ -542,7 +559,7 @@ export function FeiranteOperations({
     });
 
     seenVendorNotificationKeys.current = currentKeys;
-  }, [bankProfile.fairName, bankProfile.name, session.email, unifiedOrderRevision]);
+  }, [bankProfile.fairName, bankProfile.name, selectedStoreId, selectedBankId, session.email, unifiedOrderRevision]);
 
   async function enableFeiraeNotifications() {
     setNotificationPermission(await requestFeiraeNotificationPermission());
@@ -625,7 +642,7 @@ export function FeiranteOperations({
   useEffect(() => {
     syncVendorMarketplace({
       accountKey: session.email,
-      storeId: selectedBankId === "primary" ? undefined : storeIdFor(bankProfile.fairName, `${session.email}-${selectedBankId}`),
+      storeId: selectedBankId === "primary" ? undefined : selectedStoreId,
       name: bankProfile.name,
       fairName: bankProfile.fairName,
       isOpen: effectiveStoreOpen,
@@ -668,12 +685,8 @@ export function FeiranteOperations({
     approvalStatus,
   ]);
 
-  const expectedStoreId =
-    selectedBankId === "primary"
-      ? storeIdFor(bankProfile.fairName, session.email || bankProfile.name)
-      : storeIdFor(bankProfile.fairName, `${session.email}-${selectedBankId}`);
-  const sharedBankStore = readSharedStores().find((store) => store.storeId === expectedStoreId);
-  const effectiveStoreId = sharedBankStore?.storeId ?? expectedStoreId;
+  const sharedBankStore = readSharedStores().find((store) => store.storeId === selectedStoreId);
+  const effectiveStoreId = sharedBankStore?.storeId ?? selectedStoreId;
   const pickupPayload = pickupVerificationPayload(effectiveStoreId);
 
   const activeFreeShipping = promotions.some(
@@ -761,11 +774,17 @@ export function FeiranteOperations({
       ),
     );
     if (order?.vendorId && orderItem?.productId) {
-      patchUnifiedOrderItem(orderId, order.vendorId, orderItem.productId, {
-        actualWeightKg: update.actualWeightKg,
-        unavailable: update.unavailable,
-        note: update.note,
-      });
+      patchUnifiedOrderItem(
+        orderId,
+        order.vendorId,
+        orderItem.productId,
+        {
+          actualWeightKg: update.actualWeightKg,
+          unavailable: update.unavailable,
+          note: update.note,
+        },
+        selectedStoreId,
+      );
     }
   }
 
@@ -781,14 +800,21 @@ export function FeiranteOperations({
       vendorId,
       "accepted",
       eventNow("vendor-confirmed", "Confirmado pela banca", "vendor"),
+      selectedStoreId,
     );
-    patchVendorStatus(order.id, vendorId, "preparing", eventNow("preparing", "Em separação", "vendor"));
+    patchVendorStatus(
+      order.id,
+      vendorId,
+      "preparing",
+      eventNow("preparing", "Em separação", "vendor"),
+      selectedStoreId,
+    );
     showNotice(`Pedido ${order.id} aceito. Cliente notificado.`);
   }
 
   function rejectOrder(order: VendorOrder) {
     const vendorId = order.vendorId ?? vendorIdFor(session.email);
-    const result = cancelVendorParticipation(order.id, vendorId, rejectReason);
+    const result = cancelVendorParticipation(order.id, vendorId, rejectReason, selectedStoreId);
     updateOrder(order.id, { status: "rejected", rejectReason });
     if (result?.productIds.length) releaseInventoryItems(order.id, result.productIds);
 
@@ -824,6 +850,7 @@ export function FeiranteOperations({
         order.fulfillment === "pickup" ? "Pronto para retirada" : "Pronto para coleta",
         "vendor",
       ),
+      selectedStoreId,
     );
     showNotice(
       order.fulfillment === "pickup"
