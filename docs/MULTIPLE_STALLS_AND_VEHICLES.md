@@ -25,6 +25,16 @@ Atualizado em 19/10/2026.
 - O veículo selecionado deve ser gravado em deliveries.vehicle_id; o histórico não deve ser reescrito quando o entregador mudar seu veículo preferido.
 - Aprovação e suspensão de um veículo não devem bloquear automaticamente os outros veículos ou a conta inteira, salvo decisão administrativa específica.
 
+## Implementação nesta branch
+
+- A tela de operações do feirante agora permite cadastrar e alternar entre bancas. Cada banca adicional recebe chaves próprias de persistência local para produtos, estoque, pedidos, horários, promoções, documentos, configurações de entrega e financeiro; a banca antiga mantém suas chaves legadas.
+- O catálogo compartilhado mantém registros/produtos por `storeId`, em vez de substituir todas as bancas de uma conta quando uma banca é atualizada.
+- As leituras de pedidos e alterações de status/itens/cancelamento no fluxo do feirante agora recebem o `storeId` para separar operações entre bancas.
+- O entregador pode escolher entre veículos ativos e documentalmente compatíveis para cada oferta, quando mais de um atende à carga. A escolha fica persistida localmente por pedido e é usada ao aceitar a entrega.
+- Foi acrescentado teste de regressão para duas bancas do mesmo perfil na mesma feira e com produtos independentes.
+
+Essas mudanças ainda pertencem ao protótipo local: a seleção de banca/veículo e a separação dos dados não equivalem a uma gravação transacional no Supabase. O modelo de pedidos precisa continuar sendo validado para fluxos antigos sem `storeId`, e a atribuição do veículo precisa ser persistida no registro canônico da entrega quando o backend real estiver conectado.
+
 ## Estado verificado no repositório em 19/10/2026
 
 - O frontend já mantém uma lista de veículos por conta no estado persistido local feirae:delivery-vehicles:<email> e permite cadastrar, editar, ativar e pausar mais de um veículo.
