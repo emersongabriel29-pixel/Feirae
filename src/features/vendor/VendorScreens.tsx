@@ -530,10 +530,11 @@ export function FeiranteOperations({
     const relevantOrders = readUnifiedOrders().filter(
       (order) =>
         order.fairName === bankProfile.fairName &&
-        (order.vendors?.some(
-          (vendor) => vendor.vendorId === accountVendorId || vendor.vendorName === bankProfile.name,
-        ) ??
-          order.items.some((item) => item.vendor === bankProfile.name)),
+        (order.vendors?.some((vendor) => vendor.storeId === selectedStoreId) ??
+          order.items.some((item) => item.storeId === selectedStoreId)) ||
+          (selectedBankId === "primary" &&
+            (order.vendors?.filter((vendor) => vendor.vendorName === bankProfile.name).length === 1 ||
+              order.items.filter((item) => item.vendor === bankProfile.name).length === 1)),
     );
     const currentKeys = new Set(
       relevantOrders.flatMap((order) => order.events.map((event) => `${order.id}:${event.key}:${event.at}`)),
