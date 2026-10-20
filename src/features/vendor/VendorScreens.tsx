@@ -407,7 +407,6 @@ export function FeiranteOperations({
   }, [bankProfile.fairName, bankProfile.name, selectedStoreId, setPromotions]);
 
   useEffect(() => {
-    const accountVendorId = vendorIdFor(session.email);
     const sharedOrders = readUnifiedOrders().filter(
       (order) =>
         order.fairName === bankProfile.fairName &&
@@ -504,7 +503,6 @@ export function FeiranteOperations({
   const selectedUnifiedOrder = selectedOrder
     ? readUnifiedOrders().find((order) => order.id === selectedOrder.id)
     : undefined;
-  const accountVendorId = vendorIdFor(session.email);
   const vendorUnifiedOrders = readUnifiedOrders().filter(
     (order) =>
       (order.vendors?.some((vendor) => vendor.storeId === selectedStoreId) ??
@@ -526,7 +524,6 @@ export function FeiranteOperations({
     .slice(0, 3);
 
   useEffect(() => {
-    const accountVendorId = vendorIdFor(session.email);
     const relevantOrders = readUnifiedOrders().filter(
       (order) =>
         order.fairName === bankProfile.fairName &&
