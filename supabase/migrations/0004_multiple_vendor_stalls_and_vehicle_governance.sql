@@ -24,8 +24,9 @@ alter table public.vendor_stores
   add constraint vendor_stores_approval_status_check
   check (approval_status in ('pending','under_review','approved','correction_required','suspended'));
 
--- Backfill fair/location only when the legacy vendor has exactly one fair membership.
--- Multiple memberships are intentionally left unresolved instead of guessing a stall's fair.
+-- Backfill fair_id only when the legacy vendor has exactly one fair membership.
+-- Copy the old membership coordinate only when the vendor has exactly one store as well;
+-- never assign one physical coordinate to several distinct stalls.
 with single_fair_membership as (
   select m.vendor_id, m.fair_id, m.stall_location
   from public.fair_vendor_memberships m
@@ -33,7 +34,11 @@ with single_fair_membership as (
 )
 update public.vendor_stores vs
 set fair_id = coalesce(vs.fair_id, m.fair_id),
-    location = coalesce(vs.location, m.stall_location),
+    location = case
+      when (select count(*) from public.vendor_stores sibling where sibling.vendor_id = vs.vendor_id) = 1
+      then coalesce(vs.location, m.stall_location)
+      else vs.location
+    end,
     approval_status = case when vp.approved then 'approved' else 'pending' end
 from public.vendor_profiles vp
 left join single_fair_membership m on m.vendor_id = vp.id
