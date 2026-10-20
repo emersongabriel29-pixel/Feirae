@@ -439,7 +439,7 @@ export function FeiranteOperations({
             : [];
         const vendorState =
           exactVendorState ?? (legacyVendorMatches.length === 1 ? legacyVendorMatches[0] : undefined);
-        const resolvedVendorId = vendorState?.vendorId ?? accountVendorId;
+        const resolvedVendorId = vendorState?.vendorId ?? vendorIdFor(session.email);
         const resolvedStoreId = vendorState?.storeId ?? selectedStoreId;
         const items = record.items.filter(
           (item) =>
