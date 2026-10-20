@@ -286,3 +286,31 @@ revoke all on function private.update_order_vendor_status(
 grant execute on function private.update_order_vendor_status(
   uuid, uuid, public.order_vendor_status, text
 ) to authenticated;
+
+-- Public API wrapper: only authenticated callers can execute it. The implementation remains
+-- in the non-exposed private schema and performs the ownership and transition checks.
+create or replace function public.update_order_vendor_status(
+  p_order_id uuid,
+  p_vendor_id uuid,
+  p_status public.order_vendor_status,
+  p_reason text default null
+)
+returns table (
+  new_order_status public.order_status,
+  new_vendor_status public.order_vendor_status
+)
+language sql
+security invoker
+set search_path = ''
+as $$
+  select *
+  from private.update_order_vendor_status(p_order_id, p_vendor_id, p_status, p_reason);
+$$;
+
+grant usage on type public.order_vendor_status to authenticated;
+revoke all on function public.update_order_vendor_status(
+  uuid, uuid, public.order_vendor_status, text
+) from PUBLIC, anon;
+grant execute on function public.update_order_vendor_status(
+  uuid, uuid, public.order_vendor_status, text
+) to authenticated;
