@@ -390,7 +390,11 @@ export function FeiranteOperations({
   }, [setPromotions]);
 
   useEffect(() => {
-    const sharedStore = readStoreByIdentity(bankProfile.fairName, bankProfile.name);
+    const sharedStore = readStoreByIdentity(
+      bankProfile.fairName,
+      bankProfile.name,
+      selectedBankId === "primary" ? undefined : storeIdFor(bankProfile.fairName, `${session.email}-${selectedBankId}`),
+    );
     if (!sharedStore) return;
     setPromotions((current) =>
       current.map((promotion) => {
@@ -400,7 +404,7 @@ export function FeiranteOperations({
           : promotion;
       }),
     );
-  }, [bankProfile.fairName, bankProfile.name, setPromotions]);
+  }, [bankProfile.fairName, bankProfile.name, selectedBankId, session.email, setPromotions]);
 
   useEffect(() => {
     const accountVendorId = vendorIdFor(session.email);
@@ -664,9 +668,12 @@ export function FeiranteOperations({
     approvalStatus,
   ]);
 
-  const sharedBankStore = readSharedStores().find((store) => store.accountKey === session.email);
-  const effectiveStoreId =
-    sharedBankStore?.storeId ?? storeIdFor(bankProfile.fairName, session.email || bankProfile.name);
+  const expectedStoreId =
+    selectedBankId === "primary"
+      ? storeIdFor(bankProfile.fairName, session.email || bankProfile.name)
+      : storeIdFor(bankProfile.fairName, `${session.email}-${selectedBankId}`);
+  const sharedBankStore = readSharedStores().find((store) => store.storeId === expectedStoreId);
+  const effectiveStoreId = sharedBankStore?.storeId ?? expectedStoreId;
   const pickupPayload = pickupVerificationPayload(effectiveStoreId);
 
   const activeFreeShipping = promotions.some(
