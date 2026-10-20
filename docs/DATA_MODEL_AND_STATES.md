@@ -455,7 +455,7 @@ A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GA
 
 A migration `0004_order_vendor_state_machine.sql` define um enum independente `public.order_vendor_status` para `order_vendors.status`. Isso evita misturar estados globais de pagamento/entrega com a participação de cada banca.
 
-Transições permitidas pelo RPC `private.update_order_vendor_status`:
+Transições permitidas pelo RPC `public.update_order_vendor_status` (wrapper autenticado; implementação no schema não exposto `private`):
 
 - `pending → accepted` ou `rejected`;
 - `accepted → preparing` ou `rejected`;
