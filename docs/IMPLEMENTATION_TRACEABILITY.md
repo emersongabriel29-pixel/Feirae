@@ -483,7 +483,7 @@ Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam 
 
 - Adicionada na branch `fix/multi-vendor-promotion-allocation` a migration `0004_order_vendor_state_machine.sql`.
 - `order_vendors.status` passa a usar um enum próprio com estados `pending/accepted/preparing/ready/collected/delivered/rejected`.
-- A migration prepara RLS de leitura por cliente/feirante, revoga escrita direta de clientes e cria o RPC `private.update_order_vendor_status` com validação de propriedade, transições e eventos de auditoria.
+- A migration prepara RLS de leitura por cliente/feirante, revoga escrita direta de clientes e cria o RPC `public.update_order_vendor_status` (wrapper autenticado; implementação no schema não exposto `private`) com validação de propriedade, transições e eventos de auditoria.
 - A derivação do estado global considera todas as bancas não rejeitadas e o tipo de fulfillment (entrega/retirada).
 
 **Evidência disponível:** arquivo da migration criado e revisão estática do SQL. **Não comprovado ainda:** execução em PostgreSQL, políticas RLS com sessões reais, concorrência, advisors do Supabase ou integração do frontend. A conexão Supabase disponível não foi alterada porque não foi possível confirmar que pertence ao Feiraê.
