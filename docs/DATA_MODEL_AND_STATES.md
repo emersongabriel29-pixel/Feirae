@@ -451,6 +451,7 @@ A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GA
 8. decisão `reviews` x `order_reviews`;
 9. estruturas do painel administrativo;
 10. RLS/policies completas.
+
 ## Estado individual de cada banca — 19/10/2026
 
 A migration `0004_order_vendor_state_machine.sql` define um enum independente `public.order_vendor_status` para `order_vendors.status`. Isso evita misturar estados globais de pagamento/entrega com a participação de cada banca.
