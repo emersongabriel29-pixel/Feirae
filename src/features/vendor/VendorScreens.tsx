@@ -681,6 +681,7 @@ export function FeiranteOperations({
     promotions,
     session.email,
     selectedBankId,
+    selectedStoreId,
     vendorItems,
     approvalStatus,
   ]);
