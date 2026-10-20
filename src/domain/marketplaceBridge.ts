@@ -155,7 +155,9 @@ export function syncVendorMarketplace(input: {
   const current = readMarketplace();
   const vendorId = vendorIdFor(input.accountKey || input.name);
   const requestedStoreId = input.storeId ?? storeIdFor(input.fairName, input.accountKey || input.name);
-  const previousStore = current.stores.find((store) => store.storeId === requestedStoreId);
+  const previousStore = input.storeId
+    ? current.stores.find((store) => store.storeId === requestedStoreId)
+    : current.stores.find((store) => store.accountKey === input.accountKey);
   const storeId = previousStore?.storeId ?? requestedStoreId;
   const store: SharedStore = {
     accountKey: input.accountKey,
