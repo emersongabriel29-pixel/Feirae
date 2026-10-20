@@ -68,7 +68,8 @@ create policy "vendors view their own order vendor rows"
 
 -- Prevent direct client writes to order participation rows. Mutations go through the
 -- authenticated, ownership-checking RPC below.
-revoke insert, update, delete on public.order_vendors from anon, authenticated;
+revoke all on public.order_vendors from anon;
+revoke insert, update, delete on public.order_vendors from authenticated;
 grant select on public.order_vendors to authenticated;
 
 create schema if not exists private;
