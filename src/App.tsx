@@ -61,6 +61,7 @@ import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 import {
   authenticateLocalAccount,
+  resetLocalAccountPassword,
   scrubLegacyPlaintextPasswords,
   updateLocalAccount,
 } from "./domain/localAuth";
@@ -344,17 +345,22 @@ export default function App() {
     return {};
   }
 
-  async function recoverPassword(email: string) {
+  function recoverPassword(email: string, newPassword?: string, nextRole?: Role) {
     if (!isSupabaseConfigured()) {
-      return { error: "A recuperação segura exige configurar VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY." };
+      if (!newPassword || !nextRole) return { error: "Informe uma nova senha para a conta de demonstração." };
+      const result = resetLocalAccountPassword({ role: nextRole, email, newPassword });
+      return result.ok
+        ? { success: "Senha redefinida neste dispositivo de demonstração. Entre com a nova senha." }
+        : { error: result.message };
     }
-    try {
-      await requestPasswordReset(email);
+    return (async () => {
+      try {
+        await requestPasswordReset(email);
+      } catch {
+        // Não revela se um endereço está cadastrado.
+      }
       return { success: "Se existir uma conta para esse e-mail, enviaremos um link de redefinição." };
-    } catch {
-      // Não revela se um endereço está cadastrado.
-      return { success: "Se existir uma conta para esse e-mail, enviaremos um link de redefinição." };
-    }
+    })();
   }
 
   async function setNewPassword(password: string) {
