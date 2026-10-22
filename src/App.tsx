@@ -66,13 +66,22 @@ import {
   updateLocalAccount,
 } from "./domain/localAuth";
 import {
+  getCurrentAuthProfile,
+  isSupabaseConfigured,
+  requestPasswordReset,
+  setRecoveredPassword,
+  signInSupabase,
+  signOutSupabase,
+  signUpSupabase,
+} from "./domain/supabaseClient";
+import {
   customerPromotionNotification,
   orderEventNotification,
   showFeiraeNotification,
 } from "./domain/feiraeNotifications";
 
 export default function App() {
-  const { session, role, startSession, updateSession, clearSession } = useDemoSession();
+  const { session, role, startSession, updateSession, clearSession, authLoading } = useDemoSession();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const accountKey = session?.email ?? "guest";
@@ -303,6 +312,26 @@ export default function App() {
   }, [marketplaceRevision, offersEnabled, role]);
 
   function login(nextRole: Role, email: string, name: string, password: string, isNewAccount: boolean) {
+    if (isSupabaseConfigured()) {
+      return (async () => {
+      try {
+        if (isNewAccount) {
+          const result = await signUpSupabase({ role: nextRole, email, name, password });
+          if (!result.profile) return { success: result.message ?? "Confirme seu e-mail para continuar." };
+          startSession(result.profile.role, result.profile.email, result.profile.name, true);
+          resetForRole(result.profile.role);
+          return {};
+        }
+        const profile = await signInSupabase(email, password, nextRole);
+        startSession(profile.role, profile.email, profile.name, false);
+        resetForRole(profile.role);
+        return {};
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : "Não foi possível autenticar no Supabase." };
+      }
+      })();
+    }
+
     const result = authenticateLocalAccount({
       role: nextRole,
       email,
@@ -310,19 +339,42 @@ export default function App() {
       password,
       signup: isNewAccount,
     });
-    if (!result.ok) return result.message;
+    if (!result.ok) return { error: result.message };
     startSession(nextRole, result.account.email, result.account.name, result.isNewAccount);
     resetForRole(nextRole);
-    return null;
+    return {};
   }
 
-  function recoverPassword(nextRole: Role, email: string, newPassword: string) {
-    const result = resetLocalAccountPassword({
-      role: nextRole,
-      email,
-      newPassword,
-    });
-    return result.ok ? null : result.message;
+  function recoverPassword(email: string, newPassword?: string, nextRole?: Role) {
+    if (!isSupabaseConfigured()) {
+      if (!newPassword || !nextRole) return { error: "Informe uma nova senha para a conta de demonstração." };
+      const result = resetLocalAccountPassword({ role: nextRole, email, newPassword });
+      return result.ok
+        ? { success: "Senha redefinida neste dispositivo de demonstração. Entre com a nova senha." }
+        : { error: result.message };
+    }
+    return (async () => {
+      try {
+        await requestPasswordReset(email);
+      } catch {
+        // Não revela se um endereço está cadastrado.
+      }
+      return { success: "Se existir uma conta para esse e-mail, enviaremos um link de redefinição." };
+    })();
+  }
+
+  async function setNewPassword(password: string) {
+    try {
+      await setRecoveredPassword(password);
+      const profile = await getCurrentAuthProfile();
+      if (profile) {
+        startSession(profile.role, profile.email, profile.name, false);
+        resetForRole(profile.role);
+      }
+      return { success: "Senha atualizada com segurança." };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Não foi possível atualizar a senha." };
+    }
   }
 
   function updateAccountIdentity(name: string, email: string, newPassword?: string) {
@@ -346,6 +398,7 @@ export default function App() {
   }
 
   function logout() {
+    if (isSupabaseConfigured()) void signOutSupabase();
     clearSession();
     resetForLogout();
   }
@@ -697,7 +750,8 @@ export default function App() {
     notify(`Itens disponíveis do pedido ${source.id} voltaram para a sacola.`);
   }
 
-  if (!role) return <LoginPage onLogin={login} onResetPassword={recoverPassword} />;
+  if (authLoading) return <main className="auth-loading" role="status">Verificando sua sessão segura…</main>;
+  if (!role) return <LoginPage onLogin={login} onResetPassword={recoverPassword} onSetNewPassword={setNewPassword} />;
 
   return (
     <div className="min-h-screen bg-[var(--fe-bg)] pb-24 text-slate-900 md:pb-8">

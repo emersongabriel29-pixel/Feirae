@@ -1,6 +1,6 @@
 # Testes e QA — Feiraê
 
-Atualizado em 28/09/2026 com contagem conferida no CI da identidade oficial.
+Atualizado em 22/10/2026 com contagem confirmada pelo CI após teste do contato do entregador.
 
 ## 1. Pipeline atual
 
@@ -30,27 +30,28 @@ npm run build
 
 ## 2. Contagem atual
 
-| Arquivo                                       |  Testes |
-| --------------------------------------------- | ------: |
-| `src/App.test.tsx`                            |      69 |
-| `src/components/LaunchExperience.test.tsx`    |       4 |
-| `src/components/FeiraeBrand.test.tsx`         |       2 |
-| `src/components/OrderRouteMap.test.tsx`       |       3 |
-| `src/features/customer/FairMapPanel.test.tsx` |       5 |
-| `src/domain/orderBridge.test.ts`              |      11 |
-| `src/domain/feiraeNotifications.test.ts`      |       6 |
-| `src/domain/legalTerms.test.ts`               |       8 |
-| `src/domain/customerLegal.test.ts`            |       4 |
-| `src/domain/marketplaceBridge.test.ts`        |       5 |
-| `src/domain/multiVendor.test.ts`              |      11 |
-| `src/domain/fairInternalRouting.test.ts`      |       4 |
-| `src/domain/fairMap.test.ts`                  |       4 |
-| `src/domain/inventoryBridge.test.ts`          |       4 |
-| `src/domain/localAuth.test.ts`                |       6 |
-| `src/domain/marketplace.test.ts`              |       4 |
-| `src/domain/session.test.ts`                  |       3 |
-| `src/utils.test.ts`                           |       4 |
-| **Total Vitest**                              | **157** |
+| Arquivo                                              | Testes |
+| ---------------------------------------------------- | -----: |
+| `src/App.test.tsx`                                 |     69 |
+| `src/components/LaunchExperience.test.tsx`          |      4 |
+| `src/components/FeiraeBrand.test.tsx`               |      2 |
+| `src/components/OrderRouteMap.test.tsx`             |      3 |
+| `src/features/customer/FairMapPanel.test.tsx`       |      5 |
+| `src/features/customer/DeliveryContactCard.test.tsx` |      2 |
+| `src/domain/orderBridge.test.ts`                    |     11 |
+| `src/domain/feiraeNotifications.test.ts`             |      6 |
+| `src/domain/legalTerms.test.ts`                     |      8 |
+| `src/domain/customerLegal.test.ts`                  |      4 |
+| `src/domain/marketplaceBridge.test.ts`               |      5 |
+| `src/domain/multiVendor.test.ts`                    |     11 |
+| `src/domain/fairInternalRouting.test.ts`             |      4 |
+| `src/domain/fairMap.test.ts`                        |      4 |
+| `src/domain/inventoryBridge.test.ts`                 |      4 |
+| `src/domain/localAuth.test.ts`                      |      6 |
+| `src/domain/marketplace.test.ts`                    |      4 |
+| `src/domain/session.test.ts`                        |      3 |
+| `src/utils.test.ts`                                 |      4 |
+| **Total Vitest**                                      | **159** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
@@ -213,7 +214,7 @@ Os 69 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 157 testes Vitest NÃO comprovam diretamente
+## 5. O que os 159 testes Vitest NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -594,7 +595,7 @@ A suíte foi atualizada para acompanhar a revisão desta rodada:
 
 Limites: jsdom não prova permissão GPS real, carregamento dos tiles/mapa no Android, precisão da geocodificação, qualidade do traçado OSRM, upload de câmera/galeria nem regressão por pixel. Esses itens continuam exigindo QA em navegador/aparelho real antes de produção.
 
-Contagem após a união com a entrada premium: **157 testes Vitest**.
+Contagem após a união com a entrada premium: **159 testes Vitest**.
 
 ## QA — mapa das feiras sob demanda — 29/09/2026
 
@@ -607,3 +608,14 @@ A cobertura existente foi ajustada sem alterar a contagem total:
 - filtros de região continuam limitando os pontos entregues ao mapa.
 
 QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
+
+## Teste de contato do entregador — 22/10/2026
+
+`src/features/customer/DeliveryContactCard.test.tsx` cobre dois casos: o cartão não renderiza quando não existe entregador atribuído; com entregador, apresenta o nome e um link de chamada com o telefone normalizado. A suíte foi validada pelo CI após a correção de estreitamento de tipo em `CustomerScreens.tsx`.
+
+A validação do banco remoto é separada da suíte Vitest: foram verificadas migrations 0001–0006, RLS nas 27 tabelas da aplicação e leitura sob papel `authenticated` sem identidade, sem linhas visíveis nas tabelas operacionais consultadas. Isso não substitui testes de isolamento entre duas contas reais, que seguem pendentes antes de produção.
+
+
+## Validação da integração Auth/Storage
+
+O CI executa lint, Vitest, verificações de sincronização/branding e build. Os testes não usam credenciais de produção. O trigger `feirae_handle_new_auth_user`, bucket privado e policy de Storage foram confirmados por consultas SQL no projeto remoto. Não foi executado signup real, upload de documento com conta real nem teste de isolamento entre duas contas; esses testes permanecem pendentes. O advisor continua sinalizando a superfície PostGIS e deve ser tratado antes de produção.

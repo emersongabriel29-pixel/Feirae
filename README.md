@@ -8,7 +8,7 @@ Marketplace de feiras com três experiências: Cliente, Feirante e Entregador.
 
 O código atual é um **protótipo funcional integrado no mesmo navegador**.
 
-Ele não está conectado ao Supabase e não possui pagamento, Storage, KYC ou backend de produção. Há service worker e notificações locais/browser com marca Feiraê, mas o Web Push remoto com o app totalmente fechado ainda depende de backend e assinatura persistida.
+O frontend tem integração condicional com Supabase Auth e upload privado de documentos quando as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY estão configuradas. Catálogo, pedidos, estoque, carteira e pagamentos ainda não foram migrados para persistência remota; não considerar pronto para produção. Há service worker e notificações locais/browser com marca Feiraê, mas o Web Push remoto com o app totalmente fechado ainda depende de backend e assinatura persistida.
 
 ### Stack instalada
 
@@ -120,22 +120,19 @@ Fonte: `src/domain/vehicles.ts`.
 
 ## Supabase
 
-Existem:
+Projeto remoto ativo: `atnwxxyaxlsnlfulhums` (Ohio, EUA). Migrations aplicadas e versionadas:
 
-- `.env.example`;
-- `supabase/migrations/0001_feirae_core.sql`;
-- `supabase/migrations/0002_feirae_operations.sql`;
-- `supabase/migrations/0003_vendor_store_minimum_order.sql`.
+- `0001_feirae_core.sql`;
+- `0002_feirae_operations.sql`;
+- `0003_vendor_store_minimum_order.sql`;
+- `0004_security_rls_hardening.sql`;
+- `0005_rls_nonrecursive_helpers.sql`;
+- `0006_exposed_surface_and_fk_indexes.sql`;
+- `0007_auth_storage_and_extension_surface.sql`.
 
-Não existem ainda:
+A auditoria remota confirmou 27 tabelas da aplicação com RLS habilitado. O código agora oferece autenticação Supabase por e-mail/senha, recuperação por link e upload privado de documentos para feirantes/entregadores em builds de produção (com endpoint/chave pública do projeto como padrão, sobrescrevíveis por variáveis de ambiente). Catálogo, pedidos, estoque, carteira e pagamentos continuam usando persistência local. Edge Functions de negócio ainda não existem. Não trate o backend como pronto para produção.
 
-- cliente Supabase;
-- `supabase/config.toml`;
-- Edge Functions;
-- Storage conectado;
-- Auth conectado.
-
-As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md).
+Detalhes e limitações: [SECURITY_AND_AUTH.md](docs/SECURITY_AND_AUTH.md) e [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md).
 
 ## Testes
 
@@ -144,10 +141,10 @@ Suite atual:
 - 60 testes em `App.test.tsx`;
 - 4 testes do componente de abertura;
 - 81 testes de componentes, domínio e utilidades;
-- **145 testes Vitest**;
+- **159 testes Vitest**;
 - 8 testes da política de sincronização do repositório em `scripts/change-sync-policy-checks.mjs`.
 
-O `npm run check` executa lint, 145 testes Vitest, 8 testes de governança e build.
+O `npm run check` executa lint, 159 testes Vitest, 8 testes de governança e build.
 
 CI:
 
@@ -239,3 +236,12 @@ Os documentos definem contratos, decisões e lacunas, mas não podem transformar
 ## Shell visual da gestão
 
 A rota estática `/gestao/` aplica a identidade oficial Feiraê ao futuro painel administrativo. Ela é referência visual e **não representa backend administrativo pronto**; permissões, auditoria, taxas e ações reais continuam descritas em `docs/ADMIN_MANAGEMENT_SPEC.md`.
+
+
+### Integração Supabase — status em 22/10/2026
+
+- Configuração pública: `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` (nunca usar service-role no frontend).
+- Auth: login, cadastro com perfil inicial, refresh de sessão, logout e recuperação por link.
+- Storage: bucket privado `onboarding-documents`, limite de 10 MB, tipos JPG/PNG/PDF e pasta por usuário; uploads de documentos de feirante/entregador registram metadados no banco.
+- Persistência remota de catálogo/pedidos/estoque/financeiro e funções server-side continuam pendentes.
+- O advisor ainda acusa `public.spatial_ref_sys` sem RLS e funções PostGIS SECURITY DEFINER executáveis. A tentativa de revogar permissões não eliminou o alerta; não declarar esse ponto resolvido.

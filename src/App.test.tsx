@@ -386,7 +386,7 @@ describe("Feiraê customer flow", () => {
     openAuth("login");
 
     fireEvent.click(screen.getByRole("button", { name: /esqueci minha senha/i }));
-    expect(screen.getByRole("heading", { name: /redefina sua senha/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /recupere sua senha com segurança/i })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
       target: { value: "cliente@feirae.test" },

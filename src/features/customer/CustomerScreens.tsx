@@ -3347,7 +3347,7 @@ export function DeliveryContactCard({
     setMessage("");
   }
 
-  if (!connected) return null;
+  if (!driver) return null;
 
   return (
     <div className="surface-card delivery-contact-card">
@@ -3361,7 +3361,11 @@ export function DeliveryContactCard({
       </div>
       <div className="module-action-row">
         {phone ? (
-          <a className="primary-action" href={`tel:${phone.replace(/[^+\\d]/g, "")}`} aria-label={`Ligar para ${driver.name}`}>
+          <a
+            className="primary-action"
+            href={`tel:${phone.replace(/[^+0-9]/g, "")}`}
+            aria-label={`Ligar para ${driver.name}`}
+          >
             <Phone size={17} /> Ligar
           </a>
         ) : (

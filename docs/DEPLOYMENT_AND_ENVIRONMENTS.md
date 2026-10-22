@@ -1,6 +1,6 @@
 # Deploy e ambientes — Feiraê
 
-Atualizado em 27/09/2026 com base no repositório atual.
+Atualizado em 22/10/2026 após migrations remotas de schema e segurança.
 
 ## 1. O que existe hoje
 
@@ -145,18 +145,18 @@ Somente após staging aprovado:
 
 ## 8. Migrations existentes
 
+Migrations versionadas no repositório e aplicadas no projeto Supabase remoto `atnwxxyaxlsnlfulhums`:
+
 - 0001 core;
 - 0002 operations;
-- 0003 vendor store minimum order.
+- 0003 vendor store minimum order;
+- 0004 security RLS hardening;
+- 0005 RLS nonrecursive helpers;
+- 0006 exposed surface and foreign-key indexes;\n- 0007 auth, private document storage and PostGIS API grant hardening attempt.
 
-Não aplicar cegamente em produção porque há gaps conhecidos:
+O banco remoto está ativo e registra as seis migrations. O advisor ainda aponta objetos da extensão PostGIS em `public` (`spatial_ref_sys` sem RLS e funções SECURITY DEFINER); a tentativa de alterar `spatial_ref_sys` falhou porque a integração não é proprietária do objeto. Essa pendência está documentada em [SECURITY_AND_AUTH.md](SECURITY_AND_AUTH.md).
 
-- enum de pedido;
-- order_vendor status;
-- RLS incompleta;
-- promoções incompletas;
-- ledger ausente;
-- snapshots incompletos.
+Auth/recuperação e upload documental já têm adaptador no frontend, condicionado às variáveis públicas do Supabase. Ainda não considerar o backend de produção funcional: persistência remota de catálogo/pedidos/estoque/financeiro, operações server-side, fotos, revisão administrativa e testes RLS por usuários reais/E2E continuam pendentes. O advisor crítico do PostGIS também permanece.
 
 Ver [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
@@ -263,3 +263,20 @@ Requisitos atuais:
 - o link opcional para o Google My Maps é apenas navegação externa.
 
 Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HERE ou outro SDK com credenciais, a configuração, limites, política de chaves, CSP e fallback deverão ser documentados aqui antes do deploy.
+
+## 15. Estado remoto verificado — 22/10/2026
+
+- Projeto Supabase ativo: `atnwxxyaxlsnlfulhums`.
+- Migrations 0001–0007 registradas.
+- 27 tabelas da aplicação com RLS habilitado.
+- Nenhuma chave secreta adicionada ao frontend.
+- Frontend ainda utiliza autenticação e persistência locais; deploy do schema não equivale a deploy de backend integrado.
+
+
+## 16. Configuração de frontend
+
+O build de produção usa como padrão o endpoint e a publishable key públicos do projeto Feiraê; `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` podem sobrescrever esses valores por ambiente. O modo de desenvolvimento/testes sem variáveis mantém o modo local de demonstração. Nunca configurar `service_role` nem secret key em variáveis `VITE_*`. O CI não executa signup/upload reais contra o projeto.
+
+## Migration 0008 proposta — ACL PostGIS
+
+`supabase/migrations/0008_postgis_function_acl_hardening.sql` reaplica revogações para `PUBLIC`, `anon` e `authenticated` nas funções `st_estimatedextent` e no acesso direto à tabela de metadados `spatial_ref_sys`. Está apenas na branch de segurança; não foi aplicada ao projeto Supabase remoto. Após autorização, validar os privilégios efetivos e executar os advisors. Mover a extensão PostGIS para outro schema ou alterar objetos de propriedade da extensão é uma decisão separada e requer ensaio de compatibilidade antes de qualquer mudança de produção.

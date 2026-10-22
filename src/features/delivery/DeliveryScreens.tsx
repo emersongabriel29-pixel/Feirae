@@ -55,6 +55,7 @@ import {
   showFeiraeNotification,
 } from "../../domain/feiraeNotifications";
 import { readFileForLocalStorage, storedFileLabel, type StoredFile } from "../../domain/storedFile";
+import { isSupabaseConfigured, uploadOnboardingDocument } from "../../domain/supabaseClient";
 import {
   allRequiredTermsAccepted,
   deliveryRequiredTerms,
@@ -2863,7 +2864,18 @@ export function DeliveryOperations({
                                   onChange={(event) => {
                                     const file = event.target.files?.[0];
                                     if (!file) return;
-                                    void readFileForLocalStorage(file)
+                                    const upload = isSupabaseConfigured()
+                                      ? uploadOnboardingDocument(file, document.id).then(({ path, fileName }) => ({
+                                          name: fileName,
+                                          file: undefined,
+                                          filePath: path,
+                                        }))
+                                      : readFileForLocalStorage(file).then((stored) => ({
+                                          name: stored.name,
+                                          file: stored,
+                                          filePath: undefined,
+                                        }));
+                                    void upload
                                       .then((stored) => {
                                         setDeliveryDocuments((current) => {
                                           const merged = [
@@ -2883,7 +2895,8 @@ export function DeliveryOperations({
                                               ? {
                                                   ...item,
                                                   fileName: stored.name,
-                                                  file: stored,
+                                                  file: stored.file,
+                                                  filePath: stored.filePath,
                                                   status: "under_review",
                                                 }
                                               : item,

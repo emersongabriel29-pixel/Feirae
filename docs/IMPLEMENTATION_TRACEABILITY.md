@@ -471,3 +471,19 @@ Continua sem SDK proprietário de mapas. O protótipo usa serviços públicos e 
 - O conteúdo de antecedentes **não é classificado automaticamente** e uma anotação não reprova automaticamente; o protótipo apenas controla envio/status de revisão.
 
 Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam ser refletidos no backend/Storage/RLS antes de produção.
+
+## Atualização de backend — 22/10/2026
+
+O schema remoto Supabase `atnwxxyaxlsnlfulhums` foi criado a partir das migrations versionadas `0001`–`0006`. O banco contém as tabelas de perfis, feiras, bancas, produtos, pedidos multi-banca, entregas/veículos, documentos, promoções, suporte, avaliações e financeiro. RLS está habilitado nas 27 tabelas da aplicação; as migrations 0004–0006 adicionam policies, triggers de proteção, helpers privados para autorização de pedidos e índices.
+
+**A fonte de verdade do frontend ainda é local.** Nenhuma chave de cliente foi adicionada, `@supabase/supabase-js` não está instalado e não há Edge Functions nem Storage privado. A correspondência SQL é infraestrutura preparada, não prova de sincronização multi-dispositivo. A integração deverá substituir os adapters locais por serviços reais de forma incremental e testada, sem expor service-role.
+
+
+## Integração inicial Supabase — 22/10/2026
+
+- `src/domain/supabaseClient.ts`: chamadas Auth REST, persistência/refresh de sessão, leitura do perfil próprio, logout, solicitação de recuperação por link, alteração de senha após link e upload documental com limite/tipo de arquivo.
+- `src/hooks/useDemoSession.ts`: restaura a sessão autenticada e não confia na sessão local quando Supabase está configurado.
+- `src/features/vendor/VendorScreens.tsx` e `src/features/delivery/DeliveryScreens.tsx`: documentos de onboarding são enviados ao bucket privado quando a integração está configurada; modo de demonstração permanece local.
+- `supabase/migrations/0007_auth_storage_and_extension_surface.sql`: perfil inicial por trigger, bucket privado e policy de Storage.
+
+Ainda não migrados: catálogo, banca/estoque, carrinho/pedidos, entrega em tempo real, carteira, pagamentos e repasses. O alerta crítico de `spatial_ref_sys` permanece aberto; ver [SECURITY_AND_AUTH.md](SECURITY_AND_AUTH.md).

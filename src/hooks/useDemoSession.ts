@@ -1,11 +1,30 @@
 import type { Role } from "../types";
 import { nameFromEmail, readSession } from "../domain/session";
+import { useEffect, useState } from "react";
+import { isSupabaseConfigured, isPasswordRecoveryPending, getCurrentAuthProfile } from "../domain/supabaseClient";
 import { usePersistentState } from "../usePersistentState";
 
 export function useDemoSession() {
   const [storedSession, setStoredSession] = usePersistentState<unknown>("feirae:session", null);
   const session = readSession(storedSession);
   const role = session?.role ?? null;
+  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured() && !isPasswordRecoveryPending());
+
+  useEffect(() => {
+    if (!isSupabaseConfigured() || isPasswordRecoveryPending()) return;
+    let active = true;
+    void getCurrentAuthProfile()
+      .then((profile) => {
+        if (!active) return;
+        setStoredSession(profile ? { role: profile.role, email: profile.email, name: profile.name } : null);
+      })
+      .finally(() => {
+        if (active) setAuthLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [setStoredSession]);
 
   function startSession(nextRole: Role, email: string, name?: string, isNewAccount = false) {
     setStoredSession({
@@ -35,5 +54,6 @@ export function useDemoSession() {
     startSession,
     updateSession,
     clearSession,
+    authLoading,
   };
 }
