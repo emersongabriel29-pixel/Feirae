@@ -120,22 +120,18 @@ Fonte: `src/domain/vehicles.ts`.
 
 ## Supabase
 
-Existem:
+Projeto remoto ativo: `atnwxxyaxlsnlfulhums` (Ohio, EUA). Migrations aplicadas e versionadas:
 
-- `.env.example`;
-- `supabase/migrations/0001_feirae_core.sql`;
-- `supabase/migrations/0002_feirae_operations.sql`;
-- `supabase/migrations/0003_vendor_store_minimum_order.sql`.
+- `0001_feirae_core.sql`;
+- `0002_feirae_operations.sql`;
+- `0003_vendor_store_minimum_order.sql`;
+- `0004_security_rls_hardening.sql`;
+- `0005_rls_nonrecursive_helpers.sql`;
+- `0006_exposed_surface_and_fk_indexes.sql`.
 
-Não existem ainda:
+A auditoria remota confirmou 27 tabelas da aplicação com RLS habilitado. O banco foi preparado, mas o frontend **continua sem integração com Supabase Auth/Database**: login, catálogo, pedidos, estoque e carteira ainda usam a persistência local do protótipo. Também faltam Edge Functions e Storage privado. Não trate o banco preparado como backend de produção concluído.
 
-- cliente Supabase;
-- `supabase/config.toml`;
-- Edge Functions;
-- Storage conectado;
-- Auth conectado.
-
-As migrations atuais também possuem gaps documentados em [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md).
+Detalhes e limitações: [SECURITY_AND_AUTH.md](docs/SECURITY_AND_AUTH.md) e [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md).
 
 ## Testes
 
