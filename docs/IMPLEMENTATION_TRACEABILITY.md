@@ -472,7 +472,6 @@ Continua sem SDK proprietário de mapas. O protótipo usa serviços públicos e 
 
 Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam ser refletidos no backend/Storage/RLS antes de produção.
 
-
 ## Atualização de backend — 22/10/2026
 
 O schema remoto Supabase `atnwxxyaxlsnlfulhums` foi criado a partir das migrations versionadas `0001`–`0006`. O banco contém as tabelas de perfis, feiras, bancas, produtos, pedidos multi-banca, entregas/veículos, documentos, promoções, suporte, avaliações e financeiro. RLS está habilitado nas 27 tabelas da aplicação; as migrations 0004–0006 adicionam policies, triggers de proteção, helpers privados para autorização de pedidos e índices.
