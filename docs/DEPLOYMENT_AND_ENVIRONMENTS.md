@@ -263,3 +263,7 @@ Requisitos atuais:
 - o link opcional para o Google My Maps é apenas navegação externa.
 
 Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HERE ou outro SDK com credenciais, a configuração, limites, política de chaves, CSP e fallback deverão ser documentados aqui antes do deploy.
+
+## Migration proposta — múltiplas bancas e veículos — 22/10/2026
+
+A branch adiciona `supabase/migrations/0008_multiple_vendor_stalls_and_vehicle_governance.sql`. Ela está versionada apenas na branch de trabalho; não foi aplicada ao banco remoto. Antes de aplicá-la, integrar primeiro a sequência de segurança 0004–0007, validar a extensão PostGIS e executar testes de backfill, RLS e metadados de aprovação em ambiente não produtivo. Não aplicar diretamente em produção sem revisão e plano de reversão.
