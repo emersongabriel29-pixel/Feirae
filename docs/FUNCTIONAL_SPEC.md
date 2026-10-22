@@ -979,7 +979,7 @@ O Feiraê permanece o projeto principal. Soluções externas devem ser inspecion
 
 ## Máquina de estados por banca — 19/10/2026
 
-Cada banca participante de um pedido multi-banca possui seu próprio estado operacional, separado do estado geral do pedido. A migration proposta `0004_order_vendor_state_machine.sql` introduz o enum específico e um RPC para transições autenticadas.
+Cada banca participante de um pedido multi-banca possui seu próprio estado operacional, separado do estado geral do pedido. A migration proposta `0009_order_vendor_state_machine.sql` introduz o enum específico e um RPC para transições autenticadas.
 
 - A banca pode aceitar, preparar, marcar como pronta e concluir sua participação; rejeições exigem justificativa.
 - Na entrega, a participação progride de pronta para coletada e depois entregue.
