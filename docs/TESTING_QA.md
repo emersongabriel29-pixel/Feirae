@@ -30,28 +30,28 @@ npm run build
 
 ## 2. Contagem atual
 
-| Arquivo                                       |  Testes |
-| --------------------------------------------- | ------: |
-| `src/App.test.tsx`                            |      69 |
-| `src/components/LaunchExperience.test.tsx`    |       4 |
-| `src/components/FeiraeBrand.test.tsx`         |       2 |
-| `src/components/OrderRouteMap.test.tsx`       |       3 |
-| `src/features/customer/FairMapPanel.test.tsx` |       5 |
-| `src/features/customer/DeliveryContactCard.test.tsx` |       2 |
-| `src/domain/orderBridge.test.ts`              |      11 |
-| `src/domain/feiraeNotifications.test.ts`      |       6 |
-| `src/domain/legalTerms.test.ts`               |       8 |
-| `src/domain/customerLegal.test.ts`            |       4 |
-| `src/domain/marketplaceBridge.test.ts`        |       5 |
-| `src/domain/multiVendor.test.ts`              |      11 |
-| `src/domain/fairInternalRouting.test.ts`      |       4 |
-| `src/domain/fairMap.test.ts`                  |       4 |
-| `src/domain/inventoryBridge.test.ts`          |       4 |
-| `src/domain/localAuth.test.ts`                |       6 |
-| `src/domain/marketplace.test.ts`              |       4 |
-| `src/domain/session.test.ts`                  |       3 |
-| `src/utils.test.ts`                           |       4 |
-| **Total Vitest**                              | **159** |
+| Arquivo                                              | Testes |
+| ---------------------------------------------------- | -----: |
+| `src/App.test.tsx`                                 |     69 |
+| `src/components/LaunchExperience.test.tsx`          |      4 |
+| `src/components/FeiraeBrand.test.tsx`               |      2 |
+| `src/components/OrderRouteMap.test.tsx`             |      3 |
+| `src/features/customer/FairMapPanel.test.tsx`       |      5 |
+| `src/features/customer/DeliveryContactCard.test.tsx` |      2 |
+| `src/domain/orderBridge.test.ts`                    |     11 |
+| `src/domain/feiraeNotifications.test.ts`             |      6 |
+| `src/domain/legalTerms.test.ts`                     |      8 |
+| `src/domain/customerLegal.test.ts`                  |      4 |
+| `src/domain/marketplaceBridge.test.ts`               |      5 |
+| `src/domain/multiVendor.test.ts`                    |     11 |
+| `src/domain/fairInternalRouting.test.ts`             |      4 |
+| `src/domain/fairMap.test.ts`                        |      4 |
+| `src/domain/inventoryBridge.test.ts`                 |      4 |
+| `src/domain/localAuth.test.ts`                      |      6 |
+| `src/domain/marketplace.test.ts`                    |      4 |
+| `src/domain/session.test.ts`                        |      3 |
+| `src/utils.test.ts`                                 |      4 |
+| **Total Vitest**                                      | **159** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
@@ -214,7 +214,7 @@ Os 69 testes cobrem explicitamente:
 - trocar e-mail/senha;
 - remover senha antiga em texto.
 
-## 5. O que os 157 testes Vitest NÃO comprovam diretamente
+## 5. O que os 159 testes Vitest NÃO comprovam diretamente
 
 Não afirmar “CI cobre” estes itens sem adicionar teste específico:
 
@@ -595,7 +595,7 @@ A suíte foi atualizada para acompanhar a revisão desta rodada:
 
 Limites: jsdom não prova permissão GPS real, carregamento dos tiles/mapa no Android, precisão da geocodificação, qualidade do traçado OSRM, upload de câmera/galeria nem regressão por pixel. Esses itens continuam exigindo QA em navegador/aparelho real antes de produção.
 
-Contagem após a união com a entrada premium: **157 testes Vitest**.
+Contagem após a união com a entrada premium: **159 testes Vitest**.
 
 ## QA — mapa das feiras sob demanda — 29/09/2026
 
@@ -608,7 +608,6 @@ A cobertura existente foi ajustada sem alterar a contagem total:
 - filtros de região continuam limitando os pontos entregues ao mapa.
 
 QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
-
 
 ## Teste de contato do entregador — 22/10/2026
 
