@@ -127,9 +127,10 @@ Projeto remoto ativo: `atnwxxyaxlsnlfulhums` (Ohio, EUA). Migrations aplicadas e
 - `0003_vendor_store_minimum_order.sql`;
 - `0004_security_rls_hardening.sql`;
 - `0005_rls_nonrecursive_helpers.sql`;
-- `0006_exposed_surface_and_fk_indexes.sql`.
+- `0006_exposed_surface_and_fk_indexes.sql`;
+- `0007_auth_storage_and_extension_surface.sql`.
 
-A auditoria remota confirmou 27 tabelas da aplicação com RLS habilitado. O código agora oferece autenticação Supabase por e-mail/senha, recuperação por link e upload privado de documentos para feirantes/entregadores quando as variáveis de ambiente estão configuradas. Catálogo, pedidos, estoque, carteira e pagamentos continuam usando persistência local. Edge Functions de negócio ainda não existem. Não trate o backend como pronto para produção.
+A auditoria remota confirmou 27 tabelas da aplicação com RLS habilitado. O código agora oferece autenticação Supabase por e-mail/senha, recuperação por link e upload privado de documentos para feirantes/entregadores em builds de produção (com endpoint/chave pública do projeto como padrão, sobrescrevíveis por variáveis de ambiente). Catálogo, pedidos, estoque, carteira e pagamentos continuam usando persistência local. Edge Functions de negócio ainda não existem. Não trate o backend como pronto para produção.
 
 Detalhes e limitações: [SECURITY_AND_AUTH.md](docs/SECURITY_AND_AUTH.md) e [SCHEMA_GAP_MATRIX.md](docs/SCHEMA_GAP_MATRIX.md).
 
@@ -140,10 +141,10 @@ Suite atual:
 - 60 testes em `App.test.tsx`;
 - 4 testes do componente de abertura;
 - 81 testes de componentes, domínio e utilidades;
-- **145 testes Vitest**;
+- **159 testes Vitest**;
 - 8 testes da política de sincronização do repositório em `scripts/change-sync-policy-checks.mjs`.
 
-O `npm run check` executa lint, 145 testes Vitest, 8 testes de governança e build.
+O `npm run check` executa lint, 159 testes Vitest, 8 testes de governança e build.
 
 CI:
 
