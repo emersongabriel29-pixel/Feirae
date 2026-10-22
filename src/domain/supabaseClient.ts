@@ -184,7 +184,7 @@ export async function signUpSupabase(input: { role: Role; email: string; name: s
 export async function requestPasswordReset(email: string) {
   await request("/auth/v1/recover", {
     method: "POST",
-    body: JSON.stringify({ email: email.trim().toLocaleLowerCase("pt-BR") }),
+    body: JSON.stringify({ email: email.trim().toLocaleLowerCase("pt-BR"), redirect_to: window.location.origin }),
   });
 }
 
