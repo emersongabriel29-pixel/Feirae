@@ -3361,7 +3361,11 @@ export function DeliveryContactCard({
       </div>
       <div className="module-action-row">
         {phone ? (
-          <a className="primary-action" href={`tel:${phone.replace(/[^+0-9]/g, "")}`} aria-label={`Ligar para ${driver.name}`}>
+          <a
+            className="primary-action"
+            href={`tel:${phone.replace(/[^+0-9]/g, "")}`}
+            aria-label={`Ligar para ${driver.name}`}
+          >
             <Phone size={17} /> Ligar
           </a>
         ) : (
