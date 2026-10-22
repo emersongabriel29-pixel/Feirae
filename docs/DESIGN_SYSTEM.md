@@ -781,3 +781,8 @@ O marcador Feiraê usa:
 - escala discreta no estado selecionado.
 
 O mapa completo não deve competir com filtros e cards de feira. Na listagem principal, ele é acessado por **Mapa das feiras** e aberto em superfície dedicada.
+
+
+## Preservação visual na correção de tipagem — 22/10/2026
+
+A correção de segurança de tipos no cartão de contato do entregador não altera cores, tipografia, espaçamento, estados, navegação ou identidade visual. O cartão continua seguindo os componentes e tokens existentes; quando não há entregador, o componente não renderiza dados de contato vazios.
