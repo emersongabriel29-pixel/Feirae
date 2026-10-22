@@ -1,17 +1,17 @@
 import type { Role } from "../types";
 import { nameFromEmail, readSession } from "../domain/session";
 import { useEffect, useState } from "react";
-import { isSupabaseConfigured, getCurrentAuthProfile } from "../domain/supabaseClient";
+import { isSupabaseConfigured, isPasswordRecoveryPending, getCurrentAuthProfile } from "../domain/supabaseClient";
 import { usePersistentState } from "../usePersistentState";
 
 export function useDemoSession() {
   const [storedSession, setStoredSession] = usePersistentState<unknown>("feirae:session", null);
   const session = readSession(storedSession);
   const role = session?.role ?? null;
-  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured());
+  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured() && !isPasswordRecoveryPending());
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured() || isPasswordRecoveryPending()) return;
     let active = true;
     void getCurrentAuthProfile()
       .then((profile) => {
