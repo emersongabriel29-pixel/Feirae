@@ -242,7 +242,8 @@ export function DeliveryOperations({
     fileName: string;
     file?: StoredFile;
     expiresAt: string;
-    filePath?: string;\n  };
+    filePath?: string;
+  };
 
   const defaultDeliveryDocuments: DeliveryDocument[] = [
     {
