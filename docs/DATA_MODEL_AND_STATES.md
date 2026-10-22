@@ -452,7 +452,6 @@ A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GA
 9. estruturas do painel administrativo;
 10. testes de integração RLS por papel e de acesso cruzado.
 
-
 ## 17. Estado do banco remoto — 22/10/2026
 
 O projeto Supabase `atnwxxyaxlsnlfulhums` recebeu e registra as migrations 0001–0006. A auditoria confirmou 27 tabelas da aplicação com RLS habilitado. As migrations 0004–0006 reforçam ownership, protegem campos privilegiados/financeiros, evitam recursão nas policies de pedidos e indexam chaves estrangeiras.
