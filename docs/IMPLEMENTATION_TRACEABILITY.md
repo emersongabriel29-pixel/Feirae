@@ -471,3 +471,38 @@ Continua sem SDK proprietário de mapas. O protótipo usa serviços públicos e 
 - O conteúdo de antecedentes **não é classificado automaticamente** e uma anotação não reprova automaticamente; o protótipo apenas controla envio/status de revisão.
 
 Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam ser refletidos no backend/Storage/RLS antes de produção.
+
+## Perfil público da banca no marketplace — 29/09/2026
+
+`SharedStore` compartilha opcionalmente descrição, categorias, logo, capa, origem do horário e agenda.
+
+`FeiranteOperations` sincroniza esses campos a partir de **Minha banca** e **Horários**.
+
+`FairDetail` agrupa os dados por banca e, para cada banca, filtra o catálogo por `product.feirante === vendor.name` dentro da feira selecionada.
+
+O resultado público segue a ordem **perfil da banca → produtos da banca → próxima banca**.
+
+Não houve migration nesta rodada: o protótipo persiste esses campos no marketplace local existente. Produção deve mover mídia para Storage e os campos de perfil/agenda para o backend.
+
+## Métricas comerciais e cancelamento com aprovação — 29/09/2026
+
+### Produtos
+
+`src/domain/productMeasurements.ts` centraliza regras de unidade/apresentação por categoria.
+
+`VendorProduct.packageSize` representa a apresentação comprada; `weightKg` permanece peso logístico.
+
+`ProductCard`, carrinho e checkout usam `exactPresentation()` para mostrar ao Cliente a apresentação cadastrada, sem recalcular preço a partir do peso de separação.
+
+### Cancelamento
+
+`UnifiedOrderRecord` passa a aceitar `cancellationRequest`, com uma resposta por banca.
+
+- `requestCustomerCancellation()`: cria a solicitação sem cancelar o pedido;
+- `respondCustomerCancellation()`: registra aceite/recusa da banca;
+- aceite reutiliza `cancelVendorParticipation()`, preservando a lógica existente de estoque, frete, rota e reembolso;
+- depois da coleta, a solicitação normal não é criada.
+
+### Navegação
+
+`useAppNavigation` força a raiz do papel na primeira sincronização de uma sessão persistida. Para Cliente: `#/cliente/inicio`.

@@ -22,6 +22,15 @@ export type SharedPromotion = {
   takeQuantity?: number;
 };
 
+export type SharedStoreScheduleDay = {
+  day: string;
+  enabled: boolean;
+  open: string;
+  close: string;
+  breakStart?: string;
+  breakEnd?: string;
+};
+
 export type SharedStore = {
   accountKey: string;
   vendorId: string;
@@ -36,6 +45,12 @@ export type SharedStore = {
   acceptCashOnDelivery: boolean;
   acceptCardOnDelivery: boolean;
   minimumOrderAmount?: number;
+  description?: string;
+  categories?: string;
+  logoDataUrl?: string;
+  coverDataUrl?: string;
+  useFairHours?: boolean;
+  schedule?: SharedStoreScheduleDay[];
   box?: string;
   corridor?: string;
   sector?: string;
@@ -130,6 +145,12 @@ export function syncVendorMarketplace(input: {
   acceptCashOnDelivery: boolean;
   acceptCardOnDelivery: boolean;
   minimumOrderAmount?: number;
+  description?: string;
+  categories?: string;
+  logoDataUrl?: string;
+  coverDataUrl?: string;
+  useFairHours?: boolean;
+  schedule?: SharedStoreScheduleDay[];
   box?: string;
   corridor?: string;
   sector?: string;
@@ -169,6 +190,12 @@ export function syncVendorMarketplace(input: {
     acceptCashOnDelivery: input.acceptCashOnDelivery,
     acceptCardOnDelivery: input.acceptCardOnDelivery,
     minimumOrderAmount: normalizeVendorMinimumOrder(input.minimumOrderAmount),
+    description: input.description,
+    categories: input.categories,
+    logoDataUrl: input.logoDataUrl,
+    coverDataUrl: input.coverDataUrl,
+    useFairHours: input.useFairHours ?? true,
+    schedule: input.schedule,
     box: input.box,
     corridor: input.corridor,
     sector: input.sector,

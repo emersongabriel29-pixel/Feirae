@@ -7,6 +7,8 @@ import {
   patchUnifiedOrderItem,
   patchVendorStatus,
   readUnifiedOrders,
+  requestCustomerCancellation,
+  respondCustomerCancellation,
   resolveRefundDestination,
   upsertUnifiedOrder,
 } from "./orderBridge";
@@ -282,6 +284,61 @@ describe("unified order bridge", () => {
     resolveRefundDestination("FE-MULTI", secondRefund.id, "wallet");
     order = readUnifiedOrders()[0];
     expect(order.paymentStatus).toBe("partially_refunded");
+  });
+
+  it("keeps the order active while customer cancellation waits for vendor decisions", () => {
+    seedOrder();
+
+    const request = requestCustomerCancellation("FE-MULTI", "Não preciso mais", "");
+    const pending = readUnifiedOrders()[0];
+
+    expect(request.ok).toBe(true);
+    expect(pending.status).toBe("received");
+    expect(pending.cancellationRequest?.status).toBe("pending");
+    expect(pending.cancellationRequest?.vendorResponses).toEqual([
+      expect.objectContaining({ vendorId: "vendor:a", status: "pending" }),
+      expect.objectContaining({ vendorId: "vendor:b", status: "pending" }),
+    ]);
+    expect(pending.items.some((item) => item.cancelled)).toBe(false);
+  });
+
+  it("supports partial cancellation when one bank accepts and another continues the order", () => {
+    seedOrder();
+    requestCustomerCancellation("FE-MULTI", "Quero alterar o pedido", "Retirar uma banca");
+
+    const accepted = respondCustomerCancellation("FE-MULTI", "vendor:a", "approved");
+    let order = readUnifiedOrders()[0];
+
+    expect(accepted?.orderCancelled).toBe(false);
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:a")?.status).toBe("rejected");
+    expect(order.vendors?.find((vendor) => vendor.vendorId === "vendor:b")?.status).toBe("pending");
+    expect(order.cancellationRequest?.status).toBe("pending");
+
+    respondCustomerCancellation("FE-MULTI", "vendor:b", "declined", "Pedido já está em preparação");
+    order = readUnifiedOrders()[0];
+
+    expect(order.status).toBe("received");
+    expect(order.cancellationRequest?.status).toBe("partial");
+    expect(order.cancellationRequest?.vendorResponses.find((item) => item.vendorId === "vendor:b")?.status).toBe(
+      "declined",
+    );
+  });
+
+  it("does not create normal cancellation requests after collection", () => {
+    seedOrder();
+    patchVendorStatus("FE-MULTI", "vendor:a", "ready");
+    patchVendorStatus("FE-MULTI", "vendor:b", "ready");
+    patchUnifiedOrder("FE-MULTI", { status: "driver_assigned" });
+    patchVendorStatus("FE-MULTI", "vendor:a", "collected");
+    patchVendorStatus("FE-MULTI", "vendor:b", "collected");
+    patchUnifiedOrder("FE-MULTI", { status: "collected" });
+
+    const request = requestCustomerCancellation("FE-MULTI", "Não consigo receber agora", "");
+    const order = readUnifiedOrders()[0];
+
+    expect(request.ok).toBe(false);
+    expect(order.cancellationRequest).toBeUndefined();
+    expect(order.status).toBe("collected");
   });
 
   it("does not cancel a vendor participation after its handoff was collected", () => {
