@@ -1,7 +1,7 @@
 import type { Role } from "../types";
 
-const URL = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "") ?? "";
-const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
+const URL = (import.meta.env.VITE_SUPABASE_URL || (import.meta.env.PROD ? "https://atnwxxyaxlsnlfulhums.supabase.co" : "")).replace(/\/$/, "");
+const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || (import.meta.env.PROD ? "sb_publishable_1ACnPoa_atPzF4GEIBsmog_2r_WNzFM" : "");
 const SESSION_KEY = "feirae:supabase-auth:v1";
 const RECOVERY_KEY = "feirae:password-recovery:v1";
 
