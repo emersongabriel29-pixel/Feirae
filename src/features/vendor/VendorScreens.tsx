@@ -918,24 +918,31 @@ export function FeiranteOperations({
   }
 
   function uploadDocument(document: VendorDocument, file: File) {
+    if (isSupabaseConfigured()) {
+      void uploadOnboardingDocument(file, document.id)
+        .then(({ path, fileName }) => {
+          setDocuments((current) =>
+            current.map((item) =>
+              item.id === document.id
+                ? { ...item, fileName, filePath: path, file: undefined, status: "under_review", correctionReason: "" }
+                : item,
+            ),
+          );
+          showNotice(`${document.name} enviado ao armazenamento seguro. O envio não equivale à aprovação.`);
+        })
+        .catch((error: Error) => showNotice(error.message));
+      return;
+    }
     void readFileForLocalStorage(file)
       .then((stored) => {
         setDocuments((current) =>
           current.map((item) =>
             item.id === document.id
-              ? {
-                  ...item,
-                  fileName: stored.name,
-                  file: stored,
-                  status: "under_review",
-                  correctionReason: "",
-                }
+              ? { ...item, fileName: stored.name, file: stored, status: "under_review", correctionReason: "" }
               : item,
           ),
         );
-        showNotice(
-          `${document.name} enviado e armazenado neste dispositivo. O envio não equivale à aprovação.`,
-        );
+        showNotice(`${document.name} enviado e armazenado neste dispositivo. O envio não equivale à aprovação.`);
       })
       .catch((error: Error) => showNotice(error.message));
   }
