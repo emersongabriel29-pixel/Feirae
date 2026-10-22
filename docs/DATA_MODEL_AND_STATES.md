@@ -451,3 +451,20 @@ A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GA
 8. decisão `reviews` x `order_reviews`;
 9. estruturas do painel administrativo;
 10. RLS/policies completas.
+
+## Estado individual de cada banca — 19/10/2026
+
+A migration `0010_order_vendor_state_machine.sql` define um enum independente `public.order_vendor_status` para `order_vendors.status`. Isso evita misturar estados globais de pagamento/entrega com a participação de cada banca.
+
+Transições permitidas pelo RPC `public.update_order_vendor_status` (wrapper autenticado; implementação no schema não exposto `private`):
+
+- `pending → accepted` ou `rejected`;
+- `accepted → preparing` ou `rejected`;
+- `preparing → ready` ou `rejected`;
+- entrega: `ready → collected → delivered`;
+- retirada: `ready → delivered`;
+- estados finais `delivered` e `rejected` não podem ser reabertos pela função.
+
+A rejeição exige justificativa. A função confere se o usuário autenticado é o feirante associado à participação, bloqueia a linha da participação e do pedido, deriva o estado global a partir das bancas ativas e grava eventos. A leitura via RLS é limitada ao cliente dono do pedido ou ao feirante da banca.
+
+**Importante:** este é o contrato de banco proposto na branch, não uma integração já ativa. O app continua usando o armazenamento local; a migration não foi aplicada ao projeto Supabase conectado, cuja identidade ainda precisa ser confirmada.

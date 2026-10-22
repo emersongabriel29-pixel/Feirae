@@ -56,7 +56,15 @@ import {
   feiraeNotificationPermission,
   requestFeiraeNotificationPermission,
 } from "../../domain/feiraeNotifications";
-import type { Address, CustomerTab, DemoOrder, DemoSession, Fair, Product, Screen } from "../../types";
+import type {
+  Address,
+  CustomerTab,
+  DemoOrder,
+  DemoSession,
+  Fair,
+  Product,
+  Screen,
+} from "../../types";
 import { money } from "../../utils";
 import { usePersistentState } from "../../usePersistentState";
 import { readFileForLocalStorage } from "../../domain/storedFile";
@@ -3347,7 +3355,7 @@ export function DeliveryContactCard({
     setMessage("");
   }
 
-  if (!connected) return null;
+  if (!driver) return null;
 
   return (
     <div className="surface-card delivery-contact-card">
@@ -3355,13 +3363,20 @@ export function DeliveryContactCard({
       <div className="delivery-contact-card__identity">
         <div>
           <h3>{driver.name}</h3>
-          <p>{driver.vehicle ?? "Entregador Feiraê"}{driver.plateMasked ? ` · placa ${driver.plateMasked}` : ""}</p>
+          <p>
+            {driver.vehicle ?? "Entregador Feiraê"}
+            {driver.plateMasked ? ` · placa ${driver.plateMasked}` : ""}
+          </p>
         </div>
         <span className="delivery-contact-card__status">Conectado ao pedido</span>
       </div>
       <div className="module-action-row">
         {phone ? (
-          <a className="primary-action" href={`tel:${phone.replace(/[^+\\d]/g, "")}`} aria-label={`Ligar para ${driver.name}`}>
+          <a
+            className="primary-action"
+            href={`tel:${phone.replace(/[^+\\d]/g, "")}`}
+            aria-label={`Ligar para ${driver.name}`}
+          >
             <Phone size={17} /> Ligar
           </a>
         ) : (
@@ -3370,22 +3385,38 @@ export function DeliveryContactCard({
       </div>
       <div className="chat-card delivery-contact-card__chat">
         <div className="chat-messages" aria-live="polite">
-          {messages.length ? messages.map((text, index) => (
-            <p key={`delivery-chat-${index}`} className="sent">{text}</p>
-          )) : <p className="received">Você pode falar com o entregador durante a entrega.</p>}
+          {messages.length ? (
+            messages.map((text, index) => (
+              <p key={`delivery-chat-${index}`} className="sent">
+                {text}
+              </p>
+            ))
+          ) : (
+            <p className="received">Você pode falar com o entregador durante a entrega.</p>
+          )}
         </div>
         <form onSubmit={sendMessage}>
-          <label className="sr-only" htmlFor={`delivery-message-${orderId}`}>Mensagem para o entregador</label>
+          <label className="sr-only" htmlFor={`delivery-message-${orderId}`}>
+            Mensagem para o entregador
+          </label>
           <input
             id={`delivery-message-${orderId}`}
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             placeholder="Mensagem para o entregador…"
           />
-          <button type="submit" aria-label="Enviar mensagem" disabled={!message.trim()}><MessageCircle /></button>
+          <button
+            type="submit"
+            aria-label="Enviar mensagem"
+            disabled={!message.trim()}
+          >
+            <MessageCircle />
+          </button>
         </form>
       </div>
-      <small className="operation-footnote">O contato fica disponível somente enquanto o pedido estiver em entrega.</small>
+      <small className="operation-footnote">
+        O contato fica disponível somente enquanto o pedido estiver em entrega.
+      </small>
     </div>
   );
 }

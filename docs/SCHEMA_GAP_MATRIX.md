@@ -73,11 +73,9 @@ No `orderBridge`, a participação de banca usa:
 - `delivered`
 - `rejected`
 
-SQL `order_vendors.status` reutiliza `public.order_status`.
+Antes da migration `0010_order_vendor_state_machine.sql`, SQL `order_vendors.status` reutilizava `public.order_status`.
 
-Problema objetivo: o enum SQL não possui `pending`, `ready` nem `rejected`, portanto o schema atual não consegue persistir fielmente o estado por banca usado pelo frontend.
-
-Correção necessária: criar enum próprio, por exemplo `order_vendor_status`, e migrar `order_vendors.status`.
+A migration `0010` nesta branch cria `public.order_vendor_status` e migra a coluna para os estados específicos da participação. A correção está preparada no repositório, mas ainda depende de validação em um banco de desenvolvimento correto e de integração do frontend com o RPC.
 
 A retirada multi-banca também depende desse estado por banca: uma participação pode estar `delivered` enquanto o pedido global continua `ready_for_pickup`; somente todas as participações `delivered` encerram o pedido. O backend precisa derivar essa transição atomicamente.
 
@@ -396,3 +394,19 @@ A próxima migration não deve ser genérica. Ela precisa, no mínimo:
 10. completar RLS/policies;
 11. testar tudo em banco descartável antes de staging;
 12. validar server-side o pedido mínimo por banca e persistir snapshot da regra aplicada.
+
+## Atualização — máquina de estados por banca — 19/10/2026
+
+A migration proposta `0010_order_vendor_state_machine.sql` prepara uma coluna de status específica para cada participação em `order_vendors`, em vez de reutilizar `public.order_status`.
+
+- Enum por banca: `pending`, `accepted`, `preparing`, `ready`, `collected`, `delivered`, `rejected`.
+- Conversão de valores existentes: estados globais são mapeados para o estado de participação mais conservador compatível.
+- RLS: leitura limitada ao cliente dono do pedido e ao feirante vinculado à banca.
+- Escrita: clientes anonimizados e clientes autenticados não recebem permissão de escrita direta na tabela; o RPC autenticado valida a identidade do feirante, bloqueia linhas do pedido e verifica transições.
+- Derivação global: a função atualiza o pedido quando todas as bancas alcançam um marco compatível e registra eventos de auditoria.
+
+**Status:** migration criada na branch da PR, ainda não aplicada a banco algum. A conexão Supabase disponível aponta para um projeto cujo nome e histórico de migrations não correspondem claramente ao Feiraê; não foi alterada. Antes de aplicar, confirmar o projeto correto, revisar o schema remoto, executar a migration em ambiente de desenvolvimento e validar RLS/RPC com usuários de cliente, feirante e não autenticado.
+
+**Limite atual:** o frontend ainda usa `localStorage` e não chama este RPC. A migration prepara o contrato server-side; não torna os pedidos do app persistentes no Supabase por si só.
+
+O ponto de entrada para a aplicação, quando a integração for implementada, é `public.update_order_vendor_status`. Ele é executável apenas por `authenticated` e delega à função de implementação no schema não exposto `private`, que valida a identidade e a transição.

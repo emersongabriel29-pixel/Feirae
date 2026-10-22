@@ -263,3 +263,21 @@ Requisitos atuais:
 - o link opcional para o Google My Maps é apenas navegação externa.
 
 Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HERE ou outro SDK com credenciais, a configuração, limites, política de chaves, CSP e fallback deverão ser documentados aqui antes do deploy.
+
+## Migration 0004 — estado por banca — 19/10/2026
+
+Arquivo: `supabase/migrations/0010_order_vendor_state_machine.sql`.
+
+Esta migration altera o tipo de `order_vendors.status`, ativa RLS na tabela, cria políticas de leitura e disponibiliza o RPC público restrito `public.update_order_vendor_status`, que delega a implementação ao schema não exposto `private`. Ela é uma mudança de schema e exige revisão em ambiente de desenvolvimento antes de qualquer aplicação.
+
+Checklist obrigatório antes de aplicar:
+
+1. Confirmar que o projeto Supabase selecionado pertence ao Feiraê. A conexão consultada durante a implementação apresenta outro nome e histórico de migrations; não aplicar nela.
+2. Conferir se as migrations `0001_feirae_core.sql`, `0002_feirae_operations.sql` e `0003_vendor_store_minimum_order.sql` estão presentes no banco-alvo e se os tipos/tabelas correspondem.
+3. Aplicar primeiro em ambiente de desenvolvimento, com backup/rollback planejado.
+4. Testar leitura como cliente dono, cliente alheio, feirante vinculado, feirante alheio e usuário anônimo.
+5. Testar transições válidas/inválidas, justificativa obrigatória para rejeição, concorrência entre bancas e derivação do estado global.
+6. Executar os advisors de segurança do Supabase e revisar os logs.
+7. Só depois planejar a conexão do frontend ao RPC; não expor chave `service_role` no cliente.
+
+A migration foi registrada no repositório em branch de PR e **não foi aplicada a nenhum banco remoto**. Ainda não há evidência de teste real de PostgreSQL/RLS para esta migration.

@@ -607,3 +607,26 @@ A cobertura existente foi ajustada sem alterar a contagem total:
 - filtros de região continuam limitando os pontos entregues ao mapa.
 
 QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
+
+## Atualização de 18/10/2026 — PR #67
+
+A revisão inclui testes de regressão em `src/domain/multiVendor.test.ts` para limitar o desconto promocional ao total de mercadorias e neutralizar descontos negativos ou não finitos. A execução de CI do SHA `36c02db68288208c5951e94bc66ea0da8d181b0a` concluiu `npm run check` com sucesso, incluindo testes e build. A etapa de sincronização falhou porque faltavam atualizações simultâneas em documentos obrigatórios; esse SHA ainda não tem CI completo aprovado.
+
+A suíte não comprova integração real com Supabase, RLS em banco, reserva concorrente de estoque, pagamentos reais ou rotas internas de boxes; esses cenários exigem testes de integração/aceitação.
+
+## QA de schema — estado individual por banca — 19/10/2026
+
+A revisão estática da migration `0004_order_vendor_state_machine.sql` verificou a presença de enum próprio, conversão dos estados existentes, RLS de leitura, revogação de escrita direta, checagem de identidade do feirante, bloqueio de linhas, validação de transições, justificativa de rejeição e registro de eventos.
+
+Ainda pendente de execução real:
+
+- aplicar a migration em banco de desenvolvimento confirmado como Feiraê;
+- testar políticas com cliente proprietário/alheio, feirante vinculado/alheio e usuário anônimo;
+- testar transições permitidas e recusadas para entrega e retirada;
+- testar duas bancas atualizando simultaneamente o mesmo pedido;
+- verificar a derivação global, logs e advisors do Supabase;
+- integrar e testar o cliente frontend sem depender de `localStorage`.
+
+Nenhum teste de banco remoto foi executado e nenhuma migration foi aplicada nesta rodada.
+
+O RPC previsto para a futura integração do cliente é `public.update_order_vendor_status`; a implementação privilegiada fica em `private`. Ainda falta testar a chamada via Data API com sessão autenticada após confirmar o projeto e aplicar a migration em ambiente de desenvolvimento.
