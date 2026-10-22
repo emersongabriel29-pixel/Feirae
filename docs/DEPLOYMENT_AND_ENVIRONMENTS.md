@@ -266,4 +266,4 @@ Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HE
 
 ## Migration proposta — múltiplas bancas e veículos — 22/10/2026
 
-A branch adiciona `supabase/migrations/0008_multiple_vendor_stalls_and_vehicle_governance.sql`. Ela está versionada apenas na branch de trabalho; não foi aplicada ao banco remoto. Antes de aplicá-la, integrar primeiro a sequência de segurança 0004–0007, validar a extensão PostGIS e executar testes de backfill, RLS e metadados de aprovação em ambiente não produtivo. Não aplicar diretamente em produção sem revisão e plano de reversão.
+A branch adiciona `supabase/migrations/0009_multiple_vendor_stalls_and_vehicle_governance.sql`. Ela está versionada apenas na branch de trabalho; não foi aplicada ao banco remoto. Antes de aplicá-la, integrar primeiro a sequência de segurança 0004–0007, validar a extensão PostGIS e executar testes de backfill, RLS e metadados de aprovação em ambiente não produtivo. Não aplicar diretamente em produção sem revisão e plano de reversão.
