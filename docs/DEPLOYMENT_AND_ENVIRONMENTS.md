@@ -1,6 +1,6 @@
 # Deploy e ambientes — Feiraê
 
-Atualizado em 27/09/2026 com base no repositório atual.
+Atualizado em 22/10/2026 após migrations remotas de schema e segurança.
 
 ## 1. O que existe hoje
 
@@ -145,18 +145,18 @@ Somente após staging aprovado:
 
 ## 8. Migrations existentes
 
+Migrations versionadas no repositório e aplicadas no projeto Supabase remoto `atnwxxyaxlsnlfulhums`:
+
 - 0001 core;
 - 0002 operations;
-- 0003 vendor store minimum order.
+- 0003 vendor store minimum order;
+- 0004 security RLS hardening;
+- 0005 RLS nonrecursive helpers;
+- 0006 exposed surface and foreign-key indexes.
 
-Não aplicar cegamente em produção porque há gaps conhecidos:
+O banco remoto está ativo e registra as seis migrations. O advisor ainda aponta objetos da extensão PostGIS em `public` (`spatial_ref_sys` sem RLS e funções SECURITY DEFINER); a tentativa de alterar `spatial_ref_sys` falhou porque a integração não é proprietária do objeto. Essa pendência está documentada em [SECURITY_AND_AUTH.md](SECURITY_AND_AUTH.md).
 
-- enum de pedido;
-- order_vendor status;
-- RLS incompleta;
-- promoções incompletas;
-- ledger ausente;
-- snapshots incompletos.
+O app ainda não está conectado ao Supabase: não considerar o banco um backend de produção funcional. Continuam pendentes Auth/client no frontend, funções server-side, Storage privado, testes RLS por usuário real e E2E.
 
 Ver [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
@@ -263,3 +263,12 @@ Requisitos atuais:
 - o link opcional para o Google My Maps é apenas navegação externa.
 
 Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HERE ou outro SDK com credenciais, a configuração, limites, política de chaves, CSP e fallback deverão ser documentados aqui antes do deploy.
+
+
+## 14. Estado remoto verificado — 22/10/2026
+
+- Projeto Supabase ativo: `atnwxxyaxlsnlfulhums`.
+- Migrations 0001–0006 registradas.
+- 27 tabelas da aplicação com RLS habilitado.
+- Nenhuma chave secreta adicionada ao frontend.
+- Frontend ainda utiliza autenticação e persistência locais; deploy do schema não equivale a deploy de backend integrado.
