@@ -35,6 +35,7 @@ export type VendorOrder = {
   id: string;
   fulfillment?: "delivery" | "pickup";
   vendorId?: string;
+  storeId?: string;
   customer: string;
   createdAt: string;
   status: VendorOrderStatus;

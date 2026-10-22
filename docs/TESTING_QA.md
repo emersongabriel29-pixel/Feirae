@@ -607,3 +607,7 @@ A cobertura existente foi ajustada sem alterar a contagem total:
 - filtros de região continuam limitando os pontos entregues ao mapa.
 
 QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
+
+## Migration 0009 — múltiplas bancas e veículos
+
+A branch adiciona testes de regressão para manter duas bancas de um mesmo feirante separadas e para preservar a identidade operacional da banca e o histórico de veículos. A suíte Vitest passou na execução de CI de 22/10/2026; isso valida o comportamento coberto no frontend, não a migration remota nem RLS real. Antes de produção, executar testes de integração para feirante proprietário/alheio, cliente, entregador, administrador e usuário anônimo, incluindo aprovação/suspensão por banca e veículo.

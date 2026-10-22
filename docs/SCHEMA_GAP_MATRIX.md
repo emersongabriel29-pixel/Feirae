@@ -2,7 +2,7 @@
 
 Atualizado em 27/09/2026.
 
-Este documento registra somente divergências concretas entre o código atual e as migrations `0001_feirae_core.sql`, `0002_feirae_operations.sql` e `0003_vendor_store_minimum_order.sql`.
+Este documento registra somente divergências concretas entre o código atual e as migrations `0001_feirae_core.sql`, `0002_feirae_operations.sql`, `0003_vendor_store_minimum_order.sql` e `0009_multiple_vendor_stalls_and_vehicle_governance.sql`.
 
 ## 1. Papéis
 
@@ -282,15 +282,9 @@ Se a auditoria de transição depender desses campos, uma nova migration é nece
 
 ## 12. Catálogo e feira
 
-`vendor_stores` não possui `fair_id`.
+A migration `0009_multiple_vendor_stalls_and_vehicle_governance.sql` adiciona `vendor_stores.fair_id`, localização geográfica, coordenadas internas e metadados físicos por banca. A associação antiga em `fair_vendor_memberships` permanece para compatibilidade.
 
-Hoje a relação feira↔feirante existe em `fair_vendor_memberships`, enquanto a loja é vinculada apenas ao `vendor_profile`.
-
-Para uma banca/loja operar em uma feira específica, o backend precisa definir a relação exata entre:
-
-- `fair_vendor_memberships`
-- `vendor_stores`
-- catálogo publicado.
+A lacuna de schema foi reduzida, mas a UI ainda mantém uma banca por conta e o bridge de catálogo/pedidos precisa ser atualizado para isolar cada unidade pelo `store_id`. O backfill de feira/localização só é automático quando existe exatamente uma associação de feira para o feirante; casos com múltiplas feiras exigem confirmação explícita.
 
 ## 12.1. Pedido mínimo da banca
 
@@ -342,14 +336,15 @@ Para produção faltam:
 
 ## 15. Administração
 
-Não existem tabelas para:
+Ainda faltam tabelas para:
 
 - catálogo global de tipos de veículo;
 - configuração de capacidade máxima por tipo;
 - UFs/estados atendidos;
 - regras de taxa versionadas;
-- suspensões;
-- audit log administrativo;
+- audit log administrativo.
+
+A migration 0004 adiciona campos de aprovação/suspensão por banca e veículo, mas não cria trilha de auditoria administrativa.
 - permissões granulares de admin.
 
 Essas estruturas são requisitos do painel de gestão e precisam de migrations próprias.

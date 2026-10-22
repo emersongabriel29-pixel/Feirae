@@ -1,6 +1,6 @@
 # Modelo de dados e estados — Feiraê
 
-Atualizado em 27/09/2026 após comparação direta entre frontend e migrations.
+Atualizado em 19/10/2026 após comparação direta entre frontend e migrations.
 
 Este documento não descreve apenas o modelo desejado. Ele separa **implementado no frontend**, **existente no SQL** e **lacuna**.
 
@@ -313,6 +313,19 @@ Não cria entidade nova. Altera `vendor_stores` com:
 - `0` representa banca sem pedido mínimo.
 
 A regra ainda precisa de validação server-side, snapshot no pedido e política administrativa persistida antes de produção.
+
+### Migration 0009
+
+Adiciona a `vendor_stores`:
+
+- vínculo `fair_id`;
+- coordenada geográfica e coordenadas internas do box;
+- setor, corredor, identificação do box e referência;
+- aprovação, correção e suspensão por banca.
+
+Adiciona a `delivery_vehicles` aprovação/suspensão por veículo e índice para elegibilidade/histórico. Um trigger bloqueia alterações de aprovação feitas por clientes; a aprovação administrativa deve usar operação confiável com service role.
+
+**Lacuna restante:** o frontend ainda não oferece seleção/gestão de múltiplas bancas nem isola todos os dados por `store_id`. O frontend de entregador mantém vários veículos localmente, mas a atribuição real ainda precisa validar e persistir `deliveries.vehicle_id`. A migration não foi executada em Supabase neste trabalho.
 
 ## 9. Entidades citadas no produto, mas ausentes no SQL
 

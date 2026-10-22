@@ -471,3 +471,7 @@ Continua sem SDK proprietário de mapas. O protótipo usa serviços públicos e 
 - O conteúdo de antecedentes **não é classificado automaticamente** e uma anotação não reprova automaticamente; o protótipo apenas controla envio/status de revisão.
 
 Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam ser refletidos no backend/Storage/RLS antes de produção.
+
+## Migration 0009 — múltiplas bancas e veículos — 22/10/2026
+
+A branch propõe `supabase/migrations/0009_multiple_vendor_stalls_and_vehicle_governance.sql`, que acrescenta localização, vínculo com feira e estado de aprovação por banca, além de metadados de aprovação e histórico por veículo. A migration ainda não foi aplicada ao Supabase remoto. A execução depende da integração prévia das migrations de segurança 0004–0007 e de testes de RLS, backfill, triggers e dados legados em ambiente não produtivo.

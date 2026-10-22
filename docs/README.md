@@ -1,6 +1,6 @@
 # Documentação do Feiraê
 
-Atualizado em 27/09/2026 após Sincronização Mestre código ↔ testes ↔ migrations ↔ UI/UX ↔ deploy.
+Atualizado em 19/10/2026 após revisão de requisitos para múltiplas bancas e veículos.
 
 ## Regra de interpretação
 
@@ -38,6 +38,8 @@ Um documento de requisito não é prova de implementação.
 - [DOCUMENTATION_STATUS.md](DOCUMENTATION_STATUS.md) — resultado da segunda auditoria.
 
 ## Produto
+
+- [MULTIPLE_STALLS_AND_VEHICLES.md](MULTIPLE_STALLS_AND_VEHICLES.md) — regras e lacunas para múltiplas bancas por feirante e múltiplos veículos por entregador.
 
 - [FIGMA_DESIGN_STUDIO.md](FIGMA_DESIGN_STUDIO.md) — ligação entre Figma e GitHub, fonte de verdade e fluxo de sincronização.
 - [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) — comportamento atual e limites.

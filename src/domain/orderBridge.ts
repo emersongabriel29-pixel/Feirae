@@ -339,6 +339,7 @@ export function patchVendorStatus(
   vendorId: string,
   status: UnifiedVendorStatus,
   event?: UnifiedOrderEvent,
+  storeId?: string,
 ) {
   const current = readRawOrders();
   writeUnifiedOrders(
@@ -346,7 +347,9 @@ export function patchVendorStatus(
       if (order.id !== orderId) return order;
       const normalized = normalizeOrder(order);
       const vendors = normalized.vendors!.map((vendor) =>
-        vendor.vendorId === vendorId ? { ...vendor, status } : vendor,
+        vendor.vendorId === vendorId && (!storeId || vendor.storeId === storeId)
+          ? { ...vendor, status }
+          : vendor,
       );
       return {
         ...normalized,
@@ -370,6 +373,7 @@ export function cancelVendorParticipation(
   orderId: string,
   vendorId: string,
   reason: string,
+  storeId?: string,
 ): VendorCancellationResult | null {
   const current = readRawOrders();
   let result: VendorCancellationResult | null = null;
@@ -378,7 +382,9 @@ export function cancelVendorParticipation(
     current.map((order) => {
       if (order.id !== orderId) return order;
       const normalized = normalizeOrder(order);
-      const vendor = normalized.vendors?.find((item) => item.vendorId === vendorId);
+      const vendor = normalized.vendors?.find(
+        (item) => item.vendorId === vendorId && (!storeId || item.storeId === storeId),
+      );
       if (
         !vendor ||
         vendor.status === "rejected" ||
@@ -388,16 +394,27 @@ export function cancelVendorParticipation(
         return normalized;
       }
 
-      const cancelledItems = normalized.items.filter((item) => item.vendorId === vendorId && !item.cancelled);
+      const cancelledItems = normalized.items.filter(
+        (item) =>
+          item.vendorId === vendorId &&
+          (!storeId || item.storeId === storeId) &&
+          !item.cancelled,
+      );
       const merchandiseSubtotal =
-        normalized.vendorFinancials?.find((item) => item.vendorId === vendorId)?.merchandiseSubtotal ??
+        normalized.vendorFinancials?.find(
+          (item) => item.vendorId === vendorId && (!storeId || item.storeId === storeId),
+        )?.merchandiseSubtotal ??
         cancelledItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
       const allocatedPromotionDiscount =
-        normalized.vendorFinancials?.find((item) => item.vendorId === vendorId)?.promotionDiscount ?? 0;
+        normalized.vendorFinancials?.find(
+          (item) => item.vendorId === vendorId && (!storeId || item.storeId === storeId),
+        )?.promotionDiscount ?? 0;
       const netMerchandise = Math.max(0, merchandiseSubtotal - allocatedPromotionDiscount);
 
       const vendors = normalized.vendors!.map((item) =>
-        item.vendorId === vendorId ? { ...item, status: "rejected" as const, cancelReason: reason } : item,
+        item.vendorId === vendorId && (!storeId || item.storeId === storeId)
+          ? { ...item, status: "rejected" as const, cancelReason: reason }
+          : item,
       );
       const remainingVendorCount = vendors.filter((item) => item.status !== "rejected").length;
       const deliveryPricing = normalized.deliveryPricing;
@@ -471,7 +488,9 @@ export function cancelVendorParticipation(
         ...normalized,
         vendors,
         items: normalized.items.map((item) =>
-          item.vendorId === vendorId ? { ...item, cancelled: true } : item,
+          item.vendorId === vendorId && (!storeId || item.storeId === storeId)
+            ? { ...item, cancelled: true }
+            : item,
         ),
         subtotal: nextSubtotal,
         promotionDiscount: nextPromotionDiscount,
@@ -576,6 +595,7 @@ export function patchUnifiedOrderItem(
   vendorId: string,
   productId: number,
   patch: Partial<UnifiedOrderItem>,
+  storeId?: string,
 ) {
   const current = readRawOrders();
   writeUnifiedOrders(
@@ -586,7 +606,9 @@ export function patchUnifiedOrderItem(
         ...normalized,
         updatedAt: new Date().toISOString(),
         items: normalized.items.map((item) =>
-          item.vendorId === vendorId && item.productId === productId
+          item.vendorId === vendorId &&
+          item.productId === productId &&
+          (!storeId || item.storeId === storeId)
             ? {
                 ...item,
                 ...patch,

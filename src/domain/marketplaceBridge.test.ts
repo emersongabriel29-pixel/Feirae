@@ -101,6 +101,61 @@ describe("marketplace bridge", () => {
     expect(store.pickupCode).toMatch(/^FEIRAE-/);
   });
 
+  it("keeps multiple stalls owned by the same account isolated in the catalog", () => {
+    const common = {
+      accountKey: "vendor@test",
+      name: "Banca da Fernanda",
+      fairName: "Feira X",
+      isOpen: true,
+      approved: true,
+      deliveryEnabled: true,
+      pickupEnabled: true,
+      absorbDeliveryFee: false,
+      acceptCashOnDelivery: true,
+      acceptCardOnDelivery: true,
+      promotions: [],
+    };
+
+    syncVendorMarketplace({
+      ...common,
+      storeId: "store:feira-x:vendor-test-box-a",
+      box: "A",
+      products: [{
+        id: 1,
+        name: "Maçã da banca A",
+        category: "Frutas",
+        stock: 5,
+        active: true,
+        price: 8,
+        saleUnit: "kg",
+        weightKg: 1,
+      }],
+    });
+    syncVendorMarketplace({
+      ...common,
+      storeId: "store:feira-x:vendor-test-box-b",
+      box: "B",
+      products: [{
+        id: 1,
+        name: "Banana da banca B",
+        category: "Frutas",
+        stock: 7,
+        active: true,
+        price: 6,
+        saleUnit: "kg",
+        weightKg: 1,
+      }],
+    });
+
+    expect(readSharedStores()).toHaveLength(2);
+    expect(readSharedStores().map((store) => store.box).sort()).toEqual(["A", "B"]);
+    expect(marketplaceProducts([]).map((product) => product.name)).toEqual([
+      "Maçã da banca A",
+      "Banana da banca B",
+    ]);
+    expect(new Set(marketplaceProducts([]).map((product) => product.storeId)).size).toBe(2);
+  });
+
   it("applies a valid coupon and consumes its usage count", () => {
     syncVendorMarketplace({
       accountKey: "vendor@test",

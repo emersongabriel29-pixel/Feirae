@@ -781,3 +781,7 @@ O marcador Feiraê usa:
 - escala discreta no estado selecionado.
 
 O mapa completo não deve competir com filtros e cards de feira. Na listagem principal, ele é acessado por **Mapa das feiras** e aberto em superfície dedicada.
+
+## Múltiplas bancas e veículos — preservação visual — 22/10/2026
+
+A evolução funcional deve reutilizar os componentes e tokens visuais existentes, manter a identidade verde e branca do Feiraê e não substituir as telas por um padrão genérico de marketplace. Estados de aprovação/suspensão e seleção de banca/veículo precisam usar os padrões de feedback já existentes e manter rótulos acessíveis.

@@ -147,6 +147,32 @@ Se o cadastro não estiver aprovado, a Central mostra **Complete seu cadastro pa
 
 A área que antes se chamava **Painel** agora se chama **Disponibilidade**, preservando o controle de ficar online/offline sem duplicar o conceito de Central.
 
+## 2.4. Múltiplas bancas e veículos
+
+### Feirante
+
+- Uma conta pode administrar várias bancas, inclusive em feiras diferentes.
+- Cada banca adicional tem identificação própria e dados operacionais locais separados: produtos, estoque, pedidos, horários, promoções, documentos, configurações de entrega, avaliações e repasses.
+- O catálogo compartilhado mantém cada banca e seus produtos por `storeId`; atualizar uma banca não deve remover as outras.
+- Os pedidos são filtrados e suas alterações devem ser limitadas ao `storeId` da banca selecionada, sempre que o pedido possuir essa identidade.
+- Banca nova começa fechada e com documentação pendente; aprovação de uma banca existente não aprova automaticamente outra.
+- A interface e a persistência desta branch ainda são locais ao navegador. O painel administrativo, a aprovação server-side e a sincronização multi-dispositivo não estão concluídos.
+
+### Entregador
+
+- Um perfil pode cadastrar vários veículos, inclusive vários do mesmo tipo.
+- Cada oferta considera veículos ativos, documentação exigida e capacidade de carga.
+- Quando mais de um veículo for compatível, o entregador pode selecionar qual pretende usar para a oferta.
+- A seleção local é persistida por pedido e utilizada no aceite demonstrativo.
+- O ID do veículo ainda precisa ser gravado e validado no registro canônico do backend antes de produção; não presumir que a seleção local é uma atribuição remota definitiva.
+
+### Evidências e validação
+
+- `src/domain/marketplaceBridge.test.ts` contém teste de regressão para duas bancas de uma conta na mesma feira.
+- `docs/MULTIPLE_STALLS_AND_VEHICLES.md` descreve regras e pendências.
+- `docs/IMPLEMENTATION_TRACEABILITY.md` e `docs/TESTING_QA.md` registram as evidências e os testes necessários.
+- A migration 0004 ainda precisa ser executada em ambiente Supabase de desenvolvimento, com validação de RLS e dados legados.
+
 ## 3. Limite do protótipo
 
 A aplicação ainda não usa Supabase como fonte de verdade.
