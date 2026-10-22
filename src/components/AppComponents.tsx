@@ -384,20 +384,22 @@ export function LoginPage({
                 />
               </label>
             )}
-            <label>
-              E-mail
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  clearFormError();
-                }}
-                placeholder="seuemail@exemplo.com"
-                autoComplete="email"
-                required
-              />
-            </label>
+            {mode !== "set-password" && (
+              <label>
+                E-mail
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    clearFormError();
+                  }}
+                  placeholder="seuemail@exemplo.com"
+                  autoComplete="email"
+                  required
+                />
+              </label>
+            )}
             {(mode !== "recovery" || !isSupabaseConfigured()) && <label className="password-field">
               {mode === "set-password" ? "Nova senha" : "Senha"}
               <span>
