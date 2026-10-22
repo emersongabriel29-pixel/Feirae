@@ -310,8 +310,9 @@ export default function App() {
     seenCustomerOfferNotifications.current = currentKeys;
   }, [marketplaceRevision, offersEnabled, role]);
 
-  async function login(nextRole: Role, email: string, name: string, password: string, isNewAccount: boolean) {
+  function login(nextRole: Role, email: string, name: string, password: string, isNewAccount: boolean) {
     if (isSupabaseConfigured()) {
+      return (async () => {
       try {
         if (isNewAccount) {
           const result = await signUpSupabase({ role: nextRole, email, name, password });
@@ -327,6 +328,7 @@ export default function App() {
       } catch (error) {
         return { error: error instanceof Error ? error.message : "Não foi possível autenticar no Supabase." };
       }
+      })();
     }
 
     const result = authenticateLocalAccount({
