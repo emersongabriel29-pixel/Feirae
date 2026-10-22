@@ -410,8 +410,8 @@ export function LoginPage({
                     setPassword(event.target.value);
                     clearFormError();
                   }}
-                  placeholder={mode === "set-password" ? "Crie uma nova senha" : "Digite sua senha"}
-                  autoComplete={mode === "set-password" ? "new-password" : "current-password"}
+                  placeholder={mode === "set-password" || mode === "recovery" ? "Crie uma nova senha" : "Digite sua senha"}
+                  autoComplete={mode === "set-password" || mode === "recovery" ? "new-password" : "current-password"}
                   minLength={6}
                   required
                 />
