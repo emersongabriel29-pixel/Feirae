@@ -378,7 +378,6 @@ Cobertura principal:
 
 ## Próximas migrations recomendadas após a 0006
 
-
 A próxima migration não deve ser genérica. Ela precisa, no mínimo:
 
 1. criar `order_vendor_status`;
