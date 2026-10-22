@@ -1,16 +1,6 @@
--- Feiraê: close remaining exposed extension RPCs and document intentionally private payment access.
--- The PostGIS extension remains in public for compatibility with the existing geography columns.
-
-alter table public.spatial_ref_sys enable row level security;
-drop policy if exists "public read spatial reference metadata" on public.spatial_ref_sys;
-create policy "public read spatial reference metadata"
-on public.spatial_ref_sys for select to anon, authenticated
-using (true);
-
--- PostGIS extent estimation is not required by Feiraê's client API; prevent direct RPC calls.
-revoke execute on function public.st_estimatedextent(text, text) from public, anon, authenticated;
-revoke execute on function public.st_estimatedextent(text, text, text) from public, anon, authenticated;
-revoke execute on function public.st_estimatedextent(text, text, text, boolean) from public, anon, authenticated;
+-- Feiraê: document intentionally private payment access and index foreign keys.
+-- The PostGIS extension owns its metadata table and helper functions; those platform objects
+-- are intentionally not modified here because the migration role is not their owner.
 
 -- Explicit deny policy documents that payment rows (including commissions and settlement amounts)
 -- must only be accessed by trusted server-side operations.
