@@ -222,17 +222,20 @@ function consumeRecoveryRedirect() {
   const refreshToken = params.get("refresh_token");
   const type = params.get("type");
   if (accessToken && refreshToken && type === "recovery") {
-    const userId = params.get("user_id");
-    const email = params.get("email") ?? "";
-    if (userId) {
+    try {
+      const payload = accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      const decoded = JSON.parse(window.atob(payload)) as { sub?: string; email?: string };
+      if (!decoded.sub) return;
       storeSession({
         access_token: accessToken,
         refresh_token: refreshToken,
         expires_in: Number(params.get("expires_in") ?? 3600),
-        user: { id: userId, email },
+        user: { id: decoded.sub, email: decoded.email },
       });
       window.localStorage.setItem(RECOVERY_KEY, "true");
       window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    } catch {
+      clearSession();
     }
   }
 }
