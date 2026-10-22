@@ -1,6 +1,6 @@
 # Matriz de lacunas entre frontend e schema — Feiraê
 
-Atualizado em 22/10/2026 após aplicação das migrations 0001–0006 no Supabase remoto.
+Atualizado em 22/10/2026 após aplicação das migrations 0001–0007 e integração inicial Auth/Storage.
 
 Este documento registra somente divergências concretas entre o código atual e as migrations `0001_feirae_core.sql`, `0002_feirae_operations.sql` e `0003_vendor_store_minimum_order.sql`.
 
@@ -354,7 +354,7 @@ Não existem tabelas para:
 
 Essas estruturas são requisitos do painel de gestão e precisam de migrations próprias.
 
-## 16. RLS — estado real após migrations 0001–0006
+## 16. RLS — estado real após migrations 0001–0007
 
 A auditoria remota confirmou 27 tabelas da aplicação com RLS habilitado. A migration `0004_security_rls_hardening.sql` define policies por papel e ownership, protege campos privilegiados/financeiros e limita operações críticas a servidor. A migration `0005_rls_nonrecursive_helpers.sql` remove referências recursivas entre policies de pedidos e usa funções auxiliares no schema privado. A migration `0006_exposed_surface_and_fk_indexes.sql` define negação explícita de acesso cliente à tabela `payments` e adiciona índices para chaves estrangeiras.
 
@@ -370,9 +370,9 @@ Cobertura principal:
 
 **Pendências que impedem declarar backend de produção concluído:**
 
-- app ainda autentica e persiste dados em `localStorage`, sem Supabase Auth/client;
+- Auth/recuperação/upload documental usam Supabase quando configurado; catálogo, pedidos, estoque, carteira e pagamentos ainda persistem localmente;
 - pedidos e transições ainda precisam de RPCs/Edge Functions transacionais e idempotentes;
-- Storage privado e fluxo de documentos não foram conectados;
+- Storage privado está criado e o upload inicial de documentos de feirante/entregador foi ligado; faltam fotos de perfil/veículo, revisão administrativa e testes com usuários reais;
 - o advisor Supabase ainda aponta `public.spatial_ref_sys` sem RLS e PostGIS no schema `public`; a tentativa de alterar a tabela falhou por falta de ownership do objeto de extensão, então ela não foi modificada;
 - funções PostGIS de estimativa de extensão seguem avisadas pelo advisor por serem objetos da extensão, sem ownership pela integração.
 
@@ -392,3 +392,8 @@ A próxima migration não deve ser genérica. Ela precisa, no mínimo:
 10. adicionar testes de integração RLS por papel e de acesso cruzado;
 11. testar tudo em banco descartável antes de staging;
 12. validar server-side o pedido mínimo por banca e persistir snapshot da regra aplicada.
+
+
+### Migration 0007 e integração inicial
+
+Migration `0007_auth_storage_and_extension_surface.sql` cria o trigger de perfil para novas contas, o bucket privado `onboarding-documents` e policy por pasta/usuário. O código do frontend contém Auth REST, refresh de sessão, recuperação por e-mail e upload privado. Isso não substitui a integração remota de catálogo, pedidos, estoque e financeiro. O advisor ainda reporta `spatial_ref_sys` sem RLS e funções PostGIS executáveis por `anon`/ `authenticated`; os REVOKEs tentados não foram suficientes e essa pendência permanece crítica.
