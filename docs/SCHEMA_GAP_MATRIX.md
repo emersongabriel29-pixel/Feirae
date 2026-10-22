@@ -2,7 +2,7 @@
 
 Atualizado em 27/09/2026.
 
-Este documento registra somente divergências concretas entre o código atual e as migrations `0001_feirae_core.sql`, `0002_feirae_operations.sql`, `0003_vendor_store_minimum_order.sql` e `0008_multiple_vendor_stalls_and_vehicle_governance.sql`.
+Este documento registra somente divergências concretas entre o código atual e as migrations `0001_feirae_core.sql`, `0002_feirae_operations.sql`, `0003_vendor_store_minimum_order.sql` e `0009_multiple_vendor_stalls_and_vehicle_governance.sql`.
 
 ## 1. Papéis
 
@@ -282,7 +282,7 @@ Se a auditoria de transição depender desses campos, uma nova migration é nece
 
 ## 12. Catálogo e feira
 
-A migration `0008_multiple_vendor_stalls_and_vehicle_governance.sql` adiciona `vendor_stores.fair_id`, localização geográfica, coordenadas internas e metadados físicos por banca. A associação antiga em `fair_vendor_memberships` permanece para compatibilidade.
+A migration `0009_multiple_vendor_stalls_and_vehicle_governance.sql` adiciona `vendor_stores.fair_id`, localização geográfica, coordenadas internas e metadados físicos por banca. A associação antiga em `fair_vendor_memberships` permanece para compatibilidade.
 
 A lacuna de schema foi reduzida, mas a UI ainda mantém uma banca por conta e o bridge de catálogo/pedidos precisa ser atualizado para isolar cada unidade pelo `store_id`. O backfill de feira/localização só é automático quando existe exatamente uma associação de feira para o feirante; casos com múltiplas feiras exigem confirmação explícita.
 
