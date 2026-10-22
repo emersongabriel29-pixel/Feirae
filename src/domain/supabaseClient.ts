@@ -241,3 +241,57 @@ function consumeRecoveryRedirect() {
 }
 
 consumeRecoveryRedirect();
+
+
+export async function uploadOnboardingDocument(file: File, documentType: string) {
+  if (!isSupabaseConfigured()) throw new Error("O armazenamento seguro ainda não está configurado.");
+  if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type)) {
+    throw new Error("Envie um arquivo JPG, PNG ou PDF.");
+  }
+  if (file.size > 10 * 1024 * 1024) throw new Error("O arquivo deve ter no máximo 10 MB.");
+  const token = await currentAccessToken();
+  const session = readSession();
+  if (!token || !session) throw new Error("Entre novamente para enviar documentos.");
+  const safeName = file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "documento";
+  const path = `${session.user.id}/${crypto.randomUUID()}-${safeName}`;
+  const response = await fetch(`${URL}/storage/v1/object/onboarding-documents/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "POST",
+    headers: {
+      apikey: KEY,
+      Authorization: `Bearer ${token}`,
+      "Content-Type": file.type,
+      "x-upsert": "false",
+    },
+    body: file,
+  });
+  if (!response.ok) {
+    let message = "Não foi possível enviar o documento ao armazenamento seguro.";
+    try {
+      const payload = await response.json() as Record<string, unknown>;
+      message = authError(payload, message);
+    } catch {
+      // Keep the generic message; storage errors may include internal details.
+    }
+    throw new Error(message);
+  }
+
+  try {
+    await request("/rest/v1/onboarding_documents", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        profile_id: session.user.id,
+        document_type: documentType,
+        file_path: path,
+        status: "pending",
+      }),
+    }, token);
+  } catch {
+    await fetch(`${URL}/storage/v1/object/onboarding-documents/${path.split("/").map(encodeURIComponent).join("/")}`, {
+      method: "DELETE",
+      headers: { apikey: KEY, Authorization: `Bearer ${token}` },
+    }).catch(() => undefined);
+    throw new Error("O arquivo foi enviado, mas não conseguimos registrar o documento. Tente novamente.");
+  }
+  return { path, fileName: file.name };
+}
