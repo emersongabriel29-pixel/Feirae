@@ -80,7 +80,7 @@ import {
 } from "./domain/feiraeNotifications";
 
 export default function App() {
-  const { session, role, startSession, updateSession, clearSession } = useDemoSession();
+  const { session, role, startSession, updateSession, clearSession, authLoading } = useDemoSession();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const accountKey = session?.email ?? "guest";
@@ -742,6 +742,7 @@ export default function App() {
     notify(`Itens disponíveis do pedido ${source.id} voltaram para a sacola.`);
   }
 
+  if (authLoading) return <main className="auth-loading" role="status">Verificando sua sessão segura…</main>;
   if (!role) return <LoginPage onLogin={login} onResetPassword={recoverPassword} onSetNewPassword={setNewPassword} />;
 
   return (
