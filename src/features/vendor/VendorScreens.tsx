@@ -63,6 +63,7 @@ import { OrderRouteMap } from "../../components/OrderRouteMap";
 import { storeIdFor, vendorIdFor } from "../../domain/identity";
 import { consumeInventory, releaseInventoryItems } from "../../domain/inventoryBridge";
 import { readFileForLocalStorage, storedFileLabel } from "../../domain/storedFile";
+import { isSupabaseConfigured, uploadOnboardingDocument } from "../../domain/supabaseClient";
 import {
   allRequiredTermsAccepted,
   demoLegalAcceptance,
