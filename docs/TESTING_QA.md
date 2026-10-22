@@ -1,6 +1,6 @@
 # Testes e QA — Feiraê
 
-Atualizado em 28/09/2026 com contagem conferida no CI da identidade oficial.
+Atualizado em 22/10/2026 com contagem confirmada pelo CI após teste do contato do entregador.
 
 ## 1. Pipeline atual
 
@@ -37,6 +37,7 @@ npm run build
 | `src/components/FeiraeBrand.test.tsx`         |       2 |
 | `src/components/OrderRouteMap.test.tsx`       |       3 |
 | `src/features/customer/FairMapPanel.test.tsx` |       5 |
+| `src/features/customer/DeliveryContactCard.test.tsx` |       2 |
 | `src/domain/orderBridge.test.ts`              |      11 |
 | `src/domain/feiraeNotifications.test.ts`      |       6 |
 | `src/domain/legalTerms.test.ts`               |       8 |
@@ -50,7 +51,7 @@ npm run build
 | `src/domain/marketplace.test.ts`              |       4 |
 | `src/domain/session.test.ts`                  |       3 |
 | `src/utils.test.ts`                           |       4 |
-| **Total Vitest**                              | **157** |
+| **Total Vitest**                              | **159** |
 
 Além da suíte Vitest, `npm run check` executa **8 testes Node** da política de sincronização em `scripts/change-sync-policy-checks.mjs`. Eles validam as regras automáticas que obrigam documentação específica para UI/UX, migrations, testes, splash/som, pedidos e notificações.
 
@@ -607,3 +608,10 @@ A cobertura existente foi ajustada sem alterar a contagem total:
 - filtros de região continuam limitando os pontos entregues ao mapa.
 
 QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o diálogo ocupa a tela de forma confortável e o marcador de feira permanece legível mesmo com muitos pontos próximos.
+
+
+## Teste de contato do entregador — 22/10/2026
+
+`src/features/customer/DeliveryContactCard.test.tsx` cobre dois casos: o cartão não renderiza quando não existe entregador atribuído; com entregador, apresenta o nome e um link de chamada com o telefone normalizado. A suíte foi validada pelo CI após a correção de estreitamento de tipo em `CustomerScreens.tsx`.
+
+A validação do banco remoto é separada da suíte Vitest: foram verificadas migrations 0001–0006, RLS nas 27 tabelas da aplicação e leitura sob papel `authenticated` sem identidade, sem linhas visíveis nas tabelas operacionais consultadas. Isso não substitui testes de isolamento entre duas contas reais, que seguem pendentes antes de produção.
