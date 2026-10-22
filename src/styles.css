@@ -7,3 +7,15 @@
 @import "./styles/operations.css";
 @import "./styles/overlays.css";
 @import "./styles/responsive.css";
+
+
+.auth-loading {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 24px;
+  color: var(--color-text, #1f3a2b);
+  background: var(--color-background, #f8fbf7);
+  font-weight: 600;
+  text-align: center;
+}
