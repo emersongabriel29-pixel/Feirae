@@ -482,7 +482,7 @@ Não houve migration nesta rodada. Esses novos campos/requisitos ainda precisam 
 
 ## Estado por banca — 19/10/2026
 
-- Adicionada na branch `fix/multi-vendor-promotion-allocation` a migration `0004_order_vendor_state_machine.sql`.
+- Adicionada na branch `fix/multi-vendor-promotion-allocation` a migration `0009_order_vendor_state_machine.sql`.
 - `order_vendors.status` passa a usar um enum próprio com estados `pending/accepted/preparing/ready/collected/delivered/rejected`.
 - A migration prepara RLS de leitura por cliente/feirante, revoga escrita direta de clientes e cria o RPC `public.update_order_vendor_status` (wrapper autenticado; implementação no schema não exposto `private`) com validação de propriedade, transições e eventos de auditoria.
 - A derivação do estado global considera todas as bancas não rejeitadas e o tipo de fulfillment (entrega/retirada).
