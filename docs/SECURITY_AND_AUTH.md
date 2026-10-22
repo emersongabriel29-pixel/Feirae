@@ -1,6 +1,6 @@
 # Segurança e autenticação — Feiraê
 
-Atualizado em 22/10/2026 após aplicar as migrations 0001–0006 no projeto Supabase Feiraê.
+Atualizado em 22/10/2026 após migrations 0001–0007 e integração inicial de Auth/Storage.
 
 ## 1. Autenticação atual
 
@@ -37,7 +37,7 @@ Não é aceitável em produção porque:
 
 O projeto Supabase `atnwxxyaxlsnlfulhums` está ativo e recebeu as migrations `0001` a `0006`. O schema está criado no banco remoto.
 
-O aplicativo **ainda não está conectado ao Supabase**:
+O aplicativo tem integração condicional inicial com Supabase Auth e Storage; os dados de domínio ainda não migraram:
 
 - `package.json` não possui `@supabase/supabase-js`;
 - não existe cliente Supabase no frontend;
@@ -48,7 +48,7 @@ O aplicativo **ainda não está conectado ao Supabase**:
 
 Portanto, o banco e as políticas de segurança estão preparados no projeto remoto, mas as jornadas ponta a ponta ainda não estão operando sobre esse banco. Não inserir chaves secretas no frontend.
 
-## 3. RLS: situação após migrations 0001–0006
+## 3. RLS: situação após migrations 0001–0007
 
 A verificação no banco remoto confirmou **27 tabelas da aplicação com RLS habilitado e zero tabelas de aplicação sem RLS**. A tabela de metadados `public.spatial_ref_sys` pertence à extensão PostGIS e permanece como exceção de infraestrutura: o papel usado pela integração não é proprietário dessa tabela, então o Supabase recusou habilitar RLS nela. O advisor ainda sinaliza essa exceção e a extensão PostGIS instalada no schema `public`.
 
@@ -70,9 +70,9 @@ Triggers também bloqueiam alterações diretas em papel, aprovação, estados c
 
 ## 4. Gaps concretos de autorização ainda pendentes
 
-- O frontend ainda não usa Supabase Auth nem consulta o schema remoto.
+- O catálogo, pedidos, estoque, carteira e pagamentos ainda não leem/gravam no schema remoto; os adapters de domínio continuam locais.
 - Não há Edge Functions/RPCs de negócio para criar pedidos, reservar estoque, validar preços, transicionar pedidos, liquidar pagamentos ou aprovar documentos.
-- Não existe backend de Storage privado para documentos e fotos.
+- O bucket privado `onboarding-documents` e o upload inicial para documentos de feirante/entregador foram implementados; fotos de perfil/veículos e a revisão administrativa ainda não foram conectadas.
 - A política de administração/RBAC ainda não foi implementada.
 - A tabela PostGIS `spatial_ref_sys` e funções auxiliares da extensão permanecem sob propriedade da extensão; a auditoria do Supabase continua exibindo avisos relativos a esses objetos.
 - O advisor de performance sinaliza índices recém-criados como ainda não utilizados porque o banco está vazio; isso não demonstra regressão operacional.
@@ -302,3 +302,11 @@ Estado atual:
 - não há decisão automática baseada no conteúdo do documento.
 
 Isso **não é arquitetura de produção**. Antes de liberar dados reais, mover foto/documentos para Storage privado, validar conteúdo/magic bytes no servidor, aplicar antivírus quando cabível, RLS/RBAC, URLs assinadas, trilha de auditoria, retenção e controles contra IDOR. O status de aprovação deve ser gravado por ação autorizada do backend/admin, não confiado ao cliente.
+
+
+## 6. Estado verificado após migration 0007
+
+- O trigger `feirae_handle_new_auth_user` foi confirmado em `auth.users` e cria perfil inicial com papel restrito a cliente/feirante/entregador; feirante e entregador começam sem aprovação.
+- Bucket `onboarding-documents` confirmado como privado, limite 10 MB e allowlist JPG/PNG/PDF.
+- Policy de Storage confirmada para papel `authenticated`, limitada à primeira pasta com o UUID do usuário.
+- A tentativa de revogar permissões herdadas de `public.spatial_ref_sys` e `st_estimatedextent` **não resolveu** a exposição: o teste de privilégios ainda retornou acesso para `anon` e `authenticated`, e o advisor continua crítico. Não declarar resolvido. É necessária uma decisão explícita sobre habilitar RLS e bloquear o acesso cliente a essa tabela de referência PostGIS, ou outra estratégia compatível com a extensão.
