@@ -264,8 +264,7 @@ Requisitos atuais:
 
 Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HERE ou outro SDK com credenciais, a configuração, limites, política de chaves, CSP e fallback deverão ser documentados aqui antes do deploy.
 
-
-## 14. Estado remoto verificado — 22/10/2026
+## 15. Estado remoto verificado — 22/10/2026
 
 - Projeto Supabase ativo: `atnwxxyaxlsnlfulhums`.
 - Migrations 0001–0006 registradas.
