@@ -310,3 +310,7 @@ Isso **não é arquitetura de produção**. Antes de liberar dados reais, mover 
 - Bucket `onboarding-documents` confirmado como privado, limite 10 MB e allowlist JPG/PNG/PDF.
 - Policy de Storage confirmada para papel `authenticated`, limitada à primeira pasta com o UUID do usuário.
 - A tentativa de revogar permissões herdadas de `public.spatial_ref_sys` e `st_estimatedextent` **não resolveu** a exposição: o teste de privilégios ainda retornou acesso para `anon` e `authenticated`, e o advisor continua crítico. Não declarar resolvido. É necessária uma decisão explícita sobre habilitar RLS e bloquear o acesso cliente a essa tabela de referência PostGIS, ou outra estratégia compatível com a extensão.
+
+## Migration 0008 proposta — revalidação de ACL PostGIS
+
+A consulta SQL direta de 22/10/2026 encontrou `EXECUTE` concedido a `PUBLIC`, `anon` e `authenticated` nas três sobrecargas `public.st_estimatedextent`, apesar da revogação descrita na migration 0007. A branch adiciona `supabase/migrations/0008_postgis_function_acl_hardening.sql` para reaplicar essas revogações de forma idempotente e revogar o acesso direto a `spatial_ref_sys`. **Ainda não foi aplicada ao banco remoto.** Depois de autorização, verificar `pg_proc.proacl`, testar chamadas como `anon` e `authenticated` e consultar novamente o advisor. O alerta de RLS em `spatial_ref_sys` pode continuar porque a tabela pertence à extensão PostGIS; a migração não deve ser considerada resolução integral do linter.
