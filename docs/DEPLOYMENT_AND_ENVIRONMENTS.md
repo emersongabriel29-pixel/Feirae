@@ -152,11 +152,11 @@ Migrations versionadas no repositório e aplicadas no projeto Supabase remoto `a
 - 0003 vendor store minimum order;
 - 0004 security RLS hardening;
 - 0005 RLS nonrecursive helpers;
-- 0006 exposed surface and foreign-key indexes.
+- 0006 exposed surface and foreign-key indexes;\n- 0007 auth, private document storage and PostGIS API grant hardening attempt.
 
 O banco remoto está ativo e registra as seis migrations. O advisor ainda aponta objetos da extensão PostGIS em `public` (`spatial_ref_sys` sem RLS e funções SECURITY DEFINER); a tentativa de alterar `spatial_ref_sys` falhou porque a integração não é proprietária do objeto. Essa pendência está documentada em [SECURITY_AND_AUTH.md](SECURITY_AND_AUTH.md).
 
-O app ainda não está conectado ao Supabase: não considerar o banco um backend de produção funcional. Continuam pendentes Auth/client no frontend, funções server-side, Storage privado, testes RLS por usuário real e E2E.
+Auth/recuperação e upload documental já têm adaptador no frontend, condicionado às variáveis públicas do Supabase. Ainda não considerar o backend de produção funcional: persistência remota de catálogo/pedidos/estoque/financeiro, operações server-side, fotos, revisão administrativa e testes RLS por usuários reais/E2E continuam pendentes. O advisor crítico do PostGIS também permanece.
 
 Ver [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
 
@@ -267,7 +267,12 @@ Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HE
 ## 15. Estado remoto verificado — 22/10/2026
 
 - Projeto Supabase ativo: `atnwxxyaxlsnlfulhums`.
-- Migrations 0001–0006 registradas.
+- Migrations 0001–0007 registradas.
 - 27 tabelas da aplicação com RLS habilitado.
 - Nenhuma chave secreta adicionada ao frontend.
 - Frontend ainda utiliza autenticação e persistência locais; deploy do schema não equivale a deploy de backend integrado.
+
+
+## 16. Configuração de frontend
+
+Configurar no ambiente de build/deploy `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` usando os valores públicos do projeto Feiraê. Não configurar `service_role` nem secret key em variáveis `VITE_*`. Sem essas duas variáveis, o app mantém o modo local de demonstração; o CI não tem credenciais reais e não testa chamadas Auth/Storage contra o projeto.
