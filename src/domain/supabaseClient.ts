@@ -233,6 +233,7 @@ function consumeRecoveryRedirect() {
         user: { id: decoded.sub, email: decoded.email },
       });
       window.localStorage.setItem(RECOVERY_KEY, "true");
+      window.localStorage.removeItem("feirae:session");
       window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
     } catch {
       clearSession();
