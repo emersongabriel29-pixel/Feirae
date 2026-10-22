@@ -314,7 +314,7 @@ Não cria entidade nova. Altera `vendor_stores` com:
 
 A regra ainda precisa de validação server-side, snapshot no pedido e política administrativa persistida antes de produção.
 
-### Migration 0004
+### Migration 0008
 
 Adiciona a `vendor_stores`:
 
