@@ -24,7 +24,8 @@ export type AuthProfile = {
 type SupabaseRole = "customer" | "vendor" | "delivery" | "admin" | "fair_manager";
 
 export function isSupabaseConfigured() {
-  return Boolean(URL && KEY);
+  // Unit tests must never depend on deployment env vars or call a real Supabase project.
+  return import.meta.env.MODE !== "test" && Boolean(URL && KEY);
 }
 
 function readSession(): AuthSession | null {
