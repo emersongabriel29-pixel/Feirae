@@ -614,3 +614,8 @@ QA visual: validar em 360/390/412 px que o mapa não deixa a listagem pesada, o 
 `src/features/customer/DeliveryContactCard.test.tsx` cobre dois casos: o cartão não renderiza quando não existe entregador atribuído; com entregador, apresenta o nome e um link de chamada com o telefone normalizado. A suíte foi validada pelo CI após a correção de estreitamento de tipo em `CustomerScreens.tsx`.
 
 A validação do banco remoto é separada da suíte Vitest: foram verificadas migrations 0001–0006, RLS nas 27 tabelas da aplicação e leitura sob papel `authenticated` sem identidade, sem linhas visíveis nas tabelas operacionais consultadas. Isso não substitui testes de isolamento entre duas contas reais, que seguem pendentes antes de produção.
+
+
+## Validação da integração Auth/Storage
+
+O CI executa lint, Vitest, verificações de sincronização/branding e build. Os testes não usam credenciais de produção. O trigger `feirae_handle_new_auth_user`, bucket privado e policy de Storage foram confirmados por consultas SQL no projeto remoto. Não foi executado signup real, upload de documento com conta real nem teste de isolamento entre duas contas; esses testes permanecem pendentes. O advisor continua sinalizando a superfície PostGIS e deve ser tratado antes de produção.
