@@ -1,6 +1,6 @@
 # Modelo de dados e estados — Feiraê
 
-Atualizado em 27/09/2026 após comparação direta entre frontend e migrations.
+Atualizado em 22/10/2026 após migrations remotas 0001–0006.
 
 Este documento não descreve apenas o modelo desejado. Ele separa **implementado no frontend**, **existente no SQL** e **lacuna**.
 
@@ -437,7 +437,7 @@ Cada ação valida:
 - idempotência;
 - evento.
 
-## 16. Próxima migration após a 0003
+## 16. Próximas migrations após a 0006
 
 A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md), principalmente:
 
@@ -450,4 +450,11 @@ A próxima migration precisa tratar os itens concretos registrados em [SCHEMA_GA
 7. reservas de estoque;
 8. decisão `reviews` x `order_reviews`;
 9. estruturas do painel administrativo;
-10. RLS/policies completas.
+10. testes de integração RLS por papel e de acesso cruzado.
+
+
+## 17. Estado do banco remoto — 22/10/2026
+
+O projeto Supabase `atnwxxyaxlsnlfulhums` recebeu e registra as migrations 0001–0006. A auditoria confirmou 27 tabelas da aplicação com RLS habilitado. As migrations 0004–0006 reforçam ownership, protegem campos privilegiados/financeiros, evitam recursão nas policies de pedidos e indexam chaves estrangeiras.
+
+Isso não significa que o app já persista nesse banco: autenticação, catálogo, pedidos e estoque continuam locais até a integração com Supabase Auth/client, funções server-side e Storage privado. Ver [SECURITY_AND_AUTH.md](SECURITY_AND_AUTH.md) e [SCHEMA_GAP_MATRIX.md](SCHEMA_GAP_MATRIX.md).
