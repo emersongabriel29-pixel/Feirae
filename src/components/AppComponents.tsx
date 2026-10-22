@@ -199,7 +199,8 @@ export function LoginPage({
     const normalizedEmail = email.trim();
     const normalizedName = name.trim();
     try {
-      const result = await onLogin(selectedRole, normalizedEmail, normalizedName, password, mode === "signup");
+      const outcome = onLogin(selectedRole, normalizedEmail, normalizedName, password, mode === "signup");
+      const result = outcome instanceof Promise ? await outcome : outcome;
       if (result.error) {
         setFormError(result.error);
         return;
