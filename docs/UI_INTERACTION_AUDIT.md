@@ -653,3 +653,7 @@ Nova hierarquia:
 O mapa abre em uma superfície dedicada sobre a tela, mantendo localização, seleção de feira, abrir perfil e rota.
 
 Os marcadores deixam de usar o símbolo genérico de localização. Cada feira passa a usar o **ícone de banca/feira do próprio Feiraê** dentro de um marcador com ponta, preservando seleção e destaque de feira mais próxima.
+
+## Auditoria de interação — múltiplas bancas e veículos — 22/10/2026
+
+As mudanças preservam a identidade visual Feiraê e preparam a separação operacional por banca e por veículo. A branch não comprova sincronização multi-dispositivo: as telas continuam usando persistência local. Antes de liberar o fluxo, validar seleção de banca, isolamento de produtos/pedidos, seleção de veículo por entrega, estados vazios, erros de permissão e acessibilidade por teclado/leitor de tela.
