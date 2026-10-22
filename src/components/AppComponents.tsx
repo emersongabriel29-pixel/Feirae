@@ -40,6 +40,7 @@ import {
   saveCustomerLegalAcceptances,
 } from "../domain/customerLegal";
 import { FeiraeBrand } from "./FeiraeBrand";
+import { isPasswordRecoveryPending } from "../domain/supabaseClient";
 
 const roleLabels: Record<Role, string> = {
   customer: "Cliente",
@@ -50,6 +51,7 @@ const roleLabels: Record<Role, string> = {
 export function LoginPage({
   onLogin,
   onResetPassword,
+  onSetNewPassword,
 }: {
   onLogin: (
     role: Role,
@@ -57,12 +59,13 @@ export function LoginPage({
     name: string,
     password: string,
     isNewAccount: boolean,
-  ) => string | null;
-  onResetPassword: (role: Role, email: string, newPassword: string) => string | null;
+  ) => Promise<{ error?: string; success?: string }> | { error?: string; success?: string };
+  onResetPassword: (email: string) => Promise<{ error?: string; success?: string }>;
+  onSetNewPassword: (password: string) => Promise<{ error?: string; success?: string }>;
 }) {
   const [welcomeVisible, setWelcomeVisible] = useState(true);
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
-  const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "recovery" | "set-password">(() => isPasswordRecoveryPending() ? "set-password" : "login");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -106,7 +109,7 @@ export function LoginPage({
     setCustomerOffersOptIn(false);
   }
 
-  function changeMode(nextMode: "login" | "signup" | "recovery") {
+  function changeMode(nextMode: "login" | "signup" | "recovery" | "set-password") {
     setMode(nextMode);
     setFormError("");
     setFormSuccess("");
@@ -137,24 +140,50 @@ export function LoginPage({
     resetCustomerLegalChoice();
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
 
     if (mode === "recovery") {
+      try {
+        const result = await onResetPassword(email.trim());
+        if (result.error) {
+          setFormError(result.error);
+          return;
+        }
+        setPassword("");
+        setConfirmPassword("");
+        setFormError("");
+        setFormSuccess(result.success ?? "Se existir uma conta para esse e-mail, enviaremos um link de redefinição.");
+        setMode("login");
+      } catch (error) {
+        setFormError(error instanceof Error ? error.message : "Não foi possível solicitar a redefinição.");
+      }
+      return;
+    }
+
+    if (mode === "set-password") {
+      if (password.length < 6) {
+        setFormError("A nova senha precisa ter pelo menos 6 caracteres.");
+        return;
+      }
       if (password !== confirmPassword) {
         setFormError("As senhas não coincidem.");
         return;
       }
-      const error = onResetPassword(selectedRole, email.trim(), password);
-      if (error) {
-        setFormError(error);
-        return;
+      try {
+        const result = await onSetNewPassword(password);
+        if (result.error) {
+          setFormError(result.error);
+          return;
+        }
+        setPassword("");
+        setConfirmPassword("");
+        setFormError("");
+        setFormSuccess(result.success ?? "Senha atualizada. Entre novamente.");
+        setMode("login");
+      } catch (error) {
+        setFormError(error instanceof Error ? error.message : "Não foi possível atualizar a senha.");
       }
-      setMode("login");
-      setPassword("");
-      setConfirmPassword("");
-      setFormError("");
-      setFormSuccess("Senha redefinida. Entre com sua nova senha.");
       return;
     }
 
@@ -169,17 +198,29 @@ export function LoginPage({
 
     const normalizedEmail = email.trim();
     const normalizedName = name.trim();
-    const error = onLogin(selectedRole, normalizedEmail, normalizedName, password, mode === "signup");
-
-    if (!error && mode === "signup" && selectedRole === "customer") {
-      saveCustomerLegalAcceptances(normalizedName, normalizedEmail);
-      window.localStorage.setItem(
-        `feirae:offers:${normalizedEmail.toLocaleLowerCase("pt-BR")}`,
-        JSON.stringify(customerOffersOptIn),
-      );
+    try {
+      const result = await onLogin(selectedRole, normalizedEmail, normalizedName, password, mode === "signup");
+      if (result.error) {
+        setFormError(result.error);
+        return;
+      }
+      if (mode === "signup" && selectedRole === "customer") {
+        saveCustomerLegalAcceptances(normalizedName, normalizedEmail);
+        window.localStorage.setItem(
+          `feirae:offers:${normalizedEmail.toLocaleLowerCase("pt-BR")}`,
+          JSON.stringify(customerOffersOptIn),
+        );
+      }
+      setFormError("");
+      setFormSuccess(result.success ?? "");
+      if (result.success && mode === "signup") {
+        setMode("login");
+        setPassword("");
+        setConfirmPassword("");
+      }
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Não foi possível concluir a autenticação.");
     }
-
-    setFormError(error ?? "");
   }
 
   if (welcomeVisible) {
@@ -277,7 +318,7 @@ export function LoginPage({
               Criar conta
             </button>
           </div>
-          {mode === "recovery" && (
+          {(mode === "recovery" || mode === "set-password") && (
             <button type="button" className="recovery-back" onClick={() => changeMode("login")}>
               <ArrowLeft size={16} /> Voltar para entrar
             </button>
@@ -287,16 +328,20 @@ export function LoginPage({
               ? "Como você vai usar o aplicativo?"
               : mode === "signup"
                 ? "Crie sua conta no Feiraê"
-                : "Redefina sua senha"}
+                : mode === "recovery"
+                  ? "Recupere sua senha com segurança"
+                  : "Escolha uma nova senha"}
           </h2>
           <p className="login-intro">
             {mode === "login"
               ? "Escolha seu tipo de acesso. As telas serão preparadas para essa função."
               : mode === "signup"
                 ? "Cliente entra rápido. Feirante e entregador passam por cadastro, documentos e validação."
-                : "Escolha o tipo de conta, informe o e-mail e crie uma nova senha para este dispositivo."}
+                : mode === "recovery"
+                  ? "Enviaremos um link de redefinição para o e-mail cadastrado."
+                  : "Defina a nova senha após abrir o link enviado ao seu e-mail."}
           </p>
-          <div className="role-options" role="radiogroup" aria-label="Tipo de acesso">
+          {mode !== "recovery" && mode !== "set-password" && <div className="role-options" role="radiogroup" aria-label="Tipo de acesso">
             {options.map((option) => (
               <button
                 type="button"
@@ -314,7 +359,7 @@ export function LoginPage({
                 <i>{selectedRole === option.role && <Check size={15} />}</i>
               </button>
             ))}
-          </div>
+          </div>}
           <form onSubmit={submit} className="login-form">
             {mode === "signup" && (
               <label>
@@ -345,8 +390,8 @@ export function LoginPage({
                 required
               />
             </label>
-            <label className="password-field">
-              {mode === "recovery" ? "Nova senha" : "Senha"}
+            {mode !== "recovery" && <label className="password-field">
+              {mode === "set-password" ? "Nova senha" : "Senha"}
               <span>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -355,8 +400,8 @@ export function LoginPage({
                     setPassword(event.target.value);
                     clearFormError();
                   }}
-                  placeholder={mode === "recovery" ? "Crie uma nova senha" : "Digite sua senha"}
-                  autoComplete={mode === "recovery" ? "new-password" : "current-password"}
+                  placeholder={mode === "set-password" ? "Crie uma nova senha" : "Digite sua senha"}
+                  autoComplete={mode === "set-password" ? "new-password" : "current-password"}
                   minLength={6}
                   required
                 />
@@ -368,13 +413,13 @@ export function LoginPage({
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </span>
-            </label>
+            </label>}
             {mode === "login" && (
               <button type="button" className="forgot-password" onClick={() => changeMode("recovery")}>
                 Esqueci minha senha
               </button>
             )}
-            {mode === "recovery" && (
+            {mode === "set-password" && (
               <>
                 <label className="password-field">
                   Confirmar nova senha
@@ -405,8 +450,7 @@ export function LoginPage({
                 <div className="password-recovery-notice">
                   <ShieldCheck size={18} />
                   <p>
-                    Nesta versão de demonstração, a redefinição fica salva somente neste dispositivo. Em
-                    produção, a identidade será confirmada por código ou link enviado ao e-mail.
+                    A nova senha só será salva após a validação do link enviado pelo Supabase ao seu e-mail.
                   </p>
                 </div>
               </>
