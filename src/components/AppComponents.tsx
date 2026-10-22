@@ -40,7 +40,7 @@ import {
   saveCustomerLegalAcceptances,
 } from "../domain/customerLegal";
 import { FeiraeBrand } from "./FeiraeBrand";
-import { isPasswordRecoveryPending } from "../domain/supabaseClient";
+import { isPasswordRecoveryPending, isSupabaseConfigured } from "../domain/supabaseClient";
 
 const roleLabels: Record<Role, string> = {
   customer: "Cliente",
@@ -60,7 +60,7 @@ export function LoginPage({
     password: string,
     isNewAccount: boolean,
   ) => Promise<{ error?: string; success?: string }> | { error?: string; success?: string };
-  onResetPassword: (email: string) => Promise<{ error?: string; success?: string }>;
+  onResetPassword: (email: string, newPassword?: string, role?: Role) => Promise<{ error?: string; success?: string }> | { error?: string; success?: string };
   onSetNewPassword: (password: string) => Promise<{ error?: string; success?: string }>;
 }) {
   const [welcomeVisible, setWelcomeVisible] = useState(true);
@@ -144,8 +144,15 @@ export function LoginPage({
     event.preventDefault();
 
     if (mode === "recovery") {
+      if (!isSupabaseConfigured() && password !== confirmPassword) {
+        setFormError("As senhas não coincidem.");
+        return;
+      }
       try {
-        const result = await onResetPassword(email.trim());
+        const outcome = isSupabaseConfigured()
+          ? onResetPassword(email.trim())
+          : onResetPassword(email.trim(), password, selectedRole);
+        const result = outcome instanceof Promise ? await outcome : outcome;
         if (result.error) {
           setFormError(result.error);
           return;
@@ -391,7 +398,7 @@ export function LoginPage({
                 required
               />
             </label>
-            {mode !== "recovery" && <label className="password-field">
+            {(mode !== "recovery" || !isSupabaseConfigured()) && <label className="password-field">
               {mode === "set-password" ? "Nova senha" : "Senha"}
               <span>
                 <input
@@ -420,7 +427,7 @@ export function LoginPage({
                 Esqueci minha senha
               </button>
             )}
-            {mode === "set-password" && (
+            {(mode === "set-password" || (mode === "recovery" && !isSupabaseConfigured())) && (
               <>
                 <label className="password-field">
                   Confirmar nova senha
