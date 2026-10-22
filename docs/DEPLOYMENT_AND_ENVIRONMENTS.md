@@ -276,3 +276,7 @@ Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HE
 ## 16. Configuração de frontend
 
 O build de produção usa como padrão o endpoint e a publishable key públicos do projeto Feiraê; `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` podem sobrescrever esses valores por ambiente. O modo de desenvolvimento/testes sem variáveis mantém o modo local de demonstração. Nunca configurar `service_role` nem secret key em variáveis `VITE_*`. O CI não executa signup/upload reais contra o projeto.
+
+## Migration 0008 proposta — ACL PostGIS
+
+`supabase/migrations/0008_postgis_function_acl_hardening.sql` reaplica revogações para `PUBLIC`, `anon` e `authenticated` nas funções `st_estimatedextent` e no acesso direto à tabela de metadados `spatial_ref_sys`. Está apenas na branch de segurança; não foi aplicada ao projeto Supabase remoto. Após autorização, validar os privilégios efetivos e executar os advisors. Mover a extensão PostGIS para outro schema ou alterar objetos de propriedade da extensão é uma decisão separada e requer ensaio de compatibilidade antes de qualquer mudança de produção.
