@@ -275,4 +275,4 @@ Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HE
 
 ## 16. Configuração de frontend
 
-Configurar no ambiente de build/deploy `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` usando os valores públicos do projeto Feiraê. Não configurar `service_role` nem secret key em variáveis `VITE_*`. Sem essas duas variáveis, o app mantém o modo local de demonstração; o CI não tem credenciais reais e não testa chamadas Auth/Storage contra o projeto.
+O build de produção usa como padrão o endpoint e a publishable key públicos do projeto Feiraê; `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` podem sobrescrever esses valores por ambiente. O modo de desenvolvimento/testes sem variáveis mantém o modo local de demonstração. Nunca configurar `service_role` nem secret key em variáveis `VITE_*`. O CI não executa signup/upload reais contra o projeto.
