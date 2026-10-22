@@ -11,10 +11,7 @@ export function useDemoSession() {
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured());
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setAuthLoading(false);
-      return;
-    }
+    if (!isSupabaseConfigured()) return;
     let active = true;
     void getCurrentAuthProfile()
       .then((profile) => {
