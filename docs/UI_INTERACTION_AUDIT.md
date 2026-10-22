@@ -654,7 +654,6 @@ O mapa abre em uma superfície dedicada sobre a tela, mantendo localização, se
 
 Os marcadores deixam de usar o símbolo genérico de localização. Cada feira passa a usar o **ícone de banca/feira do próprio Feiraê** dentro de um marcador com ponta, preservando seleção e destaque de feira mais próxima.
 
-
 ## Verificação de contato do entregador — 22/10/2026
 
 A checagem TypeScript de `DeliveryContactCard` foi ajustada para estreitar o tipo opcional do entregador antes de renderizar. O comportamento visual não mudou: sem entregador atribuído, o cartão não é exibido; com entregador, nome/veículo/telefone continuam usando o mesmo layout aprovado. A correção também normaliza o link `tel:` mantendo apenas `+` e dígitos, para não descartar os números do telefone. O teste de componente correspondente está em `src/features/customer/DeliveryContactCard.test.tsx`.
