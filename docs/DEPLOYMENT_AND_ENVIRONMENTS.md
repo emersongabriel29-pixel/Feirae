@@ -266,7 +266,7 @@ Se uma futura implementação migrar para Google Maps JavaScript API, Mapbox, HE
 
 ## Migration 0004 — estado por banca — 19/10/2026
 
-Arquivo: `supabase/migrations/0004_order_vendor_state_machine.sql`.
+Arquivo: `supabase/migrations/0009_order_vendor_state_machine.sql`.
 
 Esta migration altera o tipo de `order_vendors.status`, ativa RLS na tabela, cria políticas de leitura e disponibiliza o RPC público restrito `public.update_order_vendor_status`, que delega a implementação ao schema não exposto `private`. Ela é uma mudança de schema e exige revisão em ambiente de desenvolvimento antes de qualquer aplicação.
 
