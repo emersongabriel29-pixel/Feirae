@@ -70,7 +70,7 @@ async function request(path: string, init: RequestInit = {}, token?: string) {
     },
   });
   const text = await response.text();
-  let data: unknown = null;
+  let data: unknown;
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
