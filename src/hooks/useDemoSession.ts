@@ -57,5 +57,6 @@ export function useDemoSession() {
     startSession,
     updateSession,
     clearSession,
+    authLoading,
   };
 }
