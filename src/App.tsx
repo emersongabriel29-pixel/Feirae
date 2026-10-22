@@ -61,10 +61,18 @@ import { consumeWallet } from "./domain/walletBridge";
 import { releaseInventory, reserveInventory } from "./domain/inventoryBridge";
 import {
   authenticateLocalAccount,
-  resetLocalAccountPassword,
   scrubLegacyPlaintextPasswords,
   updateLocalAccount,
 } from "./domain/localAuth";
+import {
+  getCurrentAuthProfile,
+  isSupabaseConfigured,
+  requestPasswordReset,
+  setRecoveredPassword,
+  signInSupabase,
+  signOutSupabase,
+  signUpSupabase,
+} from "./domain/supabaseClient";
 import {
   customerPromotionNotification,
   orderEventNotification,
@@ -302,7 +310,25 @@ export default function App() {
     seenCustomerOfferNotifications.current = currentKeys;
   }, [marketplaceRevision, offersEnabled, role]);
 
-  function login(nextRole: Role, email: string, name: string, password: string, isNewAccount: boolean) {
+  async function login(nextRole: Role, email: string, name: string, password: string, isNewAccount: boolean) {
+    if (isSupabaseConfigured()) {
+      try {
+        if (isNewAccount) {
+          const result = await signUpSupabase({ role: nextRole, email, name, password });
+          if (!result.profile) return { success: result.message ?? "Confirme seu e-mail para continuar." };
+          startSession(result.profile.role, result.profile.email, result.profile.name, true);
+          resetForRole(result.profile.role);
+          return {};
+        }
+        const profile = await signInSupabase(email, password, nextRole);
+        startSession(profile.role, profile.email, profile.name, false);
+        resetForRole(profile.role);
+        return {};
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : "Não foi possível autenticar no Supabase." };
+      }
+    }
+
     const result = authenticateLocalAccount({
       role: nextRole,
       email,
@@ -310,19 +336,37 @@ export default function App() {
       password,
       signup: isNewAccount,
     });
-    if (!result.ok) return result.message;
+    if (!result.ok) return { error: result.message };
     startSession(nextRole, result.account.email, result.account.name, result.isNewAccount);
     resetForRole(nextRole);
-    return null;
+    return {};
   }
 
-  function recoverPassword(nextRole: Role, email: string, newPassword: string) {
-    const result = resetLocalAccountPassword({
-      role: nextRole,
-      email,
-      newPassword,
-    });
-    return result.ok ? null : result.message;
+  async function recoverPassword(email: string) {
+    if (!isSupabaseConfigured()) {
+      return { error: "A recuperação segura exige configurar VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY." };
+    }
+    try {
+      await requestPasswordReset(email);
+      return { success: "Se existir uma conta para esse e-mail, enviaremos um link de redefinição." };
+    } catch {
+      // Não revela se um endereço está cadastrado.
+      return { success: "Se existir uma conta para esse e-mail, enviaremos um link de redefinição." };
+    }
+  }
+
+  async function setNewPassword(password: string) {
+    try {
+      await setRecoveredPassword(password);
+      const profile = await getCurrentAuthProfile();
+      if (profile) {
+        startSession(profile.role, profile.email, profile.name, false);
+        resetForRole(profile.role);
+      }
+      return { success: "Senha atualizada com segurança." };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Não foi possível atualizar a senha." };
+    }
   }
 
   function updateAccountIdentity(name: string, email: string, newPassword?: string) {
@@ -346,6 +390,7 @@ export default function App() {
   }
 
   function logout() {
+    if (isSupabaseConfigured()) void signOutSupabase();
     clearSession();
     resetForLogout();
   }
@@ -697,7 +742,7 @@ export default function App() {
     notify(`Itens disponíveis do pedido ${source.id} voltaram para a sacola.`);
   }
 
-  if (!role) return <LoginPage onLogin={login} onResetPassword={recoverPassword} />;
+  if (!role) return <LoginPage onLogin={login} onResetPassword={recoverPassword} onSetNewPassword={setNewPassword} />;
 
   return (
     <div className="min-h-screen bg-[var(--fe-bg)] pb-24 text-slate-900 md:pb-8">
