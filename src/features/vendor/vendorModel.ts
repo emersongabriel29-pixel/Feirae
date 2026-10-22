@@ -124,6 +124,7 @@ export type VendorDocument = {
   status: VendorDocumentStatus;
   fileName: string;
   file?: StoredFile;
+  filePath?: string;
   expiresAt: string;
   correctionReason: string;
 };
