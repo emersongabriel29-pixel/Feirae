@@ -45,7 +45,7 @@ Essas mudanças ainda pertencem ao protótipo local: a seleção de banca/veícu
 
 ## Migração
 
-A migration 0008_multiple_vendor_stalls_and_vehicle_governance.sql adiciona associação da banca à feira, coordenadas físicas/internas, status operacional e aprovação por banca; também adiciona status administrativo por veículo e índices para consultas de elegibilidade/histórico.
+A migration 0009_multiple_vendor_stalls_and_vehicle_governance.sql adiciona associação da banca à feira, coordenadas físicas/internas, status operacional e aprovação por banca; também adiciona status administrativo por veículo e índices para consultas de elegibilidade/histórico.
 
 ### Cuidados antes de produção
 
