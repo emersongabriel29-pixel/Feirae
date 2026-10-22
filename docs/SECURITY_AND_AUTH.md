@@ -1,6 +1,6 @@
 # Segurança e autenticação — Feiraê
 
-Atualizado em 27/09/2026 com auditoria direta das migrations 0001/0002/0003/0003.
+Atualizado em 22/10/2026 após aplicar as migrations 0001–0006 no projeto Supabase Feiraê.
 
 ## 1. Autenticação atual
 
@@ -33,133 +33,51 @@ Não é aceitável em produção porque:
 - não há MFA;
 - não há proteção multi-dispositivo.
 
-## 2. Supabase ainda não está conectado ao app
+## 2. Estado real do Supabase
 
-Fatos atuais:
+O projeto Supabase `atnwxxyaxlsnlfulhums` está ativo e recebeu as migrations `0001` a `0006`. O schema está criado no banco remoto.
 
-- existem `.env.example`, 0001 e 0002;
-- `package.json` **não possui `@supabase/supabase-js`**;
+O aplicativo **ainda não está conectado ao Supabase**:
+
+- `package.json` não possui `@supabase/supabase-js`;
 - não existe cliente Supabase no frontend;
-- não existe `supabase/config.toml`;
-- não existem Edge Functions no repositório.
+- login/cadastro ainda usa `src/domain/localAuth.ts` e `localStorage`;
+- pedidos, estoque, catálogo, carteira e repasses continuam persistidos localmente;
+- não existem Edge Functions implementadas no repositório;
+- `.env.example` contém somente placeholders públicos.
 
-Portanto, migrations existentes são preparação de schema, não backend ativo.
+Portanto, o banco e as políticas de segurança estão preparados no projeto remoto, mas as jornadas ponta a ponta ainda não estão operando sobre esse banco. Não inserir chaves secretas no frontend.
 
-## 3. RLS: situação exata
+## 3. RLS: situação após migrations 0001–0006
 
-### Sem RLS habilitada nas migrations atuais
+A verificação no banco remoto confirmou **27 tabelas da aplicação com RLS habilitado e zero tabelas de aplicação sem RLS**. A tabela de metadados `public.spatial_ref_sys` pertence à extensão PostGIS e permanece como exceção de infraestrutura: o papel usado pela integração não é proprietário dessa tabela, então o Supabase recusou habilitar RLS nela. O advisor ainda sinaliza essa exceção e a extensão PostGIS instalada no schema `public`.
 
-- `vendor_stores`
-- `categories`
-- `order_vendors`
-- `order_items`
-- `carts`
-- `deliveries`
-- `payments`
-- `reviews`
+Policies atuais, em alto nível:
 
-Essas tabelas não devem ser expostas diretamente ao cliente antes de políticas adequadas.
+- `profiles`: leitura/edição do próprio perfil; o papel começa como `customer` e não pode ser promovido pelo próprio usuário.
+- `fairs`, `categories`, `products`, `vendor_profiles`, `vendor_stores`, `fair_vendor_memberships`: catálogo público condicionado a feira ativa, produto disponível e feirante aprovado; feirante aprovado administra os próprios produtos e bancas.
+- `addresses`, `carts`, `cart_items`: somente dados próprios.
+- `orders`, `order_vendors`, `order_items`, `deliveries`, `order_events`: leitura limitada aos participantes autorizados; helpers privados evitam recursão nas policies.
+- `delivery_profiles`, `delivery_vehicles`, `delivery_preferences`: dados e veículos próprios; aprovação não pode ser definida pelo próprio entregador.
+- `onboarding_documents`: leitura/envio/edição de documentos próprios enquanto pendentes; aprovação e revisão ficam no servidor.
+- `promotions`, `promotion_usages`: ofertas ativas visíveis ao público; gestão por feirante aprovado e leitura de usos limitada.
+- `support_tickets`: leitura e abertura próprias; edição limitada a chamados próprios ainda abertos.
+- `reviews`, `order_reviews`: leitura de avaliações e escrita condicionada a pedido entregue e autoria/participação autenticada.
+- `wallet_entries`, `payouts`: leitura dos próprios registros; sem escrita direta pelo cliente.
+- `payments`: política explícita de negação para `anon` e `authenticated`; dados financeiros devem passar por operação de servidor.
 
-### RLS habilitada e com policies existentes
+Triggers também bloqueiam alterações diretas em papel, aprovação, estados críticos e campos financeiros protegidos. Os helpers de autorização ficam no schema privado e não são expostos pela Data API.
 
-`profiles`:
+## 4. Gaps concretos de autorização ainda pendentes
 
-- usuário gerencia o próprio perfil.
+- O frontend ainda não usa Supabase Auth nem consulta o schema remoto.
+- Não há Edge Functions/RPCs de negócio para criar pedidos, reservar estoque, validar preços, transicionar pedidos, liquidar pagamentos ou aprovar documentos.
+- Não existe backend de Storage privado para documentos e fotos.
+- A política de administração/RBAC ainda não foi implementada.
+- A tabela PostGIS `spatial_ref_sys` e funções auxiliares da extensão permanecem sob propriedade da extensão; a auditoria do Supabase continua exibindo avisos relativos a esses objetos.
+- O advisor de performance sinaliza índices recém-criados como ainda não utilizados porque o banco está vazio; isso não demonstra regressão operacional.
 
-`fairs`:
-
-- leitura pública de feiras ativas.
-
-`products`:
-
-- leitura pública de produtos disponíveis.
-
-`addresses`:
-
-- usuário gerencia os próprios endereços.
-
-`orders`:
-
-- cliente possui SELECT dos próprios pedidos.
-
-`cart_items`:
-
-- usuário gerencia itens do próprio carrinho.
-
-`delivery_profiles`:
-
-- entregador gerencia próprio perfil.
-
-`delivery_vehicles`:
-
-- entregador gerencia próprios veículos.
-
-`delivery_preferences`:
-
-- entregador gerencia próprias preferências.
-
-`onboarding_documents`:
-
-- usuário vê, envia e atualiza documentos próprios pendentes.
-
-`promotions`:
-
-- público lê promoções ativas;
-- feirante gerencia promoções próprias.
-
-`order_events`:
-
-- participantes leem eventos.
-
-`wallet_entries`:
-
-- cliente lê próprios lançamentos.
-
-`payouts`:
-
-- usuário lê próprios repasses.
-
-### RLS habilitada, mas sem policy funcional suficiente na migration
-
-- `vendor_profiles`
-- `promotion_usages`
-- `support_tickets`
-- `order_reviews`
-
-## 4. Gaps concretos de autorização
-
-### Produto
-
-Existe SELECT público, mas não há policy explícita de INSERT/UPDATE/DELETE do feirante.
-
-### Pedido
-
-Cliente tem SELECT, mas criação e transições não estão modeladas como operações seguras.
-
-### Banca e item de pedido
-
-`order_vendors` e `order_items` não têm RLS.
-
-### Entrega
-
-`deliveries` não tem RLS.
-
-### Pagamento
-
-`payments` não tem RLS.
-
-### Aprovação documental
-
-Usuário envia documento próprio, mas não existe policy administrativa documentada para:
-
-- revisar;
-- aprovar;
-- rejeitar;
-- solicitar correção.
-
-### Suporte e avaliações
-
-Tabelas existem, porém policies não completam leitura/escrita pelos participantes.
+As policies atuais são uma barreira de segurança do banco, não uma prova de que os fluxos de produção estejam concluídos.
 
 ## 5. Operações que não devem virar CRUD livre no browser
 
